@@ -573,7 +573,7 @@ section {
   color: #444444;
   text-align: center;
   box-shadow: 0 0 30px rgba(214, 215, 216, 0.6);
-  padding: 20px 0 30px 0;
+  padding: 40px 0 30px 0;
 }
 
 .about .info-box i.bx {
@@ -596,6 +596,7 @@ section {
   line-height: 24px;
   font-size: 14px;
   margin-bottom: 0;
+  min-height: 50px;
 }
 
 .about .social-links {
@@ -611,7 +612,7 @@ section {
   line-height: 1;
   margin: 0 8px;
   transition: 0.3s;
-  padding: 14px;
+  padding: 12px;
   border-radius: 50px;
   border: 1px solid #dde1e4;
 }
