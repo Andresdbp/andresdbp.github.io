@@ -9,6 +9,10 @@
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
+main {
+  background-color: #3b434a;
+}
+
 body {
   font-family: "Open Sans", sans-serif;
   color: #444444;
@@ -32,6 +36,11 @@ h5,
 h6 {
   font-family: "Raleway", sans-serif;
 }
+
+h4,p,li {
+  color: #eee;
+}
+
 
 /*--------------------------------------------------------------
 # Back to top button
@@ -147,7 +156,7 @@ h6 {
   z-index: 99;
   opacity: 0;
   visibility: hidden;
-  background: #fff;
+  background: #3b434a;
   box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
   transition: 0.3s;
   border-radius: 4px;
@@ -162,7 +171,7 @@ h6 {
   font-size: 14px;
   text-transform: none;
   font-weight: 400;
-  color: #3b434a;
+  color: #eee;
   letter-spacing: 1px;
 }
 
@@ -317,7 +326,7 @@ h6 {
 #hero {
   width: 100%;
   height: 100vh;
-  background: url("../img/manta-ray-waves.jpg") center;
+  background: url("../img/dna.jpg") center;
   background-position: bottom;
   background-size: cover;
   position: relative;
@@ -412,10 +421,6 @@ section {
   padding: 60px 0;
 }
 
-.section-bg {
-  background-color: rgb(255, 255, 255);
-}
-
 .section-title {
   text-align: center;
   padding: 30px 0;
@@ -436,7 +441,7 @@ section {
 .section-title span {
   position: absolute;
   top: 30px;
-  color: #e2f0fd;
+  color: #455059;
   left: 0;
   right: 0;
   z-index: 1;
@@ -528,10 +533,14 @@ section {
 /*--------------------------------------------------------------
 # About Me
 --------------------------------------------------------------*/
+.about {
+  background-color: #3b434a;
+}
+
 .about .content h3 {
   font-weight: 700;
   font-size: 26px;
-  color: #3b434a;
+  color: #fff;
   text-transform: uppercase;
 }
 
@@ -562,6 +571,8 @@ section {
   background-size: cover;
   min-height: 500px;
   margin-bottom: 0px;
+  box-shadow: 0 0 10px rgba(10,10,10, 0.4);
+  border-radius: 8px;
 }
 
 .about .content .subheadings {
@@ -570,15 +581,16 @@ section {
 }
 
 .about .info-box {
-  color: #444444;
+  color: #3b434a;
   text-align: center;
-  box-shadow: 0 0 30px rgba(214, 215, 216, 0.6);
+  box-shadow: 0 0 10px rgba(10,10,10, 0.4);
   padding: 40px 0 30px 0;
+  border-radius: 8px;
 }
 
 .about .info-box i.bx {
   font-size: 24px;
-  color: #fff;
+  color: #eee;
   border-radius: 50%;
   padding: 15px;
   background: #4fadff;
@@ -586,7 +598,7 @@ section {
 
 .about .info-box h3 {
   font-size: 20px;
-  color: #777777;
+  color: #eee;
   font-weight: 700;
   margin: 10px 0;
 }
@@ -600,7 +612,8 @@ section {
 }
 
 .about .info-box a{
-  color: #777777;
+  color: #4fadff;
+  font-style: italic;
 }
 
 .about .info-box a:hover{
@@ -616,13 +629,13 @@ section {
 .about .social-links a {
   font-size: 18px;
   display: inline-block;
-  color: #687683;
+  color: #eee;
   line-height: 1;
   margin: 0 8px;
   transition: 0.3s;
   padding: 12px;
   border-radius: 50px;
-  border: 1px solid #dde1e4;
+  border: 1px solid #eee;
 }
 
 .about .social-links a:hover {
@@ -638,6 +651,7 @@ section {
   padding: 0px;
   margin-top: 30px;
   margin-bottom: 0px;
+  background-color: #3b434a;
 }
 
 .research .section-title h2 {
@@ -653,7 +667,7 @@ section {
 --------------------------------------------------------------*/
 .testimonials {
   padding: 80px 0;
-  background: url("../img/shark-circle.jpg") no-repeat;
+  background: url("../img/dark-betta.jpg") no-repeat;
   background-position: center center;
   background-size: cover;
   position: relative;
@@ -676,7 +690,7 @@ section {
   margin-bottom: 0;
   position: relative;
   z-index: 2;
-  color: #fff;
+  color: #eee;
 }
 
 .testimonials::before {
@@ -778,7 +792,7 @@ section {
   font-weight: 700;
   margin-top: 20px;
   margin-bottom: 20px;
-  color: #3b434a;
+  color: #eee;
 }
 
 .resume .resume-item {
@@ -944,7 +958,7 @@ section {
 #footer .social-links a {
   font-size: 18px;
   display: inline-block;
-  background: #fff;
+  background: #3b434a;
   color: #4fadff;
   line-height: 1;
   padding: 8px 0;
@@ -958,7 +972,7 @@ section {
 
 #footer .social-links a:hover {
   background: #4fadff;
-  color: #fff;
+  color: #eee;
   text-decoration: none;
 }
 
