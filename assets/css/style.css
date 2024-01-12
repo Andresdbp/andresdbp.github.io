@@ -9,13 +9,11 @@
 /*--------------------------------------------------------------
 # General
 --------------------------------------------------------------*/
-main {
-  background-color: #3b434a;
-}
 
 body {
   font-family: "Open Sans", sans-serif;
   color: #444444;
+  background-color: #3b434a;
 }
 
 a {
@@ -218,7 +216,7 @@ h4,p,li {
 * Mobile Navigation 
 */
 .mobile-nav-toggle {
-  color: #fff;
+  color: #eee;
   font-size: 28px;
   cursor: pointer;
   display: none;
@@ -263,12 +261,16 @@ h4,p,li {
   left: 15px;
   padding: 10px 0;
   border-radius: 10px;
-  background-color: #fff;
+  background-color: #3b434a;
   overflow-y: auto;
   transition: 0.3s;
 }
 
-.navbar-mobile a,
+.navbar-mobile a {
+  padding: 10px 20px;
+  font-size: 14px;
+  color: #eee;
+}
 .navbar-mobile a:focus {
   padding: 10px 20px;
   font-size: 14px;
@@ -294,7 +296,7 @@ h4,p,li {
   z-index: 99;
   opacity: 1;
   visibility: visible;
-  background: #fff;
+  background: #3b434a;
   box-shadow: 0px 0px 30px rgba(127, 137, 161, 0.25);
 }
 
