@@ -6,40 +6,42 @@
   <title>Andres Barboza | Evolutionary Geneticist</title>
   <meta content="Ph.D. Candidate in Genetics and Genomics at Texas A&M University studying genome evolution, population genetics, and bioinformatics" name="description">
   <meta content="Andres Barboza, evolutionary biology, genome evolution, population genetics, bioinformatics, Texas A&M, sex chromosomes, achiasmy" name="keywords">
+  
   <link rel="icon" href="assets/img/favicon-16x16.png" sizes="16x16" type="image/png">
   <link rel="icon" href="assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" sizes="57x57 72x72 114x144 144x144" href="assets/img/apple-touch-icon.png">
+  
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  
   <style>
     /* =========================================
-       COLOR PALETTE - CHANGE THESE 6 COLORS!
+       CUSTOM COLOR PALETTE
        ========================================= */
     :root {
-      --color-1: #0d1b2a;      /* Darkest - Primary backgrounds, text */
-      --color-2: #1b3a4b;      /* Dark accent - Cards, secondary elements */
-      --color-3: #065a60;      /* Primary accent - Buttons, links, highlights */
-      --color-4: #99d98c;      /* Bright accent - Tags, badges, hover states */
-      --color-5: #d8f3dc;      /* Light accent - Light backgrounds */
-      --color-6: #f8faf9;      /* Lightest - Main background */
+      --baltic-blue: #2f6690;
+      --cerulean: #3a7ca5;
+      --alabaster-grey: #d9dcd6;
+      --yale-blue: #16425b;
+      --sky-blue-light: #81c3d7;
       
-      /* Derived colors - these use the palette above */
-      --text-primary: var(--color-1);
-      --text-secondary: #5a6872;
+      /* Theme Application */
+      --text-primary: var(--yale-blue);
+      --text-secondary: var(--baltic-blue);
       --text-light: #ffffff;
-      --bg-primary: var(--color-6);
-      --bg-secondary: var(--color-5);
-      --bg-dark: var(--color-1);
-      --accent: var(--color-3);
-      --accent-light: var(--color-4);
+      --bg-primary: #ffffff;
+      --bg-secondary: rgba(217, 220, 214, 0.4);
+      --bg-dark: var(--yale-blue);
+      --accent: var(--cerulean);
+      --accent-light: var(--sky-blue-light);
       
       /* Spacing & Effects */
       --radius-sm: 8px;
       --radius-md: 16px;
       --radius-lg: 24px;
-      --shadow-sm: 0 2px 8px rgba(13, 27, 42, 0.06);
-      --shadow-md: 0 4px 20px rgba(13, 27, 42, 0.1);
-      --shadow-lg: 0 8px 40px rgba(13, 27, 42, 0.15);
+      --shadow-sm: 0 2px 8px rgba(22, 66, 91, 0.08);
+      --shadow-md: 0 4px 20px rgba(22, 66, 91, 0.12);
+      --shadow-lg: 0 8px 40px rgba(22, 66, 91, 0.18);
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -80,7 +82,7 @@
     }
 
     a:hover {
-      color: var(--color-2);
+      color: var(--baltic-blue);
     }
 
     img {
@@ -109,9 +111,9 @@
       left: 0;
       right: 0;
       z-index: 1000;
-      background: rgba(248, 250, 249, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(13, 27, 42, 0.08);
+      border-bottom: 1px solid rgba(22, 66, 91, 0.08);
       transition: var(--transition);
     }
 
@@ -131,10 +133,6 @@
       font-size: 24px;
       font-weight: 700;
       color: var(--text-primary);
-    }
-
-    .nav-logo span {
-      color: var(--accent);
     }
 
     .nav-menu {
@@ -185,7 +183,6 @@
       .nav-toggle {
         display: block;
       }
-
       .nav-menu {
         position: fixed;
         top: 72px;
@@ -199,9 +196,8 @@
         opacity: 0;
         visibility: hidden;
         transition: var(--transition);
-        border-bottom: 1px solid rgba(13, 27, 42, 0.08);
+        border-bottom: 1px solid rgba(22, 66, 91, 0.08);
       }
-
       .nav-menu.active {
         transform: translateY(0);
         opacity: 1;
@@ -218,17 +214,7 @@
       align-items: center;
       position: relative;
       overflow: hidden;
-      background: linear-gradient(135deg, var(--color-1) 0%, var(--color-2) 50%, var(--color-3) 100%);
-    }
-
-    .hero-bg-pattern {
-      position: absolute;
-      inset: 0;
-      opacity: 0.1;
-      background-image: 
-        radial-gradient(circle at 25% 25%, var(--color-4) 2px, transparent 2px),
-        radial-gradient(circle at 75% 75%, var(--color-4) 2px, transparent 2px);
-      background-size: 60px 60px;
+      background: linear-gradient(135deg, rgba(22, 66, 91, 0.85) 0%, rgba(47, 102, 144, 0.85) 100%), url('assets/img/hero-bg.jpg') center center/cover fixed no-repeat;
     }
 
     .hero-content {
@@ -241,8 +227,8 @@
 
     .hero-badge {
       display: inline-block;
-      background: rgba(153, 217, 140, 0.2);
-      color: var(--color-4);
+      background: rgba(129, 195, 215, 0.2);
+      color: var(--sky-blue-light);
       padding: 8px 20px;
       border-radius: 50px;
       font-size: 13px;
@@ -250,7 +236,7 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       margin-bottom: 24px;
-      border: 1px solid rgba(153, 217, 140, 0.3);
+      border: 1px solid rgba(129, 195, 215, 0.3);
     }
 
     .hero h1 {
@@ -263,7 +249,7 @@
 
     .hero-subtitle {
       font-size: clamp(18px, 3vw, 24px);
-      color: var(--color-5);
+      color: var(--alabaster-grey);
       margin-bottom: 24px;
       font-weight: 300;
     }
@@ -271,7 +257,7 @@
     .hero-description {
       max-width: 600px;
       margin: 0 auto 40px;
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.8);
       font-size: 17px;
     }
 
@@ -296,14 +282,14 @@
     }
 
     .btn-primary {
-      background: var(--color-4);
-      color: var(--color-1);
+      background: var(--sky-blue-light);
+      color: var(--yale-blue);
     }
 
     .btn-primary:hover {
-      background: var(--color-5);
+      background: var(--alabaster-grey);
       transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(153, 217, 140, 0.3);
+      box-shadow: 0 10px 30px rgba(129, 195, 215, 0.3);
     }
 
     .btn-outline {
@@ -314,8 +300,8 @@
 
     .btn-outline:hover {
       background: rgba(255, 255, 255, 0.1);
-      border-color: var(--color-4);
-      color: var(--color-4);
+      border-color: var(--sky-blue-light);
+      color: var(--sky-blue-light);
     }
 
     .hero-scroll {
@@ -323,7 +309,7 @@
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
-      color: var(--color-4);
+      color: var(--sky-blue-light);
       font-size: 32px;
       animation: bounce 2s infinite;
     }
@@ -340,21 +326,17 @@
     .section {
       padding: 100px 0;
     }
-
     .section-alt {
       background: var(--bg-secondary);
     }
-
     .section-dark {
       background: var(--bg-dark);
       color: var(--text-light);
     }
-
     .section-header {
       text-align: center;
       margin-bottom: 60px;
     }
-
     .section-label {
       display: inline-block;
       color: var(--accent);
@@ -364,58 +346,69 @@
       text-transform: uppercase;
       margin-bottom: 12px;
     }
-
     .section-dark .section-label {
-      color: var(--color-4);
+      color: var(--sky-blue-light);
     }
-
     .section-title {
       font-size: clamp(32px, 5vw, 48px);
       margin-bottom: 16px;
     }
-
     .section-dark .section-title {
       color: var(--text-light);
     }
-
     .section-subtitle {
       color: var(--text-secondary);
       font-size: 18px;
       max-width: 600px;
       margin: 0 auto;
     }
-
     .section-dark .section-subtitle {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.7);
     }
 
     /* =========================================
        ABOUT SECTION
        ========================================= */
+    .about-wrapper {
+      display: flex;
+      gap: 40px;
+      align-items: stretch;
+    }
+    .about-image {
+      flex: 0 0 35%;
+      background: url('assets/img/me.jpg') center center/cover no-repeat;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      min-height: 400px;
+    }
+    .about-content {
+      flex: 1;
+    }
+    @media (max-width: 992px) {
+      .about-wrapper { flex-direction: column; }
+      .about-image { height: 400px; flex: auto; }
+    }
     .about-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 24px;
     }
-
     .about-card {
       background: white;
       padding: 32px;
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-sm);
       transition: var(--transition);
-      border: 1px solid rgba(13, 27, 42, 0.06);
+      border: 1px solid rgba(22, 66, 91, 0.06);
     }
-
     .about-card:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-md);
     }
-
     .about-card-icon {
       width: 56px;
       height: 56px;
-      background: linear-gradient(135deg, var(--color-3), var(--color-4));
+      background: linear-gradient(135deg, var(--cerulean), var(--sky-blue-light));
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
@@ -424,12 +417,10 @@
       color: white;
       margin-bottom: 20px;
     }
-
     .about-card h3 {
       font-size: 20px;
       margin-bottom: 16px;
     }
-
     .about-card ul li {
       padding: 8px 0;
       border-bottom: 1px solid var(--bg-secondary);
@@ -438,49 +429,12 @@
       align-items: center;
       gap: 10px;
     }
-
     .about-card ul li:last-child {
       border-bottom: none;
     }
-
     .about-card ul li i {
       color: var(--accent);
       font-size: 12px;
-    }
-
-    /* =========================================
-       STATS SECTION
-       ========================================= */
-    .stats {
-      background: linear-gradient(135deg, var(--color-1) 0%, var(--color-3) 100%);
-      padding: 80px 0;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 40px;
-      text-align: center;
-    }
-
-    .stat-item {
-      padding: 20px;
-    }
-
-    .stat-number {
-      font-family: 'Crimson Pro', serif;
-      font-size: 56px;
-      font-weight: 700;
-      color: var(--color-4);
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .stat-label {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
     }
 
     /* =========================================
@@ -491,7 +445,6 @@
       grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
       gap: 24px;
     }
-
     .research-card {
       background: white;
       border-radius: var(--radius-md);
@@ -501,18 +454,15 @@
       display: flex;
       flex-direction: column;
     }
-
     .research-card:hover {
       transform: translateY(-4px);
       box-shadow: var(--shadow-lg);
     }
-
     .research-card-header {
-      background: linear-gradient(135deg, var(--color-2), var(--color-3));
+      background: linear-gradient(135deg, var(--baltic-blue), var(--cerulean));
       padding: 24px;
       color: white;
     }
-
     .research-status {
       display: inline-block;
       padding: 4px 12px;
@@ -524,48 +474,41 @@
       letter-spacing: 1px;
       margin-bottom: 12px;
     }
-
     .research-status.published {
-      background: var(--color-4);
-      color: var(--color-1);
+      background: var(--sky-blue-light);
+      color: var(--yale-blue);
     }
-
     .research-card-header h3 {
       color: white;
       font-size: 20px;
       line-height: 1.4;
     }
-
     .research-card-body {
       padding: 24px;
       flex-grow: 1;
       display: flex;
       flex-direction: column;
     }
-
     .research-card-body p {
       color: var(--text-secondary);
       font-size: 15px;
       margin-bottom: 20px;
       flex-grow: 1;
     }
-
     .tag-list {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
-
     .tag {
       background: var(--bg-secondary);
-      color: var(--color-2);
+      color: var(--yale-blue);
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 12px;
       font-weight: 500;
       transition: var(--transition);
     }
-
     .tag:hover {
       background: var(--accent);
       color: white;
@@ -581,7 +524,6 @@
       max-width: 900px;
       margin: 0 auto;
     }
-
     .pub-card {
       background: white;
       padding: 28px;
@@ -590,12 +532,10 @@
       transition: var(--transition);
       border-left: 4px solid var(--accent);
     }
-
     .pub-card:hover {
       transform: translateX(8px);
       box-shadow: var(--shadow-md);
     }
-
     .pub-meta {
       display: flex;
       align-items: center;
@@ -603,7 +543,6 @@
       margin-bottom: 12px;
       flex-wrap: wrap;
     }
-
     .pub-type {
       padding: 4px 12px;
       border-radius: 20px;
@@ -611,58 +550,48 @@
       font-weight: 600;
       text-transform: uppercase;
     }
-
     .pub-type.published {
-      background: var(--color-4);
-      color: var(--color-1);
+      background: var(--sky-blue-light);
+      color: var(--yale-blue);
     }
-
     .pub-type.review {
-      background: var(--color-5);
-      color: var(--color-3);
+      background: var(--alabaster-grey);
+      color: var(--cerulean);
     }
-
     .pub-type.prep {
       background: var(--bg-secondary);
       color: var(--text-secondary);
     }
-
     .pub-year {
       color: var(--text-secondary);
       font-size: 13px;
       font-weight: 500;
     }
-
     .pub-card h4 {
       font-size: 18px;
       margin-bottom: 8px;
       line-height: 1.4;
     }
-
     .pub-authors {
       color: var(--text-secondary);
       font-size: 14px;
       margin-bottom: 8px;
     }
-
     .pub-authors .highlight {
       color: var(--accent);
       font-weight: 600;
     }
-
     .pub-journal {
       color: var(--text-secondary);
       font-style: italic;
       font-size: 14px;
       margin-bottom: 16px;
     }
-
     .pub-links {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
     }
-
     .pub-link {
       display: inline-flex;
       align-items: center;
@@ -674,9 +603,8 @@
       font-size: 12px;
       font-weight: 500;
     }
-
     .pub-link:hover {
-      background: var(--color-2);
+      background: var(--baltic-blue);
       color: white;
       transform: translateY(-2px);
     }
@@ -689,7 +617,6 @@
       max-width: 800px;
       margin: 0 auto;
     }
-
     .timeline::before {
       content: '';
       position: absolute;
@@ -697,41 +624,35 @@
       top: 0;
       bottom: 0;
       width: 3px;
-      background: linear-gradient(180deg, var(--accent), var(--color-4));
+      background: linear-gradient(180deg, var(--accent), var(--sky-blue-light));
       border-radius: 3px;
     }
-
     @media (min-width: 768px) {
       .timeline::before {
         left: 50%;
         transform: translateX(-50%);
       }
     }
-
     .timeline-item {
       position: relative;
       padding-left: 40px;
       padding-bottom: 40px;
     }
-
     @media (min-width: 768px) {
       .timeline-item {
         width: 50%;
         padding-left: 40px;
         padding-right: 40px;
       }
-
       .timeline-item:nth-child(odd) {
         margin-left: 50%;
       }
-
       .timeline-item:nth-child(even) {
         text-align: right;
         padding-left: 40px;
         padding-right: 40px;
       }
     }
-
     .timeline-dot {
       position: absolute;
       left: -8px;
@@ -743,25 +664,16 @@
       border: 4px solid var(--bg-primary);
       box-shadow: 0 0 0 3px var(--accent);
     }
-
     @media (min-width: 768px) {
-      .timeline-item:nth-child(odd) .timeline-dot {
-        left: -10px;
-      }
-
-      .timeline-item:nth-child(even) .timeline-dot {
-        right: -10px;
-        left: auto;
-      }
+      .timeline-item:nth-child(odd) .timeline-dot { left: -10px; }
+      .timeline-item:nth-child(even) .timeline-dot { right: -10px; left: auto; }
     }
-
     .timeline-content {
       background: white;
       padding: 24px;
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-sm);
     }
-
     .timeline-date {
       display: inline-block;
       background: var(--accent);
@@ -772,29 +684,24 @@
       font-weight: 600;
       margin-bottom: 12px;
     }
-
     .timeline-content h4 {
       font-size: 18px;
       margin-bottom: 8px;
     }
-
     .timeline-location {
       color: var(--accent);
       font-size: 14px;
       font-style: italic;
       margin-bottom: 12px;
     }
-
     .timeline-content p {
       color: var(--text-secondary);
       font-size: 14px;
       margin-bottom: 0;
     }
-
     .timeline-content ul {
       margin-top: 12px;
     }
-
     .timeline-content ul li {
       color: var(--text-secondary);
       font-size: 14px;
@@ -802,25 +709,131 @@
       padding-left: 20px;
       position: relative;
     }
-
     .timeline-content ul li::before {
       content: '→';
       position: absolute;
       left: 0;
       color: var(--accent);
     }
-
     @media (min-width: 768px) {
       .timeline-item:nth-child(even) .timeline-content ul li {
         padding-left: 0;
         padding-right: 20px;
       }
-
       .timeline-item:nth-child(even) .timeline-content ul li::before {
         left: auto;
         right: 0;
         content: '←';
       }
+    }
+
+    /* =========================================
+       MENTORSHIP & AWARDS SECTIONS
+       ========================================= */
+    .mentee-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .mentee-card {
+      background: white;
+      padding: 28px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      border: 1px solid rgba(22, 66, 91, 0.06);
+    }
+    .mentee-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+    .mentee-avatar {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, var(--cerulean), var(--sky-blue-light));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      margin: 0 auto 16px;
+    }
+    .mentee-card h4 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--yale-blue);
+    }
+    .mentee-outcome {
+      display: inline-block;
+      background: var(--sky-blue-light);
+      color: var(--yale-blue);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    
+    .awards-list {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .award-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: white;
+      padding: 24px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      border: 1px solid rgba(22, 66, 91, 0.06);
+    }
+    .award-item:hover {
+      transform: translateX(8px);
+      box-shadow: var(--shadow-md);
+    }
+    .award-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, var(--sky-blue-light), var(--cerulean));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      color: var(--yale-blue);
+    }
+    .award-details {
+      flex-grow: 1;
+    }
+    .award-details h4 {
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+    .award-details p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin: 0;
+    }
+    .award-year {
+      background: var(--bg-secondary);
+      color: var(--yale-blue);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    @media (max-width: 600px) {
+      .award-item { flex-direction: column; text-align: center; }
+      .award-year { margin-top: 12px; }
     }
 
     /* =========================================
@@ -831,7 +844,6 @@
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 24px;
     }
-
     .skill-card {
       background: rgba(255, 255, 255, 0.05);
       padding: 28px;
@@ -839,23 +851,20 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       transition: var(--transition);
     }
-
     .skill-card:hover {
       background: rgba(255, 255, 255, 0.08);
       transform: translateY(-4px);
     }
-
     .skill-card-header {
       display: flex;
       align-items: center;
       gap: 12px;
       margin-bottom: 20px;
     }
-
     .skill-card-icon {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, var(--color-3), var(--color-4));
+      background: linear-gradient(135deg, var(--cerulean), var(--sky-blue-light));
       border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
@@ -863,288 +872,79 @@
       font-size: 20px;
       color: white;
     }
-
     .skill-card h3 {
       color: var(--text-light);
       font-size: 18px;
     }
-
     .skill-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
-
     .skill-tag {
-      background: rgba(153, 217, 140, 0.15);
-      color: var(--color-4);
+      background: rgba(129, 195, 215, 0.15);
+      color: var(--sky-blue-light);
       padding: 6px 14px;
       border-radius: 20px;
       font-size: 13px;
       font-weight: 500;
-      border: 1px solid rgba(153, 217, 140, 0.3);
+      border: 1px solid rgba(129, 195, 215, 0.3);
       transition: var(--transition);
     }
-
     .skill-tag:hover {
-      background: var(--color-4);
-      color: var(--color-1);
+      background: var(--sky-blue-light);
+      color: var(--yale-blue);
     }
 
     /* =========================================
-       MENTORSHIP SECTION
-       ========================================= */
-    .mentee-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px;
-      margin-top: 40px;
-    }
-
-    .mentee-card {
-      background: white;
-      padding: 28px;
-      border-radius: var(--radius-md);
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-
-    .mentee-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .mentee-avatar {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, var(--color-3), var(--color-4));
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28px;
-      color: white;
-      margin: 0 auto 16px;
-    }
-
-    .mentee-card h4 {
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    .mentee-outcome {
-      display: inline-block;
-      background: var(--color-4);
-      color: var(--color-1);
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 500;
-    }
-
-    /* =========================================
-       AWARDS SECTION
-       ========================================= */
-    .awards-list {
-      max-width: 700px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .award-item {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      background: white;
-      padding: 24px;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-
-    .award-item:hover {
-      transform: translateX(8px);
-      box-shadow: var(--shadow-md);
-    }
-
-    .award-icon {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, var(--color-4), var(--accent));
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      flex-shrink: 0;
-    }
-
-    .award-details {
-      flex-grow: 1;
-    }
-
-    .award-details h4 {
-      font-size: 17px;
-      margin-bottom: 4px;
-    }
-
-    .award-details p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin: 0;
-    }
-
-    .award-year {
-      background: var(--bg-secondary);
-      color: var(--color-2);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
-
-    @media (max-width: 600px) {
-      .award-item {
-        flex-direction: column;
-        text-align: center;
-      }
-
-      .award-year {
-        margin-top: 12px;
-      }
-    }
-
-    /* =========================================
-       PRESENTATIONS SECTION
-       ========================================= */
-    .presentations-container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .pres-year-group {
-      margin-bottom: 48px;
-    }
-
-    .pres-year-title {
-      font-size: 32px;
-      margin-bottom: 24px;
-      padding-bottom: 12px;
-      border-bottom: 3px solid var(--accent);
-      display: inline-block;
-    }
-
-    .pres-list {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .pres-item {
-      display: flex;
-      gap: 16px;
-      background: white;
-      padding: 20px;
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-
-    .pres-item:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateX(4px);
-    }
-
-    .pres-type {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      flex-shrink: 0;
-      height: fit-content;
-    }
-
-    .pres-type.oral {
-      background: var(--color-4);
-      color: var(--color-1);
-    }
-
-    .pres-type.poster {
-      background: var(--color-5);
-      color: var(--color-3);
-    }
-
-    .pres-type.datablitz {
-      background: var(--accent);
-      color: white;
-    }
-
-    .pres-content h5 {
-      font-size: 16px;
-      margin-bottom: 6px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600;
-    }
-
-    .pres-content p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin: 0;
-    }
-
-    /* =========================================
-       GALLERY SECTION
+       GALLERY SECTION 
        ========================================= */
     .gallery-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 24px;
     }
-
     .gallery-item {
       position: relative;
       border-radius: var(--radius-md);
       overflow: hidden;
       aspect-ratio: 4/3;
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--shadow-md);
       cursor: pointer;
+      border: 3px solid white;
     }
-
     .gallery-item img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: var(--transition);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .gallery-item:hover img {
-      transform: scale(1.05);
+      transform: scale(1.08);
     }
-
     .gallery-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, transparent 50%, rgba(13, 27, 42, 0.9) 100%);
+      background: linear-gradient(180deg, transparent 40%, rgba(22, 66, 91, 0.9) 100%);
       display: flex;
       align-items: flex-end;
-      padding: 20px;
+      padding: 24px;
       opacity: 0;
       transition: var(--transition);
     }
-
     .gallery-item:hover .gallery-overlay {
       opacity: 1;
     }
-
     .gallery-overlay p {
       color: white;
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+      transform: translateY(10px);
+      transition: var(--transition);
+    }
+    .gallery-item:hover .gallery-overlay p {
+      transform: translateY(0);
     }
 
     /* =========================================
@@ -1156,124 +956,116 @@
       gap: 24px;
       margin-bottom: 48px;
     }
-
     .contact-card {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.6);
       padding: 32px;
       border-radius: var(--radius-md);
       text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(22, 66, 91, 0.1);
       transition: var(--transition);
+      box-shadow: var(--shadow-sm);
     }
-
     .contact-card:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: white;
       transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
     }
-
     .contact-card i {
       font-size: 40px;
-      color: var(--color-4);
+      color: var(--cerulean);
       margin-bottom: 16px;
     }
-
     .contact-card h4 {
-      color: var(--text-light);
+      color: var(--yale-blue);
       font-size: 18px;
       margin-bottom: 8px;
     }
-
     .contact-card a,
     .contact-card span {
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--baltic-blue);
       font-size: 15px;
     }
-
     .contact-card a:hover {
-      color: var(--color-4);
+      color: var(--cerulean);
     }
-
     .social-links {
       display: flex;
       justify-content: center;
       gap: 16px;
     }
-
     .social-link {
       width: 56px;
       height: 56px;
-      background: rgba(255, 255, 255, 0.1);
+      background: white;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      color: var(--color-4);
-      border: 2px solid transparent;
+      color: var(--cerulean);
+      border: 1px solid rgba(22, 66, 91, 0.1);
+      box-shadow: var(--shadow-sm);
       transition: var(--transition);
     }
-
     .social-link:hover {
-      background: var(--color-4);
-      color: var(--color-1);
+      background: var(--cerulean);
+      color: white;
       transform: translateY(-4px) scale(1.1);
     }
 
     /* =========================================
-       FOOTER
+       FOOTER (WITH BACKGROUND IMAGE)
        ========================================= */
     .footer {
-      background: var(--color-1);
+      background: linear-gradient(rgba(22, 66, 91, 0.5), rgba(22, 66, 91, 0.5)), url('assets/img/footer-bg.jpg');
+      background-position: center center;
+      background-size: cover;
+      background-repeat: no-repeat;
       padding: 60px 0 30px;
       text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
-
     .footer h3 {
       font-size: 28px;
       color: var(--text-light);
       margin-bottom: 8px;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5); /* Added subtle shadow for readability */
     }
-
     .footer p {
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.9);
       margin-bottom: 24px;
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
     }
-
     .footer-links {
       display: flex;
       justify-content: center;
       gap: 16px;
       margin-bottom: 40px;
     }
-
     .footer-link {
       width: 44px;
       height: 44px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--color-4);
+      color: var(--sky-blue-light);
       transition: var(--transition);
     }
-
     .footer-link:hover {
       background: var(--accent);
       color: white;
       transform: translateY(-3px);
     }
-
     .footer-bottom {
       padding-top: 24px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.7);
       font-size: 14px;
     }
 
-    /* =========================================
-       BACK TO TOP
-       ========================================= */
+    /* Back to Top */
     .back-to-top {
       position: fixed;
       bottom: 30px;
@@ -1295,39 +1087,28 @@
       cursor: pointer;
       border: none;
     }
-
     .back-to-top.visible {
       opacity: 1;
       visibility: visible;
     }
-
     .back-to-top:hover {
-      background: var(--color-2);
+      background: var(--baltic-blue);
       transform: translateY(-4px);
     }
-
-    /* =========================================
-       ANIMATIONS
-       ========================================= */
+    
+    /* Animations */
     .fade-in {
       opacity: 0;
       transform: translateY(30px);
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
-
     .fade-in.visible {
       opacity: 1;
       transform: translateY(0);
     }
-
-    /* Utility classes */
-    .text-center { text-align: center; }
-    .mb-4 { margin-bottom: 24px; }
-    .mt-4 { margin-top: 24px; }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
   <nav class="nav" id="nav">
     <div class="container">
       <div class="nav-inner">
@@ -1338,7 +1119,7 @@
           <li><a href="#publications" class="nav-link">Publications</a></li>
           <li><a href="#experience" class="nav-link">Experience</a></li>
           <li><a href="#skills" class="nav-link">Skills</a></li>
-          <li><a href="#presentations" class="nav-link">Talks</a></li>
+          <li><a href="#gallery" class="nav-link">Gallery</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
         </ul>
         <button class="nav-toggle" id="navToggle">
@@ -1348,7 +1129,6 @@
     </div>
   </nav>
 
-  <!-- Hero Section -->
   <section class="hero" id="hero">
     <div class="hero-bg-pattern"></div>
     <div class="container">
@@ -1374,7 +1154,6 @@
     </a>
   </section>
 
-  <!-- About Section -->
   <section class="section" id="about">
     <div class="container">
       <div class="section-header fade-in">
@@ -1384,84 +1163,53 @@
           Researcher at the <a href="http://coleoguy.github.io" target="_blank">Blackmon Lab</a>, Texas A&M University • Expected Graduation 2026
         </p>
       </div>
-      <div class="about-grid">
-        <div class="about-card fade-in">
-          <div class="about-card-icon">
-            <i class="bi bi-lightbulb"></i>
-          </div>
-          <h3>Research Interests</h3>
-          <ul>
-            <li><i class="bi bi-chevron-right"></i> Genome Evolution</li>
-            <li><i class="bi bi-chevron-right"></i> Population Genetics</li>
-            <li><i class="bi bi-chevron-right"></i> Sex Chromosomes</li>
-            <li><i class="bi bi-chevron-right"></i> Bioinformatics</li>
-            <li><i class="bi bi-chevron-right"></i> Computational Biology</li>
-            <li><i class="bi bi-chevron-right"></i> Evolutionary Theory</li>
-          </ul>
-        </div>
-        <div class="about-card fade-in">
-          <div class="about-card-icon">
-            <i class="bi bi-mortarboard"></i>
-          </div>
-          <h3>Education</h3>
-          <ul>
-            <li>
-              <div>
-                <strong>Ph.D. Genetics & Genomics</strong><br>
-                <small>Texas A&M University, 2026 (Expected)</small><br>
-                <small style="color: var(--text-secondary);">GPA: 4.00</small>
+      
+      <div class="about-wrapper">
+        <div class="about-image fade-in"></div>
+        <div class="about-content">
+          <div class="about-grid">
+            <div class="about-card fade-in">
+              <div class="about-card-icon">
+                <i class="bi bi-lightbulb"></i>
               </div>
-            </li>
-            <li>
-              <div>
-                <strong>B.S. Biochemistry</strong><br>
-                <small>Arkansas Tech University, 2022</small><br>
-                <small style="color: var(--text-secondary);">Summa Cum Laude, GPA: 3.96</small>
+              <h3>Research Interests</h3>
+              <ul>
+                <li><i class="bi bi-chevron-right"></i> Genome Evolution</li>
+                <li><i class="bi bi-chevron-right"></i> Population Genetics</li>
+                <li><i class="bi bi-chevron-right"></i> Sex Chromosomes</li>
+                <li><i class="bi bi-chevron-right"></i> Bioinformatics</li>
+                <li><i class="bi bi-chevron-right"></i> Computational Biology</li>
+                <li><i class="bi bi-chevron-right"></i> Evolutionary Theory</li>
+              </ul>
+            </div>
+            <div class="about-card fade-in">
+              <div class="about-card-icon">
+                <i class="bi bi-mortarboard"></i>
               </div>
-            </li>
-          </ul>
-        </div>
-        <div class="about-card fade-in">
-          <div class="about-card-icon">
-            <i class="bi bi-people"></i>
+              <h3>Education</h3>
+              <ul>
+                <li>
+                  <div>
+                    <strong>Ph.D. Genetics & Genomics</strong><br>
+                    <small>Texas A&M University, 2026 (Expected)</small><br>
+                    <small style="color: var(--text-secondary);">GPA: 4.00</small>
+                  </div>
+                </li>
+                <li>
+                  <div>
+                    <strong>B.S. Biochemistry</strong><br>
+                    <small>Arkansas Tech University, 2022</small><br>
+                    <small style="color: var(--text-secondary);">Summa Cum Laude, GPA: 3.96</small>
+                  </div>
+                </li>
+              </ul>
+            </div>
           </div>
-          <h3>Committee</h3>
-          <ul>
-            <li><i class="bi bi-chevron-right"></i> <strong>Heath Blackmon</strong> (Advisor)</li>
-            <li><i class="bi bi-chevron-right"></i> William Murphy</li>
-            <li><i class="bi bi-chevron-right"></i> Alex Keene</li>
-            <li><i class="bi bi-chevron-right"></i> Mahul Chakraborty</li>
-          </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Stats Section -->
-  <section class="stats">
-    <div class="container">
-      <div class="stats-grid">
-        <div class="stat-item fade-in">
-          <div class="stat-number">6</div>
-          <div class="stat-label">Publications</div>
-        </div>
-        <div class="stat-item fade-in">
-          <div class="stat-number">20+</div>
-          <div class="stat-label">Presentations</div>
-        </div>
-        <div class="stat-item fade-in">
-          <div class="stat-number">4</div>
-          <div class="stat-label">Mentees in PhD</div>
-        </div>
-        <div class="stat-item fade-in">
-          <div class="stat-number">3</div>
-          <div class="stat-label">Awards</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Research Section -->
   <section class="section section-alt" id="research">
     <div class="container">
       <div class="section-header fade-in">
@@ -1512,50 +1260,10 @@
             </div>
           </div>
         </div>
-        <div class="research-card fade-in">
-          <div class="research-card-header">
-            <span class="research-status">Current</span>
-            <h3>Self-Compatibility and Karyotype Evolution</h3>
-          </div>
-          <div class="research-card-body">
-            <p>Investigating how self-compatibility weakens barriers to karyotype change and increases chromosome evolution rate in angiosperms.</p>
-            <div class="tag-list">
-              <span class="tag">Chromosome Evolution</span>
-              <span class="tag">Plant Biology</span>
-            </div>
-          </div>
-        </div>
-        <div class="research-card fade-in">
-          <div class="research-card-header">
-            <span class="research-status published">Published</span>
-            <h3>DirectRepeater: Genome Assembly Annotation</h3>
-          </div>
-          <div class="research-card-body">
-            <p>R package for annotating direct repeats in genome assemblies, providing tools for structural variant analysis and genome characterization.</p>
-            <div class="tag-list">
-              <span class="tag">R Package</span>
-              <span class="tag">Genome Assembly</span>
-            </div>
-          </div>
-        </div>
-        <div class="research-card fade-in">
-          <div class="research-card-header">
-            <span class="research-status published">Published</span>
-            <h3>Orphan Gene Evolution</h3>
-          </div>
-          <div class="research-card-body">
-            <p>Investigating evolutionary origins and characteristics of orphan genes, challenging the notion they represent a distinct biological entity.</p>
-            <div class="tag-list">
-              <span class="tag">Gene Evolution</span>
-              <span class="tag">Comparative Genomics</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- Publications Section -->
   <section class="section" id="publications">
     <div class="container">
       <div class="section-header fade-in">
@@ -1574,7 +1282,7 @@
           </div>
           <h4>SeqDef: An R package for phylogenetically weighted genomic prioritization across the tree of life</h4>
           <p class="pub-authors"><span class="highlight">ANDRES BARBOZA</span>, GARRETT FISSELL, DANIEL SPALINK, HEATH BLACKMON</p>
-          <p class="pub-journal">Preparing for Journal of Evolutionary Biology</p>
+          <p class="pub-journal">Preparing for submission to Journal of Evolutionary Biology</p>
         </div>
         <div class="pub-card fade-in">
           <div class="pub-meta">
@@ -1592,23 +1300,15 @@
           <h4>Drivers of Achiasmatic Meiosis: Sexual Antagonism versus Heteromorphy-Dependent Aneuploidy across Sex-Chromosome Divergence</h4>
           <p class="pub-authors"><span class="highlight">ANDRES BARBOZA</span>, HEATH BLACKMON</p>
           <p class="pub-journal">G3: Genes, Genomes, Genetics</p>
-          <div class="pub-links">
-            <a href="#" class="pub-link"><i class="bi bi-file-pdf"></i> PDF</a>
-            <a href="#" class="pub-link"><i class="bi bi-link-45deg"></i> DOI</a>
-          </div>
         </div>
         <div class="pub-card fade-in">
           <div class="pub-meta">
             <span class="pub-type published">Published</span>
             <span class="pub-year">2025</span>
           </div>
-          <h4>DirectRepeater: R package for annotating direct repeats in genome assemblies</h4>
+          <h4>Direct Repeater: R package for annotating direct repeats in genome assemblies</h4>
           <p class="pub-authors">MEGAN COPELAND, <span class="highlight">ANDRES BARBOZA</span>, JOSEPH ROMANOWSKI, ZACH ADELMAN, HEATH BLACKMON</p>
           <p class="pub-journal">F1000 Research</p>
-          <div class="pub-links">
-            <a href="#" class="pub-link"><i class="bi bi-file-pdf"></i> PDF</a>
-            <a href="#" class="pub-link"><i class="bi bi-link-45deg"></i> DOI</a>
-          </div>
         </div>
         <div class="pub-card fade-in">
           <div class="pub-meta">
@@ -1616,12 +1316,8 @@
             <span class="pub-year">2024</span>
           </div>
           <h4>Orphan Genes are not a Distinct Biological Entity</h4>
-          <p class="pub-authors"><span class="highlight">ANDRES BARBOZA PEREIRA</span>*, MATTHEW MARANO*, RAMYA BATHALA, RIGOBERTO AYALA ZARAGOZA, ANDRES NEIRA, ALEX SAMANO, ADEKOLA OWOYEMI, CLAUDIO CASOLA</p>
+          <p class="pub-authors"><span class="highlight">ANDRES BARBOZA</span>*, MATTHEW MARANO*, RAMYA BATHALA, RIGOBERTO AYALA ZARAGOZA, ANDRES NEIRA, ALEX SAMANO, ADEKOLA OWOYEMI, CLAUDIO CASOLA</p>
           <p class="pub-journal">BioEssays</p>
-          <div class="pub-links">
-            <a href="#" class="pub-link"><i class="bi bi-file-pdf"></i> PDF</a>
-            <a href="#" class="pub-link"><i class="bi bi-link-45deg"></i> DOI</a>
-          </div>
         </div>
         <div class="pub-card fade-in">
           <div class="pub-meta">
@@ -1629,7 +1325,7 @@
             <span class="pub-year">2022</span>
           </div>
           <h4>In Situ Generation of a Zwitterionic Charge Transfer Probe for Selective Detection of Human Serum Albumin</h4>
-          <p class="pub-authors">RAJIB CHOUDHURY, ARUN K. SHARMA, PRATIKSHYA PAUDEL, PRESTON WILSON, <span class="highlight">ANDRES BARBOZA PEREIRA</span></p>
+          <p class="pub-authors">RAJIB CHOUDHURY, ARUN K. SHARMA, PRATIKSHYA PAUDEL, PRESTON WILSON, <span class="highlight">ANDRES BARBOZA</span></p>
           <p class="pub-journal">Analytical Biochemistry</p>
           <div class="pub-links">
             <a href="https://doi.org/10.1016/j.ab.2022.114630" class="pub-link" target="_blank"><i class="bi bi-link-45deg"></i> DOI</a>
@@ -1639,13 +1335,12 @@
     </div>
   </section>
 
-  <!-- Experience Section -->
   <section class="section section-alt" id="experience">
     <div class="container">
       <div class="section-header fade-in">
         <span class="section-label">Experience</span>
         <h2 class="section-title">Education & Career</h2>
-        <p class="section-subtitle">Academic journey and professional development</p>
+        <p class="section-subtitle">Academic journey, professional development, and leadership</p>
       </div>
       <div class="timeline">
         <div class="timeline-item fade-in">
@@ -1657,6 +1352,7 @@
             <p>Studying genome structure, population genetics, and evolutionary biology under Dr. Heath Blackmon. Major GPA: 4.00</p>
           </div>
         </div>
+        
         <div class="timeline-item fade-in">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
@@ -1664,41 +1360,71 @@
             <h4>Pharmacogenetics Clinical Trial Intern</h4>
             <p class="timeline-location">AbbVie</p>
             <ul>
-              <li>Compared sequencing platforms for pharmacogenetics call performance</li>
+              <li>Compared short-read, long-read, and PharmacoScan sequencing platforms</li>
               <li>Built pipelines for star-allele calling using WGS and ONT data</li>
             </ul>
           </div>
         </div>
+        
         <div class="timeline-item fade-in">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
             <span class="timeline-date">2023 - Present</span>
-            <h4>Graduate Teaching Assistant</h4>
+            <h4>Graduate Teaching & Research Assistant</h4>
             <p class="timeline-location">Texas A&M University</p>
             <ul>
-              <li>Introductory Biology II Laboratory (Fall 2025 - Spring 2026)</li>
-              <li>Principles of Genetics Laboratory (Spring 2023 - Spring 2025)</li>
+              <li>Focus on genome evolution and population genetics via simulations</li>
+              <li>Lead Introductory Biology II & Principles of Genetics Labs</li>
+              <li>Conduct mathematical modeling and ML for image recognition</li>
             </ul>
           </div>
         </div>
+        
+        <div class="timeline-item fade-in">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <span class="timeline-date">2023 - 2025</span>
+            <h4>Leadership & Service</h4>
+            <p class="timeline-location">GGSA, Texas A&M University</p>
+            <ul>
+              <li><strong>Membership Committee Chair (2024-2025):</strong> Led faculty-student committee and reviewed applications</li>
+              <li><strong>Seminar Committee Co-Chair (2023-2024):</strong> Invited speakers and coordinated itineraries</li>
+            </ul>
+          </div>
+        </div>
+
         <div class="timeline-item fade-in">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
             <span class="timeline-date">2018 - 2022</span>
             <h4>B.S. in Biochemistry</h4>
             <p class="timeline-location">Arkansas Tech University</p>
-            <p>Graduated Summa Cum Laude with Major GPA: 3.96. Coursework in biology, chemistry, and bioinformatics.</p>
+            <p>Graduated Summa Cum Laude with Major GPA: 3.96.</p>
           </div>
         </div>
+        
         <div class="timeline-item fade-in">
           <div class="timeline-dot"></div>
           <div class="timeline-content">
-            <span class="timeline-date">Summer 2021</span>
-            <h4>Summer Research Intern</h4>
-            <p class="timeline-location">University of Arkansas for Medical Sciences</p>
+            <span class="timeline-date">2021 - 2022</span>
+            <h4>Undergraduate Research Assistant</h4>
+            <p class="timeline-location">Arkansas Tech University & UAMS</p>
             <ul>
-              <li>Research in osteoblast gene expression with RT-PCR and cell cultures</li>
-              <li>Wrote research manuscript for oral presentation</li>
+              <li>Assisted projects on organic fluorescent probes (Arkansas Tech)</li>
+              <li>Performed osteoblast gene expression research (UAMS, Summer 2021)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="timeline-item fade-in">
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <span class="timeline-date">2019 - 2022</span>
+            <h4>Undergraduate Teaching Assistant & Tutor</h4>
+            <p class="timeline-location">Arkansas Tech University</p>
+            <ul>
+              <li>Assisted in Organic Chem I, General Chem, and Survey of Chemistry Labs</li>
+              <li>Tutored Chemistry, Biology, and Calculus (2020)</li>
             </ul>
           </div>
         </div>
@@ -1706,14 +1432,33 @@
     </div>
   </section>
 
-  <!-- Mentorship Section -->
   <section class="section">
     <div class="container">
       <div class="section-header fade-in">
-        <span class="section-label">Mentorship</span>
-        <h2 class="section-title">Undergraduate Mentees</h2>
-        <p class="section-subtitle">Guiding the next generation of scientists in computational biology and evolutionary genetics</p>
+        <span class="section-label">Leadership</span>
+        <h2 class="section-title">Mentorship & Awards</h2>
+        <p class="section-subtitle">Guiding the next generation of scientists and academic recognition</p>
       </div>
+      
+      <div class="awards-list mb-4">
+        <div class="award-item fade-in">
+          <div class="award-icon"><i class="bi bi-trophy-fill"></i></div>
+          <div class="award-details">
+            <h4>GGSA Teaching Excellence & Conference Awards</h4>
+            <p>Texas A&M University Genetics Graduate Student Association</p>
+          </div>
+          <span class="award-year">2023</span>
+        </div>
+        <div class="award-item fade-in">
+          <div class="award-icon"><i class="bi bi-award-fill"></i></div>
+          <div class="award-details">
+            <h4>ACS Physical Chemistry Achievement Award</h4>
+            <p>American Chemical Society recognition at Arkansas Tech University</p>
+          </div>
+          <span class="award-year">2022</span>
+        </div>
+      </div>
+
       <div class="mentee-grid">
         <div class="mentee-card fade-in">
           <div class="mentee-avatar"><i class="bi bi-person-check"></i></div>
@@ -1739,49 +1484,12 @@
     </div>
   </section>
 
-  <!-- Awards Section -->
-  <section class="section section-alt">
-    <div class="container">
-      <div class="section-header fade-in">
-        <span class="section-label">Recognition</span>
-        <h2 class="section-title">Awards & Honors</h2>
-      </div>
-      <div class="awards-list">
-        <div class="award-item fade-in">
-          <div class="award-icon">🏆</div>
-          <div class="award-details">
-            <h4>GGSA Teaching Excellence Award</h4>
-            <p>Texas A&M University Genetics Graduate Student Association</p>
-          </div>
-          <span class="award-year">2023</span>
-        </div>
-        <div class="award-item fade-in">
-          <div class="award-icon">✈️</div>
-          <div class="award-details">
-            <h4>GGSA Conference Award</h4>
-            <p>Travel grant for conference presentation</p>
-          </div>
-          <span class="award-year">2023</span>
-        </div>
-        <div class="award-item fade-in">
-          <div class="award-icon">🧪</div>
-          <div class="award-details">
-            <h4>ACS Physical Chemistry Achievement Award</h4>
-            <p>American Chemical Society recognition at Arkansas Tech University</p>
-          </div>
-          <span class="award-year">2022</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Skills Section -->
   <section class="section section-dark" id="skills">
     <div class="container">
       <div class="section-header fade-in">
         <span class="section-label">Skills</span>
         <h2 class="section-title">Technical Expertise</h2>
-        <p class="section-subtitle">Computational and laboratory skills</p>
+        <p class="section-subtitle">Computational, analytical, and laboratory skills</p>
       </div>
       <div class="skills-grid">
         <div class="skill-card fade-in">
@@ -1801,32 +1509,25 @@
         </div>
         <div class="skill-card fade-in">
           <div class="skill-card-header">
-            <div class="skill-card-icon"><i class="bi bi-git"></i></div>
-            <h3>Code Management</h3>
-          </div>
-          <div class="skill-tags">
-            <span class="skill-tag">Git/GitHub</span>
-            <span class="skill-tag">Conda</span>
-            <span class="skill-tag">Docker</span>
-            <span class="skill-tag">Singularity</span>
-            <span class="skill-tag">Snakemake</span>
-            <span class="skill-tag">Nextflow</span>
-          </div>
-        </div>
-        <div class="skill-card fade-in">
-          <div class="skill-card-header">
             <div class="skill-card-icon"><i class="bi bi-diagram-3"></i></div>
             <h3>Genomics & Bioinformatics</h3>
           </div>
           <div class="skill-tags">
             <span class="skill-tag">bwa</span>
+            <span class="skill-tag">bamtools</span>
             <span class="skill-tag">GATK</span>
             <span class="skill-tag">bcftools</span>
+            <span class="skill-tag">vcftools</span>
             <span class="skill-tag">PLINK</span>
             <span class="skill-tag">samtools</span>
             <span class="skill-tag">HIFIasm</span>
+            <span class="skill-tag">SPAdes</span>
             <span class="skill-tag">BUSCO</span>
+            <span class="skill-tag">FastQC</span>
+            <span class="skill-tag">bowtie2</span>
+            <span class="skill-tag">Salmon</span>
             <span class="skill-tag">DESeq2</span>
+            <span class="skill-tag">GWAS</span>
           </div>
         </div>
         <div class="skill-card fade-in">
@@ -1839,7 +1540,22 @@
             <span class="skill-tag">Computer Vision</span>
             <span class="skill-tag">Simulations</span>
             <span class="skill-tag">Data Visualization</span>
-            <span class="skill-tag">HPC Computing</span>
+            <span class="skill-tag">Software Development</span>
+            <span class="skill-tag">HPC Cluster Computing</span>
+          </div>
+        </div>
+        <div class="skill-card fade-in">
+          <div class="skill-card-header">
+            <div class="skill-card-icon"><i class="bi bi-git"></i></div>
+            <h3>Code Management</h3>
+          </div>
+          <div class="skill-tags">
+            <span class="skill-tag">Git/GitHub</span>
+            <span class="skill-tag">Conda</span>
+            <span class="skill-tag">Docker</span>
+            <span class="skill-tag">Singularity</span>
+            <span class="skill-tag">Snakemake</span>
+            <span class="skill-tag">Nextflow</span>
           </div>
         </div>
         <div class="skill-card fade-in">
@@ -1863,118 +1579,13 @@
           <div class="skill-tags">
             <span class="skill-tag">UV-Vis Spectrometry</span>
             <span class="skill-tag">IR Spectroscopy</span>
-            <span class="skill-tag">Fluorimetry</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Presentations Section -->
-  <section class="section section-alt" id="presentations">
-    <div class="container">
-      <div class="section-header fade-in">
-        <span class="section-label">Presentations</span>
-        <h2 class="section-title">Conference Talks</h2>
-        <p class="section-subtitle">Oral presentations, posters, and DataBlitz talks</p>
-      </div>
-      <div class="presentations-container">
-        <div class="pres-year-group fade-in">
-          <h3 class="pres-year-title">2026</h3>
-          <div class="pres-list">
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>SeqDef: An R Package for Phylogenetically Weighted Genomic Prioritization</h5>
-                <p>Texas A&M Life Sciences Graduate Recruitment Symposium</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="pres-year-group fade-in">
-          <h3 class="pres-year-title">2025</h3>
-          <div class="pres-list">
-            <div class="pres-item">
-              <span class="pres-type oral">Oral</span>
-              <div class="pres-content">
-                <h5>Epistatic Capacitance: New Hypothesis on the Source of Adaptation</h5>
-                <p>Texas A&M Ecology and Evolutionary Biology Seminar</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>Epistatic Capacitance: The Adaptive Reservoir of Populations</h5>
-                <p>Texas Genetics Society, College Station, TX</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>Epistatic Capacitance: The Accumulation of Variance in Populations</h5>
-                <p>Southeast Texas Evolutionary Genetics & Genomics</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="pres-year-group fade-in">
-          <h3 class="pres-year-title">2024</h3>
-          <div class="pres-list">
-            <div class="pres-item">
-              <span class="pres-type oral">Oral</span>
-              <div class="pres-content">
-                <h5>Exploring the Evolutionary Dynamics of Achiasmatic Meiosis</h5>
-                <p>Ecological Integration Symposium, Texas A&M University</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type datablitz">DataBlitz</span>
-              <div class="pres-content">
-                <h5>Exploring the Evolutionary Dynamics of Achiasmatic Meiosis</h5>
-                <p>SPRC Conference, Texas A&M University</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>Exploring the Evolutionary Dynamics of Achiasmatic Meiosis</h5>
-                <p>Texas Genetics Society Meeting</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="pres-year-group fade-in">
-          <h3 class="pres-year-title">2023</h3>
-          <div class="pres-list">
-            <div class="pres-item">
-              <span class="pres-type oral">Oral</span>
-              <div class="pres-content">
-                <h5>Exploring the Evolutionary Dynamics of Achiasmatic Meiosis</h5>
-                <p>G2 Seminar, Texas A&M University</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>The Evolutionary Origins of Orphan Genes</h5>
-                <p>SMBE Satellite Meeting, Texas A&M University</p>
-              </div>
-            </div>
-            <div class="pres-item">
-              <span class="pres-type poster">Poster</span>
-              <div class="pres-content">
-                <h5>Rest and Activity Behavior of Betta Fish</h5>
-                <p>Evolution Meeting, Albuquerque, NM</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Gallery Section -->
-  <section class="section" id="gallery">
+  <section class="section section-alt" id="gallery">
     <div class="container">
       <div class="section-header fade-in">
         <span class="section-label">Gallery</span>
@@ -2016,8 +1627,7 @@
     </div>
   </section>
 
-  <!-- Contact Section -->
-  <section class="section section-dark" id="contact">
+<section class="section" id="contact">
     <div class="container">
       <div class="section-header fade-in">
         <span class="section-label">Contact</span>
@@ -2028,55 +1638,40 @@
         <div class="contact-card fade-in">
           <i class="bi bi-envelope-fill"></i>
           <h4>Email</h4>
-          <a href="mailto:andresdbp@tamu.edu">andresdbp@tamu.edu</a>
+          <a href="mailto:andresdbp00@gmail.com">andresdbp00@gmail.com</a>
         </div>
+        
         <div class="contact-card fade-in">
-          <i class="bi bi-geo-alt-fill"></i>
-          <h4>Location</h4>
-          <span>College Station, TX 77840</span>
-        </div>
-        <div class="contact-card fade-in">
-          <i class="bi bi-building"></i>
-          <h4>Lab</h4>
-          <a href="http://coleoguy.github.io" target="_blank">Blackmon Lab<br>Texas A&M University</a>
-        </div>
-      </div>
-      <div class="social-links fade-in">
-        <a href="https://twitter.com/AndresBarbozaP" class="social-link" target="_blank" title="Twitter">
-          <i class="bi bi-twitter"></i>
-        </a>
-        <a href="https://github.com/Andresdbp" class="social-link" target="_blank" title="GitHub">
           <i class="bi bi-github"></i>
-        </a>
-        <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" class="social-link" target="_blank" title="Google Scholar">
+          <h4>GitHub</h4>
+          <a href="https://github.com/Andresdbp" target="_blank">@Andresdbp</a>
+        </div>
+        
+        <div class="contact-card fade-in">
           <i class="bi bi-mortarboard-fill"></i>
-        </a>
-        <a href="https://www.linkedin.com/in/andres-barboza-pereira-4400721b8" class="social-link" target="_blank" title="LinkedIn">
+          <h4>Google Scholar</h4>
+          <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" target="_blank">View Profile</a>
+        </div>
+        
+        <div class="contact-card fade-in">
           <i class="bi bi-linkedin"></i>
-        </a>
+          <h4>LinkedIn</h4>
+          <a href="https://www.linkedin.com/in/andres-barboza-pereira-4400721b8" target="_blank">Connect</a>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="footer">
     <div class="container">
-      <h3>Andres Barboza Pereira</h3>
+      <h3>Andres Barboza</h3>
       <p>Ph.D. Candidate | Evolutionary Geneticist | Bioinformatician</p>
-      <div class="footer-links">
-        <a href="mailto:andresdbp@tamu.edu" class="footer-link" title="Email"><i class="bi bi-envelope-fill"></i></a>
-        <a href="https://twitter.com/AndresBarbozaP" class="footer-link" target="_blank" title="Twitter"><i class="bi bi-twitter"></i></a>
-        <a href="https://github.com/Andresdbp" class="footer-link" target="_blank" title="GitHub"><i class="bi bi-github"></i></a>
-        <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" class="footer-link" target="_blank" title="Google Scholar"><i class="bi bi-mortarboard-fill"></i></a>
-        <a href="https://www.linkedin.com/in/andres-barboza-pereira-4400721b8" class="footer-link" target="_blank" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
-      </div>
       <div class="footer-bottom">
-        &copy; 2024 Andres Barboza Pereira. All Rights Reserved
+        &copy; 2024 Andres Barboza. All Rights Reserved
       </div>
     </div>
   </footer>
 
-  <!-- Back to Top -->
   <button class="back-to-top" id="backToTop">
     <i class="bi bi-arrow-up"></i>
   </button>
