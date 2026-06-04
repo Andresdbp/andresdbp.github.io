@@ -26,7 +26,10 @@
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  background-color: #0c2333;   /* dark fallback behind the fixed image */
+}
 
 body {
   font-family: 'Space Grotesk', sans-serif;
@@ -70,7 +73,7 @@ img { max-width: 100%; display: block; }
 .page {
   display: flex;
   min-height: 100vh;
-  padding: 44px 20px;
+  padding: 44px max(20px, env(safe-area-inset-right)) 44px max(20px, env(safe-area-inset-left));
 }
 
 .card {
@@ -84,7 +87,10 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 560px) {
-  .page { padding: 14px; align-items: flex-start; }
+  .page {
+    align-items: flex-start;
+    padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  }
   .card { margin: 0 auto; padding: 28px 22px; border-radius: 18px; }
 }
 
