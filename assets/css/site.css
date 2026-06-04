@@ -84,8 +84,8 @@ img { max-width: 100%; display: block; }
 }
 
 @media (max-width: 560px) {
-  .card { padding: 30px 24px; border-radius: 18px; }
-  .page { padding: 22px 14px; }
+  .page { padding: 14px; align-items: flex-start; }
+  .card { margin: 0 auto; padding: 28px 22px; border-radius: 18px; }
 }
 
 /* =========================================
@@ -173,11 +173,12 @@ img { max-width: 100%; display: block; }
 
 .home-head.stacked {
   flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: stretch;
+  gap: 18px;
 }
 
-.home-head.stacked .home-titles { align-self: stretch; }
+/* Stacked: name/title first (full width), photo centered below. */
+.home-head.stacked .home-titles { order: 1; }
 
 .home .photo {
   flex: 0 0 auto;
@@ -186,7 +187,11 @@ img { max-width: 100%; display: block; }
   border-radius: 12px;
 }
 
-.home-head.stacked .photo { height: 132px; }
+.home-head.stacked .photo {
+  order: 2;
+  align-self: center;
+  height: 190px;
+}
 
 .home-titles {
   flex: 1 1 auto;
@@ -208,7 +213,7 @@ img { max-width: 100%; display: block; }
 }
 
 /* JS adds .fit to keep the name and title on one line (shrinking the
-   font, after moving the photo above, when they would not fit). */
+   font, after moving the photo below, when they would not fit). */
 .home-head.fit .home-titles h1,
 .home-head.fit .home-titles .role {
   white-space: nowrap;

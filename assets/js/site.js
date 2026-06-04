@@ -1,7 +1,7 @@
 // Home header: keep the name and title each on a single line.
 //   1. Size the photo to be only as tall as the name + title block.
-//   2. If the title doesn't fit beside the photo, move the photo ABOVE
-//      so the titles get the full card width.
+//   2. If the title doesn't fit beside the photo, drop the photo BELOW
+//      the name/title (centered) so the titles get the full card width.
 //   3. Only if it still doesn't fit, shrink the font until it does.
 (function () {
   var head = document.querySelector('.home-head');
