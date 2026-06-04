@@ -285,6 +285,13 @@ img { max-width: 100%; display: block; }
 
 .pub .authors b { color: var(--text-primary); }
 
+.pub .authors .eq {
+  margin-left: 6px;
+  font-style: italic;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
 .pub .venue {
   display: flex;
   align-items: center;
@@ -320,13 +327,13 @@ img { max-width: 100%; display: block; }
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-top: 9px;
   padding: 5px 13px;
   border-radius: 20px;
   background: var(--accent);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 .doi:hover { background: var(--baltic-blue); color: #fff; }
 
