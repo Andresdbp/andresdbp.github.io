@@ -162,44 +162,62 @@ img { max-width: 100%; display: block; }
 /* =========================================
    HOME
    ========================================= */
-.home {
+.home { text-align: left; }
+
+.home-head {
   display: flex;
   align-items: center;
-  gap: 38px;
-  text-align: left;
+  gap: 22px;
+  margin-bottom: 20px;
 }
+
+.home-head.stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.home-head.stacked .home-titles { align-self: stretch; }
 
 .home .photo {
   flex: 0 0 auto;
   width: auto;
-  height: 360px;
-  border-radius: 16px;
+  height: 92px;          /* JS matches this to the name + title height */
+  border-radius: 12px;
 }
 
-.home-text { flex: 1; min-width: 0; }
+.home-head.stacked .photo { height: 132px; }
 
-.home h1 {
-  font-size: clamp(34px, 6vw, 46px);
+.home-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.home-titles h1 {
+  font-size: 44px;
+  line-height: 1.12;
   letter-spacing: -0.5px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
-.home .role {
+.home-titles .role {
   color: var(--text-secondary);
   font-size: 18px;
   font-weight: 500;
-  margin-bottom: 18px;
+}
+
+/* JS adds .fit to keep the name and title on one line (shrinking the
+   font, after moving the photo above, when they would not fit). */
+.home-head.fit .home-titles h1,
+.home-head.fit .home-titles .role {
+  white-space: nowrap;
 }
 
 .home .bio {
   color: var(--text-secondary);
   font-size: 16.5px;
   margin: 0;
-}
-
-@media (max-width: 560px) {
-  .home { flex-direction: column; align-items: center; text-align: center; gap: 22px; }
-  .home .photo { width: 220px; height: auto; }
 }
 
 /* =========================================
