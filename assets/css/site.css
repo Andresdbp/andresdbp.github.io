@@ -173,8 +173,8 @@ img { max-width: 100%; display: block; }
 .home-head {
   display: flex;
   align-items: center;
-  gap: 22px;
-  margin-bottom: 20px;
+  gap: 28px;
+  margin-bottom: 22px;
 }
 
 .home-head.stacked {
@@ -189,14 +189,14 @@ img { max-width: 100%; display: block; }
 .home .photo {
   flex: 0 0 auto;
   width: auto;
-  height: 92px;          /* JS matches this to the name + title height */
-  border-radius: 12px;
+  height: 175px;
+  border-radius: 14px;
 }
 
 .home-head.stacked .photo {
   order: 2;
   align-self: center;
-  height: 190px;
+  height: 210px;
 }
 
 .home-titles {
@@ -206,16 +206,17 @@ img { max-width: 100%; display: block; }
 }
 
 .home-titles h1 {
-  font-size: 44px;
-  line-height: 1.12;
+  font-size: clamp(30px, 6vw, 58px);
+  line-height: 1.1;
   letter-spacing: -0.5px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .home-titles .role {
   color: var(--text-secondary);
-  font-size: 18px;
+  font-size: clamp(16px, 3vw, 28px);
   font-weight: 500;
+  line-height: 1.3;
 }
 
 /* JS adds .fit to keep the name and title on one line (shrinking the
