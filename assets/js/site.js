@@ -9,8 +9,8 @@
   var titles = head.querySelector('.home-titles');
   var h1 = titles.querySelector('h1');
   var role = titles.querySelector('.role');
-  var MAX_H1 = 58;
-  var MAX_ROLE = 28;
+  var MAX_H1 = 46;
+  var MAX_ROLE = 22;
 
   function overflowing() {
     return (h1.scrollWidth - h1.clientWidth > 1) ||
