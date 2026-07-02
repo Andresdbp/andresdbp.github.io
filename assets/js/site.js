@@ -1,44 +1,48 @@
-// Home header: keep the name and title each on a single line.
-//   1. If the title doesn't fit beside the photo, drop the photo BELOW
-//      the name/title (centered) so the titles get the full card width.
-//   2. Only if it still doesn't fit, shrink the font until it does.
+// Navigation: mobile menu toggle + Contact dropdown
 (function () {
-  var head = document.querySelector('.home-head');
-  if (!head) return;
+  var toggle = document.querySelector('.nav-toggle');
+  var nav = document.querySelector('.nav');
+  var dropdown = document.querySelector('.dropdown');
+  var dropBtn = dropdown ? dropdown.querySelector('.drop-btn') : null;
 
-  var titles = head.querySelector('.home-titles');
-  var h1 = titles.querySelector('h1');
-  var role = titles.querySelector('.role');
-  var MAX_H1 = 46;
-  var MAX_ROLE = 22;
-
-  function overflowing() {
-    return (h1.scrollWidth - h1.clientWidth > 1) ||
-           (role.scrollWidth - role.clientWidth > 1);
+  if (toggle && nav) {
+    toggle.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var open = nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
   }
 
-  function layout() {
-    head.classList.add('fit');          // single-line (nowrap)
-    head.classList.remove('stacked');
-    h1.style.fontSize = MAX_H1 + 'px';
-    role.style.fontSize = MAX_ROLE + 'px';
+  if (dropdown && dropBtn) {
+    dropBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+  }
 
-    if (overflowing()) {
-      // Drop the photo below; give the titles the full width.
-      head.classList.add('stacked');
+  // Close the mobile menu after tapping a real navigation link
+  if (nav) {
+    nav.querySelectorAll('.nav-link, .cv-btn, .drop-menu a').forEach(function (a) {
+      a.addEventListener('click', function () {
+        nav.classList.remove('open');
+        toggle && toggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
 
-      // Still too wide even at full width — shrink to fit.
-      var scale = 1;
-      while (overflowing() && scale > 0.5) {
-        scale -= 0.02;
-        h1.style.fontSize = (MAX_H1 * scale).toFixed(1) + 'px';
-        role.style.fontSize = (MAX_ROLE * scale).toFixed(1) + 'px';
+  // Click outside closes the dropdown
+  document.addEventListener('click', function (e) {
+    if (dropdown && !dropdown.contains(e.target)) dropdown.classList.remove('open');
+  });
+
+  // Escape closes both
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      dropdown && dropdown.classList.remove('open');
+      if (nav) {
+        nav.classList.remove('open');
+        toggle && toggle.setAttribute('aria-expanded', 'false');
       }
     }
-  }
-
-  layout();
-  window.addEventListener('resize', layout);
-  window.addEventListener('load', layout);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  });
 })();

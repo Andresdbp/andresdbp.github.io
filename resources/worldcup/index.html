@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Cup 2026 — prediction dashboard</title>
+<style>
+:root{
+  --bg:#f6f6f3; --card:#ffffff; --line:#e6e4de; --text:#1b1b19; --muted:#6c6a63;
+  --accent:#2b6cb0; --accent-bg:#e8f0f8; --green:#2f855a; --green-bg:#e6f2ec;
+  --played:#7a7a73; --played-bg:#eeece7; --barbg:#eceae4; --amber:#b7791f; --amber-bg:#fbeed9;
+  --shadow:0 1px 2px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#181816;--card:#232320;--line:#39382f;--text:#ece9e2;--muted:#9c988d;
+        --accent:#5b9bd5;--accent-bg:#1e2c3a;--green:#5aa77f;--green-bg:#1c2c23;
+        --played:#8c887d;--played-bg:#2b2a25;--barbg:#302f29;--amber:#d6a247;--amber-bg:#3a2c16;--shadow:none;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:22px 20px 60px}
+h1{font-size:22px;font-weight:600;margin:0}
+.head{display:flex;align-items:center;gap:12px;margin:0 0 16px}
+.pill{display:inline-block;padding:2px 11px;border-radius:20px;font-size:12px;font-weight:600}
+.pill.ok{background:var(--accent-bg);color:var(--accent)}
+.pill.busy{background:var(--amber-bg);color:var(--amber)}
+.layout{display:grid;grid-template-columns:1fr 296px;gap:22px;align-items:start}
+@media (max-width:940px){.layout{grid-template-columns:1fr}}
+aside{position:sticky;top:14px;display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;box-shadow:var(--shadow)}
+.panel h2{font-size:13px;font-weight:600;letter-spacing:.02em;color:var(--muted);margin:0 0 10px;text-transform:uppercase}
+.ctrls label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+.ctrls input[type=range]{width:100%}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;color:var(--text-secondary)}
+.chk input{cursor:pointer;width:auto;margin:0}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+button{font:inherit;font-size:13px;background:var(--card);color:var(--text);border:1px solid var(--line);
+  border-radius:9px;padding:6px 11px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.odds .o{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:13.5px}
+.odds .fl{width:20px;text-align:center;font-size:15px;flex:none}
+.odds .nm{width:96px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.odds .tk{flex:1;height:16px;background:var(--barbg);border-radius:4px;overflow:hidden;position:relative}
+.odds .tk>i{position:absolute;top:0;height:100%;background:var(--accent);border-radius:4px}
+.odds .tk>u{position:absolute;top:0;height:100%;background:var(--accent);opacity:.25}
+.odds .pc{width:74px;text-align:right;flex:none;font-variant-numeric:tabular-nums;color:var(--muted);font-size:12px}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.5}
+.bracket-wrap{overflow-x:auto;padding-bottom:8px}
+.bracket{display:flex;gap:16px;min-width:980px;min-height:640px;align-items:stretch}
+.col{display:flex;flex-direction:column;flex:1;min-width:172px}
+.col h3{font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--muted);text-transform:uppercase;
+  text-align:center;margin:0 0 8px}
+.col-matches{flex:1;display:flex;flex-direction:column;justify-content:space-around}
+.m{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1px;box-shadow:var(--shadow)}
+.m.open{border-color:var(--accent)}
+.m.settled{border-color:var(--green);background:var(--green-bg)}
+.m.played{background:var(--played-bg)}
+.m.tbd{opacity:.85;border-style:dashed}
+.m.hostm{border-left:3px solid var(--amber)}
+.finalgroup{display:flex;flex-direction:column;gap:10px}
+.slot{position:relative;display:flex;align-items:center;gap:6px;padding:1px 6px;line-height:1.25;border-radius:6px;overflow:hidden}
+.slot .bar{position:absolute;left:0;top:0;bottom:0;background:var(--barbg);z-index:0;border-radius:6px}
+.m.open .slot .bar{background:var(--accent-bg)}
+.slot>*{position:relative;z-index:1}
+.slot .fl{font-size:13px;width:16px;text-align:center;flex:none}
+.slot .nm{flex:1;font-size:12px;font-weight:500;letter-spacing:.03em;white-space:nowrap;overflow:hidden}
+.slot .xg{font-variant-numeric:tabular-nums;font-size:10.5px;color:var(--muted);opacity:.8;flex:none;width:20px;text-align:right}
+.slot .pc{font-variant-numeric:tabular-nums;font-size:11.5px;color:var(--muted);flex:none;width:34px;text-align:right}
+.m.open .slot{cursor:pointer}
+.m.open .slot:hover{outline:1px solid var(--accent)}
+.slot.win{font-weight:600}
+.slot.win .nm{color:var(--green)}
+.m.open .slot.win .nm{color:var(--accent)}
+.slot.lose{opacity:.5}
+.slot.tbdrow .nm{color:var(--muted);font-style:italic;font-weight:400}
+.thirdlbl{font-size:10px;color:var(--muted);text-align:center;margin-bottom:2px}
+.mfoot{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:3px 7px 1px;font-size:11.5px;color:var(--muted)}
+.mfoot .xg{font-variant-numeric:tabular-nums}
+.mfoot .undo{cursor:pointer;color:var(--accent)}
+.tag{font-size:10.5px;padding:1px 6px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+.tag.res{color:var(--played)}
+.tag.pick{color:var(--green);border-color:var(--green)}
+details{margin-top:10px}
+summary{cursor:pointer;font-size:12.5px;color:var(--accent);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";font-size:10px}
+details[open] summary::before{content:"▾ "}
+details .hint{margin-top:8px}
+details code{background:var(--barbg);padding:1px 5px;border-radius:5px;font-size:11.5px}
+#reset{width:100%;margin-top:2px}
+</style>
+<link rel="icon" href="../../assets/img/favicon-16x16.png" sizes="16x16" type="image/png">
+<link rel="icon" href="../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+</head>
+<body>
+<div class="wrap">
+  <a href="../../resources.html" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;margin-bottom:14px">&#8592;&nbsp;Andres Barboza &middot; Resources</a>
+  <div class="head">
+    <h1>World Cup 2026</h1>
+    <span id="status" class="pill ok">ready</span>
+  </div>
+
+  <div class="layout">
+    <main>
+      <div class="bracket-wrap"><div class="bracket" id="bracket"></div></div>
+    </main>
+    <aside>
+      <div class="panel ctrls">
+        <h2>Controls</h2>
+        <label>Simulations per update: <b id="nlab">6000</b></label>
+        <input type="range" id="nsims" min="1000" max="100000" step="1000" value="6000">
+        <label class="chk"><input type="checkbox" id="hostToggle" checked>
+          Host advantage (+<span id="hd">122</span> Elo)</label>
+        <label class="chk"><input type="checkbox" id="bandsToggle">
+          Bayesian uncertainty bands</label>
+      </div>
+      <div class="panel">
+        <h2>Title probability</h2>
+        <div class="odds" id="odds"></div>
+      </div>
+      <div class="panel">
+        <h2>How to use</h2>
+        <p class="hint">Each row shows a team's <b>expected goals</b> (small, left) and its chance to
+          advance (right). Click the team you expect to win any highlighted upcoming tie to
+          <b>settle</b> it; downstream probabilities and expected goals re-compute instantly. Undo from the tie.</p>
+        <details><summary>About the model</summary>
+          <p class="hint" id="about"></p></details>
+      </div>
+      <button id="reset">Reset picks</button>
+    </aside>
+  </div>
+</div>
+
+<script>
+window.WC_DATA = {"params": {"mu": -0.01039, "gamma": 0.3671, "beta": 0.19856, "rho": -0.05161}, "tuned": {"w_club": 0.0, "w_form": 0.0, "w_uxg": 25.0, "m": 1.0}, "host": {"delta": 123.9, "hosts": ["Canada", "Mexico", "United States"]}, "rounds": ["Round of 32", "Round of 16", "Quarter-final", "Semi-final", "Final"], "teams": {"South Africa": {"name": "South Africa", "rating": 1697.0, "flag": "🇿🇦", "code": "RSA", "resid": 54.4, "resid_sd": 73.8}, "Canada": {"name": "Canada", "rating": 1880.0, "flag": "🇨🇦", "code": "CAN", "resid": 61.6, "resid_sd": 69.6}, "Germany": {"name": "Germany", "rating": 2012.8, "flag": "🇩🇪", "code": "GER", "resid": -24.9, "resid_sd": 69.1}, "Paraguay": {"name": "Paraguay", "rating": 1900.5, "flag": "🇵🇾", "code": "PAR", "resid": 61.3, "resid_sd": 65.6}, "Netherlands": {"name": "Netherlands", "rating": 2048.6, "flag": "🇳🇱", "code": "NED", "resid": -31.3, "resid_sd": 65.7}, "Morocco": {"name": "Morocco", "rating": 2027.4, "flag": "🇲🇦", "code": "MAR", "resid": 49.0, "resid_sd": 74.0}, "Brazil": {"name": "Brazil", "rating": 2119.8, "flag": "🇧🇷", "code": "BRA", "resid": 44.8, "resid_sd": 69.0}, "Japan": {"name": "Japan", "rating": 1974.5, "flag": "🇯🇵", "code": "JPN", "resid": 51.2, "resid_sd": 73.5}, "France": {"name": "France", "rating": 2219.9, "flag": "🇫🇷", "code": "FRA", "resid": -21.3, "resid_sd": 63.3}, "Sweden": {"name": "Sweden", "rating": 1798.2, "flag": "🇸🇪", "code": "SWE", "resid": -62.6, "resid_sd": 63.4}, "Ivory Coast": {"name": "Ivory Coast", "rating": 1845.8, "flag": "🇨🇮", "code": "CIV", "resid": 2.7, "resid_sd": 72.4}, "Norway": {"name": "Norway", "rating": 2007.1, "flag": "🇳🇴", "code": "NOR", "resid": 20.3, "resid_sd": 69.6}, "Mexico": {"name": "Mexico", "rating": 2052.3, "flag": "🇲🇽", "code": "MEX", "resid": 56.1, "resid_sd": 71.4}, "Ecuador": {"name": "Ecuador", "rating": 1953.0, "flag": "🇪🇨", "code": "ECU", "resid": 105.2, "resid_sd": 70.9}, "England": {"name": "England", "rating": 2147.5, "flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "code": "ENG", "resid": 73.6, "resid_sd": 68.3}, "DR Congo": {"name": "DR Congo", "rating": 1804.8, "flag": "🇨🇩", "code": "COD", "resid": 52.0, "resid_sd": 74.8}, "United States": {"name": "United States", "rating": 1914.2, "flag": "🇺🇸", "code": "USA", "resid": 25.4, "resid_sd": 67.2}, "Bosnia and Herzegovina": {"name": "Bosnia and Herzegovina", "rating": 1677.3, "flag": "🇧🇦", "code": "BIH", "resid": -1.1, "resid_sd": 65.1}, "Belgium": {"name": "Belgium", "rating": 1991.6, "flag": "🇧🇪", "code": "BEL", "resid": -42.1, "resid_sd": 65.9}, "Senegal": {"name": "Senegal", "rating": 1875.6, "flag": "🇸🇳", "code": "SEN", "resid": 13.4, "resid_sd": 72.1}, "Portugal": {"name": "Portugal", "rating": 2060.6, "flag": "🇵🇹", "code": "POR", "resid": 19.0, "resid_sd": 64.8}, "Croatia": {"name": "Croatia", "rating": 1967.8, "flag": "🇭🇷", "code": "CRO", "resid": -21.1, "resid_sd": 62.3}, "Spain": {"name": "Spain", "rating": 2216.0, "flag": "🇪🇸", "code": "ESP", "resid": 41.7, "resid_sd": 66.5}, "Austria": {"name": "Austria", "rating": 1896.2, "flag": "🇦🇹", "code": "AUT", "resid": -32.5, "resid_sd": 64.9}, "Switzerland": {"name": "Switzerland", "rating": 1978.3, "flag": "🇨🇭", "code": "SUI", "resid": -6.7, "resid_sd": 62.0}, "Algeria": {"name": "Algeria", "rating": 1885.8, "flag": "🇩🇿", "code": "ALG", "resid": -33.9, "resid_sd": 73.8}, "Argentina": {"name": "Argentina", "rating": 2224.2, "flag": "🇦🇷", "code": "ARG", "resid": 76.7, "resid_sd": 68.6}, "Cape Verde": {"name": "Cape Verde", "rating": 1696.0, "flag": "🇨🇻", "code": "CPV", "resid": 1.4, "resid_sd": 71.5}, "Colombia": {"name": "Colombia", "rating": 2077.7, "flag": "🇨🇴", "code": "COL", "resid": 19.8, "resid_sd": 65.0}, "Ghana": {"name": "Ghana", "rating": 1683.2, "flag": "🇬🇭", "code": "GHA", "resid": 25.8, "resid_sd": 69.8}, "Australia": {"name": "Australia", "rating": 1907.8, "flag": "🇦🇺", "code": "AUS", "resid": 28.9, "resid_sd": 67.7}, "Egypt": {"name": "Egypt", "rating": 1866.0, "flag": "🇪🇬", "code": "EGY", "resid": 21.5, "resid_sd": 71.8}}, "matches": [{"num": 73, "round": "Round of 32", "t1": "South Africa", "t2": "Canada", "ground": "Los Angeles (Inglewood)", "host": "United States", "played": true, "s1": 0, "s2": 1, "winner": "Canada"}, {"num": 74, "round": "Round of 32", "t1": "Germany", "t2": "Paraguay", "ground": "Boston (Foxborough)", "host": "United States", "played": true, "s1": 1, "s2": 1, "winner": "Paraguay"}, {"num": 75, "round": "Round of 32", "t1": "Netherlands", "t2": "Morocco", "ground": "Monterrey (Guadalupe)", "host": "Mexico", "played": true, "s1": 1, "s2": 1, "winner": "Morocco"}, {"num": 76, "round": "Round of 32", "t1": "Brazil", "t2": "Japan", "ground": "Houston", "host": "United States", "played": true, "s1": 2, "s2": 1, "winner": "Brazil"}, {"num": 77, "round": "Round of 32", "t1": "France", "t2": "Sweden", "ground": "New York/New Jersey (East Rutherford)", "host": "United States", "played": true, "s1": 3, "s2": 0, "winner": "France"}, {"num": 78, "round": "Round of 32", "t1": "Ivory Coast", "t2": "Norway", "ground": "Dallas (Arlington)", "host": "United States", "played": true, "s1": 1, "s2": 2, "winner": "Norway"}, {"num": 79, "round": "Round of 32", "t1": "Mexico", "t2": "Ecuador", "ground": "Mexico City", "host": "Mexico", "played": true, "s1": 2, "s2": 0, "winner": "Mexico"}, {"num": 80, "round": "Round of 32", "t1": "England", "t2": "DR Congo", "ground": "Atlanta", "host": "United States", "played": true, "s1": 2, "s2": 1, "winner": "England"}, {"num": 81, "round": "Round of 32", "t1": "United States", "t2": "Bosnia and Herzegovina", "ground": "San Francisco Bay Area (Santa Clara)", "host": "United States", "played": true, "s1": 2, "s2": 0, "winner": "United States"}, {"num": 82, "round": "Round of 32", "t1": "Belgium", "t2": "Senegal", "ground": "Seattle", "host": "United States", "played": true, "s1": 2, "s2": 2, "winner": "Belgium"}, {"num": 83, "round": "Round of 32", "t1": "Portugal", "t2": "Croatia", "ground": "Toronto", "host": "Canada", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 84, "round": "Round of 32", "t1": "Spain", "t2": "Austria", "ground": "Los Angeles (Inglewood)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 85, "round": "Round of 32", "t1": "Switzerland", "t2": "Algeria", "ground": "Vancouver", "host": "Canada", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 86, "round": "Round of 32", "t1": "Argentina", "t2": "Cape Verde", "ground": "Miami (Miami Gardens)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 87, "round": "Round of 32", "t1": "Colombia", "t2": "Ghana", "ground": "Kansas City", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 88, "round": "Round of 32", "t1": "Australia", "t2": "Egypt", "ground": "Dallas (Arlington)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 89, "round": "Round of 16", "t1": "Paraguay", "t2": "France", "ground": "Philadelphia", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 90, "round": "Round of 16", "t1": "Canada", "t2": "Morocco", "ground": "Houston", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 91, "round": "Round of 16", "t1": "Brazil", "t2": "Norway", "ground": "New York/New Jersey (East Rutherford)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 92, "round": "Round of 16", "t1": "Mexico", "t2": "England", "ground": "Mexico City", "host": "Mexico", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 93, "round": "Round of 16", "t1": "W83", "t2": "W84", "ground": "Dallas (Arlington)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 94, "round": "Round of 16", "t1": "United States", "t2": "Belgium", "ground": "Seattle", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 95, "round": "Round of 16", "t1": "W86", "t2": "W88", "ground": "Atlanta", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 96, "round": "Round of 16", "t1": "W85", "t2": "W87", "ground": "Vancouver", "host": "Canada", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 97, "round": "Quarter-final", "t1": "W89", "t2": "W90", "ground": "Boston (Foxborough)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 98, "round": "Quarter-final", "t1": "W93", "t2": "W94", "ground": "Los Angeles (Inglewood)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 99, "round": "Quarter-final", "t1": "W91", "t2": "W92", "ground": "Miami (Miami Gardens)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 100, "round": "Quarter-final", "t1": "W95", "t2": "W96", "ground": "Kansas City", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 101, "round": "Semi-final", "t1": "W97", "t2": "W98", "ground": "Dallas (Arlington)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 102, "round": "Semi-final", "t1": "W99", "t2": "W100", "ground": "Atlanta", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 103, "round": "Match for third place", "t1": "L101", "t2": "L102", "ground": "Miami (Miami Gardens)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}, {"num": 104, "round": "Final", "t1": "W101", "t2": "W102", "ground": "New York/New Jersey (East Rutherford)", "host": "United States", "played": false, "s1": null, "s2": null, "winner": null}], "snapshot": "2026-07-01"};
+</script>
+<script>
+const D = window.WC_DATA;
+const {mu, beta, rho, gamma} = D.params;
+const HOSTS = new Set((D.host && D.host.hosts) || []);
+const HOST_DELTA = (D.host && D.host.delta) || 0;
+let USE_HOST = true, SHOW_BANDS = false;
+const hostBonus = (team, hostCountry) => (USE_HOST && HOSTS.has(team) && hostCountry === team) ? HOST_DELTA : 0;
+// standard normal (Box-Muller) for sampling team-strength uncertainty
+function gauss(mean, sd){ const u=1-Math.random(), v=Math.random();
+  return mean + sd*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+const matches = D.matches.slice().sort((a,b)=>a.num-b.num);
+const KO = matches.filter(m=>m.round!=='Match for third place');
+const third = matches.find(m=>m.round==='Match for third place');
+const FINAL_NUM = Math.max(...matches.filter(m=>m.round==='Final').map(m=>m.num));
+const numToMatch = {}; KO.forEach(m=>numToMatch[m.num]=m);
+// static feeder tree — the bracket SHAPE is fixed; only slot occupants change.
+// A slot is either a placeholder (W##/L##) or a real team (= winner of a played match).
+const wonBy = {};
+for(const m of matches){ if(m.played && m.winner) wonBy[m.winner]=m.num; }
+const feeders = m => [m.t1,m.t2].map(s => /^[WL]\d+$/.test(s) ? +s.slice(1) : wonBy[s]);
+// depth-first from the final → each round ordered top-to-bottom with feeders adjacent,
+// so `justify-content:space-around` centres every match between its two feeders.
+const ORDER = {}; D.rounds.forEach(r=>ORDER[r]=[]);
+(function dfs(num){
+  const m=numToMatch[num]; if(!m) return;
+  ORDER[m.round].push(num);
+  if(D.rounds.indexOf(m.round)>0){ const f=feeders(m); if(f[0]) dfs(f[0]); if(f[1]) dfs(f[1]); }
+})(FINAL_NUM);
+let ratingDelta = {};                       // per-draw strength perturbation (bands)
+const rating = n => (D.teams[n] ? D.teams[n].rating : 1500) + (ratingDelta[n] || 0);
+const residSd = n => (D.teams[n] && D.teams[n].resid_sd) ? D.teams[n].resid_sd : 60;
+const flag = n => (D.teams[n] ? (D.teams[n].flag||'') : '');
+const codeOf = n => (D.teams[n] && D.teams[n].code) ? D.teams[n].code
+                    : (n ? String(n).replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase() : '—');
+const userSettles = {};           // num -> chosen winner (hypotheticals only)
+let NSIMS = 6000;
+
+// ---- fast simulation (mirrors the Python fast bracket path) ----
+function pois(l){ if(l<=0) return 0; const L=Math.exp(-l); let k=0,p=1; do{k++;p*=Math.random();}while(p>L); return k-1; }
+function lambdas(rh,ra){ const d=(rh-ra)/100; return [Math.exp(mu+beta*d), Math.exp(mu-beta*d)]; }
+function shootout(ra,rb){
+  const pa=Math.min(.9,Math.max(.55,.75+.04*Math.tanh((ra-rb)/200)));
+  const pb=Math.min(.9,Math.max(.55,.75+.04*Math.tanh((rb-ra)/200)));
+  let a=0,b=0;
+  for(let k=0;k<5;k++){ a+=Math.random()<pa?1:0; b+=Math.random()<pb?1:0; const rem=5-(k+1); if(a>b+rem||b>a+rem)break; }
+  while(a===b){ a+=Math.random()<pa?1:0; b+=Math.random()<pb?1:0; }
+  return a>b;
+}
+function simMatch(t1,t2,hostCountry){
+  const r1=rating(t1)+hostBonus(t1,hostCountry), r2=rating(t2)+hostBonus(t2,hostCountry);
+  const [l1,l2]=lambdas(r1,r2);
+  let g1=pois(l1), g2=pois(l2);
+  if(g1!==g2) return g1>g2?t1:t2;
+  const e1=pois(l1*30/90), e2=pois(l2*30/90);
+  if(e1!==e2) return e1>e2?t1:t2;
+  return shootout(r1,r2)?t1:t2;
+}
+const isPlace = s => typeof s==='string' && /^[WL]\d+$/.test(s);
+function resolve(name, winners, losers){
+  if(isPlace(name)){ const n=+name.slice(1); return name[0]==='W'?winners[n]:losers[n]; }
+  return name;
+}
+
+// ---- deterministic resolution from played + valid user picks ----
+function computeFixed(){
+  const winners={}, losers={}, concrete={}, determined={}, fixed={};
+  for(const m of matches){
+    const t1=resolve(m.t1,winners,losers)||null, t2=resolve(m.t2,winners,losers)||null;
+    concrete[m.num]={t1,t2}; const det=!!(t1&&t2); determined[m.num]=det;
+    if(m.round==='Match for third place') continue;
+    let w=null;
+    if(m.played) w=m.winner;
+    else if(det && userSettles[m.num] && (userSettles[m.num]===t1||userSettles[m.num]===t2)) w=userSettles[m.num];
+    else if(userSettles[m.num] && !det){ delete userSettles[m.num]; }
+    else if(userSettles[m.num] && det && userSettles[m.num]!==t1 && userSettles[m.num]!==t2){ delete userSettles[m.num]; }
+    if(w){ fixed[m.num]=w; winners[m.num]=w; losers[m.num]=(w===t1?t2:t1); }
+  }
+  return {concrete, determined, fixed};
+}
+
+// ---- Monte-Carlo over the remaining bracket ----
+function runMC(n, fixed){
+  const champ={}, slot={}, wins={};
+  for(const m of KO){ slot[m.num]=[{},{}]; wins[m.num]={}; }
+  for(let s=0;s<n;s++){
+    const winners={}, losers={};
+    for(const m of KO){
+      const t1=resolve(m.t1,winners,losers), t2=resolve(m.t2,winners,losers);
+      slot[m.num][0][t1]=(slot[m.num][0][t1]||0)+1;
+      slot[m.num][1][t2]=(slot[m.num][1][t2]||0)+1;
+      const w = (m.num in fixed)? fixed[m.num] : simMatch(t1,t2,m.host);
+      wins[m.num][w]=(wins[m.num][w]||0)+1;
+      winners[m.num]=w; losers[m.num]=(w===t1?t2:t1);
+    }
+    const c=winners[FINAL_NUM]; champ[c]=(champ[c]||0)+1;
+  }
+  return {champ, slot, wins, n};
+}
+
+// lightweight champion-only MC (for the uncertainty bands)
+function runChampMC(n, fixed){
+  const champ={};
+  for(let s=0;s<n;s++){
+    const winners={}, losers={};
+    for(const m of KO){
+      const t1=resolve(m.t1,winners,losers), t2=resolve(m.t2,winners,losers);
+      const w=(m.num in fixed)?fixed[m.num]:simMatch(t1,t2,m.host);
+      winners[m.num]=w; losers[m.num]=(w===t1?t2:t1);
+    }
+    const c=winners[FINAL_NUM]; champ[c]=(champ[c]||0)+1;
+  }
+  return champ;
+}
+
+// Bayesian uncertainty band: resample each team's strength ~N(0, resid_sd) and
+// re-run the bracket; report the 10th–90th percentile of each title probability.
+function computeBands(fixed, teams, K=20, M=1500){
+  const series={}; teams.forEach(t=>series[t]=[]);
+  for(let k=0;k<K;k++){
+    ratingDelta={}; teams.forEach(t=>ratingDelta[t]=gauss(0, residSd(t)));
+    const ch=runChampMC(M, fixed);
+    teams.forEach(t=>series[t].push((ch[t]||0)/M));
+  }
+  ratingDelta={};
+  const band={};
+  teams.forEach(t=>{ const a=series[t].sort((x,y)=>x-y);
+    band[t]=[a[Math.floor(0.1*K)], a[Math.floor(0.9*K)]]; });
+  return band;
+}
+const argmax = o => { let bk=null,bv=-1; for(const k in o) if(o[k]>bv){bv=o[k];bk=k;} return [bk,bv]; };
+
+// ---- rendering ----
+function render(){
+  const {concrete, determined, fixed} = computeFixed();
+  const mc = runMC(NSIMS, fixed);
+
+  // title odds
+  const champ = Object.entries(mc.champ).map(([t,c])=>[t,c/mc.n]).sort((a,b)=>b[1]-a[1]).slice(0,14);
+  const mx = champ.length?champ[0][1]:1;
+  const bands = SHOW_BANDS ? computeBands(fixed, champ.map(c=>c[0])) : null;
+  document.getElementById('odds').innerHTML = champ.map(([t,p])=>{
+    let bar = `<i style="width:${(p/mx*100).toFixed(1)}%"></i>`, pc = `${(p*100).toFixed(1)}%`;
+    if(bands){ const [lo,hi]=bands[t];
+      bar = `<u style="left:${(lo/mx*100).toFixed(1)}%;width:${((hi-lo)/mx*100).toFixed(1)}%"></u>` + bar;
+      pc = `${(p*100).toFixed(0)}%·<span style="opacity:.7">${(lo*100).toFixed(0)}–${(hi*100).toFixed(0)}</span>`; }
+    return `<div class="o"><span class="fl">${flag(t)}</span><span class="nm">${t}</span>
+      <span class="tk">${bar}</span><span class="pc">${pc}</span></div>`;
+  }).join('');
+
+  // bracket columns — tree order so each match sits between its two feeders
+  const cols = D.rounds.map(rd=>{
+    let cards = ORDER[rd].map(num=>renderMatch(numToMatch[num], concrete[num], determined[num], fixed, mc)).join('');
+    if(rd==='Final' && third)                        // 3rd-place match sits under the final
+      cards = `<div class="finalgroup">${cards}${renderThird(third, concrete[third.num], mc)}</div>`;
+    return `<div class="col"><h3>${rd}</h3><div class="col-matches">${cards}</div></div>`;
+  }).join('');
+  document.getElementById('bracket').innerHTML = cols;
+}
+
+function slotRow(num, team, right, barPct, {win=false, lose=false, click=false, tbd=false, xg=null}={}){
+  const cls = ['slot', win?'win':'', lose?'lose':'', tbd?'tbdrow':''].join(' ');
+  const label = team ? codeOf(team) : '—';
+  const data = click ? `data-num="${num}" data-team="${team}"` : '';
+  const ttl = team ? ` title="${team}"` : '';
+  const xgHtml = (xg != null) ? `<span class="xg" title="expected goals">${xg.toFixed(1)}</span>` : '';
+  return `<div class="${cls}" ${data}${ttl}>
+      <span class="bar" style="width:${barPct||0}%"></span>
+      <span class="fl">${team?flag(team):''}</span>
+      <span class="nm">${label}</span>${xgHtml}<span class="pc">${right||''}</span></div>`;
+}
+
+function renderMatch(m, con, det, fixed, mc){
+  const {t1,t2}=con;
+  // undetermined -> show modal occupants
+  if(!det){
+    const [a,ac]=argmax(mc.slot[m.num][0]); const [b,bc]=argmax(mc.slot[m.num][1]);
+    return `<div class="m tbd" title="to be decided">
+      ${slotRow(m.num,a,`${Math.round(ac/mc.n*100)}%`,0,{tbd:true})}
+      ${slotRow(m.num,b,`${Math.round(bc/mc.n*100)}%`,0,{tbd:true})}</div>`;
+  }
+  const w = fixed[m.num];
+  const p1 = (mc.wins[m.num][t1]||0)/mc.n, p2=(mc.wins[m.num][t2]||0)/mc.n;
+  const hb1=hostBonus(t1,m.host), hb2=hostBonus(t2,m.host);
+  const [l1,l2]=lambdas(rating(t1)+hb1, rating(t2)+hb2);
+  const hostNote = (hb1||hb2) ? ` · host +${Math.round(HOST_DELTA)}` : '';
+  if(m.played){
+    return `<div class="m played" title="${t1} ${m.s1}–${m.s2} ${t2} · expected goals ${l1.toFixed(1)}–${l2.toFixed(1)}">
+      ${slotRow(m.num,t1,`${m.s1}`,0,{win:w===t1,lose:w!==t1,xg:l1})}
+      ${slotRow(m.num,t2,`${m.s2}`,0,{win:w===t2,lose:w!==t2,xg:l2})}</div>`;
+  }
+  const settled = userSettles[m.num];
+  if(settled){
+    return `<div class="m settled" title="your pick — click to undo · expected goals ${l1.toFixed(1)}–${l2.toFixed(1)}">
+      ${slotRow(m.num,t1,settled===t1?'✓':'',0,{win:settled===t1,lose:settled!==t1,click:true,xg:l1})}
+      ${slotRow(m.num,t2,settled===t2?'✓':'',0,{win:settled===t2,lose:settled!==t2,click:true,xg:l2})}</div>`;
+  }
+  // determined & open -> settleable, show expected goals + advance probs
+  return `<div class="m open${(hb1||hb2)?' hostm':''}" title="expected goals ${l1.toFixed(1)}–${l2.toFixed(1)}${hostNote} · click a team to settle">
+      ${slotRow(m.num,t1,`${Math.round(p1*100)}%`,p1*100,{win:p1>=p2,click:true,xg:l1})}
+      ${slotRow(m.num,t2,`${Math.round(p2*100)}%`,p2*100,{win:p2>p1,click:true,xg:l2})}</div>`;
+}
+
+function renderThird(m, con, mc){
+  const {t1,t2}=con;
+  return `<div class="m tbd" title="3rd-place play-off">
+    <div class="thirdlbl">3rd place</div>
+    ${slotRow(m.num, t1, t1?'':'', 0, {tbd:true})}
+    ${slotRow(m.num, t2, t2?'':'', 0, {tbd:true})}</div>`;
+}
+
+// ---- interaction ----
+function withStatus(fn){
+  const s=document.getElementById('status'); s.textContent='simulating…'; s.className='pill busy';
+  setTimeout(()=>{ fn(); s.textContent='updated'; s.className='pill ok'; }, 10);
+}
+document.getElementById('bracket').addEventListener('click', e=>{
+  const undo=e.target.closest('[data-undo]');
+  if(undo){ delete userSettles[+undo.dataset.undo]; withStatus(render); return; }
+  const slot=e.target.closest('.slot[data-num]');
+  if(!slot) return;
+  const num=+slot.dataset.num, team=slot.dataset.team;
+  if(userSettles[num]===team) delete userSettles[num];   // toggle off
+  else userSettles[num]=team;
+  withStatus(render);
+});
+document.getElementById('nsims').addEventListener('input', e=>{
+  NSIMS=+e.target.value; document.getElementById('nlab').textContent=NSIMS.toLocaleString();
+});
+document.getElementById('nsims').addEventListener('change', ()=>withStatus(render));
+document.getElementById('reset').addEventListener('click', ()=>{
+  for(const k in userSettles) delete userSettles[k]; withStatus(render);
+});
+document.getElementById('hostToggle').addEventListener('change', e=>{ USE_HOST=e.target.checked; withStatus(render); });
+document.getElementById('bandsToggle').addEventListener('change', e=>{ SHOW_BANDS=e.target.checked; withStatus(render); });
+document.getElementById('hd').textContent = Math.round(HOST_DELTA);
+document.getElementById('about').innerHTML =
+  `Self-computed World-Football Elo → Dixon-Coles bivariate-Poisson goals (fit on WC qualifiers, `+
+  `<code>&beta;=${beta.toFixed(3)}</code>) → group-stage momentum, plus Understat club-xG. The bracket `+
+  `Monte-Carlo runs live in your browser (thousands of tournaments per update), mirroring the Python `+
+  `<code>simulate.simulate_bracket</code>. Host advantage (+${Math.round(HOST_DELTA)} Elo at home venues) is `+
+  `toggleable; the uncertainty band resamples each team's strength from the hierarchical-Bayes posterior. `+
+  `Grey ties are already played; dashed ties are still undecided and show each slot's most-likely occupant. `+
+  `Snapshot ${D.snapshot}. Single-match calls are probabilities, not certainties.`;
+render();
+</script>
+</body>
+</html>

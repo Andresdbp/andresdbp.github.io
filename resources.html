@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
-  <title>Dr. Andres Barboza</title>
-  <meta content="Andres Barboza, Ph.D. in Genetics & Genomics from Texas A&M University. Science teacher at Strake Jesuit College Preparatory and swim coach." name="description">
-  <meta content="Andres Barboza, science teacher, Strake Jesuit, swim coach, evolutionary genetics, genomics, Texas A&M" name="keywords">
+  <title>Resources | Dr. Andres Barboza</title>
+  <meta content="Interactive tools by Andres Barboza, including a 2026 World Cup bracket predictor." name="description">
+  <meta content="Andres Barboza, resources, tools, World Cup 2026, bracket predictor, simulation" name="keywords">
 
   <link rel="icon" href="assets/img/favicon-16x16.png" sizes="16x16" type="image/png">
   <link rel="icon" href="assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
@@ -24,9 +24,9 @@
       <a class="brand" href="index.html">Dr. Andres Barboza</a>
       <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="bi bi-list"></i></button>
       <nav class="nav">
-        <a class="nav-link active" href="index.html">Home</a>
+        <a class="nav-link" href="index.html">Home</a>
         <a class="nav-link" href="research.html">Research</a>
-        <a class="nav-link" href="resources.html">Resources</a>
+        <a class="nav-link active" href="resources.html">Resources</a>
         <div class="dropdown">
           <button class="drop-btn" aria-label="Contact links">Contact <span class="caret">&#9662;</span></button>
           <div class="drop-menu">
@@ -41,17 +41,37 @@
   </header>
 
   <main class="wrap">
-    <section class="hero">
-      <div class="hero-text">
-        <h1>Science Teacher at Strake Jesuit</h1>
-        <p class="lead">
-          I have a <strong>Ph.D. in Genetics &amp; Genomics</strong> from Texas A&amp;M University, where I
-          studied genome evolution, population genetics, and sex-chromosome dynamics. Now I teach science
-          at <strong>Strake Jesuit College Preparatory</strong> and coach swimming.
-        </p>
-      </div>
-      <img class="portrait" src="assets/img/me.jpg" alt="Andres Barboza">
-    </section>
+    <div class="page-head">
+      <p class="eyebrow">Tools &amp; Projects</p>
+      <h1>Resources</h1>
+      <p class="lead">Interactive things I've built.</p>
+    </div>
+
+    <div class="resource-list">
+      <a class="resource-card" href="resources/worldcup/">
+        <svg class="icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="stad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3a7ca5"/>
+              <stop offset="1" stop-color="#16425b"/>
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#stad)"/>
+          <g fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="12" y="17" width="40" height="30" rx="8"/>
+            <line x1="32" y1="17" x2="32" y2="47"/>
+            <circle cx="32" cy="32" r="6.5"/>
+            <path d="M12 25.5 h6 v13 h-6"/>
+            <path d="M52 25.5 h-6 v13 h6"/>
+          </g>
+        </svg>
+        <div class="rc-body">
+          <h3>World Cup 2026 Predictor</h3>
+          <p>An interactive bracket with a live Monte-Carlo simulation. Settle any tie and watch every advance probability, title odd, and expected-goals figure re-compute instantly.</p>
+        </div>
+        <i class="bi bi-arrow-right chev" aria-hidden="true"></i>
+      </a>
+    </div>
   </main>
 
   <footer class="site-footer">
