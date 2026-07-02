@@ -87,7 +87,7 @@ img, svg { max-width: 100%; display: block; }
 
 .brand {
   font-family: 'Crimson Pro', serif;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.2px;
   color: var(--ink);
@@ -199,7 +199,7 @@ img, svg { max-width: 100%; display: block; }
 .wrap {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 60px var(--safe-r) 30px var(--safe-l);
+  padding: 60px var(--safe-r) 10px var(--safe-l);
 }
 
 .eyebrow {
@@ -214,12 +214,15 @@ img, svg { max-width: 100%; display: block; }
 /* =========================================================
    Home / hero
    ========================================================= */
-.hero { display: flex; align-items: center; gap: 46px; }
-.hero-text { flex: 1 1 auto; min-width: 0; }
-.hero h1 {
+.hero { display: flex; flex-direction: column; gap: 28px; }
+.hero-title {
   font-size: clamp(36px, 6.5vw, 58px);
   letter-spacing: -0.5px;
-  margin-bottom: 10px;
+}
+.hero-body { display: flex; align-items: center; gap: 46px; }
+.hero-text {
+  flex: 1 1 auto; min-width: 0;
+  padding: 0 32px 0 0;
 }
 .hero .role {
   font-size: clamp(17px, 2.6vw, 22px);
@@ -241,7 +244,9 @@ img, svg { max-width: 100%; display: block; }
 }
 
 @media (max-width: 640px) {
-  .hero { flex-direction: column; align-items: stretch; gap: 26px; }
+  .hero { gap: 20px; }
+  .hero-body { flex-direction: column; align-items: stretch; gap: 20px; }
+  .hero-text { padding: 0; }
   .portrait {
     width: calc(100% + var(--safe-l) + var(--safe-r));
     margin-left: calc(-1 * var(--safe-l));
@@ -328,8 +333,8 @@ img, svg { max-width: 100%; display: block; }
    ========================================================= */
 .site-footer {
   max-width: var(--maxw);
-  margin: 40px auto 0;
-  padding: 40px var(--safe-r) calc(46px + env(safe-area-inset-bottom)) var(--safe-l);
+  margin: 20px auto 0;
+  padding: 28px var(--safe-r) calc(24px + env(safe-area-inset-bottom)) var(--safe-l);
   text-align: center;
 }
 .footer-rule {
