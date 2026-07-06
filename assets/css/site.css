@@ -231,7 +231,7 @@ img, svg { max-width: 100%; display: block; }
   margin-bottom: 24px;
 }
 .hero .lead {
-  font-size: 17px;
+  font-size: 20px;
   color: var(--ink-soft);
   max-width: 54ch;
 }
