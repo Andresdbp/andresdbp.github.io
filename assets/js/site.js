@@ -46,3 +46,15 @@
     }
   });
 })();
+
+// Suppress transitions during window resize to prevent nav ghosting at breakpoint
+(function () {
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    document.body.classList.add('no-transition');
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      document.body.classList.remove('no-transition');
+    }, 150);
+  });
+})();
