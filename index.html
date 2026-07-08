@@ -6,9 +6,9 @@
   <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
   <title>Dr. Andres Barboza</title>
   <meta
-    content="Andres Barboza, Ph.D. in Genetics & Genomics from Texas A&M University. Science teacher at Strake Jesuit College Preparatory and swim coach."
+    content="Andres Barboza, Ph.D. in Genetics &amp; Genomics from Texas A&amp;M University. Science teacher at Strake Jesuit College Preparatory and swim coach."
     name="description">
-  <meta content="Andres Barboza, science teacher, Strake Jesuit, swim coach, evolutionary genetics, genomics, Texas A&M"
+  <meta content="Andres Barboza, science teacher, Strake Jesuit, swim coach, evolutionary genetics, genomics, Texas A&amp;M"
     name="keywords">
 
   <link rel="icon" href="assets/img/favicon-16x16.png" sizes="16x16" type="image/png">
@@ -18,77 +18,352 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Poppins:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/css/site.css?v=4" rel="stylesheet">
+  <link href="assets/css/site.css?v=5" rel="stylesheet">
+
+  <!-- set theme before paint to avoid flash -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('theme');
+        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+    })();
+  </script>
 </head>
 
 <body>
+  <div class="page">
 
-  <header class="site-header">
-    <div class="nav-inner">
-      <a class="brand" href="index.html">Dr. Andres Barboza</a>
-      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false"><i class="bi bi-list"></i></button>
-      <nav class="nav">
-        <a class="nav-link active" href="index.html">Home</a>
-        <a class="nav-link" href="research.html">Research</a>
-        <a class="nav-link" href="resources.html">Resources</a>
-        <div class="dropdown">
-          <button class="drop-btn" aria-label="Contact links">Contact <span class="caret">&#9662;</span></button>
-          <div class="drop-menu">
-            <a href="https://www.linkedin.com/in/andres-barboza-pereira-4400721b8" target="_blank" rel="noopener"><i
-                class="bi bi-linkedin"></i> LinkedIn</a>
-            <a href="https://github.com/Andresdbp" target="_blank" rel="noopener"><i class="bi bi-github"></i>
-              GitHub</a>
-            <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" target="_blank" rel="noopener"><i
-                class="bi bi-mortarboard-fill"></i> Google Scholar</a>
+    <!-- ================= SIDEBAR ================= -->
+    <aside class="sidebar" id="sidebar">
+      <button class="contacts-toggle" id="contactsToggle" aria-expanded="false">
+        <span>Show Contacts</span> <i class="bi bi-chevron-down"></i>
+      </button>
+      <div class="sb-top">
+        <img class="avatar" src="assets/img/me-sq.png" alt="Andres Barboza">
+        <div class="sb-id">
+          <div class="sb-name">Dr. Andres Barboza</div>
+          <span class="sb-title">Science Teacher</span>
+        </div>
+      </div>
+
+      <div class="sb-more">
+        <div class="sep"></div>
+        <ul class="contact-list">
+          <li class="contact-item">
+            <div class="icon-box"><i class="bi bi-envelope-fill"></i></div>
+            <div class="contact-meta">
+              <div class="contact-label">Email</div>
+              <a class="contact-value" href="mailto:andresdbp00@gmail.com">andresdbp00@gmail.com</a>
+            </div>
+          </li>
+          <li class="contact-item">
+            <div class="icon-box"><i class="bi bi-geo-alt-fill"></i></div>
+            <div class="contact-meta">
+              <div class="contact-label">Location</div>
+              <span class="contact-value">Houston, Texas</span>
+            </div>
+          </li>
+        </ul>
+
+        <div class="socials">
+          <a href="https://www.linkedin.com/in/andres-barboza-pereira-4400721b8" target="_blank" rel="noopener"
+            aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="https://github.com/Andresdbp" target="_blank" rel="noopener" aria-label="GitHub"><i
+              class="bi bi-github"></i></a>
+          <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" target="_blank" rel="noopener"
+            aria-label="Google Scholar"><i class="bi bi-mortarboard-fill"></i></a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN ================= -->
+    <div class="main">
+      <div class="content-card">
+      <nav class="navbar">
+        <div class="nav-links">
+          <button class="nav-link active" data-tab="about">About</button>
+          <button class="nav-link" data-tab="resume">Resume</button>
+          <button class="nav-link" data-tab="research">Research</button>
+          <button class="nav-link" data-tab="resources">Resources</button>
+        </div>
+      </nav>
+
+      <!-- ---------- ABOUT ---------- -->
+      <article class="active" data-page="about">
+        <h2 class="section-title">About Me</h2>
+        <p class="lead">
+          I teach AP Biology and Advanced Chemistry at
+          <strong>Strake Jesuit College Preparatory</strong> in Houston, where I also coach swimming
+          and assist with campus ministry.
+        </p>
+        <p class="lead">
+          I hold a Ph.D. in Genetics &amp; Genomics from Texas A&amp;M University, where I studied genome
+          evolution, population genetics, and sex-chromosome dynamics. My dissertation, “From Evolutionary
+          Theory to Biodiversity Genomics: Modeling, Assembly, and Prioritization Across the Tree of Life,”
+          spanned achiasmatic-meiosis modeling, comparative genomics of Chrysina beetles, and SeqDef, an R
+          package for genomic data prioritization.
+        </p>
+
+        <h3 class="subhead">What I do</h3>
+        <div class="service-grid">
+          <div class="service-card">
+            <i class="bi bi-mortarboard-fill si"></i>
+            <div>
+              <h4>Teaching</h4>
+              <p>AP Biology &amp; Advanced Chemistry at Strake Jesuit College Preparatory.</p>
+            </div>
+          </div>
+          <div class="service-card">
+            <i class="bi bi-water si"></i>
+            <div>
+              <h4>Coaching &amp; Ministry</h4>
+              <p>Swim coaching and campus ministry in the Jesuit tradition of formation.</p>
+            </div>
+          </div>
+          <div class="service-card">
+            <i class="bi bi-diagram-3-fill si"></i>
+            <div>
+              <h4>Genomics Research</h4>
+              <p>Genome evolution, population genetics, and chromosome dynamics across the tree of life.</p>
+            </div>
+          </div>
+          <div class="service-card">
+            <i class="bi bi-code-slash si"></i>
+            <div>
+              <h4>Computational Biology</h4>
+              <p>Scalable pipelines, simulations, and R/Python tools for biodiversity genomics.</p>
+            </div>
           </div>
         </div>
-        <a class="cv-btn" href="assets/Barboza_CV.pdf" download
-          onclick="return confirm('Download Andres Barboza’s CV (PDF)?')">CV <i class="bi bi-download"></i></a>
-      </nav>
-    </div>
-  </header>
+      </article>
 
-  <main class="wrap">
-    <section class="hero">
-      <h1 class="hero-title">Science Teacher at Strake Jesuit</h1>
-      <div class="hero-body">
-        <div class="hero-text">
-          <p class="lead">
-            I teach <em>AP Biology</em> and <em>Advanced Chemistry</em> at
-            <strong>Strake Jesuit College Preparatory</strong> in Houston, where I also
-            coach swimming and assist with campus ministry.
-          </p>
-          <p class="lead" style="margin-top: 1em;">
-            I have a <strong>Ph.D. in Genetics &amp; Genomics</strong> from <strong>Texas A&amp;M University</strong>,
-            where I studied genome evolution, population genetics, and sex-chromosome dynamics. My dissertation,
-            <em>&quot;From Evolutionary Theory to Biodiversity Genomics: Modeling, Assembly, and Prioritization
-              Across the Tree of Life,&quot;</em> included work in achiasmatic meiosis modeling, comparative genomics
-            of <em>Chrysina</em> beetles, and development of <em>SeqDef</em>, an R package for genomic
-            data prioritization.
-          </p>
+      <!-- ---------- RESUME ---------- -->
+      <article data-page="resume">
+        <h2 class="section-title">Resume</h2>
+
+        <div class="timeline">
+          <div class="tl-head">
+            <div class="icon-box"><i class="bi bi-book-fill"></i></div>
+            <h3>Education</h3>
+          </div>
+          <ul class="tl-list">
+            <li class="tl-item">
+              <h4>Ph.D. in Genetics &amp; Genomics</h4>
+              <div class="tl-org">Texas A&amp;M University</div>
+              <span class="tl-date">2026 · College Station, TX</span>
+              <p>Genome evolution, population genetics, and sex-chromosome dynamics. Dissertation: “From
+                Evolutionary Theory to Biodiversity Genomics: Modeling, Assembly, and Prioritization Across the
+                Tree of Life.” Advisor: Heath Blackmon.</p>
+            </li>
+            <li class="tl-item">
+              <h4>B.S. in Biochemistry</h4>
+              <div class="tl-org">Arkansas Tech University</div>
+              <span class="tl-date">2022 · Russellville, AR</span>
+              <p>Summa Cum Laude. Major GPA 3.96.</p>
+            </li>
+          </ul>
         </div>
-        <img class="portrait" src="assets/img/me.jpg" alt="Andres Barboza">
+
+        <div class="timeline">
+          <div class="tl-head">
+            <div class="icon-box"><i class="bi bi-briefcase-fill"></i></div>
+            <h3>Experience</h3>
+          </div>
+          <ul class="tl-list">
+            <li class="tl-item">
+              <h4>Science Teacher &amp; Swim Coach</h4>
+              <div class="tl-org">Strake Jesuit College Preparatory</div>
+              <span class="tl-date">Present · Houston, TX</span>
+              <p>Teach AP Biology and Advanced Chemistry; coach swimming and assist with campus ministry.</p>
+            </li>
+            <li class="tl-item">
+              <h4>Graduate Research Assistant</h4>
+              <div class="tl-org">Texas A&amp;M University</div>
+              <span class="tl-date">2023 – 2026 · College Station, TX</span>
+              <ul>
+                <li>Genome evolution and population genetics via genomic pipelines and computer simulations.</li>
+                <li>Built scalable Snakemake workflows for population genetics of <em>Chrysina</em> beetles.</li>
+                <li><em>De novo</em> genome annotation from PacBio HiFi data on HPC clusters.</li>
+              </ul>
+            </li>
+            <li class="tl-item">
+              <h4>Pharmacogenetics Clinical Trial Intern</h4>
+              <div class="tl-org">AbbVie</div>
+              <span class="tl-date">Summer 2024 · Chicago, IL</span>
+              <ul>
+                <li>Benchmarked short-read, long-read, and PharmacoScan platforms for pharmacogenetics calling.</li>
+                <li>Built and tested star-allele calling pipelines on WGS and ONT data.</li>
+              </ul>
+            </li>
+            <li class="tl-item">
+              <h4>Graduate Teaching Assistant</h4>
+              <div class="tl-org">Texas A&amp;M University</div>
+              <span class="tl-date">2023 – 2026</span>
+              <p>Led laboratory sections in Introductory Biology and Principles of Genetics.</p>
+            </li>
+          </ul>
+        </div>
+
+        <div class="cv-foot">
+          <a class="cv-btn" style="display:inline-flex;width:auto;margin:0" href="assets/Barboza_CV.pdf"
+            download onclick="return confirm('Download Andres Barboza’s CV (PDF)?')">
+            <i class="bi bi-download"></i> Download CV
+          </a>
+        </div>
+      </article>
+
+      <!-- ---------- RESEARCH ---------- -->
+      <article data-page="research">
+        <h2 class="section-title">Research</h2>
+
+        <div class="pub-list">
+          <article class="pub">
+            <h3>Genomes of jewels: contrasting evolutionary dynamics of X and autosomal chromosomes in sky island
+              jewel scarab beetles (<em>Chrysina</em>)</h3>
+            <p class="authors"><b>Barboza A.</b>, Chien S., Blackmon L., Esfadani T., Blackmon H.</p>
+            <p class="venue"><span class="status prep">In preparation</span></p>
+          </article>
+          <article class="pub">
+            <h3>Mating Systems &amp; Chromosome Evolution in Angiosperms</h3>
+            <p class="authors">Copeland M., <b>Barboza A.</b>, Ugochukwu P., Blackmon H.</p>
+            <p class="venue"><span class="status prep">In preparation</span></p>
+          </article>
+          <article class="pub">
+            <h3>Dismantling Chromosomal Stasis Across the Eukaryotic Tree of Life</h3>
+            <p class="authors">Copeland M., McConnell M., <b>Barboza A.</b>, et al.</p>
+            <p class="venue"><span class="status prep">Submitted</span> <a class="doi"
+                href="https://doi.org/10.64898/2026.04.14.718287" target="_blank" rel="noopener"><i
+                  class="bi bi-link-45deg"></i> DOI</a> <span class="meta"><em>bioRxiv</em></span></p>
+          </article>
+          <article class="pub">
+            <h3>SeqDef: An R package for phylogenetically weighted genomic prioritization across the tree of life</h3>
+            <p class="authors"><b>Barboza A.</b>, Fissell G., Spalink D., Blackmon H.</p>
+            <p class="venue"><span class="status accepted">Accepted</span> <em>Journal of Evolutionary Biology</em></p>
+          </article>
+          <article class="pub">
+            <h3>Drivers of Achiasmatic Meiosis: Sexual Antagonism versus Heteromorphy-Dependent Aneuploidy across
+              Sex-Chromosome Divergence</h3>
+            <p class="authors"><b>Barboza A.</b>, Blackmon H.</p>
+            <p class="venue"><a class="doi" href="https://doi.org/10.1093/g3journal/jkaf217" target="_blank"
+                rel="noopener"><i class="bi bi-link-45deg"></i> DOI</a> <span class="meta"><em>G3: Genes, Genomes,
+                  Genetics</em> &middot; 2025</span></p>
+          </article>
+          <article class="pub">
+            <h3>Direct Repeater: R package for annotating direct repeats in genome assemblies</h3>
+            <p class="authors">Copeland M., <b>Barboza A.</b>, Romanowski J., Adelman Z., Blackmon H.</p>
+            <p class="venue"><a class="doi" href="https://doi.org/10.12688/f1000research.170810.1" target="_blank"
+                rel="noopener"><i class="bi bi-link-45deg"></i> DOI</a> <span class="meta"><em>F1000 Research</em>
+                &middot; 2025</span></p>
+          </article>
+          <article class="pub">
+            <h3>Orphan Genes are not a Distinct Biological Entity</h3>
+            <p class="authors"><b>Barboza A.</b>*, Marano M.*, Bathala R., Ayala Zaragoza R., Neira A., Samano A.,
+              Owoyemi A., Casola C. <span class="eq">*Authors contributed equally.</span></p>
+            <p class="venue"><a class="doi" href="https://doi.org/10.1002/bies.202400146" target="_blank"
+                rel="noopener"><i class="bi bi-link-45deg"></i> DOI</a> <span class="meta"><em>BioEssays</em> &middot;
+                2024</span></p>
+          </article>
+          <article class="pub">
+            <h3>In Situ Generation of a Zwitterionic Charge Transfer Probe for Selective Detection of Human Serum
+              Albumin</h3>
+            <p class="authors">Choudhury R., Sharma A.K., Paudel P., Wilson P., <b>Barboza A.</b></p>
+            <p class="venue"><a class="doi" href="https://doi.org/10.1016/j.ab.2022.114630" target="_blank"
+                rel="noopener"><i class="bi bi-link-45deg"></i> DOI</a> <span class="meta"><em>Analytical
+                  Biochemistry</em> &middot; 2022</span></p>
+          </article>
+        </div>
+
+        <p class="scholar-line">
+          <a href="https://scholar.google.com/citations?hl=en&user=0NhNctcAAAAJ" target="_blank" rel="noopener">
+            <i class="bi bi-mortarboard-fill"></i> Full list on Google Scholar
+          </a>
+        </p>
+      </article>
+
+      <!-- ---------- RESOURCES ---------- -->
+      <article data-page="resources">
+        <h2 class="section-title">Resources</h2>
+        <p class="lead">Interactive tools I've built.</p>
+
+        <div class="resource-list">
+          <a class="resource-card" href="resources/worldcup/">
+            <svg class="rc-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="stad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#6a97d6" />
+                  <stop offset="1" stop-color="#507dbc" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#stad)" />
+              <g fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="12" y="17" width="40" height="30" rx="8" />
+                <line x1="32" y1="17" x2="32" y2="47" />
+                <circle cx="32" cy="32" r="6.5" />
+                <path d="M12 25.5 h6 v13 h-6" />
+                <path d="M52 25.5 h-6 v13 h6" />
+              </g>
+            </svg>
+            <div class="rc-body">
+              <h3>World Cup 2026 Predictor</h3>
+              <p>A live Monte-Carlo bracket. Settle any tie and watch every advance probability, title odd, and
+                expected-goals figure re-compute instantly.</p>
+            </div>
+            <i class="bi bi-arrow-right chev" aria-hidden="true"></i>
+          </a>
+
+          <a class="resource-card" href="https://github.com/Andresdbp/SeqDef" target="_blank" rel="noopener">
+            <svg class="rc-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="phy" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#6a97d6" />
+                  <stop offset="1" stop-color="#507dbc" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="64" height="64" rx="15" fill="url(#phy)" />
+              <g fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 32 H24 V19 H36" />
+                <path d="M24 32 V45 H36" />
+                <path d="M36 19 V13 H46" />
+                <path d="M36 19 V25 H46" />
+                <path d="M36 45 V39 H46" />
+                <path d="M36 45 V51 H46" />
+              </g>
+              <g fill="#ffffff">
+                <circle cx="14" cy="32" r="2.6" />
+                <circle cx="46" cy="13" r="2.6" />
+                <circle cx="46" cy="25" r="2.6" />
+                <circle cx="46" cy="39" r="2.6" />
+                <circle cx="46" cy="51" r="2.6" />
+              </g>
+            </svg>
+            <div class="rc-body">
+              <h3>SeqDef</h3>
+              <p>An R package for phylogenetically weighted genomic prioritization across the tree of life. Source
+                and documentation on GitHub.</p>
+            </div>
+            <i class="bi bi-box-arrow-up-right chev" aria-hidden="true"></i>
+          </a>
+        </div>
+      </article>
+      </div><!-- /content-card -->
+
+      <div class="amdg-foot">
+        <p class="amdg">Ad Maiorem Dei Gloriam</p>
       </div>
-    </section>
-  </main>
 
-  <footer class="site-footer">
-    <div class="footer-rule">
-      <svg viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-        stroke-linejoin="round" aria-hidden="true">
-        <path d="M7 12 C13 5 27 5 33 12 C27 19 13 19 7 12 Z" />
-        <path d="M7 12 L2 8 M7 12 L2 16" />
-        <circle cx="27" cy="10.5" r="1.3" fill="currentColor" stroke="none" />
-      </svg>
     </div>
-    <p class="amdg">Ad Maiorem Dei Gloriam</p>
-    <p class="footer-meta">&copy; 2026 Andres Barboza</p>
-  </footer>
+  </div>
 
-  <script src="assets/js/site.js?v=4"></script>
+  <button class="theme-toggle theme-fab" id="themeToggle" aria-label="Toggle light / dark mode">
+    <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+  </button>
+
+  <script src="assets/js/site.js?v=5"></script>
 </body>
 
 </html>
