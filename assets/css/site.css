@@ -575,15 +575,21 @@ article[data-page].active { display: block; animation: fade 0.5s ease; }
 /* =========================================================
    Footer (AMDG)
    ========================================================= */
-.amdg-foot { text-align: center; margin-top: 4px; }
+.amdg-foot {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
 .amdg {
   font-family: 'Cinzel', Georgia, serif;
   text-transform: uppercase;
   font-weight: 600;
   font-size: 15px;
-  color: var(--gold);
+  color: #C42032;
   letter-spacing: 3px;
 }
+:root[data-theme="dark"] .amdg { color: #958C64; }
 
 /* =========================================================
    Responsive
@@ -617,7 +623,8 @@ article[data-page].active { display: block; animation: fade 0.5s ease; }
   .nav-link { padding: 16px 6px; }
   /* lift the theme toggle above the bottom bar so they don't overlap */
   .theme-fab { bottom: 68px; }
-  body { padding-bottom: 78px; }
+  /* extra bottom room so a full scroll lifts the AMDG mark clear of the FAB */
+  body { padding-bottom: 120px; }
 
   .sb-more {
     max-height: 0;
@@ -634,7 +641,7 @@ article[data-page].active { display: block; animation: fade 0.5s ease; }
 }
 
 @media (max-width: 600px) {
-  body { padding: 14px 10px 32px; padding-bottom: 78px; }
+  body { padding: 14px 10px 32px; padding-bottom: 120px; }
   .content-card { padding: 12px 18px 24px; }
   .service-grid { grid-template-columns: 1fr; }
   .section-title { font-size: 22px; }
