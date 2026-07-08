@@ -23,14 +23,12 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link href="assets/css/site.css?v=5" rel="stylesheet">
 
-  <!-- set theme before paint to avoid flash -->
+  <!-- default to light; remember the visitor's toggle choice. set before paint to avoid flash -->
   <script>
     (function () {
       try {
-        var t = localStorage.getItem('theme');
-        if (!t) t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', t);
-      } catch (e) { document.documentElement.setAttribute('data-theme', 'dark'); }
+        document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
+      } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }
     })();
   </script>
 </head>
