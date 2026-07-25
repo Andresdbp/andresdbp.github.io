@@ -149,7 +149,12 @@
 
     function frame(t) {
       if (!running) return;
-      var dt = last ? Math.min((t - last) / 1000, 0.1) : 0;  // clamp tab-switch jumps
+      // Establish the time baseline without ever handing step() a zero dt.
+      // A zero-length step looks like "no time left" to any integrator that
+      // guards on remaining time, which silently halts the simulation on
+      // frame one. Skip the first frame instead.
+      if (!last) { last = t; id = requestAnimationFrame(frame); return; }
+      var dt = Math.min((t - last) / 1000, 0.1);   // clamp tab-switch jumps
       last = t;
       step(dt, t / 1000);
       id = requestAnimationFrame(frame);

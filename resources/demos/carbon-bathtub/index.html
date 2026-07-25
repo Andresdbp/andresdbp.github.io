@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
 
   <style>
     /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
@@ -1319,8 +1319,11 @@
         var TM = tmax();
         var st = MODE === 'carbon' ? CS : RS;
         var H = MODE === 'carbon' ? 0.02 : 0.05;
+        // Stop only when the TIMELINE is exhausted. A zero-length step is not
+        // the end of the run — treating it as such halts the sim on frame one.
+        if (TM - st.t <= 1e-9) { setRun(false); return; }
         var rem = Math.min(dtSim, TM - st.t);
-        if (rem <= 1e-9) { setRun(false); return; }
+        if (rem <= 1e-9) return;
         while (rem > 1e-9) {
           var h = Math.min(H, rem);
           if (MODE === 'carbon') stepC(CS, CS.E, h); else stepR(RS, RS.L, h);
