@@ -269,8 +269,9 @@ something false. Treat them as acceptance criteria.
    stored in broken bonds vs. going into motion, same particles with H-bonding on vs. off). Never print
    J/g·K or °C for real water on that panel.
 
-2. **"Cells are small because diffusion is slow" is the wrong mechanism.** With D ≈ 2000 µm²/s, a 100 µm
-   cell reaches steady state in ~0.8 milliseconds. The real constraint is the steady-state Krogh
+2. **"Cells are small because diffusion is slow" is the wrong mechanism.** With D ≈ 2000 µm²/s, a 10 µm
+   cell equilibrates in about 8 milliseconds and even a 100 µm one in under a second — negligible against
+   a cell cycle measured in hours. The real constraint is the steady-state Krogh
    criterion, R_crit = √(6·D·Cs/k). Lead with critical radius; demote r² timing to a secondary
    observation and be honest that the transient is fast. Also: the shape toggle needs per-geometry
    constants (sphere /6, cylinder /4, slab /2) — reusing the sphere formula for a flattened disc is a

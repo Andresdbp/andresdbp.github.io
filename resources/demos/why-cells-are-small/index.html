@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Why Cells Are Small | Dr. Andres Barboza</title>
+  <meta name="description" content="Oxygen diffuses in from the surface and is burned throughout the cell. Solve the steady state and the centre concentration falls as the square of the radius until it hits zero. The membrane never fails to deliver - the middle just runs out.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: sub/sup, stage labels, legend swatches, equation block */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.s1 i { background: var(--series-1); }
+    .legend .lg.s2 i { background: var(--series-2); }
+    .legend .lg.s3 i { background: var(--series-3); }
+    .legend .lg.dead i { height: 11px; width: 11px; border-radius: 3px; background: var(--bad); }
+    .legend .lg.on { color: var(--text); font-weight: 600; }
+
+    /* readout tiles here carry real units, which are wider than the shell default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 27px; }
+
+    .eqn {
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      padding-bottom: 2px;
+    }
+    .eqn b { color: var(--accent-strong); font-weight: 600; }
+
+    .tbl td.dead { color: var(--bad); font-weight: 600; }
+    .tbl td.live { color: var(--ok); font-weight: 600; }
+    .tbl tr.now td { background: var(--accent-soft); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Why Cells Are Small</h1>
+        <p class="demo-sub">Drag the radius up until a dead core opens in the middle. Then tick &ldquo;keep the volume fixed&rdquo; and press <em>Flat sheet</em> &mdash; same amount of cytoplasm, fully supplied.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 2</span>
+          <span class="tag is-accent">Diffusion limit</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Cell geometry" id="geoSeg">
+          <button role="tab" aria-selected="true" data-geo="sphere">Sphere</button>
+          <button role="tab" aria-selected="false" data-geo="cylinder">Cylinder</button>
+          <button role="tab" aria-selected="false" data-geo="slab">Flat sheet</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="cellLabel">Cut through the middle of the cell</p>
+        <canvas id="cell" role="img"
+                aria-label="Cross-section of the cell, shaded by dissolved oxygen concentration: rich at the membrane and falling towards the centre, with any anoxic dead core drawn in red."></canvas>
+        <p class="stage-caption" id="cellCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:15px 0">
+
+        <p class="stage-label">Oxygen across the cell <span>&mdash; surface to surface, through the centre</span></p>
+        <canvas id="profile" role="img"
+                aria-label="Dissolved oxygen concentration plotted from one surface, through the centre, to the other surface. The profile is a downward parabola, clamped at zero wherever a dead core has formed."></canvas>
+        <p class="stage-caption" id="profCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:15px 0">
+
+        <p class="stage-label">Centre concentration as the cell grows <span>&mdash; same k, D and C<sub>s</sub> for all three shapes</span></p>
+        <canvas id="crit" role="img"
+                aria-label="Concentration at the centre of the cell plotted against half-thickness, for a sphere, a cylinder and a flat sheet. Each curve falls as the square of the size and reaches zero at its own critical radius."></canvas>
+        <div class="legend" id="critLegend">
+          <span class="lg s1" id="lgSphere"><i></i>sphere &divide;6</span>
+          <span class="lg s2" id="lgCyl"><i></i>cylinder &divide;4</span>
+          <span class="lg s3" id="lgSlab"><i></i>flat sheet &divide;2</span>
+          <span class="lg dead"><i></i>anoxic</span>
+        </div>
+        <p class="stage-caption" id="critCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The answer</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2" id="centreBox">
+              <div class="r-label">Oxygen at the centre</div>
+              <div class="r-value big" id="rCentre">52.0<span class="r-unit">&micro;M</span></div>
+              <div class="r-sub" id="rCentreSub">52.0% of the concentration just outside the membrane</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Critical size for this shape</div>
+              <div class="r-value" id="rCrit">173<span class="r-unit">&micro;m</span></div>
+              <div class="r-sub" id="rCritSub">past this the centre is at zero</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Dead core radius</div>
+              <div class="r-value" id="rCore">0<span class="r-unit">&micro;m</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Volume that is anoxic</div>
+              <div class="r-value" id="rCoreV">0.0%</div>
+            </div>
+          </div>
+          <p class="note" id="verdict" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The cell</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="aRange" id="aLabel">Radius R</label>
+                <span class="ctrl-value" id="aOut">120 &micro;m</span>
+              </div>
+              <input type="range" id="aRange" min="0.3" max="3" step="0.0002" value="2.0792">
+              <p class="ctrl-hint" id="aHint">The distance from the membrane to the deepest point inside. 2 &micro;m to 1000 &micro;m, logarithmic. A typical animal cell is 10&ndash;30 &micro;m across, so its radius sits near the far left.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="rhoRange">Elongation / flattening</label>
+                <span class="ctrl-value" id="rhoOut">20&times;</span>
+              </div>
+              <input type="range" id="rhoRange" min="0.3" max="2" step="0.0002" value="1.301">
+              <p class="ctrl-hint" id="rhoHint">How many times longer (cylinder) or wider (sheet) than it is thick.</p>
+            </div>
+
+            <label class="check"><input type="checkbox" id="keepVol"> Keep the volume fixed when I change shape</label>
+            <p class="ctrl-hint">With this on, switching shape re-solves the thickness so the cell holds exactly the same cytoplasm. That is the honest comparison &mdash; and the whole point of the demonstration.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The physics</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="kRange">Consumption rate k</label>
+                <span class="ctrl-value" id="kOut">40.0 &micro;M s⁻¹</span>
+              </div>
+              <input type="range" id="kRange" min="-1.4" max="2.3" step="0.0002" value="1.602">
+              <p class="ctrl-hint">Oxygen burned per litre of cytoplasm per second, assumed the same everywhere inside. Resting tissue is roughly 5 &micro;M s⁻¹; hard-working muscle runs tens of times higher.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="dRange">Diffusion coefficient D</label>
+                <span class="ctrl-value" id="dOut">2000 &micro;m&sup2; s⁻¹</span>
+              </div>
+              <input type="range" id="dRange" min="1.3" max="3.6" step="0.0002" value="3.301">
+              <p class="ctrl-hint">Oxygen in cytoplasm is about 2000 &micro;m&sup2; s⁻¹ (2 &times; 10⁻⁵ cm&sup2; s⁻¹). A large protein in crowded cytoplasm is nearer 20.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="csRange">Outside concentration C<sub>s</sub></label>
+                <span class="ctrl-value" id="csOut">100 &micro;M</span>
+              </div>
+              <input type="range" id="csRange" min="5" max="250" step="1" value="100">
+              <p class="ctrl-hint">Dissolved oxygen held constant right at the membrane. Arterial plasma is about 130 &micro;M; the venous end of a capillary bed is nearer 50 &micro;M.</p>
+            </div>
+
+            <div class="btn-row" id="presets">
+              <button class="btn" data-preset="rest">Resting tissue</button>
+              <button class="btn is-on" data-preset="muscle">Working muscle</button>
+              <button class="btn" data-preset="tumour">Tumour spheroid</button>
+              <button class="btn" data-preset="protein">A large protein</button>
+            </div>
+            <div class="btn-row" style="margin-top:2px">
+              <button class="btn" id="btnReset">Reset everything</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Does the membrane fail?</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Oxygen consumed</div>
+              <div class="r-value" id="rCons">290</div>
+              <div class="r-sub" id="rConsU">fmol s⁻¹</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Oxygen crossing the membrane</div>
+              <div class="r-value" id="rDeliv">290</div>
+              <div class="r-sub" id="rDelivU">fmol s⁻¹</div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:11px">
+            <strong>These two numbers are always equal.</strong> Not approximately &mdash; exactly, at every setting
+            of every slider, including sizes far past the critical radius. They are computed independently here: one
+            from k &times; volume, the other from Fick&rsquo;s law at the membrane. In a steady state the surface
+            <em>must</em> deliver everything the inside burns. The membrane never runs short of area. What runs
+            short is the concentration left over by the time oxygen has reached the middle.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Surface&ndash;area&ndash;to&ndash;volume &mdash; the famous number</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">SA : V</div>
+              <div class="r-value" id="rSAV">0.025<span class="r-unit">&micro;m⁻¹</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Volume</div>
+              <div class="r-value" id="rVol">7.24</div>
+              <div class="r-sub" id="rVolU">&micro;m&sup3;</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Surface area</div>
+              <div class="r-value" id="rArea">1.81</div>
+              <div class="r-sub" id="rAreaU">&micro;m&sup2;</div>
+            </div>
+          </div>
+          <p class="note warn" style="margin-top:11px">
+            <strong>Real, related, and not the mechanism.</strong> SA:V really does fall as 1/a, and you can watch it
+            do exactly that. But it is not what breaks. Test it: switch to the <em>flat sheet</em>, leave the
+            thickness alone, and drag the flattening slider from 20&times; to 100&times;. You just built a cell with
+            <strong>25 times the volume and 23 times the membrane</strong> &mdash; and SA:V went slightly
+            <em>down</em>, while the centre concentration did not move by a single &micro;M. Supply into the middle
+            is set by the <strong>distance</strong> from the surface, not by how much surface there is.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Same cytoplasm, three shapes</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Shape</th><th>Half-thickness</th><th>SA : V</th><th>Centre</th></tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" id="tblHint" style="margin-top:9px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">How long to reach this steady state</div>
+          <div class="readouts two">
+            <div class="readout span2">
+              <div class="r-label">t &asymp; a&sup2; / 6D</div>
+              <div class="r-value" id="rTime">1.20<span class="r-unit">s</span></div>
+              <div class="r-sub" id="rTimeSub">an ordinary cell 10 &micro;m across, at this D: 2.08 ms</div>
+            </div>
+          </div>
+          <p class="note" id="timeNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The equations</div>
+          <div class="eqn">
+            D &nabla;&sup2;C = k,&nbsp; C(surface) = C<sub>s</sub><br>
+            C(r) = C<sub>s</sub> &minus; k(a&sup2; &minus; r&sup2;) / (<b>n</b>D)<br>
+            C(centre) = C<sub>s</sub> &minus; k a&sup2; / (<b>n</b>D)<br>
+            a<sub>crit</sub> = &radic;( <b>n</b> D C<sub>s</sub> / k )<br>
+            <b>n</b> = 6 sphere&nbsp;&middot;&nbsp;4 cylinder&nbsp;&middot;&nbsp;2 sheet
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            The geometry constant <strong>n</strong> is the whole difference between the three shapes, and it comes
+            straight out of the Laplacian: a sphere draws in through a shell whose area grows as r&sup2;, a cylinder
+            as r, a sheet not at all. Reusing the sphere&rsquo;s 6 for a sheet would be wrong by a factor of three
+            in a<sub>crit</sub>&sup2;. Past a<sub>crit</sub> the formula above would go negative, which is
+            meaningless, so the demonstration switches to the free-boundary solution: consumption stops where the
+            oxygen runs out, and the dead core radius r<sub>0</sub> is solved for numerically.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where this model simplifies</div>
+          <p class="note warn">
+            <strong>Consumption is zero-order.</strong> Every litre of live cytoplasm burns oxygen at the same rate
+            k regardless of how much is there. Real mitochondria follow saturation kinetics with a very low
+            half-saturation constant (under 1 &micro;M), so zero-order is an excellent approximation almost
+            everywhere &mdash; but it means the dead-core edge here is a hard line, whereas a real cell tapers into
+            hypoxia over a few micrometres.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            Other simplifications, stated plainly. The cytoplasm is treated as uniform water: one D everywhere, no
+            organelles, no membranes in the way, and <em>no stirring</em> &mdash; real large cells cheat by
+            streaming their cytoplasm, which beats diffusion outright. C<sub>s</sub> is pinned at the membrane, so
+            the outside is assumed well mixed; an unstirred layer would lower it. The cylinder is solved for radial
+            diffusion only, ignoring flux in through its two ends, and the sheet ignores flux through its rim
+            &mdash; both are good once the elongation slider is above about 5&times;, which is why the slider starts
+            there. The drawing is rescaled to fill the panel, so read the size off the scale bar, not off the
+            picture. And oxygen is only one of the things a cell has to move: this is the diffusion constraint, not
+            a complete theory of cell size.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn that surface area grows as the square while volume grows
+        as the cube, so SA:V falls as a cell gets bigger &mdash; and then they explain the size limit by saying the
+        cell <em>&ldquo;does not have enough surface to absorb the nutrients it needs&rdquo;</em>. That sentence is
+        wrong, and this page is built to break it. Look at the two flux numbers in the
+        <em>Does the membrane fail?</em> panel. They are equal. They are equal at 10 &micro;m, at 120 &micro;m, and
+        at 1000 &micro;m with a third of the cell already dead. The membrane delivers <strong>100% of demand, always</strong>.
+        A cell in trouble is not a cell whose surface stopped keeping up.
+      </p>
+      <p>
+        <strong>What actually goes wrong.</strong> To push oxygen inwards you need a concentration gradient, and the
+        deeper you want it to go, the more concentration you have to spend getting it there. Solve the steady state
+        and the arithmetic is brutally simple: the centre sits at
+        C<sub>s</sub> &minus; ka&sup2;/(nD). The drop is proportional to the <strong>square</strong> of the distance
+        from the surface to the middle. Double the radius and you need four times as much concentration in hand at
+        the membrane. At some point you do not have it, the centre reaches zero, and everything beyond that point is
+        anoxic no matter how much surface the cell has. That radius is
+        a<sub>crit</sub> = &radic;(nDC<sub>s</sub>/k), and it is the real limit.
+      </p>
+      <p>
+        <strong>Watch the shape change do what SA:V cannot explain.</strong> With the starting settings, a sphere of
+        radius 250 &micro;m has a dead core 128 &micro;m across &mdash; 13.5% of it is anoxic. Now tick
+        <em>keep the volume fixed</em> and press <em>Flat sheet</em>. Not one molecule of cytoplasm was removed: the
+        cell is now 55 &micro;m thick and about 1.1 mm across, and its centre sits at <strong>92.5 &micro;M</strong>,
+        essentially the outside value. Its SA:V rose by a factor of 3.4, but its centre concentration went from dead
+        to full. Those two things are nowhere near proportional, because SA:V was never the cause. What actually
+        changed was the trip from the surface to the deepest point: 250 &micro;m became 27 &micro;m, and the drop
+        goes as the square of that, so the deficit fell by roughly eighty-fold. This is why genuinely large cells
+        are long and thin or flat and wide &mdash; a nerve fibre a metre long is still only micrometres thick, and
+        every point in it is a few micrometres from the outside.
+      </p>
+      <p>
+        <strong>Do not blame the clock.</strong> The other popular wrong answer is &ldquo;diffusion is too slow to
+        reach the middle of a big cell&rdquo;. Check the timing panel. A real 10 &micro;m cell equilibrates with
+        oxygen in about 8 <em>milliseconds</em>; even a 100 &micro;m giant does it in under a second, and a 1 mm one
+        in a minute and a half. Compare that with a cell cycle measured in hours. The transient is over almost
+        instantly on any biological clock &mdash; and once it is over, it stays over. The problem is not that oxygen
+        takes too long to arrive. The problem is that when it gets there, in the steady state, there is none left.
+        (Turn D down to 25 &micro;m&sup2; s⁻¹ with the <em>large protein</em> preset and the timing does become
+        serious &mdash; that is a real constraint too, just not the one that sets cell size for oxygen.)
+      </p>
+      <p>
+        <strong>The honest caveat, because it matters.</strong> With realistic oxygen numbers the critical radius
+        comes out in the hundreds of micrometres &mdash; far bigger than the 10&ndash;30 &micro;m cell you drew in
+        your notes. So oxygen diffusion is <em>not</em> what stops your liver cell from being 50 &micro;m wide; it
+        has an enormous safety margin. What this criterion really explains is why <em>tissues</em> are threaded with
+        capillaries every 50 &micro;m or so, why a tumour spheroid grows a necrotic core at a couple of hundred
+        micrometres (try the preset), and why the few genuinely huge cells that exist are either shaped like sheets
+        and threads or are metabolically almost switched off, like an egg. The size of an ordinary cell is set by
+        other things as well &mdash; one nucleus can only supply so much cytoplasm with mRNA, which is exactly why a
+        skeletal muscle fibre big enough to see gives up and carries hundreds of nuclei.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — steady-state reaction–diffusion for a nutrient (oxygen)
+      //
+      //   D ∇²C = k          uniform zero-order consumption
+      //   C(surface) = Cs    well-mixed outside
+      //   dC/dr = 0 at the centre (regularity / symmetry)
+      //
+      // Solving with the correct Laplacian for each geometry:
+      //
+      //   sphere    C(r) = Cs − k(a² − r²)/(6D)     a_crit = √(6 D Cs / k)
+      //   cylinder  C(r) = Cs − k(a² − r²)/(4D)     a_crit = √(4 D Cs / k)
+      //   slab      C(x) = Cs − k(a² − x²)/(2D)     a_crit = √(2 D Cs / k)
+      //
+      // The constant n ∈ {6,4,2} is NOT interchangeable — it falls out of
+      // (1/r²)(r²C')' vs (1/r)(rC')' vs C''. Every formula below is keyed
+      // off GEO[g].n so no geometry can silently borrow another's answer.
+      //
+      // Past a_crit the formula would go negative, which is physically
+      // meaningless. The real solution is a free-boundary (dead-core)
+      // problem: consumption stops where C = 0, so on r ∈ [r0, a] we solve
+      // D∇²C = k with C(r0) = 0 AND C'(r0) = 0. With u = r0/a:
+      //
+      //   sphere    1 − 3u² + 2u³        = (a_crit/a)²
+      //   cylinder  1 − u²  + 2u² ln u   = (a_crit/a)²
+      //   slab      u = 1 − a_crit/a
+      //
+      // Each left-hand side is monotone decreasing on [0,1], so bisection
+      // is safe. C is clamped at zero everywhere; it is never plotted
+      // negative.
+      //
+      // Units: a, r in µm · D in µm² s⁻¹ · C, Cs in µM · k in µM s⁻¹
+      //        1 µM·µm³ = 1e-21 mol = 1e-6 fmol
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var TAU = Math.PI * 2;
+
+      var GEO = {
+        sphere:   { n: 6, label: 'Sphere',     dim: 'Radius R',          sym: 'R', si: 0 },
+        cylinder: { n: 4, label: 'Cylinder',   dim: 'Radius R',          sym: 'R', si: 1 },
+        slab:     { n: 2, label: 'Flat sheet', dim: 'Half-thickness L',  sym: 'L', si: 2 }
+      };
+      var ORDER = ['sphere', 'cylinder', 'slab'];
+
+      var DEF = { a: 120, k: 40, D: 2000, Cs: 100, rho: 20, geo: 'sphere', keep: false };
+      var S = { a: DEF.a, k: DEF.k, D: DEF.D, Cs: DEF.Cs, rho: DEF.rho, geo: DEF.geo, keep: false };
+
+      var PRESETS = {
+        rest:    { a: 120, k: 5,    D: 2000, Cs: 60 },
+        muscle:  { a: 120, k: 40,   D: 2000, Cs: 100 },
+        tumour:  { a: 200, k: 30,   D: 1600, Cs: 60 },
+        protein: { a: 120, k: 0.05, D: 25,   Cs: 5 }
+      };
+
+      // ---------------- geometry ----------------
+
+      function aCrit(g) { return Math.sqrt(GEO[g].n * S.D * S.Cs / S.k); }
+
+      function volume(g, a, rho) {
+        if (g === 'sphere') return 4 / 3 * Math.PI * a * a * a;      // (4/3)πa³
+        if (g === 'cylinder') return 2 * Math.PI * rho * a * a * a;  // πa²·L,  L = 2ρa
+        return 8 * rho * rho * a * a * a;                            // 2a·W²,  W = 2ρa
+      }
+      function aFromVol(g, V, rho) {
+        if (g === 'sphere') return Math.cbrt(3 * V / (4 * Math.PI));
+        if (g === 'cylinder') return Math.cbrt(V / (2 * Math.PI * rho));
+        return Math.cbrt(V / (8 * rho * rho));
+      }
+      function area(g, a, rho) {
+        if (g === 'sphere') return 4 * Math.PI * a * a;
+        if (g === 'cylinder') return 4 * Math.PI * rho * a * a + 2 * Math.PI * a * a;  // side + two caps
+        return 8 * rho * rho * a * a + 16 * rho * a * a;                               // two faces + rim
+      }
+      // the part of the surface the 1-D solution actually diffuses through
+      function diffArea(g, a, rho) {
+        if (g === 'sphere') return 4 * Math.PI * a * a;
+        if (g === 'cylinder') return 4 * Math.PI * rho * a * a;
+        return 8 * rho * rho * a * a;
+      }
+      function savRatio(g, a, rho) { return area(g, a, rho) / volume(g, a, rho); }
+
+      // ---------------- dead core ----------------
+
+      function coreU(g, a, ac) {
+        if (!(a > ac)) return 0;
+        if (g === 'slab') return 1 - ac / a;
+        var q = (ac / a) * (ac / a);
+        var lo = 0, hi = 1, mid, f, i;
+        for (i = 0; i < 80; i++) {
+          mid = (lo + hi) / 2;
+          if (g === 'sphere') f = 1 - 3 * mid * mid + 2 * mid * mid * mid - q;
+          else f = 1 - mid * mid + (mid > 1e-12 ? 2 * mid * mid * Math.log(mid) : 0) - q;
+          if (f > 0) lo = mid; else hi = mid;
+        }
+        return (lo + hi) / 2;
+      }
+      function liveFrac(g, u) {
+        if (g === 'sphere') return 1 - u * u * u;
+        if (g === 'cylinder') return 1 - u * u;
+        return 1 - u;
+      }
+
+      // ---------------- concentration profile ----------------
+
+      function conc(g, r, a, u) {
+        var k = S.k, D = S.D, Cs = S.Cs, n = GEO[g].n;
+        if (u <= 0) return Math.max(0, Cs - k * (a * a - r * r) / (n * D));
+        var r0 = u * a;
+        if (r <= r0) return 0;                                   // clamped, never negative
+        if (g === 'slab') return k * (r - r0) * (r - r0) / (2 * D);
+        if (g === 'sphere') return k * r * r / (6 * D) + k * r0 * r0 * r0 / (3 * D * r) - k * r0 * r0 / (2 * D);
+        return k * r * r / (4 * D) - (k * r0 * r0 / (2 * D)) * Math.log(r / r0) - k * r0 * r0 / (4 * D);
+      }
+
+      // Fick at the membrane — computed from the gradient, deliberately NOT
+      // from k·V, so that the two flux readouts are an independent check.
+      function surfGrad(g, a, u) {
+        var k = S.k, D = S.D, r0 = u * a;
+        if (g === 'sphere') return (k / (3 * D)) * (a - r0 * r0 * r0 / (a * a));
+        if (g === 'cylinder') return (k / (2 * D)) * (a - r0 * r0 / a);
+        return (k / D) * (a - r0);
+      }
+
+      function model() {
+        var g = S.geo, a = S.a, ac = aCrit(g), u = coreU(g, a, ac);
+        var V = volume(g, a, S.rho);
+        return {
+          geo: g, a: a, ac: ac, u: u, r0: u * a, Cs: S.Cs,
+          c0: conc(g, 0, a, u),
+          V: V, A: area(g, a, S.rho), sav: savRatio(g, a, S.rho),
+          live: liveFrac(g, u),
+          cons: S.k * V * liveFrac(g, u) * 1e-6,                                  // fmol s⁻¹
+          deliv: S.D * diffArea(g, a, S.rho) * surfGrad(g, a, u) * 1e-6,          // fmol s⁻¹
+          t: a * a / (6 * S.D)                                                    // s
+        };
+      }
+
+      // ---------------- formatting ----------------
+
+      function roundNice(x) {
+        if (x >= 100) return Math.round(x);
+        if (x >= 10) return Math.round(x * 10) / 10;
+        if (x >= 1) return Math.round(x * 100) / 100;
+        return Math.round(x * 1000) / 1000;
+      }
+      function fmtLen(x) { return x >= 100 ? F.dec(x, 0) : x >= 10 ? F.dec(x, 1) : F.dec(x, 2); }
+      function fmtC(x) { return x >= 10 ? F.dec(x, 1) : x >= 1 ? F.dec(x, 2) : x > 0 ? F.dec(x, 3) : '0'; }
+      function fmtBig(x) { return (x >= 1e5 || (x > 0 && x < 0.01)) ? F.sci(x, 2) : F.sig(x, 3); }
+      function fmtFlux(f) {
+        if (f >= 1e6) return [F.sig(f / 1e6, 3), 'nmol s⁻¹'];
+        if (f >= 1000) return [F.sig(f / 1000, 3), 'pmol s⁻¹'];
+        return [F.sig(f, 3), 'fmol s⁻¹'];
+      }
+      function fmtTime(t) {
+        if (t < 1e-3) return [F.sig(t * 1e6, 3), 'µs'];
+        if (t < 1) return [F.sig(t * 1000, 3), 'ms'];
+        if (t < 120) return [F.sig(t, 3), 's'];
+        if (t < 7200) return [F.sig(t / 60, 3), 'min'];
+        return [F.sig(t / 3600, 3), 'h'];
+      }
+
+      // ---------------- palette-derived colour ramp ----------------
+      // Never a hard-coded hex: both endpoints come from the live palette.
+
+      function parseCol(s) {
+        s = (s || '').trim();
+        if (s.charAt(0) === '#') {
+          if (s.length === 4) return [parseInt(s[1] + s[1], 16), parseInt(s[2] + s[2], 16), parseInt(s[3] + s[3], 16)];
+          return [parseInt(s.substr(1, 2), 16), parseInt(s.substr(3, 2), 16), parseInt(s.substr(5, 2), 16)];
+        }
+        var m = s.match(/-?\d+(\.\d+)?/g);
+        return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
+      }
+      function mix(ca, cb, t) {
+        var A = parseCol(ca), B = parseCol(cb);
+        return 'rgb(' + Math.round(A[0] + (B[0] - A[0]) * t) + ',' +
+          Math.round(A[1] + (B[1] - A[1]) * t) + ',' +
+          Math.round(A[2] + (B[2] - A[2]) * t) + ')';
+      }
+      function ramp(c, t) { return mix(c.surface2, c.accent, Math.pow(Demo.clamp(t, 0, 1), 0.8)); }
+
+      // ---------------- small canvas helpers ----------------
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.86;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+      function niceStep(x) {
+        var e = Math.pow(10, Math.floor(Math.log10(x))), m = x / e;
+        return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * e;
+      }
+
+      // ==================================================================
+      // CANVAS 1 — cross-section
+      // ==================================================================
+      var SPANS = [20, 30, 50, 80, 120, 200, 300, 500, 800, 1200, 2000, 3000];
+
+      var cellCv = Demo.canvas('#cell', function (ctx, w, h, c) {
+        var M = model(), i;
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = 12, padR = 12, padT = 22, padB = 58;
+        var bx0 = padL, bx1 = w - padR, by0 = padT, by1 = h - padB;
+        var boxW = bx1 - bx0, boxH = by1 - by0;
+        var cx = (bx0 + bx1) / 2, cy = (by0 + by1) / 2;
+        var a = M.a, isSlab = M.geo === 'slab';
+
+        // quantised µm span for the box height, so the scale does not jitter
+        var need = 2.25 * a, span = need;
+        for (i = 0; i < SPANS.length; i++) { if (SPANS[i] >= need) { span = SPANS[i]; break; } }
+        var pxPerUm = boxH / span;
+        var Rpx = a * pxPerUm;
+        if (!isSlab && Rpx > boxW / 2 * 0.96) { Rpx = boxW / 2 * 0.96; pxPerUm = Rpx / a; }
+
+        // ---- concentration fill ----
+        var stops = 28, grad;
+        if (isSlab) grad = ctx.createLinearGradient(0, cy - Rpx, 0, cy + Rpx);
+        else grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Rpx);
+        for (i = 0; i <= stops; i++) {
+          var s = i / stops;
+          var rr = isSlab ? Math.abs(2 * s - 1) * a : s * a;
+          grad.addColorStop(s, ramp(c, conc(M.geo, rr, a, M.u) / M.Cs));
+        }
+
+        function shapePath() {
+          ctx.beginPath();
+          if (isSlab) ctx.rect(bx0, cy - Rpx, boxW, 2 * Rpx);
+          else ctx.arc(cx, cy, Rpx, 0, TAU);
+        }
+        shapePath(); ctx.fillStyle = grad; ctx.fill();
+
+        // ---- dead core ----
+        if (M.u > 0) {
+          var r0px = M.u * Rpx;
+          ctx.save();
+          ctx.beginPath();
+          if (isSlab) ctx.rect(bx0, cy - r0px, boxW, 2 * r0px);
+          else ctx.arc(cx, cy, r0px, 0, TAU);
+          ctx.fillStyle = c.bad; ctx.globalAlpha = 0.92; ctx.fill();
+          ctx.globalAlpha = 1; ctx.clip();
+          ctx.strokeStyle = c.surface; ctx.globalAlpha = 0.4; ctx.lineWidth = 1.4;
+          for (var hx = bx0 - boxH; hx < bx1 + boxH; hx += 9) {
+            ctx.beginPath(); ctx.moveTo(hx, by1); ctx.lineTo(hx + boxH, by0); ctx.stroke();
+          }
+          ctx.restore();
+          ctx.save();
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1.4; ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          if (isSlab) { ctx.moveTo(bx0, cy - r0px); ctx.lineTo(bx1, cy - r0px); ctx.moveTo(bx0, cy + r0px); ctx.lineTo(bx1, cy + r0px); }
+          else ctx.arc(cx, cy, r0px, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // ---- membrane ----
+        shapePath();
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 2.4; ctx.stroke();
+
+        // ---- half-thickness arrow ----
+        ctx.strokeStyle = c.text; ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        if (isSlab) { ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - Rpx); }
+        else { ctx.moveTo(cx, cy); ctx.lineTo(cx + Rpx, cy); }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        dot(ctx, c, cx, cy, 2.6, c.text);
+        chip(ctx, c, isSlab ? cx : cx + Rpx / 2, isSlab ? cy - Rpx / 2 : cy - 6,
+          GEO[M.geo].sym + ' = ' + fmtLen(a) + ' µm', fs, c.text, w, 'center');
+
+        // ---- header text ----
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + (fs + 1) + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(GEO[M.geo].label, 2, 2);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right';
+        ctx.fillText(M.u > 0 ? 'dead core ' + fmtLen(M.r0) + ' µm' : 'fully supplied', w - 2, 3);
+
+        // ---- "extends sideways" markers on the sheet ----
+        if (isSlab) {
+          ctx.fillStyle = c.text2;
+          [bx0 + 8, bx1 - 8].forEach(function (ex, idx) {
+            var d = idx === 0 ? -1 : 1;
+            ctx.beginPath();
+            ctx.moveTo(ex + d * 6, cy); ctx.lineTo(ex - d * 3, cy - 5); ctx.lineTo(ex - d * 3, cy + 5);
+            ctx.closePath(); ctx.fill();
+          });
+        }
+
+        // ---- scale bar ----
+        var barUm = niceStep(span * 0.28);
+        var barPx = barUm * pxPerUm;
+        if (barPx > boxW * 0.6) { barUm = niceStep(span * 0.12); barPx = barUm * pxPerUm; }
+        var sbY = by1 - 6, sbX = bx0 + 4;
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(sbX, sbY - 4); ctx.lineTo(sbX, sbY); ctx.lineTo(sbX + barPx, sbY); ctx.lineTo(sbX + barPx, sbY - 4);
+        ctx.stroke();
+        ctx.fillStyle = c.muted; ctx.font = fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText(fmtLen(barUm) + ' µm', sbX + barPx + 5, sbY + 2);
+
+        // ---- colour bar ----
+        var cbW = Math.min(boxW - 8, 250), cbX = cx - cbW / 2, cbH = 11, cbY = by1 + 20;
+        var g2 = ctx.createLinearGradient(cbX, 0, cbX + cbW, 0);
+        for (i = 0; i <= 20; i++) g2.addColorStop(i / 20, ramp(c, i / 20));
+        ctx.fillStyle = g2; ctx.fillRect(cbX, cbY, cbW, cbH);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.strokeRect(cbX, cbY, cbW, cbH);
+
+        ctx.font = fs + FONT; ctx.fillStyle = c.muted;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left'; ctx.fillText('0', cbX, cbY + cbH + 3);
+        ctx.textAlign = 'right'; ctx.fillText(fmtC(M.Cs) + ' µM outside', cbX + cbW, cbY + cbH + 3);
+
+        var mxp = cbX + cbW * Demo.clamp(M.c0 / M.Cs, 0, 1);
+        ctx.fillStyle = M.c0 <= 0 ? c.bad : c.text;
+        ctx.beginPath();
+        ctx.moveTo(mxp, cbY - 1); ctx.lineTo(mxp - 4.5, cbY - 8); ctx.lineTo(mxp + 4.5, cbY - 8);
+        ctx.closePath(); ctx.fill();
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('centre', Demo.clamp(mxp, 24, w - 24), cbY - 9);
+      }, { aspect: 0.74, minHeight: 260, maxHeight: 380 });
+
+      // ==================================================================
+      // CANVAS 2 — concentration across the cell, surface to surface
+      // ==================================================================
+      var profCv = Demo.canvas('#profile', function (ctx, w, h, c) {
+        var M = model(), i, px;
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 36 : 44, padR = narrow ? 12 : 16, padT = 20, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var a = M.a;
+
+        function X(r) { return (x0 + x1) / 2 + (x1 - x0) / 2 * (r / a); }   // r from −a to +a
+        function Y(v) { return y0 - (y0 - y1) * Demo.clamp(v / M.Cs, 0, 1); }
+
+        // gridlines
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(fmtC(M.Cs * i / 4), x0 - 5, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // dead core band
+        if (M.u > 0) {
+          ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = c.bad;
+          ctx.fillRect(X(-M.r0), y1, X(M.r0) - X(-M.r0), y0 - y1);
+          ctx.restore();
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(X(-M.r0), y1); ctx.lineTo(X(-M.r0), y0);
+          ctx.moveTo(X(M.r0), y1); ctx.lineTo(X(M.r0), y0);
+          ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        // centre line
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(X(0), y1); ctx.lineTo(X(0), y0); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the profile
+        ctx.strokeStyle = c.series[GEO[M.geo].si]; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var r = (px - (x0 + x1) / 2) / ((x1 - x0) / 2) * a;
+          var y = Y(conc(M.geo, Math.abs(r), a, M.u));
+          if (px === x0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+        }
+        ctx.stroke();
+
+        // x ticks
+        ctx.font = fs + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        [-a, -a / 2, 0, a / 2, a].forEach(function (r) {
+          var pxx = X(r);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(pxx, y0); ctx.lineTo(pxx, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(fmtLen(Math.abs(r)) === '0.00' ? '0' : (r < 0 ? '−' : '') + fmtLen(Math.abs(r)), pxx, y0 + 6);
+        });
+        ctx.fillText('distance from the centre (µm)', (x0 + x1) / 2, y0 + 19);
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT; ctx.fillStyle = c.muted;
+        ctx.fillText('C (µM)', 1, 2);
+
+        // markers
+        dot(ctx, c, X(0), Y(M.c0), 5, M.c0 <= 0 ? c.bad : c.series[GEO[M.geo].si]);
+        dot(ctx, c, X(-a), Y(M.Cs), 3.6, c.muted);
+        dot(ctx, c, X(a), Y(M.Cs), 3.6, c.muted);
+        chip(ctx, c, X(0), Y(M.c0) - 9, M.c0 <= 0 ? 'centre at zero' : 'centre ' + fmtC(M.c0) + ' µM',
+          fs, M.c0 <= 0 ? c.bad : c.text, w, 'center', x0 + 1);
+        chip(ctx, c, x1 - 2, Y(M.Cs) + 14, 'membrane ' + fmtC(M.Cs) + ' µM', fs, c.muted, w, 'right');
+      }, { aspect: 0.44, minHeight: 165, maxHeight: 225 });
+
+      // ==================================================================
+      // CANVAS 3 — centre concentration vs size, all three geometries
+      // ==================================================================
+      var critCv = Demo.canvas('#crit', function (ctx, w, h, c) {
+        var M = model(), i, px;
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 36 : 44, padR = narrow ? 14 : 18, padT = 22, padB = 38;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+
+        var xmax = niceStep(Math.max(1.35 * M.a, 1.28 * aCrit('sphere'), 8));
+        function X(a) { return x0 + (x1 - x0) * Demo.clamp(a / xmax, 0, 1); }
+        function Y(v) { return y0 - (y0 - y1) * Demo.clamp(v / M.Cs, 0, 1); }
+
+        // gridlines
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(fmtC(M.Cs * i / 4), x0 - 5, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // the "anoxic" floor
+        ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = c.bad;
+        ctx.fillRect(x0, y0 - 5, x1 - x0, 5); ctx.restore();
+
+        // three curves
+        ORDER.forEach(function (g) {
+          var sel = g === M.geo, n = GEO[g].n, col = c.series[GEO[g].si];
+          ctx.save();
+          ctx.globalAlpha = sel ? 1 : 0.5;
+          ctx.strokeStyle = col; ctx.lineWidth = sel ? 2.6 : 1.5; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (px = x0; px <= x1; px++) {
+            var aa = (px - x0) / (x1 - x0) * xmax;
+            var v = Math.max(0, S.Cs - S.k * aa * aa / (n * S.D));
+            if (px === x0) ctx.moveTo(px, Y(v)); else ctx.lineTo(px, Y(v));
+          }
+          ctx.stroke();
+          // critical radius tick
+          var ac = Math.sqrt(n * S.D * S.Cs / S.k);
+          if (ac <= xmax) {
+            ctx.strokeStyle = col; ctx.lineWidth = sel ? 1.5 : 1;
+            ctx.setLineDash([4, 3]);
+            ctx.beginPath(); ctx.moveTo(X(ac), y0); ctx.lineTo(X(ac), sel ? y1 : y0 - 16); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          ctx.restore();
+        });
+
+        // label the selected geometry's critical radius
+        if (M.ac <= xmax) {
+          chip(ctx, c, X(M.ac), y1 + 12, 'critical size ' + fmtLen(M.ac) + ' µm', fs,
+            c.series[GEO[M.geo].si], w, 'center', x0 + 1);
+        }
+
+        // current point
+        dot(ctx, c, X(M.a), Y(M.c0), 5.5, M.c0 <= 0 ? c.bad : c.series[GEO[M.geo].si]);
+
+        // x ticks
+        ctx.font = fs + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (i = 0; i <= 4; i++) {
+          var xv = xmax * i / 4, pxx = X(xv);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(pxx, y0); ctx.lineTo(pxx, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(i === 0 ? '0' : fmtLen(xv), pxx, y0 + 6);
+        }
+        ctx.fillText('half-thickness a, surface to centre (µm)', (x0 + x1) / 2, y0 + 19);
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT; ctx.fillStyle = c.muted;
+        ctx.fillText('C at the centre (µM)', 1, 2);
+      }, { aspect: 0.54, minHeight: 200, maxHeight: 290 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        aRange: document.getElementById('aRange'),
+        aOut: document.getElementById('aOut'),
+        aLabel: document.getElementById('aLabel'),
+        aHint: document.getElementById('aHint'),
+        rhoRange: document.getElementById('rhoRange'),
+        rhoOut: document.getElementById('rhoOut'),
+        rhoHint: document.getElementById('rhoHint'),
+        kRange: document.getElementById('kRange'),
+        kOut: document.getElementById('kOut'),
+        dRange: document.getElementById('dRange'),
+        dOut: document.getElementById('dOut'),
+        csRange: document.getElementById('csRange'),
+        csOut: document.getElementById('csOut'),
+        keepVol: document.getElementById('keepVol'),
+        geoSeg: document.getElementById('geoSeg'),
+        presets: document.getElementById('presets'),
+        btnReset: document.getElementById('btnReset'),
+        centreBox: document.getElementById('centreBox'),
+        rCentre: document.getElementById('rCentre'),
+        rCentreSub: document.getElementById('rCentreSub'),
+        rCrit: document.getElementById('rCrit'),
+        rCritSub: document.getElementById('rCritSub'),
+        rCore: document.getElementById('rCore'),
+        rCoreV: document.getElementById('rCoreV'),
+        verdict: document.getElementById('verdict'),
+        rCons: document.getElementById('rCons'),
+        rConsU: document.getElementById('rConsU'),
+        rDeliv: document.getElementById('rDeliv'),
+        rDelivU: document.getElementById('rDelivU'),
+        rSAV: document.getElementById('rSAV'),
+        rVol: document.getElementById('rVol'),
+        rVolU: document.getElementById('rVolU'),
+        rArea: document.getElementById('rArea'),
+        rAreaU: document.getElementById('rAreaU'),
+        rTime: document.getElementById('rTime'),
+        rTimeSub: document.getElementById('rTimeSub'),
+        timeNote: document.getElementById('timeNote'),
+        tblBody: document.getElementById('tblBody'),
+        tblHint: document.getElementById('tblHint'),
+        cellLabel: document.getElementById('cellLabel'),
+        cellCap: document.getElementById('cellCap'),
+        profCap: document.getElementById('profCap'),
+        critCap: document.getElementById('critCap'),
+        lgSphere: document.getElementById('lgSphere'),
+        lgCyl: document.getElementById('lgCyl'),
+        lgSlab: document.getElementById('lgSlab')
+      };
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        var M = model();
+        var pct = M.Cs > 0 ? M.c0 / M.Cs : 0;
+
+        // ---- slider readouts ----
+        el.aOut.textContent = fmtLen(S.a) + ' µm';
+        el.rhoOut.textContent = F.dec(S.rho, S.rho >= 10 ? 0 : 1) + '×';
+        el.kOut.innerHTML = (S.k >= 1 ? F.dec(S.k, 1) : F.sig(S.k, 2)) + ' &micro;M s⁻¹';
+        el.dOut.innerHTML = F.dec(S.D, 0) + ' &micro;m&sup2; s⁻¹';
+        el.csOut.innerHTML = F.dec(S.Cs, 0) + ' &micro;M';
+
+        el.aLabel.textContent = GEO[S.geo].dim;
+        el.rhoHint.innerHTML = S.geo === 'sphere'
+          ? 'A sphere has no long axis, so this changes nothing about the cell on screen &mdash; it still sets the cylinder and the sheet in the comparison table below.'
+          : (S.geo === 'cylinder'
+            ? 'Length &divide; diameter. At ' + F.dec(S.rho, 0) + '&times; this cylinder is ' + fmtLen(2 * S.rho * S.a)
+              + ' &micro;m long and ' + fmtLen(2 * S.a) + ' &micro;m thick. Only the radius controls supply; the length does not.'
+            : 'Width &divide; thickness. At ' + F.dec(S.rho, 0) + '&times; this sheet is ' + fmtLen(2 * S.rho * S.a)
+              + ' &micro;m across and ' + fmtLen(2 * S.a) + ' &micro;m thick. Only the thickness controls supply; the width does not.');
+
+        // ---- headline ----
+        el.rCentre.innerHTML = fmtC(M.c0) + '<span class="r-unit">&micro;M</span>';
+        el.centreBox.className = 'readout span2 ' + (M.c0 <= 0 ? 'is-bad' : pct >= 0.35 ? 'is-ok' : 'is-accent');
+        el.rCentreSub.innerHTML = M.c0 <= 0
+          ? 'anoxic &mdash; the middle of this cell has no oxygen at all'
+          : F.pct(pct, 1) + ' of the concentration just outside the membrane';
+
+        el.rCrit.innerHTML = fmtLen(M.ac) + '<span class="r-unit">&micro;m</span>';
+        el.rCritSub.innerHTML = 'a<sub>crit</sub> = &radic;(' + GEO[S.geo].n + ' &times; D &times; C<sub>s</sub> / k) &mdash; '
+          + (S.a < M.ac
+            ? 'you are at ' + F.pct(S.a / M.ac, 0) + ' of it'
+            : 'you are ' + F.dec(S.a / M.ac, 2) + '&times; past it');
+
+        el.rCore.innerHTML = fmtLen(M.r0) + '<span class="r-unit">&micro;m</span>';
+        el.rCoreV.textContent = F.pct(1 - M.live, 1);
+
+        // ---- verdict ----
+        if (M.u > 0) {
+          el.verdict.className = 'note bad';
+          el.verdict.innerHTML = '<strong>The middle is dead.</strong> Oxygen runs out ' + fmtLen(M.a - M.r0)
+            + ' &micro;m in from the membrane, so everything inside a radius of ' + fmtLen(M.r0) + ' &micro;m &mdash; '
+            + F.pct(1 - M.live, 1) + ' of the cell &mdash; gets nothing. Growing more membrane cannot fix this. '
+            + 'The only fixes are: be smaller, be a different shape, burn less, or bring the outside closer.';
+        } else if (pct < 0.2) {
+          el.verdict.className = 'note warn';
+          el.verdict.innerHTML = '<strong>Alive, but only just.</strong> The centre is down to ' + fmtC(M.c0)
+            + ' &micro;M, ' + F.pct(pct, 1) + ' of the outside. Push ' + GEO[S.geo].sym + ' to '
+            + fmtLen(M.ac) + ' &micro;m and it reaches zero.';
+        } else {
+          el.verdict.className = 'note';
+          el.verdict.innerHTML = '<strong>Fully supplied.</strong> Every point inside has oxygen. The deficit at the '
+            + 'centre is k a&sup2;/(' + GEO[S.geo].n + 'D) = ' + fmtC(M.Cs - M.c0) + ' &micro;M. It grows with the '
+            + '<em>square</em> of the size &mdash; double ' + GEO[S.geo].sym + ' and the deficit quadruples to '
+            + fmtC(4 * (M.Cs - M.c0)) + ' &micro;M.';
+        }
+
+        // ---- flux balance ----
+        var fc = fmtFlux(M.cons), fd = fmtFlux(M.deliv);
+        el.rCons.textContent = fc[0]; el.rConsU.textContent = fc[1];
+        el.rDeliv.textContent = fd[0]; el.rDelivU.textContent = fd[1];
+
+        // ---- SA:V ----
+        el.rSAV.innerHTML = F.sig(M.sav, 3) + '<span class="r-unit">&micro;m⁻¹</span>';
+        el.rVol.textContent = fmtBig(M.V); el.rVolU.innerHTML = '&micro;m&sup3;';
+        el.rArea.textContent = fmtBig(M.A); el.rAreaU.innerHTML = '&micro;m&sup2;';
+
+        // ---- timing ----
+        var ft = fmtTime(M.t), ft10 = fmtTime(25 / (6 * S.D));
+        el.rTime.innerHTML = ft[0] + '<span class="r-unit">' + ft[1] + '</span>';
+        el.rTimeSub.textContent = 'an ordinary cell 10 µm across (5 µm to the middle), at this D: '
+          + ft10[0] + ' ' + ft10[1];
+        el.timeNote.className = M.t > 60 ? 'note warn' : 'note';
+        el.timeNote.innerHTML = M.t > 60
+          ? '<strong>Here the clock does matter.</strong> At D = ' + F.dec(S.D, 0) + ' &micro;m&sup2; s⁻¹ this cell '
+            + 'needs ' + ft[0] + ' ' + ft[1] + ' to settle &mdash; that is a real transport problem. But notice what '
+            + 'you had to do to get here: crank D down to protein values. For <em>oxygen</em> the transient is '
+            + 'always trivially fast, which is why "diffusion is too slow" is the wrong explanation for cell size.'
+          : '<strong>This is the number that is not the problem.</strong> Settling takes ' + ft[0] + ' ' + ft[1]
+            + ' here, and about ' + ft10[0] + ' ' + ft10[1] + ' for an ordinary cell 10 &micro;m across &mdash; against '
+            + 'a cell cycle measured in hours. Diffusion is not slow at this scale. The limit above is a '
+            + '<em>steady-state</em> limit: it is still there long after the transient has finished, and waiting '
+            + 'does not help.';
+
+        // ---- same-volume table ----
+        var rows = '';
+        ORDER.forEach(function (g) {
+          var ag = aFromVol(g, M.V, S.rho);
+          var acg = aCrit(g), ug = coreU(g, ag, acg);
+          var cg = conc(g, 0, ag, ug);
+          rows += '<tr' + (g === S.geo ? ' class="now"' : '') + '>'
+            + '<td>' + GEO[g].label + '</td>'
+            + '<td>' + fmtLen(ag) + '</td>'
+            + '<td>' + F.sig(savRatio(g, ag, S.rho), 3) + '</td>'
+            + '<td class="' + (cg <= 0 ? 'dead' : 'live') + '">' + (cg <= 0 ? 'dead core' : fmtC(cg)) + '</td>'
+            + '</tr>';
+        });
+        el.tblBody.innerHTML = rows;
+        el.tblHint.innerHTML = 'All three hold the same ' + fmtBig(M.V) + ' &micro;m&sup3; of cytoplasm, with the '
+          + 'cylinder and the sheet at ' + F.dec(S.rho, 0) + '&times; elongation. Half-thickness in &micro;m, SA:V in '
+          + '&micro;m⁻¹, centre concentration in &micro;M. The sphere is the <em>best</em> shape at a given '
+          + 'thickness &mdash; and the worst at a given volume, because it forces the thickness to be large.';
+
+        // ---- captions and legend ----
+        el.cellLabel.innerHTML = 'Cut through the middle of the cell <span>&mdash; ' + GEO[S.geo].label.toLowerCase()
+          + (S.geo === 'slab' ? ', seen edge-on' : '') + '</span>';
+        el.cellCap.innerHTML = 'Shading is dissolved oxygen: full at the membrane, falling inwards. '
+          + (M.u > 0 ? 'The red hatched region is the dead core, where oxygen has reached zero and stays there. ' : '')
+          + 'The drawing is rescaled to fill the panel, so judge the size from the scale bar, not the picture.';
+        el.profCap.innerHTML = 'A parabola, not a straight line: C(r) = C<sub>s</sub> &minus; k(a&sup2; &minus; r&sup2;)/('
+          + GEO[S.geo].n + 'D). '
+          + (M.u > 0 ? 'The flat floor in the middle is the dead core &mdash; concentration is clamped at zero, never negative.'
+            : 'The gradient is steepest at the membrane and flat at the centre, because at the centre there is nothing left to pull from.');
+        el.critCap.innerHTML = 'Three shapes, identical k, D and C<sub>s</sub>. They differ only by the geometry '
+          + 'constant, and that constant alone moves the critical size from ' + fmtLen(aCrit('slab')) + ' µm (sheet) to '
+          + fmtLen(aCrit('cylinder')) + ' µm (cylinder) to ' + fmtLen(aCrit('sphere')) + ' µm (sphere). '
+          + 'At one fixed half-thickness the sphere always wins &mdash; which is why the shape argument has to be made '
+          + 'at fixed <em>volume</em>, in the table on the right.';
+
+        el.lgSphere.className = 'lg s1' + (S.geo === 'sphere' ? ' on' : '');
+        el.lgCyl.className = 'lg s2' + (S.geo === 'cylinder' ? ' on' : '');
+        el.lgSlab.className = 'lg s3' + (S.geo === 'slab' ? ' on' : '');
+
+        cellCv.redraw(); profCv.redraw(); critCv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var rA = Demo.range('#aRange', function (v) { S.a = roundNice(Math.pow(10, v)); render(); });
+      var rRho = Demo.range('#rhoRange', function (v) { S.rho = roundNice(Math.pow(10, v)); render(); });
+      var rK = Demo.range('#kRange', function (v) { S.k = roundNice(Math.pow(10, v)); render(); });
+      var rD = Demo.range('#dRange', function (v) { S.D = roundNice(Math.pow(10, v)); render(); });
+      var rCs = Demo.range('#csRange', function (v) { S.Cs = v; render(); });
+
+      el.keepVol.addEventListener('change', function () { S.keep = this.checked; });
+
+      function selectGeo(g) {
+        if (!GEO[g] || g === S.geo) { S.geo = g; render(); return; }
+        if (S.keep) {
+          var V = volume(S.geo, S.a, S.rho);
+          var na = Demo.clamp(aFromVol(g, V, S.rho), 2, 1000);
+          S.geo = g;
+          rA.set(Math.log10(na));    // handler sets S.a and renders
+        } else {
+          S.geo = g;
+        }
+        render();
+      }
+
+      el.geoSeg.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          el.geoSeg.querySelectorAll('button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          selectGeo(b.dataset.geo);
+        });
+      });
+
+      function applyPreset(name) {
+        var p = PRESETS[name];
+        if (!p) return;
+        el.presets.querySelectorAll('button').forEach(function (o) {
+          o.className = 'btn' + (o.dataset.preset === name ? ' is-on' : '');
+        });
+        rK.set(Math.log10(p.k));
+        rD.set(Math.log10(p.D));
+        rCs.set(p.Cs);
+        rA.set(Math.log10(p.a));
+        render();
+      }
+
+      el.presets.querySelectorAll('button').forEach(function (b) {
+        b.addEventListener('click', function () { applyPreset(b.dataset.preset); });
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        el.geoSeg.querySelectorAll('button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.geo === DEF.geo ? 'true' : 'false');
+        });
+        S.geo = DEF.geo;
+        S.keep = false;
+        el.keepVol.checked = false;
+        rRho.set(Math.log10(DEF.rho));
+        applyPreset('muscle');
+      });
+
+      // .btn.is-on has no rule in demo.css; give the active preset a look here
+      var st = document.createElement('style');
+      st.textContent = '.btn.is-on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent-strong);}';
+      document.head.appendChild(st);
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>
