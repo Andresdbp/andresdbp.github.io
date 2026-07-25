@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Water Potential Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Osmosis with the pressure term switched on. A U-tube stops moving water while the two sides are still at different concentrations, and one solution can be hypertonic to an animal cell and hypotonic to a plant cell at the same time.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, tonicity chips, tight numeric tables */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 12px 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* the numeric tables carry four columns of bars; keep them legible at 375px */
+    .tbl.tight th, .tbl.tight td { padding: 6px 6px; white-space: nowrap; }
+    .tbl.tight td.k, .tbl.tight th.k { text-align: left; white-space: normal; }
+    .tbl.tight tr.hl td { background: var(--accent-soft); font-weight: 600; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .r-value.big { font-size: 24px; }
+
+    .ton {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .ton.hyper { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+    .ton.hypo { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .ton.iso { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .btn-row.wrap3 .btn { flex: 1 1 44%; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+    .legend .lg.mem i { width: 16px; height: 0; border-radius: 0; border-top: 2px dashed var(--text-2); }
+
+    .eqn {
+      font-size: 13.5px;
+      text-align: center;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      padding: 4px 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Water Potential Bench</h1>
+        <p class="demo-sub">Put 5 mM on the left and pure water on the right, press <em>Jump to equilibrium</em>, and then read the two concentrations. They are still different. Find out why.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 2</span>
+          <span class="tag is-accent">Water potential &amp; osmosis</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Which system" id="modeSeg">
+          <button role="tab" aria-selected="true" data-mode="tube">U-tube</button>
+          <button role="tab" aria-selected="false" data-mode="cells">Cells</button>
+        </div>
+
+        <div id="tubeStage">
+          <p class="stage-label">U-tube with a semipermeable membrane at the bottom
+            <span>&mdash; water crosses, solute never does</span></p>
+          <canvas id="tubeCv" role="img"
+                  aria-label="A U-tube. Each arm holds a solution; a semipermeable membrane sits in the channel joining them. Water moves across the membrane and the two liquid levels change until the water potentials match."></canvas>
+          <div class="legend">
+            <span class="lg"><i style="background:var(--series-2)"></i>solute particles, left arm</span>
+            <span class="lg"><i style="background:var(--series-4)"></i>solute particles, right arm</span>
+            <span class="lg mem"><i></i>membrane</span>
+          </div>
+          <p class="stage-caption" id="tubeCap">&nbsp;</p>
+        </div>
+
+        <div id="cellStage" hidden>
+          <p class="stage-label">One beaker, two cells
+            <span>&mdash; same solution, same physics, and the wall changes the ending</span></p>
+          <canvas id="cellCv" role="img"
+                  aria-label="A beaker of solution containing an animal cell and a plant cell. The animal cell swells and bursts or shrinks and crenates; the plant cell becomes turgid or its protoplast pulls away from the wall."></canvas>
+          <p class="stage-caption" id="cellCap">&nbsp;</p>
+        </div>
+
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The formula sheet, live</div>
+          <p class="eqn">&Psi; = &Psi;<sub>p</sub> + &Psi;<sub>s</sub></p>
+          <p class="eqn">&Psi;<sub>s</sub> = &minus;<em>i</em>CRT</p>
+          <hr class="sep" style="margin:10px 0">
+          <div class="stack">
+            <div>
+              <div class="ctrl-row"><span class="ctrl-label">Solute (both sides / the bath)</span></div>
+              <div class="seg" role="tablist" aria-label="Solute" id="soluteSeg">
+                <button role="tab" aria-selected="true" data-i="1">Sucrose, i = 1</button>
+                <button role="tab" aria-selected="false" data-i="2">NaCl, i = 2</button>
+              </div>
+              <p class="ctrl-hint"><em>i</em> is the ionisation constant: how many particles one formula unit
+                becomes in water. Sucrose stays as one molecule. NaCl splits into Na<sup>+</sup> and
+                Cl<sup>&minus;</sup>, so the <strong>same molarity does twice the osmotic work</strong>. What
+                matters to water is particles per litre, not what they are.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tempK">Temperature T</label>
+                <span class="ctrl-value" id="tempOut">295 K</span>
+              </div>
+              <input type="range" id="tempK" min="278" max="313" step="1" value="295">
+              <p class="ctrl-hint">R = 0.0831 L&middot;bar&middot;mol⁻¹&middot;K⁻¹, so RT = <span id="rtOut">24.51</span>
+                L&middot;bar&middot;mol⁻¹. A 1.00 M non-ionising solute therefore has
+                &Psi;<sub>s</sub> = <span id="oneMolar">&minus;24.51</span> bar. T must be in
+                <strong>kelvin</strong>, never &deg;C.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== U-TUBE CONTROLS ========== -->
+        <div class="panel" id="tubePanel">
+          <div class="panel-title">U-tube &mdash; starting concentrations</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="cL">Left arm</label>
+                <span class="ctrl-value" id="cLOut">5.0 mM</span>
+              </div>
+              <input type="range" id="cL" min="0" max="10" step="0.5" value="5">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="cR">Right arm</label>
+                <span class="ctrl-value" id="cROut">0.0 mM</span>
+              </div>
+              <input type="range" id="cR" min="0" max="10" step="0.5" value="0">
+              <p class="ctrl-hint">Moving either slider refills the tube to level (150 mL, 150 cm each side) and
+                stirs in the new amount of solute. The solute then stays put forever &mdash; only water crosses.</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="tubeRun">Pause</button>
+              <button class="btn" id="tubeEq">Jump to equilibrium</button>
+              <button class="btn" id="tubeReset">Refill level</button>
+            </div>
+
+            <hr class="sep">
+
+            <button class="btn" id="tubeMatch">Match the concentrations, keep the levels</button>
+            <p class="ctrl-hint">Stirs extra solute into whichever arm is more dilute until both read the
+              <strong>same</strong> concentration, without moving a drop of water. Do it after the tube has come to
+              rest and watch what happens next: the solute gradient is now <em>zero</em>, and water still flows
+              &mdash; downhill, out of the tall arm. That flow is &Psi;<sub>p</sub> acting alone.</p>
+          </div>
+
+          <hr class="sep" style="margin:14px 0">
+
+          <div class="table-scroll">
+            <table class="tbl tight">
+              <thead>
+                <tr><th class="k">Per side</th><th>Left</th><th>Right</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="k">C (mM)</td><td id="tLc">5.00</td><td id="tRc">0.00</td></tr>
+                <tr><td class="k">Osmolarity <em>i</em>C (mOsm)</td><td id="tLo">5.00</td><td id="tRo">0.00</td></tr>
+                <tr><td class="k">Column height (cm)</td><td id="tLh">150.0</td><td id="tRh">150.0</td></tr>
+                <tr><td class="k">&Psi;<sub>p</sub> (bar)</td><td id="tLpp">0.147</td><td id="tRpp">0.147</td></tr>
+                <tr><td class="k">&Psi;<sub>s</sub> (bar)</td><td id="tLps">&minus;0.123</td><td id="tRps">0.000</td></tr>
+                <tr class="hl"><td class="k">&Psi; (bar)</td><td id="tLp">0.025</td><td id="tRp">0.147</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="readouts two" style="margin-top:12px">
+            <div class="readout span2 is-accent">
+              <div class="r-label">&Psi;<sub>left</sub> &minus; &Psi;<sub>right</sub></div>
+              <div class="r-value big" id="dPsi">&minus;0.123<span class="r-unit">bar</span></div>
+              <div class="r-sub" id="dPsiDir">Water is crossing right &rarr; left.</div>
+            </div>
+          </div>
+
+          <p class="note" id="tubeNote" style="margin-top:11px">&nbsp;</p>
+
+          <p class="ctrl-hint" style="margin-top:11px">
+            &Psi;<sub>p</sub> here is not a slider and nobody is pressing on anything. It is the pressure the liquid
+            column itself exerts at the membrane: &rho;gh, which for water is
+            <strong>0.000981 bar per cm of height</strong>. Both potentials are read at the membrane, the only place
+            water actually crosses. Atmospheric pressure pushes down on both open surfaces equally, so it cancels and
+            is taken as zero.
+          </p>
+        </div>
+
+        <!-- ========== CELL CONTROLS ========== -->
+        <div class="panel" id="cellPanel" hidden>
+          <div class="panel-title">Cells &mdash; the bath around them</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="cBath">Bath concentration</label>
+                <span class="ctrl-value" id="cBathOut">0.300 M</span>
+              </div>
+              <input type="range" id="cBath" min="0" max="1" step="0.005" value="0.3">
+              <p class="ctrl-hint">The beaker is treated as huge, so the bath does not change as the cells gain or
+                lose water. Only the cells move.</p>
+            </div>
+
+            <div class="btn-row wrap3" id="bathPresets">
+              <button class="btn" data-osm="0">Pure water</button>
+              <button class="btn is-on" data-osm="0.3">Isotonic to the animal cell</button>
+              <button class="btn" data-osm="0.35">The one that splits them</button>
+              <button class="btn" data-osm="0.4">Plant just goes flaccid</button>
+              <button class="btn" data-osm="0.8">Strongly hypertonic</button>
+            </div>
+            <p class="ctrl-hint">Each preset sets an <strong>osmolarity</strong>, so switching to NaCl halves the
+              molarity it dials in. &ldquo;Isotonic to the animal cell&rdquo; with NaCl lands on 0.150 M, which is
+              why medical saline is 0.9% NaCl.</p>
+
+            <div class="btn-row">
+              <button class="btn primary" id="cellRun">Pause</button>
+              <button class="btn" id="cellReset">Fresh cells</button>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:14px 0">
+
+          <div class="table-scroll">
+            <table class="tbl tight">
+              <thead>
+                <tr><th class="k"></th><th>Bath</th><th>Animal</th><th>Plant</th></tr>
+              </thead>
+              <tbody>
+                <tr><td class="k">Osmolarity (Osm)</td><td id="soO">0.300</td><td id="anO">0.300</td><td id="plO">0.400</td></tr>
+                <tr><td class="k">&Psi;<sub>p</sub> (bar)</td><td id="soPp">0.00</td><td id="anPp">0.00</td><td id="plPp">2.06</td></tr>
+                <tr><td class="k">&Psi;<sub>s</sub> (bar)</td><td id="soPs">&minus;7.35</td><td id="anPs">&minus;7.35</td><td id="plPs">&minus;9.42</td></tr>
+                <tr class="hl"><td class="k">&Psi; (bar)</td><td id="soP">&minus;7.35</td><td id="anP">&minus;7.35</td><td id="plP">&minus;7.35</td></tr>
+                <tr><td class="k">Volume (&times; normal)</td><td>&mdash;</td><td id="anV">1.00</td><td id="plV">1.04</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="readouts two" style="margin-top:12px">
+            <div class="readout span2">
+              <div class="r-label">This solution, judged against the animal cell (0.300 Osm inside)</div>
+              <div class="r-value" style="font-size:15px"><span class="ton iso" id="anTon">isotonic</span></div>
+              <div class="r-sub" id="anState">No net movement. The cell keeps its normal volume.</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">The same solution, judged against the plant cell (0.400 Osm inside)</div>
+              <div class="r-value" style="font-size:15px"><span class="ton hypo" id="plTon">hypotonic</span></div>
+              <div class="r-sub" id="plState">Water enters; the wall pushes back and the cell is turgid.</div>
+            </div>
+          </div>
+
+          <p class="note" id="cellNote" style="margin-top:11px">&nbsp;</p>
+
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>Hypotonic, hypertonic and isotonic are adjectives for the solution</strong>, and they only mean
+            anything once you name the cell you are comparing it with. There is no such thing as a hypotonic cell.
+            Drag the bath to 0.35 Osm and this panel says two different words about one beaker.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where this model stops being true</div>
+          <p class="note warn">
+            <strong>The U-tube runs on millimolar solutions and a three-metre tube on purpose.</strong> A column of
+            water is a feeble source of pressure: 1 cm of it is only 0.000981 bar. To balance a 1.0 M solution
+            (&Psi;<sub>s</sub> = &minus;24.5 bar) you would need a column <strong>250 m</strong> tall. Real bench
+            U-tubes never reach equilibrium for exactly this reason &mdash; they rise a few centimetres and keep
+            creeping. Diluting to millimolar is what lets you actually watch osmosis stop.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>What else is simplified.</strong> &Psi;<sub>s</sub> = &minus;<em>i</em>CRT is the van 't Hoff
+            law, exact only for dilute ideal solutions; real NaCl behaves as <em>i</em> &asymp; 1.87, not 2.00,
+            because the ions are not fully independent. Solution density is taken as water's 1.00 g&middot;mL⁻¹ for
+            the &rho;gh calculation, and the short channel joining the arms is treated as having no volume. The
+            membrane leaks nothing at all, ever &mdash; real membranes do leak, and a solute that crosses freely
+            (urea, ethanol) generates no lasting osmotic pull no matter how concentrated it is. The plant cell wall
+            is modelled as a linear spring with elastic modulus &epsilon; = 50 bar; the red blood cell is set to
+            burst at 1.45&times; its normal volume. How <em>fast</em> water moves here is a made-up rate constant.
+            The <em>direction</em> and the <em>endpoint</em> are physics.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The first misconception:</strong> students compress osmosis into one rule &mdash; <em>water moves
+        toward the higher solute concentration</em> &mdash; and then quietly assume it keeps going until the two
+        concentrations are equal. The rule is a decent guess for the first instant. The conclusion is wrong, and this
+        page is built to break it. Start the U-tube with 5.0 mM on the left and pure water on the right and press
+        <em>Jump to equilibrium</em>. Water stops crossing when the left arm stands at
+        <strong>197.5 cm</strong> and the right at <strong>102.5 cm</strong>. Now read the concentrations:
+        <strong>3.80 mM on the left, 0.00 mM on the right.</strong> Not equal. Not close to equal. And nothing is
+        going to move them, because the thing water actually responds to is not concentration &mdash; it is
+        &Psi;, and &Psi; is +0.101 bar on both sides.
+      </p>
+      <p>
+        <strong>What is doing the balancing.</strong> The left arm still has the more negative &Psi;<sub>s</sub>
+        (&minus;0.093 bar against 0.000). What cancels it is &Psi;<sub>p</sub>: the left column is 94.9 cm taller,
+        and 94.9 cm of water presses down at the membrane with 0.093 bar. Solute pull on one side, column weight on
+        the other, exactly equal. This is the entire content of &Psi; = &Psi;<sub>p</sub> + &Psi;<sub>s</sub>, and it
+        is why the formula has two terms instead of one. Watch &Psi;<sub>p</sub> in the table as the sim runs: nobody
+        set it, no slider controls it, it builds itself out of the water that already moved. Osmosis generates the
+        pressure that stops osmosis.
+      </p>
+      <p>
+        <strong>Which way does water go?</strong> <strong>From higher &Psi; to lower &Psi; &mdash; from less negative
+        to more negative.</strong> Check it against the numbers rather than against your intuition, every time. At
+        the start of that run the right arm sits at &Psi; = +0.147 bar and the left at +0.025 bar, so water crosses
+        right to left and the salty side rises. That agrees with the memorised rule. Now do the experiment that
+        breaks it: with the tube resting at 197.5 / 102.5 cm, press
+        <em>Match the concentrations, keep the levels</em>. Solute is stirred into the short arm until both sides
+        read 3.80 mM. The concentration gradient is now <strong>exactly zero</strong>, so the &ldquo;more
+        solute&rdquo; rule has nothing whatsoever to say &mdash; and water immediately pours <em>out</em> of the tall
+        arm, because &Psi; is +0.101 bar on the left and only +0.007 bar on the right. Twenty-nine millilitres cross
+        back and the tube settles at <strong>168.6 / 131.4 cm</strong>, still not level, because the transfer pulls
+        the concentrations apart again (4.45 mM against 2.96 mM). Pressure moved water against no concentration
+        gradient at all. That is what pushes sap up a root at night and what makes a plant guttate.
+      </p>
+      <p>
+        <strong>The second misconception:</strong> students say &ldquo;the cell is hypotonic.&rdquo; The words
+        describe the <em>solution</em>, and only relative to a named cell &mdash; which means one beaker can be two
+        different things at once. Switch to <strong>Cells</strong> and press <em>The one that splits them</em>
+        (0.350 Osm). The animal cell holds 0.300 Osm, so the bath is <strong>hypertonic</strong> to it and it shrinks
+        to 0.86 of normal volume. The plant cell holds 0.400 Osm, so the very same bath is
+        <strong>hypotonic</strong> to it and water moves in until the wall is pushing back at
+        &Psi;<sub>p</sub> = 1.03 bar. One solution, two opposite directions of water flow, in the same beaker at the
+        same moment. &ldquo;Hypertonic&rdquo; is not a property of the liquid on its own any more than
+        &ldquo;taller&rdquo; is a property of one person.
+      </p>
+      <p>
+        <strong>Why the wall changes the ending, and not the mechanism.</strong> Both cells obey
+        &Psi; = &Psi;<sub>p</sub> + &Psi;<sub>s</sub>; the difference is that the animal cell's
+        <strong>&Psi;<sub>p</sub> is stuck at 0</strong>. A bare plasma membrane cannot hold pressure, so the cell has
+        no way to raise its own &Psi; and push back. Its only route to equilibrium is to take in water until its
+        contents are as dilute as the bath &mdash; and in pure water that means infinite volume, so it bursts instead
+        (lysis, here at 1.45&times; volume). The plant cell has a wall, so as water enters, &Psi;<sub>p</sub> climbs
+        and its &Psi; rises to meet the bath's. In pure water it stops at
+        <strong>&Psi;<sub>p</sub> = +8.40 bar, &Psi;<sub>s</sub> = &minus;8.40 bar, &Psi; = 0</strong> &mdash; full
+        turgor, and precisely the &ldquo;&Psi;<sub>p</sub> = &minus;&Psi;<sub>s</sub>&rdquo; case from the formula
+        sheet. Same physics, same equation, one extra structure, and the plant cell lives.
+      </p>
+      <p>
+        <strong>One more number worth chasing.</strong> Set the bath to <em>Plant just goes flaccid</em> (0.400 Osm).
+        The plant cell sits at exactly its normal volume with &Psi;<sub>p</sub> = 0 &mdash; incipient plasmolysis, the
+        knife-edge between turgid and plasmolysed. That is not a curiosity: it is how the &Psi;<sub>s</sub> of real
+        plant tissue is measured in a lab. You find the external concentration at which half the cells are just
+        beginning to plasmolyse, and because &Psi;<sub>p</sub> = 0 there, &Psi;<sub>s inside</sub> =
+        &Psi;<sub>solution</sub> = &minus;<em>i</em>CRT. Push past it and the protoplast pulls away from the wall,
+        which stays exactly where it was &mdash; a plasmolysed cell is not a smaller cell, it is a cell with a gap.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      //   AP formula sheet:   Psi = Psi_p + Psi_s ,   Psi_s = -i C R T
+      //   R = 0.0831 L bar mol^-1 K^-1 , T in kelvin, Psi in bar.
+      //   Water always moves from HIGHER Psi to LOWER Psi.
+      //
+      // MODE 1 — U-tube ---------------------------------------------------
+      //   Two vertical arms, each 1.00 cm^2 in cross-section and 300 cm tall,
+      //   joined at the bottom by a channel with a semipermeable membrane.
+      //   Each arm starts with 150 mL (= 150 cm of column).
+      //
+      //   The moles of solute in each arm, nL and nR, are FIXED. Nothing in
+      //   this file ever moves solute across the membrane; the only state
+      //   variable is x, the volume of water that has crossed R -> L.
+      //
+      //     C  = n / V                       so water arriving DILUTES a side
+      //     Psi_s = -i C R T
+      //     Psi_p = rho g h  evaluated AT THE MEMBRANE
+      //           = 0.000981 bar per cm of column above it
+      //
+      //   This is trap #1 made structural: Psi_p is computed from the column
+      //   height, never from a slider. Equilibrium is Psi_L = Psi_R, i.e.
+      //
+      //     rho g (hL - hR)  =  i R T (C_L - C_R)
+      //
+      //   which is satisfied with the CONCENTRATIONS STILL UNEQUAL. Because a
+      //   water column is such a weak pressure source (250 m per 24.5 bar),
+      //   the concentration range here is millimolar; anything stronger would
+      //   simply pull one arm dry, which is what happens on a real bench.
+      //
+      // MODE 2 — cells -----------------------------------------------------
+      //   Infinite bath, Psi_out = Psi_s,out = -i C R T, Psi_p,out = 0.
+      //   Solute crosses no membrane here either; each cell's osmoles are
+      //   fixed, so its internal osmolarity is n / V.
+      //
+      //   Animal cell:  Psi_p == 0 ALWAYS (no wall, no way to bear pressure)
+      //                 Psi_in = -R T n_a / V
+      //                 equilibrium volume = n_a / osm_out  ->  infinite in
+      //                 pure water, hence lysis (threshold 1.45x volume).
+      //   Plant cell:   Psi_p = eps * (V/V0 - 1) for V > V0, else 0
+      //                 (V0 = volume at zero turgor = incipient plasmolysis)
+      //                 Psi_in = Psi_p + (-R T n_p / V)
+      //   Both relax by dV/dt = Lp (Psi_out - Psi_in): a cell swells when the
+      //   outside potential is higher. Same rule, same sign, both modes.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var R_GAS = 0.0831;            // L bar mol^-1 K^-1
+      var BAR_PER_CM = 0.000981;     // rho g h for 1 cm of water, in bar
+      var V0 = 0.150;                // L in each arm at the start
+      var TUBE_CM = 300;             // usable arm height, cm
+      var XMAX = 0.1485;             // L, hard clamp so an arm never runs dry
+      var LP_TUBE = 0.14;            // L bar^-1 s^-1, made-up permeability
+
+      var EPS_WALL = 50;             // bar, cell-wall elastic modulus
+      var N_ANIMAL = 0.300;          // Osm inside the animal cell at normal volume
+      var N_PLANT = 0.400;           // Osm inside the plant cell at zero turgor
+      var LYSE_V = 1.45;             // relative volume at which the RBC bursts
+      var LP_CELL = 0.035;           // bar^-1 s^-1, made-up permeability
+
+      var S = {
+        mode: 'tube',
+        i: 1,
+        T: 295,
+        cL: 5, cR: 0,                // mM, the values the sliders hold
+        nL: 0, nR: 0,                // mol, fixed once poured
+        x: 0,                        // L of water that has crossed R -> L
+        matched: false,              // "concentrations matched by hand" narrative flag
+        cBath: 0.30,                 // mol L^-1
+        Va: 1, Vp: 1, lysed: false
+      };
+
+      function RT() { return R_GAS * S.T; }
+
+      // ---------------- U-tube ----------------
+
+      function tubeState(x) {
+        var vL = V0 + x, vR = V0 - x;
+        var hL = vL * 1000, hR = vR * 1000;          // 1 mL over 1 cm^2 = 1 cm
+        var cL = S.nL / vL, cR = S.nR / vR;          // mol L^-1
+        var psL = -S.i * cL * RT(), psR = -S.i * cR * RT();
+        var ppL = hL * BAR_PER_CM, ppR = hR * BAR_PER_CM;
+        return {
+          vL: vL, vR: vR, hL: hL, hR: hR, cL: cL, cR: cR,
+          psL: psL, psR: psR, ppL: ppL, ppR: ppR,
+          pL: ppL + psL, pR: ppR + psR
+        };
+      }
+
+      function bisect(f, lo, hi) {
+        var flo = f(lo), fhi = f(hi);
+        if (flo > 0) return lo;                      // already past the root
+        if (fhi < 0) return hi;
+        for (var k = 0; k < 80; k++) {
+          var m = (lo + hi) / 2;
+          if (f(m) < 0) lo = m; else hi = m;
+        }
+        return (lo + hi) / 2;
+      }
+
+      function tubeEqX() {
+        return bisect(function (x) {
+          var st = tubeState(x);
+          return st.pL - st.pR;                      // strictly increasing in x
+        }, -XMAX, XMAX);
+      }
+
+      function pourTube() {
+        S.nL = (S.cL / 1000) * V0;
+        S.nR = (S.cR / 1000) * V0;
+        S.x = 0;
+        S.matched = false;
+      }
+
+      // ---------------- cells ----------------
+
+      function bathOsm() { return S.i * S.cBath; }
+      function psiOut() { return -bathOsm() * RT(); }
+
+      function animalPsi(V) { return -RT() * N_ANIMAL / V; }   // Psi_p is 0. Always.
+      function plantPp(V) { return V > 1 ? EPS_WALL * (V - 1) : 0; }
+      function plantPs(V) { return -RT() * N_PLANT / V; }
+      function plantPsi(V) { return plantPp(V) + plantPs(V); }
+
+      function resetCells() { S.Va = 1; S.Vp = 1; S.lysed = false; }
+
+      // ---------------- formatting ----------------
+      // U+2212 minus, so the tables and the canvas agree typographically.
+      function fb(x) {                               // a value in bar
+        if (!isFinite(x)) return '—';
+        return (Math.abs(x) < 1 ? F.dec(x, 3) : F.dec(x, 2)).replace('-', '−');
+      }
+      function mM(c) { return F.dec(c * 1000, 2); }
+
+      // ==================================================================
+      // CANVAS HELPERS
+      // ==================================================================
+
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function chip(ctx, c, x, y, txt, fs, col, W, anchor) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, 2, Math.max(2, W - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function arrowH(ctx, xFrom, xTo, y, head, col, lw) {
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2;
+        ctx.beginPath(); ctx.moveTo(xFrom, y); ctx.lineTo(xTo, y); ctx.stroke();
+        var s = xTo > xFrom ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(xTo + s * head, y);
+        ctx.lineTo(xTo - s * head * 0.4, y - head * 0.62);
+        ctx.lineTo(xTo - s * head * 0.4, y + head * 0.62);
+        ctx.closePath(); ctx.fill();
+      }
+
+      function arrowV(ctx, x, yFrom, yTo, head, col, lw) {
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2;
+        ctx.beginPath(); ctx.moveTo(x, yFrom); ctx.lineTo(x, yTo); ctx.stroke();
+        var s = yTo > yFrom ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(x, yTo + s * head);
+        ctx.lineTo(x - head * 0.62, yTo - s * head * 0.4);
+        ctx.lineTo(x + head * 0.62, yTo - s * head * 0.4);
+        ctx.closePath(); ctx.fill();
+      }
+
+      // fixed scatter positions so the solute dots do not jitter every frame
+      var DOTF = (function () {
+        var r = Demo.rng(11), a = [];
+        for (var k = 0; k < 40; k++) a.push([r(), r()]);
+        return a;
+      })();
+
+      // ==================================================================
+      // U-TUBE CANVAS
+      // ==================================================================
+      var tubeCv = Demo.canvas('#tubeCv', function (ctx, w, h, c) {
+        var st = tubeState(S.x);
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 32 : 48, padR = narrow ? 6 : 10, padT = 46, padB = 44;
+        var conH = 20;
+        var yBase = h - padB - conH;
+        var yTop = padT;
+        var pxCm = (yBase - yTop) / TUBE_CM;
+        var innerW = w - padL - padR;
+        var gap = Demo.clamp(innerW * 0.24, 34, 82);
+        var aw = (innerW - gap) / 2;
+        var xL = padL, xR = padL + aw + gap;
+        var xMem = padL + aw + gap / 2;
+        var yCon = yBase + conH;
+        var i;
+
+        function yOf(cm) { return yBase - Demo.clamp(cm, 0, TUBE_CM) * pxCm; }
+
+        // ---- glass ----
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(xL, yTop, aw, yBase - yTop);
+        ctx.fillRect(xR, yTop, aw, yBase - yTop);
+        ctx.fillRect(xL, yBase, xR + aw - xL, conH);
+
+        // ---- liquid ----
+        function tint(conc) { return 0.14 + 0.5 * Demo.clamp(conc / 0.010, 0, 1); }
+
+        function liquid(x0, wid, yLev, conc, colr) {
+          ctx.save();
+          ctx.globalAlpha = tint(conc);
+          ctx.fillStyle = colr;
+          ctx.fillRect(x0, yLev, wid, yBase - yLev);
+          ctx.restore();
+        }
+        var yLL = yOf(st.hL), yRL = yOf(st.hR);
+        liquid(xL, aw, yLL, st.cL, c.accent);
+        liquid(xR, aw, yRL, st.cR, c.accent);
+        // the connecting channel, each half tinted by its own side
+        ctx.save();
+        ctx.globalAlpha = tint(st.cL); ctx.fillStyle = c.accent;
+        ctx.fillRect(xL, yBase, xMem - xL, conH);
+        ctx.globalAlpha = tint(st.cR);
+        ctx.fillRect(xMem, yBase, xR + aw - xMem, conH);
+        ctx.restore();
+
+        // surfaces
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(xL, yLL); ctx.lineTo(xL + aw, yLL); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xR, yRL); ctx.lineTo(xR + aw, yRL); ctx.stroke();
+
+        // ---- solute particles: they never cross, and they spread as a side dilutes ----
+        function dots(x0, yLev, n, colr) {
+          var count = Demo.clamp(Math.round(n / 7.5e-5), 0, 34);
+          ctx.fillStyle = colr;
+          var span = Math.max(6, (yBase - yLev) - 12);
+          for (var k = 0; k < count; k++) {
+            var f = DOTF[k];
+            // stratified vertically: the particles spread out as the column
+            // grows, which is the whole visual point of "water dilutes a side"
+            ctx.beginPath();
+            ctx.arc(x0 + 7 + f[0] * Math.max(4, aw - 14),
+              yLev + 6 + ((k + 0.15 + 0.7 * f[1]) / count) * span, 2.6, 0, 6.2832);
+            ctx.fill();
+          }
+        }
+        dots(xL, yLL, S.nL, c.series[1]);
+        dots(xR, yRL, S.nR, c.series[3]);
+
+        // ---- glass outline ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.6;
+        ctx.strokeRect(xL, yTop, aw, yBase - yTop + conH);
+        ctx.strokeRect(xR, yTop, aw, yBase - yTop + conH);
+        ctx.beginPath(); ctx.moveTo(xL, yBase); ctx.lineTo(xR + aw, yBase);
+        ctx.moveTo(xL, yCon); ctx.lineTo(xR + aw, yCon); ctx.stroke();
+
+        // ---- membrane ----
+        ctx.save();
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 2.4;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(xMem, yBase - 1); ctx.lineTo(xMem, yCon + 1); ctx.stroke();
+        ctx.restore();
+
+        // ---- net water flow through the membrane ----
+        var d = st.pR - st.pL;                       // > 0 means water crosses R -> L
+        var mag = Demo.clamp(Math.abs(d) / 0.06, 0, 1);
+        var yA = yBase + conH / 2;
+        if (Math.abs(d) > 2e-5) {
+          var len = 14 + 22 * mag;
+          if (d > 0) arrowH(ctx, xMem + len, xMem - len, yA, 6, c.accentStrong, 2.4);
+          else arrowH(ctx, xMem - len, xMem + len, yA, 6, c.accentStrong, 2.4);
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.accentStrong;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText('H₂O', xMem, yCon + 4);
+        } else {
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.ok;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText('no net flow', xMem, yCon + 4);
+        }
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(narrow ? 'membrane: water only' : 'semipermeable membrane — water crosses, solute cannot',
+          w / 2, yCon + 4 + fs + 4);
+
+        // ---- height axis ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(padL - 6, yTop); ctx.lineTo(padL - 6, yBase); ctx.stroke();
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        var step = narrow ? 100 : 50;
+        for (i = 0; i <= TUBE_CM; i += step) {
+          var ty = yOf(i);
+          ctx.strokeStyle = c.line;
+          ctx.beginPath(); ctx.moveTo(padL - 10, ty); ctx.lineTo(padL - 6, ty); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(i), padL - 12, ty);
+        }
+        if (!narrow) {
+          ctx.save();
+          ctx.translate(9, (yTop + yBase) / 2);
+          ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = '600 ' + (fs - 0.8) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText('height above membrane (cm)', 0, 0);
+          ctx.restore();
+        }
+
+        // ---- headers ----
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText('LEFT', xL + aw / 2, 3);
+        ctx.fillText('RIGHT', xR + aw / 2, 3);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.text2;
+        ctx.fillText('Ψ ' + fb(st.pL) + ' bar', xL + aw / 2, 3 + fs + 4);
+        ctx.fillText('Ψ ' + fb(st.pR) + ' bar', xR + aw / 2, 3 + fs + 4);
+        ctx.fillStyle = c.muted;
+        ctx.fillText(mM(st.cL) + ' mM', xL + aw / 2, 3 + 2 * (fs + 4));
+        ctx.fillText(mM(st.cR) + ' mM', xR + aw / 2, 3 + 2 * (fs + 4));
+
+        // ---- level chips ----
+        chip(ctx, c, xL + aw / 2, yLL - 5, F.dec(st.hL, 1) + ' cm', fs, c.accentStrong, w, 'center');
+        chip(ctx, c, xR + aw / 2, yRL - 5, F.dec(st.hR, 1) + ' cm', fs, c.accentStrong, w, 'center');
+
+        // ---- the head difference, drawn between the two surfaces ----
+        if (Math.abs(st.hL - st.hR) > 4) {
+          var hiY = Math.min(yLL, yRL), loY = Math.max(yLL, yRL);
+          var mx = xMem;
+          ctx.save();
+          ctx.strokeStyle = c.warn; ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(st.hL > st.hR ? xL + aw : xR, hiY); ctx.lineTo(mx, hiY);
+          ctx.moveTo(st.hL > st.hR ? xR : xL + aw, loY); ctx.lineTo(mx, loY);
+          ctx.stroke();
+          ctx.restore();
+          arrowV(ctx, mx, loY - 1, hiY + 1, 5, c.warn, 1.6);
+          arrowV(ctx, mx, hiY + 1, loY - 1, 5, c.warn, 1.6);
+          if (loY - hiY > 34) {
+            var dh = Math.abs(st.hL - st.hR);
+            chip(ctx, c, mx, (hiY + loY) / 2 + 4,
+              narrow ? 'Δh ' + F.dec(dh, 1) + ' cm'
+                : 'Δh ' + F.dec(dh, 1) + ' cm = ' + F.dec(dh * BAR_PER_CM, 3) + ' bar',
+              fs - 0.5, c.warn, w, 'center');
+          }
+        }
+      }, { aspect: 0.92, minHeight: 330, maxHeight: 470 });
+
+      // ==================================================================
+      // CELL CANVAS
+      // ==================================================================
+      var cellCv = Demo.canvas('#cellCv', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var bx = 8, by = 42, bw = w - 16, bh = h - by - 10;
+        var osm = bathOsm();
+        var pOut = psiOut();
+        var bathA = 0.08 + 0.26 * Demo.clamp(osm / 1.2, 0, 1);
+        var i;
+
+        // ---- beaker + bath ----
+        rr(ctx, bx, by, bw, bh, 12);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.save();
+        ctx.clip();
+        ctx.globalAlpha = bathA;
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(bx, by, bw, bh);
+        ctx.restore();
+        rr(ctx, bx, by, bw, bh, 12);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.6; ctx.stroke();
+
+        // ---- bath header ----
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText('SOLUTION', bx + 2, 2);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.text2;
+        ctx.fillText(F.dec(S.cBath, 3) + ' M ' + (S.i === 2 ? 'NaCl' : 'sucrose') +
+          '  ·  ' + F.dec(osm, 3) + ' Osm  ·  Ψ = ' + fb(pOut) + ' bar',
+          bx + 2, 2 + fs + 4);
+        ctx.fillStyle = c.muted;
+        ctx.fillText('Ψp = 0 (open beaker)', bx + 2, 2 + 2 * (fs + 4));
+
+        // Three label lines live under each cell. Both cells share ONE fixed
+        // label baseline sized off `base`, not off the current radius, so the
+        // captions hold still while a cell swells or shrinks.
+        var labelH = 12 + 3 * (fs + 4);
+        var base = Demo.clamp(Math.min(bw * 0.145, (bh - labelH - 12) / 2.4), 18, 88);
+        var blockH = 2.4 * base + labelH;
+        var cy = by + (bh - blockH) / 2 + 1.2 * base;
+        var yLab = cy + 1.2 * base + 12;
+        var cxA = bx + bw * 0.27, cxP = bx + bw * 0.72;
+
+        // ---------- animal cell ----------
+        (function () {
+          var V = S.Va;
+          var r = base * Math.pow(V, 1 / 3);
+          var cren = Demo.clamp((0.86 - V) / 0.34, 0, 1);
+          var col = S.lysed ? c.bad : c.series[3];
+
+          // net flux arrow
+          var dA = pOut - animalPsi(V);
+          if (!S.lysed && Math.abs(dA) > 0.03) {
+            var mg = Demo.clamp(Math.abs(dA) / 8, 0.25, 1);
+            var ax = cxA - r - 14 - 18 * mg;
+            if (dA > 0) arrowH(ctx, ax, cxA - r - 6, cy, 5, c.accentStrong, 2.2);
+            else arrowH(ctx, cxA - r - 6, ax, cy, 5, c.accentStrong, 2.2);
+            ctx.font = '600 ' + (fs - 1) + FONT;
+            ctx.fillStyle = c.accentStrong;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText('H₂O', (ax + cxA - r - 6) / 2, cy - 5);
+          }
+
+          ctx.beginPath();
+          for (i = 0; i <= 72; i++) {
+            var th = i / 72 * Math.PI * 2;
+            var rr2 = r * (1 + 0.15 * cren * Math.sin(9 * th));
+            var px = cxA + rr2 * Math.cos(th), py = cy + rr2 * Math.sin(th);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.save();
+          ctx.globalAlpha = 0.32; ctx.fillStyle = col; ctx.fill();
+          ctx.restore();
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 2.4;
+          if (S.lysed) ctx.setLineDash([7, 6]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          if (S.lysed) {
+            // contents leaving
+            var rg = Demo.rng(5);
+            ctx.fillStyle = c.bad;
+            for (i = 0; i < 14; i++) {
+              var a = rg() * Math.PI * 2, d2 = r * (1.2 + rg() * 0.6);
+              ctx.beginPath();
+              ctx.arc(cxA + d2 * Math.cos(a), cy + d2 * Math.sin(a) * 0.7, 2.2, 0, 6.2832);
+              ctx.fill();
+            }
+          }
+
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.text;
+          ctx.fillText('Animal cell', cxA, yLab);
+          ctx.font = fs + FONT;
+          ctx.fillStyle = S.lysed ? c.bad : c.muted;
+          ctx.fillText(animalWord(), cxA, yLab + fs + 4);
+          ctx.fillStyle = c.muted;
+          ctx.fillText('Ψp = 0 always', cxA, yLab + 2 * (fs + 4));
+        })();
+
+        // ---------- plant cell ----------
+        (function () {
+          var V = S.Vp;
+          var ws = Math.max(1, Math.pow(V, 1 / 3));
+          var ps = Math.pow(V, 1 / 3);
+          var bwid = base * 1.12, bhei = base * 0.92;
+          var Wo = 2 * bwid * ws, Ho = 2 * bhei * ws;
+          var Pp = plantPp(V);
+
+          var dP = pOut - plantPsi(V);
+          if (Math.abs(dP) > 0.03) {
+            var mg = Demo.clamp(Math.abs(dP) / 8, 0.25, 1);
+            var ax = cxP + Wo / 2 + 14 + 18 * mg;
+            if (dP > 0) arrowH(ctx, ax, cxP + Wo / 2 + 6, cy, 5, c.accentStrong, 2.2);
+            else arrowH(ctx, cxP + Wo / 2 + 6, ax, cy, 5, c.accentStrong, 2.2);
+            ctx.font = '600 ' + (fs - 1) + FONT;
+            ctx.fillStyle = c.accentStrong;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillText('H₂O', (ax + cxP + Wo / 2 + 6) / 2, cy - 5);
+          }
+
+          // wall: the box that does not move when the protoplast shrinks.
+          // Its interior is painted as BATH, a shade stronger than the beaker,
+          // because external solution is exactly what floods the gap that opens
+          // during plasmolysis.
+          rr(ctx, cxP - Wo / 2, cy - Ho / 2, Wo, Ho, 9);
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.55, bathA + 0.12);
+          ctx.fillStyle = c.accent; ctx.fill();
+          ctx.restore();
+          ctx.strokeStyle = c.series[2];
+          ctx.lineWidth = Demo.clamp(base * 0.07, 3, 6);
+          ctx.stroke();
+
+          // protoplast
+          var f = (ps / ws) * 0.93;
+          var Wi = Wo * f, Hi = Ho * f;
+          rr(ctx, cxP - Wi / 2, cy - Hi / 2, Wi, Hi, 8);
+          ctx.save();
+          ctx.globalAlpha = 0.34; ctx.fillStyle = c.ok; ctx.fill();
+          ctx.restore();
+          ctx.strokeStyle = c.ok; ctx.lineWidth = 2; ctx.stroke();
+
+          // vacuole
+          rr(ctx, cxP - Wi * 0.31, cy - Hi * 0.29, Wi * 0.62, Hi * 0.58, 6);
+          ctx.save();
+          ctx.globalAlpha = 0.42; ctx.fillStyle = c.accent; ctx.fill();
+          ctx.restore();
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 1.2; ctx.stroke();
+
+          // turgor: the protoplast pressing outward on the wall, scaled by Psi_p
+          if (Pp > 0.05) {
+            var mgp = Demo.clamp(Pp / 9, 0.18, 1);
+            var L = 6 + 12 * mgp;
+            var hd = 3.2;
+            ctx.strokeStyle = c.accentStrong; ctx.fillStyle = c.accentStrong; ctx.lineWidth = 1.8;
+            var pts = [[0, -1, 1], [0, 1, 1], [-1, 0, 1], [1, 0, 1],
+                       [-0.707, -0.707, 0.8], [0.707, -0.707, 0.8],
+                       [-0.707, 0.707, 0.8], [0.707, 0.707, 0.8]];
+            for (i = 0; i < pts.length; i++) {
+              var ux = pts[i][0], uy = pts[i][1], k = pts[i][2];
+              var tipX = cxP + ux * (Wi / 2) * k * 0.94;
+              var tipY = cy + uy * (Hi / 2) * k * 0.94;
+              ctx.beginPath();
+              ctx.moveTo(tipX - ux * L, tipY - uy * L);
+              ctx.lineTo(tipX - ux * hd, tipY - uy * hd);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(tipX, tipY);
+              ctx.lineTo(tipX - ux * hd * 1.9 - uy * hd, tipY - uy * hd * 1.9 + ux * hd);
+              ctx.lineTo(tipX - ux * hd * 1.9 + uy * hd, tipY - uy * hd * 1.9 - ux * hd);
+              ctx.closePath(); ctx.fill();
+            }
+          }
+
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.text;
+          ctx.fillText('Plant cell', cxP, yLab);
+          ctx.font = fs + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(plantWord(), cxP, yLab + fs + 4);
+          ctx.fillText('Ψp = ' + F.dec(Pp, 2) + ' bar', cxP, yLab + 2 * (fs + 4));
+        })();
+      }, { aspect: 0.58, minHeight: 268, maxHeight: 356 });
+
+      // ==================================================================
+      // WORDS
+      // ==================================================================
+
+      function animalWord() {
+        if (S.lysed) return 'LYSED — burst';
+        if (S.Va > 1.08) return 'swollen, ' + F.dec(S.Va, 2) + '×';
+        if (S.Va < 0.88) return 'crenated, ' + F.dec(S.Va, 2) + '×';
+        return 'normal, ' + F.dec(S.Va, 2) + '×';
+      }
+
+      function plantWord() {
+        if (S.Vp < 0.995) return 'plasmolysed, ' + F.dec(S.Vp, 2) + '×';
+        if (S.Vp <= 1.005) return 'flaccid (Ψp = 0)';
+        return 'turgid, ' + F.dec(S.Vp, 2) + '×';
+      }
+
+      function tonWord(osmOut, osmIn) {
+        if (Math.abs(osmOut - osmIn) < 5e-4) return 'iso';
+        return osmOut > osmIn ? 'hyper' : 'hypo';
+      }
+      var TON_TEXT = { hyper: 'hypertonic', hypo: 'hypotonic', iso: 'isotonic' };
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {};
+      ['tempK', 'tempOut', 'rtOut', 'oneMolar',
+        'tubeStage', 'cellStage', 'tubePanel', 'cellPanel',
+        'cL', 'cLOut', 'cR', 'cROut', 'tubeRun', 'tubeEq', 'tubeReset', 'tubeMatch',
+        'tLc', 'tRc', 'tLo', 'tRo', 'tLh', 'tRh', 'tLpp', 'tRpp', 'tLps', 'tRps', 'tLp', 'tRp',
+        'dPsi', 'dPsiDir', 'tubeNote', 'tubeCap',
+        'cBath', 'cBathOut', 'cellRun', 'cellReset',
+        'soO', 'anO', 'plO', 'soPp', 'anPp', 'plPp', 'soPs', 'anPs', 'plPs',
+        'soP', 'anP', 'plP', 'anV', 'plV',
+        'anTon', 'plTon', 'anState', 'plState', 'cellNote', 'cellCap'
+      ].forEach(function (id) { el[id] = document.getElementById(id); });
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+
+      function render(fast) {
+        el.tempOut.textContent = S.T + ' K (' + F.dec(S.T - 273.15, 1) + ' °C)';
+        el.rtOut.textContent = F.dec(RT(), 2);
+        el.oneMolar.innerHTML = '&minus;' + F.dec(RT(), 2);
+
+        if (S.mode === 'tube') renderTube(); else renderCells();
+
+        if (fast) (S.mode === 'tube' ? tubeCv : cellCv).paint();
+        else (S.mode === 'tube' ? tubeCv : cellCv).redraw();
+      }
+
+      function renderTube() {
+        var st = tubeState(S.x);
+        el.cLOut.textContent = F.dec(S.cL, 2) + ' mM';
+        el.cROut.textContent = F.dec(S.cR, 2) + ' mM';
+
+        el.tLc.textContent = mM(st.cL); el.tRc.textContent = mM(st.cR);
+        el.tLo.textContent = F.dec(S.i * st.cL * 1000, 2); el.tRo.textContent = F.dec(S.i * st.cR * 1000, 2);
+        el.tLh.textContent = F.dec(st.hL, 1); el.tRh.textContent = F.dec(st.hR, 1);
+        el.tLpp.innerHTML = fb(st.ppL); el.tRpp.innerHTML = fb(st.ppR);
+        el.tLps.innerHTML = fb(st.psL); el.tRps.innerHTML = fb(st.psR);
+        el.tLp.innerHTML = fb(st.pL); el.tRp.innerHTML = fb(st.pR);
+
+        var d = st.pL - st.pR;
+        el.dPsi.innerHTML = fb(d) + '<span class="r-unit">bar</span>';
+
+        var eq = Math.abs(d) < 2e-5;
+        if (eq) {
+          el.dPsiDir.innerHTML = '&Psi; matches. No net water movement.';
+        } else if (d > 0) {
+          el.dPsiDir.innerHTML = '&Psi; is higher on the <strong>left</strong>, so water crosses '
+            + 'left &rarr; right. The left level is falling.';
+        } else {
+          el.dPsiDir.innerHTML = '&Psi; is higher on the <strong>right</strong>, so water crosses '
+            + 'right &rarr; left. The right level is falling.';
+        }
+
+        var same = Math.abs(S.nL - S.nR) < 1e-9;
+        if (!eq && S.matched) {
+          el.tubeNote.className = 'note bad';
+          el.tubeNote.innerHTML = '<strong>You wiped out the concentration difference without moving a drop of '
+            + 'water &mdash; and water started flowing anyway.</strong> It is running <em>downhill</em>, out of the '
+            + 'taller arm, driven by &Psi;<sub>p</sub> alone: ' + fb(st.ppL) + ' bar on the left against '
+            + fb(st.ppR) + ' bar on the right. Now that some has crossed, the concentrations have pulled apart '
+            + 'again &mdash; ' + mM(st.cL) + ' mM against ' + mM(st.cR) + ' mM &mdash; because water dilutes '
+            + 'whichever side it lands in. So much for &ldquo;water moves toward more solute&rdquo;.';
+        } else if (eq && same && Math.abs(st.hL - st.hR) < 0.05) {
+          el.tubeNote.className = 'note';
+          el.tubeNote.innerHTML = '<strong>Both sides are identical</strong>, so there is nothing to drive. '
+            + 'Water molecules still cross the membrane constantly in both directions &mdash; what is zero is the '
+            + '<em>net</em> flow. Move one slider to break the symmetry.';
+        } else if (eq) {
+          el.tubeNote.className = 'note warn';
+          el.tubeNote.innerHTML = '<strong>Equilibrium &mdash; and the concentrations are not equal.</strong> '
+            + 'Left is ' + mM(st.cL) + ' mM, right is ' + mM(st.cR) + ' mM. Water stopped because &Psi; matched at '
+            + fb(st.pL) + ' bar on both sides, not because the solutions matched. The '
+            + F.dec(Math.abs(st.hL - st.hR), 1) + ' cm difference in level presses down with '
+            + F.dec(Math.abs(st.hL - st.hR) * BAR_PER_CM, 3) + ' bar, and that is exactly the size of the '
+            + '&Psi;<sub>s</sub> gap it is cancelling.';
+        } else {
+          el.tubeNote.className = 'note';
+          el.tubeNote.innerHTML = 'Water is moving <strong>from the higher &Psi; to the lower &Psi;</strong> '
+            + '(from less negative to more negative). Watch &Psi;<sub>p</sub> in the table climb on the receiving '
+            + 'side as its column grows &mdash; that rising number is what will eventually stop the flow.';
+        }
+
+        var pull = st.psL - st.psR;
+        el.tubeCap.innerHTML = 'Solute stays where it was poured: '
+          + F.sci(S.nL, 2) + ' mol on the left and ' + F.sci(S.nR, 2) + ' mol on the right, '
+          + 'unchanged for the whole run. Only water crosses, which is why a side that gains water gets '
+          + '<em>more dilute</em> instead of pulling solute over. Right now the solute pull differs by '
+          + F.dec(Math.abs(pull), 3) + ' bar and the column weights differ by '
+          + F.dec(Math.abs(st.ppL - st.ppR), 3) + ' bar; flow stops when those two numbers are equal.';
+      }
+
+      function renderCells() {
+        var osm = bathOsm(), pOut = psiOut();
+        el.cBathOut.textContent = F.dec(S.cBath, 3) + ' M';
+
+        var anPs = animalPsi(S.Va), anOsm = N_ANIMAL / S.Va;
+        var plPp = plantPp(S.Vp), plPs = plantPs(S.Vp), plOsm = N_PLANT / S.Vp;
+
+        el.soO.textContent = F.dec(osm, 3);
+        el.anO.textContent = S.lysed ? '—' : F.dec(anOsm, 3);
+        el.plO.textContent = F.dec(plOsm, 3);
+
+        el.soPp.textContent = '0.00';
+        el.anPp.textContent = '0.00';
+        el.plPp.innerHTML = fb(plPp);
+
+        el.soPs.innerHTML = fb(pOut);
+        el.anPs.innerHTML = S.lysed ? '&mdash;' : fb(anPs);
+        el.plPs.innerHTML = fb(plPs);
+
+        el.soP.innerHTML = fb(pOut);
+        el.anP.innerHTML = S.lysed ? '&mdash;' : fb(anPs);
+        el.plP.innerHTML = fb(plPp + plPs);
+
+        el.anV.textContent = S.lysed ? 'burst' : F.dec(S.Va, 2);
+        el.plV.textContent = F.dec(S.Vp, 2);
+
+        var ta = tonWord(osm, N_ANIMAL), tp = tonWord(osm, N_PLANT);
+        el.anTon.className = 'ton ' + ta;
+        el.anTon.textContent = TON_TEXT[ta];
+        el.plTon.className = 'ton ' + tp;
+        el.plTon.textContent = TON_TEXT[tp];
+
+        if (S.lysed) {
+          el.anState.innerHTML = '<strong>Lysed.</strong> With &Psi;<sub>p</sub> pinned at 0 the only way for this '
+            + 'cell to raise its &Psi; was to keep swallowing water. It passed 1.45&times; volume and the membrane '
+            + 'tore.';
+        } else if (ta === 'hyper') {
+          el.anState.innerHTML = 'Water leaves. The cell shrinks to ' + F.dec(S.Va, 2)
+            + '× normal volume and crenates. Nothing stops it except its own contents concentrating.';
+        } else if (ta === 'hypo') {
+          el.anState.innerHTML = 'Water enters and keeps entering &mdash; the cell has no wall, so it cannot '
+            + 'build any &Psi;<sub>p</sub> to push back. Equilibrium would need '
+            + (osm > 0 ? F.dec(N_ANIMAL / osm, 2) + '× volume' : 'infinite volume') + '.';
+        } else {
+          el.anState.innerHTML = 'No net movement. The bath already matches the cell’s 0.300 Osm interior, '
+            + 'so the cell keeps its normal volume with &Psi;<sub>p</sub> = 0.';
+        }
+
+        if (tp === 'hyper') {
+          el.plState.innerHTML = 'Water leaves. &Psi;<sub>p</sub> hit 0 first, then the protoplast pulled away from '
+            + 'the wall: <strong>plasmolysis</strong>, now at ' + F.dec(S.Vp, 2) + '× volume. The wall itself '
+            + 'has not moved and the cell has not burst.';
+        } else if (tp === 'hypo') {
+          el.plState.innerHTML = 'Water enters, the protoplast presses on the wall, and the wall presses back: '
+            + '&Psi;<sub>p</sub> = ' + F.dec(plPp, 2) + ' bar. That rising pressure raises the cell’s own &Psi; '
+            + 'until it matches the bath, and the swelling stops at ' + F.dec(S.Vp, 2) + '×.';
+        } else {
+          el.plState.innerHTML = 'The bath matches the cell’s 0.400 Osm contents exactly, so the cell sits at '
+            + 'normal volume with <strong>&Psi;<sub>p</sub> = 0</strong> &mdash; flaccid. This is incipient '
+            + 'plasmolysis, the point used in the lab to measure a tissue’s &Psi;<sub>s</sub>.';
+        }
+
+        if (S.lysed) {
+          el.cellNote.className = 'note bad';
+          el.cellNote.innerHTML = '<strong>Same solution, same physics, one cell dead.</strong> The plant cell in '
+            + 'this identical bath is fine at ' + F.dec(S.Vp, 2) + '× volume with &Psi;<sub>p</sub> = '
+            + F.dec(plPp, 2) + ' bar. The wall is the entire difference: it lets &Psi;<sub>p</sub> rise, and a rising '
+            + '&Psi;<sub>p</sub> is a cell’s only way to stop taking on water.';
+        } else if (ta !== tp) {
+          el.cellNote.className = 'note warn';
+          el.cellNote.innerHTML = '<strong>One beaker, two answers.</strong> This solution is <em>'
+            + TON_TEXT[ta] + '</em> to the animal cell and <em>' + TON_TEXT[tp] + '</em> to the plant cell, and '
+            + 'water is moving in opposite directions in the two of them right now. Tonicity is a comparison, not a '
+            + 'label you can stick on a bottle &mdash; and it is never a property of the cell.';
+        } else {
+          el.cellNote.className = 'note';
+          el.cellNote.innerHTML = 'This solution is <strong>' + TON_TEXT[ta] + '</strong> to both cells, because '
+            + 'its ' + F.dec(osm, 3) + ' Osm sits on the same side of 0.300 Osm (animal) and 0.400 Osm (plant). '
+            + 'Slide the bath between those two values and the two verdicts come apart.';
+        }
+
+        el.cellCap.innerHTML = 'Water moves from higher &Psi; to lower &Psi; in both cells, by exactly the rule the '
+          + 'U-tube uses. Bath &Psi; = ' + fb(pOut) + ' bar; animal &Psi; = '
+          + (S.lysed ? '—' : fb(anPs) + ' bar') + '; plant &Psi; = ' + fb(plPp + plPs) + ' bar. '
+          + 'The animal cell reaches equilibrium only by changing &Psi;<sub>s</sub> (diluting or concentrating '
+          + 'itself); the plant cell can also change &Psi;<sub>p</sub>, which is a far cheaper way to do it.';
+      }
+
+      // ==================================================================
+      // ANIMATION
+      // ==================================================================
+
+      function stepTube(dt) {
+        var sub = 4, d = dt / sub, k;
+        for (k = 0; k < sub; k++) {
+          var st = tubeState(S.x);
+          S.x = Demo.clamp(S.x + LP_TUBE * (st.pR - st.pL) * d, -XMAX, XMAX);
+        }
+        var f = tubeState(S.x);
+        var drive = f.pR - f.pL;
+        // safety: if an arm has hit the physical clamp and the gradient still
+        // pushes that way, there is nothing more to move.
+        if (S.x >= XMAX - 1e-9 && drive > 0) return false;
+        if (S.x <= -XMAX + 1e-9 && drive < 0) return false;
+        return Math.abs(drive) > 2e-5;
+      }
+
+      function stepCells(dt) {
+        var sub = 4, d = dt / sub, k, busy = false;
+        for (k = 0; k < sub; k++) {
+          if (!S.lysed) {
+            S.Va = Demo.clamp(S.Va + LP_CELL * (psiOut() - animalPsi(S.Va)) * d, 0.12, 3);
+            if (S.Va >= LYSE_V) { S.Va = LYSE_V; S.lysed = true; }
+          }
+          S.Vp = Demo.clamp(S.Vp + LP_CELL * (psiOut() - plantPsi(S.Vp)) * d, 0.12, 2);
+        }
+        if (!S.lysed && Math.abs(psiOut() - animalPsi(S.Va)) > 1e-3) busy = true;
+        if (Math.abs(psiOut() - plantPsi(S.Vp)) > 1e-3) busy = true;
+        return busy;
+      }
+
+      var anim = Demo.loop(function (dt) {
+        var busy = S.mode === 'tube' ? stepTube(dt) : stepCells(dt);
+        render(true);
+        if (!busy) stopAnim();
+      });
+
+      function startAnim() {
+        if (anim.running) return;
+        anim.start();
+        el.tubeRun.textContent = 'Pause';
+        el.cellRun.textContent = 'Pause';
+      }
+      function stopAnim() {
+        anim.stop();
+        el.tubeRun.textContent = 'Run';
+        el.cellRun.textContent = 'Run';
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+
+      function segSet(sel, val, key) {
+        var btns = document.querySelectorAll(sel + ' button');
+        for (var k = 0; k < btns.length; k++) {
+          btns[k].setAttribute('aria-selected', btns[k].dataset[key] === String(val) ? 'true' : 'false');
+        }
+      }
+
+      function setMode(m) {
+        S.mode = m;
+        segSet('#modeSeg', m, 'mode');
+        el.tubeStage.hidden = m !== 'tube';
+        el.cellStage.hidden = m !== 'cells';
+        el.tubePanel.hidden = m !== 'tube';
+        el.cellPanel.hidden = m !== 'cells';
+        (m === 'tube' ? tubeCv : cellCv).resize();
+        render(false);
+        startAnim();
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('#modeSeg button'), function (b) {
+        b.addEventListener('click', function () { setMode(b.dataset.mode); });
+      });
+
+      Array.prototype.forEach.call(document.querySelectorAll('#soluteSeg button'), function (b) {
+        b.addEventListener('click', function () {
+          S.i = parseInt(b.dataset.i, 10);
+          segSet('#soluteSeg', S.i, 'i');
+          pourTube();
+          resetCells();
+          markPreset(activePreset(S.cBath));
+          render(false);
+          startAnim();
+        });
+      });
+
+      Demo.range('#tempK', function (v) {
+        S.T = v;
+        render(false);
+        startAnim();
+      });
+
+      Demo.range('#cL', function (v) {
+        S.cL = v;
+        el.cLOut.textContent = F.dec(v, 1) + ' mM';
+        pourTube();
+        render(false);
+        if (S.mode === 'tube') startAnim();
+      });
+
+      Demo.range('#cR', function (v) {
+        S.cR = v;
+        el.cROut.textContent = F.dec(v, 1) + ' mM';
+        pourTube();
+        render(false);
+        if (S.mode === 'tube') startAnim();
+      });
+
+      el.tubeRun.addEventListener('click', function () {
+        if (anim.running) stopAnim(); else startAnim();
+      });
+
+      el.tubeEq.addEventListener('click', function () {
+        stopAnim();
+        S.x = tubeEqX();
+        render(false);
+      });
+
+      el.tubeReset.addEventListener('click', function () {
+        stopAnim();
+        S.x = 0;
+        pourTube();
+        render(false);
+      });
+
+      // Add solute to the weaker arm until both concentrations match, WITHOUT
+      // moving water. Kills the solute gradient and leaves Psi_p on its own.
+      el.tubeMatch.addEventListener('click', function () {
+        var st = tubeState(S.x);
+        var target = Math.max(st.cL, st.cR);      // mol L^-1
+        S.nL = target * st.vL;
+        S.nR = target * st.vR;
+        S.cL = S.cR = target * 1000;              // mM, for the slider readouts
+        S.matched = true;
+        el.cL.value = Demo.clamp(S.cL, 0, 10);
+        el.cR.value = Demo.clamp(S.cR, 0, 10);
+        render(false);
+        startAnim();
+      });
+
+      // presetBtns must exist before Demo.range fires its handler immediately
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#bathPresets .btn'));
+      function markPreset(btn) {
+        presetBtns.forEach(function (o) { o.classList.toggle('is-on', o === btn); });
+      }
+
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var osm = parseFloat(b.dataset.osm);
+          // snap onto the slider's 0.005 M step so the thumb and the number agree
+          S.cBath = parseFloat((Math.round((osm / S.i) / 0.005) * 0.005).toFixed(3));
+          el.cBath.value = S.cBath;
+          el.cBathOut.textContent = F.dec(S.cBath, 3) + ' M';
+          markPreset(b);
+          render(false);
+          startAnim();
+        });
+      });
+
+      Demo.range('#cBath', function (v) {
+        S.cBath = v;
+        el.cBathOut.textContent = F.dec(v, 3) + ' M';
+        markPreset(activePreset(v));
+        render(false);
+        if (S.mode === 'cells') startAnim();
+      });
+
+      // keep a preset lit if the slider happens to be sitting exactly on it
+      function activePreset(v) {
+        for (var k = 0; k < presetBtns.length; k++) {
+          var target = parseFloat((Math.round((parseFloat(presetBtns[k].dataset.osm) / S.i) / 0.005) * 0.005).toFixed(3));
+          if (Math.abs(target - v) < 1e-6) return presetBtns[k];
+        }
+        return null;
+      }
+
+      el.cellRun.addEventListener('click', function () {
+        if (anim.running) stopAnim(); else startAnim();
+      });
+
+      el.cellReset.addEventListener('click', function () {
+        resetCells();
+        render(false);
+        startAnim();
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      pourTube();
+      resetCells();
+      setMode('tube');
+    })();
+  </script>
+</body>
+
+</html>

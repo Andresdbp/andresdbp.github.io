@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Logistic Growth | Dr. Andres Barboza</title>
+  <meta name="description" content="Exponential against logistic growth, plus the growth-rate curve that peaks at half the carrying capacity, and a reproductive lag that makes the population overshoot K and oscillate.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* these tiles carry real units, longer than the shell's one-line default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.good { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.bad { color: var(--bad); font-weight: 600; }
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dash i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Logistic Growth</h1>
+        <p class="demo-sub">Press Play and watch the lower plot: growth is fastest halfway to K, not at the top. Then add a reproductive lag and watch the population sail straight through the &ldquo;ceiling&rdquo;.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Population ecology</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Population against time <span>&mdash; individuals vs days</span></p>
+        <canvas id="plotN" role="img"
+                aria-label="Population plotted against time: an exponential curve that runs off the top of the chart, a logistic curve that levels off at the carrying capacity, and, when a reproductive lag is set, a delayed curve that overshoots the carrying capacity and oscillates."></canvas>
+        <div class="legend">
+          <span class="lg"><i id="lgExpSw"></i>exponential, dN/dt = rN</span>
+          <span class="lg"><i id="lgLogSw"></i>logistic, no lag</span>
+          <span class="lg" id="lgLagWrap" hidden><i id="lgLagSw"></i>logistic with lag</span>
+          <span class="lg dash"><i></i>carrying capacity K</span>
+        </div>
+        <p class="stage-caption" id="capN">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Growth rate against population size <span>&mdash; dN/dt vs N</span></p>
+        <canvas id="plotG" role="img"
+                aria-label="Growth rate plotted against population size: a downward parabola that is zero at N equals zero, peaks at half the carrying capacity, and returns to zero at the carrying capacity."></canvas>
+        <p class="stage-caption" id="capG">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Playback</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tmRange">Day shown</label>
+                <span class="ctrl-value" id="tmOut">0.0 d</span>
+              </div>
+              <input type="range" id="tmRange" min="0" max="60" step="0.05" value="0">
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="btnPlay">Play</button>
+              <button class="btn" id="btnReset">Reset all</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The population</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="rRange">Intrinsic growth rate r</label>
+                <span class="ctrl-value" id="rOut">0.50 d⁻¹</span>
+              </div>
+              <input type="range" id="rRange" min="0.05" max="1" step="0.01" value="0.5">
+              <p class="ctrl-hint">Births minus deaths per individual per day, when nothing is limiting. Units are per day (d⁻¹), not individuals.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="kRange">Carrying capacity K</label>
+                <span class="ctrl-value" id="kOut">1,000</span>
+              </div>
+              <input type="range" id="kRange" min="200" max="2000" step="10" value="1000">
+              <p class="ctrl-hint">Individuals the habitat supports indefinitely under <em>these</em> conditions.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="n0Range">Starting population N<sub>0</sub></label>
+                <span class="ctrl-value" id="n0Out">10</span>
+              </div>
+              <input type="range" id="n0Range" min="1" max="1500" step="1" value="10">
+              <p class="ctrl-hint">Push N<sub>0</sub> above K and the logistic curve comes <em>down</em> to K. K is a destination, not a ceiling.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tRange">Time window</label>
+                <span class="ctrl-value" id="tOut">60 d</span>
+              </div>
+              <input type="range" id="tRange" min="20" max="200" step="5" value="60">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Reproductive lag &mdash; where overshoot comes from</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="lagRange">Lag &tau;</label>
+                <span class="ctrl-value" id="lagOut">0.0 d</span>
+              </div>
+              <input type="range" id="lagRange" min="0" max="4" step="0.1" value="0">
+              <p class="ctrl-hint">
+                Crowding felt today reflects the density &tau; days ago &mdash; eggs already laid still hatch,
+                seeds already set still germinate. The model becomes
+                dN/dt = rN(t)&thinsp;[1 &minus; N(t&minus;&tau;)/K].
+              </p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">r &times; &tau; &mdash; the number that decides the behaviour</div>
+                <div class="r-value" id="rtVal">0.00</div>
+                <div class="r-sub" id="rtSub">no lag: the population can never pass K</div>
+              </div>
+              <div class="readout span2" id="osBox">
+                <div class="r-label">Highest population reached, as a share of K</div>
+                <div class="r-value" id="osVal">100%</div>
+                <div class="r-sub" id="osSub">peak 1,000 individuals</div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" data-preset="none">No lag</button>
+              <button class="btn" data-preset="damped">Damped</button>
+              <button class="btn" data-preset="cycles">Sustained cycles</button>
+            </div>
+            <p class="ctrl-hint">
+              Thresholds are exact for this model: below r&tau; = 1/e = 0.368 the approach is smooth, between
+              0.368 and &pi;/2 = 1.571 you get overshoot then damped oscillation, and above &pi;/2 the
+              oscillation never dies out.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where growth is fastest</div>
+          <div class="readouts two">
+            <div class="readout is-accent">
+              <div class="r-label">Fastest growth rK/4</div>
+              <div class="r-value" id="gMax">125</div>
+              <div class="r-sub">individuals per day</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">Population there, K/2</div>
+              <div class="r-value" id="nHalf">500</div>
+              <div class="r-sub">individuals</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Growth at N = 0.9K</div>
+              <div class="r-value" id="g90">45.0</div>
+              <div class="r-sub bad" id="g90Sub">bigger population, slower growth</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Growth at N = 0.5K</div>
+              <div class="r-value" id="g50">125</div>
+              <div class="r-sub good">2.78&times; faster than at 0.9K</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            That 2.78&times; is fixed: (rK/4) &divide; (0.09&thinsp;rK) = 25/9, whatever r and K you choose.
+            At N = 0.99K the half-full population grows 25.3&times; faster.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="atDayTitle">At day 0.0</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Logistic N</div>
+              <div class="r-value" id="rNlog">10</div>
+              <div class="r-sub" id="rNlogSub">individuals</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Its growth dN/dt</div>
+              <div class="r-value" id="rGlog">4.95</div>
+              <div class="r-sub">individuals per day</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Exponential N</div>
+              <div class="r-value" id="rNexp">10</div>
+              <div class="r-sub">individuals, no limit</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Exponential &divide; logistic</div>
+              <div class="r-value" id="rRatio">1.00&times;</div>
+              <div class="r-sub">how far the unlimited model has run away</div>
+            </div>
+            <div class="readout span2" id="lagTile" hidden>
+              <div class="r-label">With the lag: N and dN/dt</div>
+              <div class="r-value" id="rNlag">&mdash;</div>
+              <div class="r-sub" id="rNlagSub">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>K is not a property of the place.</strong> It is the population that the current food,
+            water, nesting sites, predators and disease can support &mdash; change any of those and K changes,
+            which is why the K slider exists at all. A drought can halve K overnight while the population is
+            still sitting at the old value, and that, not a lag, is the other common route to a crash.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. One species, one limiting resource, no age structure, no predators, no
+            seasons, no immigration or emigration, and r held constant. Real populations are also
+            stochastic: this model is perfectly deterministic, so the same sliders always give exactly the
+            same curve, and small populations here never go extinct by bad luck. The lagged model is
+            Hutchinson&rsquo;s delayed logistic; at large r&tau; its crashes are far deeper than anything a
+            real population survives.
+          </p>
+          <p class="ctrl-hint" style="margin-top:9px" id="numNote">
+            Numerics: fourth-order Runge&ndash;Kutta, &Delta;t = 0.005 day.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The first misconception:</strong> that carrying capacity is a hard ceiling &mdash; a lid the
+        population runs into and cannot pass. Students draw the S-curve, label the flat top K, and conclude
+        that going above K is impossible. Real populations go above K all the time. Reindeer put on St
+        Matthew Island in 1944 grew to roughly 6,000 by 1963 on an island whose lichen could support a few
+        hundred, and then crashed to 42 animals in a single winter.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Leave the lag at 0 and the logistic curve really does stop at K
+        &mdash; not because K is a wall, but because dN/dt = rN(1 &minus; N/K) goes to zero exactly when N
+        reaches K. Nothing pushes it over, and nothing ever can: that is a fact about the equation, so any
+        textbook figure showing the smooth continuous logistic curve poking above K is simply drawn wrong.
+        Now drag the lag to 2.0 days. The population sails past K to about 1,276 &mdash; a 28% overshoot
+        &mdash; and then falls back and settles. Take the lag to 3.5 days and it never settles at all: it
+        cycles between roughly 260 and 2,130 forever. The reason is the whole point. With a lag, the
+        population is responding to the crowding of &tau; days ago. At the moment it crosses K it still
+        &ldquo;feels&rdquo; uncrowded, so it keeps reproducing, and by the time the crowding registers, the
+        extra individuals have already been born.
+      </p>
+      <p>
+        <strong>So what actually sets K?</strong> Not the model. Food, water, nest sites, predators, disease
+        &mdash; and those change. K is the level a population is pulled toward under current conditions, not
+        a line painted on the habitat.
+      </p>
+      <p>
+        <strong>The second misconception:</strong> that a population grows fastest when it is biggest. It is
+        an easy mistake, because on the upper plot the curve <em>is</em> steepest somewhere in the middle,
+        and students read &ldquo;steep&rdquo; as &ldquo;lots of individuals&rdquo;. The lower plot settles
+        it. With r = 0.50 d⁻¹ and K = 1,000, the growth rate peaks at <strong>125 individuals per day</strong>,
+        and it peaks at <strong>N = 500</strong>, exactly half of K. A population of 900 grows at 45 per day.
+        A population of 100 &mdash; nine times smaller &mdash; also grows at 45 per day, exactly. A population
+        of 990 adds fewer than 5 individuals a day. Bigger is emphatically not faster.
+      </p>
+      <p>
+        <strong>Why K/2.</strong> dN/dt = rN(1 &minus; N/K) is a product of two things pulling in opposite
+        directions: how many individuals there are to reproduce (N, which grows) and how much room each one
+        has (1 &minus; N/K, which shrinks). At small N there are plenty of resources but almost nobody to
+        breed; near K everybody is breeding but there is no room. The product is largest where the two are
+        balanced, and for a parabola through zero at N = 0 and N = K, that is the midpoint. Setting the
+        derivative to zero gives r(1 &minus; 2N/K) = 0, so N = K/2 and the peak height is rK/4 &mdash; every
+        time, for every population. This is not a curiosity: it is why fisheries are managed for
+        <em>maximum sustainable yield</em> at about half the unfished stock. Fish a population down to half
+        and it replaces itself faster than if you had left it alone.
+      </p>
+      <p>
+        <strong>One honest caveat about the lower plot.</strong> The parabola is the growth rate of the
+        no-lag logistic. Turn the lag on and the coloured orbit leaves the parabola completely, looping
+        around it: with a lag, today's growth rate is not a function of today's population at all, which is
+        exactly why the population can be above K and still growing.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      //   exponential   dN/dt = r N                    N(t) = N0 e^(rt)
+      //   logistic      dN/dt = r N (1 - N/K)          N(t) = K N0 / (N0 + (K-N0) e^(-rt))
+      //   delayed       dN/dt = r N(t) [1 - N(t-tau)/K]   (Hutchinson, 1948)
+      //
+      //   Units: N in individuals, t in days, r in day^-1, K in individuals,
+      //   tau in days. dN/dt is therefore individuals per day.
+      //
+      //   The continuous logistic CANNOT exceed K: at N = K the growth rate is
+      //   exactly zero, and N = K is an invariant. Overshoot in this demo comes
+      //   from the delay term and from nowhere else. Do not "fix" that.
+      //
+      //   Peak of the growth-rate parabola: d/dN [rN(1-N/K)] = r(1 - 2N/K) = 0
+      //   => N = K/2, and the peak value is rK/4.
+      //
+      //   Delay thresholds (standard linear-stability result for Hutchinson):
+      //     r*tau < 1/e   = 0.3679  monotone approach, no overshoot
+      //     r*tau < pi/2  = 1.5708  damped oscillation about K
+      //     r*tau > pi/2          sustained limit cycle
+      //
+      //   Integrator: classical RK4 at dt = 0.005 day. For the delayed model the
+      //   history is stored at every step and linearly interpolated, which is
+      //   valid because tau >= 0.1 day >> dt whenever the lag is on.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var DT = 0.005;                 // day
+      var E_INV = 1 / Math.E;         // 0.36788
+      var HALF_PI = Math.PI / 2;      // 1.57080
+      var NCAP = 50;                  // hard clamp at 50K, so a violent cycle cannot overflow
+
+      var DEF = { r: 0.5, K: 1000, N0: 10, lag: 0, T: 60 };
+      var S = { r: DEF.r, K: DEF.K, N0: DEF.N0, lag: DEF.lag, T: DEF.T, tm: 0 };
+
+      var sim = null;
+
+      // ---------------- simulation ----------------
+
+      function simulate() {
+        var r = S.r, K = S.K, N0 = S.N0, tau = S.lag, T = S.T;
+        var n = Math.round(T / DT);
+        var N = new Float64Array(n + 1);
+        var lagN = tau > 0 ? new Float64Array(n + 1) : null;
+        var gLag = tau > 0 ? new Float64Array(n + 1) : null;
+        var cur = 0;
+        var i;
+
+        // no-lag logistic: closed form, no integrator error at all
+        for (i = 0; i <= n; i++) {
+          var t = i * DT;
+          N[i] = K * N0 / (N0 + (K - N0) * Math.exp(-r * t));
+        }
+
+        var peak = 0, lateMin = Infinity, lateMax = -Infinity, gMin = 0, gMax = 0;
+
+        if (tau > 0) {
+          lagN[0] = N0;
+          // value of N at a past time, from the history already computed
+          var past = function (tq) {
+            if (tq <= 0) return N0;                 // population held at N0 before t = 0
+            var x = tq / DT, j = Math.floor(x);
+            if (j >= cur) return lagN[cur];
+            return lagN[j] + (lagN[j + 1] - lagN[j]) * (x - j);
+          };
+          var f = function (t, y, tq) {
+            var d = past(tq);
+            return r * y * (1 - d / K);
+          };
+          var cap = NCAP * K;
+          for (i = 0; i < n; i++) {
+            cur = i;
+            var t0 = i * DT, y0 = lagN[i];
+            var k1 = f(t0, y0, t0 - tau);
+            var k2 = f(t0, y0 + DT / 2 * k1, t0 + DT / 2 - tau);
+            var k3 = f(t0, y0 + DT / 2 * k2, t0 + DT / 2 - tau);
+            var k4 = f(t0, y0 + DT * k3, t0 + DT - tau);
+            var y1 = y0 + DT / 6 * (k1 + 2 * k2 + 2 * k3 + k4);
+            if (!isFinite(y1) || y1 < 0) y1 = 0;
+            if (y1 > cap) y1 = cap;
+            lagN[i + 1] = y1;
+          }
+          cur = n;
+          for (i = 0; i <= n; i++) {
+            gLag[i] = r * lagN[i] * (1 - past(i * DT - tau) / K);
+            if (lagN[i] > peak) peak = lagN[i];
+            if (gLag[i] < gMin) gMin = gLag[i];
+            if (gLag[i] > gMax) gMax = gLag[i];
+          }
+          var from = Math.floor(n * 0.75);
+          for (i = from; i <= n; i++) {
+            if (lagN[i] < lateMin) lateMin = lagN[i];
+            if (lagN[i] > lateMax) lateMax = lagN[i];
+          }
+        } else {
+          for (i = 0; i <= n; i++) if (N[i] > peak) peak = N[i];
+          lateMin = lateMax = N[n];
+        }
+
+        return {
+          n: n, N: N, lagN: lagN, gLag: gLag,
+          peak: peak, lateMin: lateMin, lateMax: lateMax,
+          gLagMin: gMin, gLagMax: gMax
+        };
+      }
+
+      function idxAt(t) {
+        var i = Math.round(t / DT);
+        return i < 0 ? 0 : i > sim.n ? sim.n : i;
+      }
+      function nExp(t) { return S.N0 * Math.exp(S.r * t); }
+      function gLogistic(N) { return S.r * N * (1 - N / S.K); }
+
+      // ---------------- derived teaching numbers ----------------
+
+      function stats() {
+        var rt = S.r * S.lag;
+        var regime = S.lag <= 0 ? 'none' : rt < E_INV ? 'smooth' : rt < HALF_PI ? 'damped' : 'cycles';
+        return {
+          rt: rt,
+          regime: regime,
+          gPeak: S.r * S.K / 4,
+          nPeak: S.K / 2,
+          g90: S.r * (0.9 * S.K) * 0.1,
+          g50: S.r * S.K / 4,
+          tHalf: S.N0 < S.K ? Math.log((S.K - S.N0) / S.N0) / S.r : null,
+          over: sim ? sim.peak / S.K : 1
+        };
+      }
+
+      // ---------------- number formatting ----------------
+
+      function pop(x) {
+        if (!isFinite(x)) return '—';
+        if (x >= 1e7) return F.sci(x, 1);
+        if (x >= 100) return F.comma(x);
+        if (x >= 10) return F.dec(x, 1);
+        return F.dec(x, 2);
+      }
+      function rate(x) {
+        var a = Math.abs(x);
+        if (!isFinite(x)) return '—';
+        if (a >= 1e7) return F.sci(x, 1);
+        if (a >= 100) return F.comma(x);
+        if (a >= 10) return F.dec(x, 1);
+        return F.dec(x, 2);
+      }
+      // axis labels have to survive both 2,000 individuals and 2.5 per day
+      function axisNum(x, step) {
+        if (Math.abs(x) >= 1e6) return F.sci(x, 0);
+        if (step >= 1) return F.comma(x);
+        var d = step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
+        return F.dec(x, d);
+      }
+
+      // ---------------- canvas helpers ----------------
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+
+      function tickStep(span) {
+        var raw = span / 5;
+        var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        var q = raw / mag;
+        var m = q <= 1 ? 1 : q <= 2 ? 2 : q <= 5 ? 5 : 10;
+        return m * mag;
+      }
+
+      // ==================================================================
+      // PLOT 1 — N against time
+      // ==================================================================
+      var cvN = Demo.canvas('#plotN', function (ctx, w, h, c) {
+        if (!sim) return;
+        var narrow = w < 380;
+        var padL = narrow ? 40 : 52, padR = narrow ? 12 : 16, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var i, px, t, yv;
+
+        var yTop = Math.max(S.K * 1.45, sim.peak * 1.10, S.N0 * 1.15);
+        function X(t) { return x0 + (x1 - x0) * Demo.clamp(t, 0, S.T) / S.T; }
+        function Y(v) { return y0 - (y0 - y1) * Demo.clamp(v, 0, yTop) / yTop; }
+        function tAt(px) { return (px - x0) / (x1 - x0) * S.T; }
+
+        // y gridlines
+        var ys = tickStep(yTop);
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (yv = 0; yv <= yTop + 1e-9; yv += ys) {
+          var gy = Y(yv);
+          if (yv > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(axisNum(yv, ys), x0 - 5, gy);
+        }
+
+        // axes
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('N (individuals)', 1, 3);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center';
+        var xs = tickStep(S.T);
+        for (t = 0; t <= S.T + 1e-9; t += xs) {
+          px = X(t);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(t, 0), px, y0 + 6);
+        }
+        ctx.fillText('time (days)', (x0 + x1) / 2, y0 + 20);
+
+        // K and K/2
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.3;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Y(S.K)); ctx.lineTo(x1, Y(S.K)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Y(S.K / 2)); ctx.lineTo(x1, Y(S.K / 2)); ctx.stroke();
+        ctx.setLineDash([]);
+        chip(ctx, c, x1 - 2, Y(S.K) - 4, 'K = ' + F.comma(S.K), fs, c.muted, w, 'right');
+        chip(ctx, c, x0 + 4, Y(S.K / 2) - 4, 'K/2 = ' + F.comma(S.K / 2), fs, c.muted, w, 'left', x0 + 1);
+
+        // exponential (analytic)
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1 - 2, x1 - x0, y0 - y1 + 2); ctx.clip();
+        ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2; ctx.lineJoin = 'round';
+        ctx.setLineDash([7, 4]);
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var ye = Y(nExp(tAt(px)));
+          if (px === x0) ctx.moveTo(px, ye); else ctx.lineTo(px, ye);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // logistic, no lag
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var yl = Y(sim.N[idxAt(tAt(px))]);
+          if (px === x0) ctx.moveTo(px, yl); else ctx.lineTo(px, yl);
+        }
+        ctx.stroke();
+
+        // logistic with lag
+        if (sim.lagN) {
+          ctx.strokeStyle = c.series[2]; ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          for (px = x0; px <= x1; px++) {
+            var yg = Y(sim.lagN[idxAt(tAt(px))]);
+            if (px === x0) ctx.moveTo(px, yg); else ctx.lineTo(px, yg);
+          }
+          ctx.stroke();
+        }
+
+        // overshoot label first, so the exponential label knows to step down a line
+        var showPeak = sim.lagN && sim.peak > S.K * 1.002 && S.N0 < S.K;
+        if (showPeak) {
+          var ip = 0;
+          for (i = 0; i <= sim.n; i++) if (sim.lagN[i] === sim.peak) { ip = i; break; }
+          chip(ctx, c, X(ip * DT), Math.max(Y(sim.peak) - 8, y1 + 12),
+            'peak ' + F.comma(sim.peak) + ' = ' + F.dec(100 * sim.peak / S.K, 0) + '% of K',
+            fs, c.series[2], w, 'center', x0 + 1);
+        }
+
+        // where the exponential leaves the top of the chart
+        var tEsc = Math.log(yTop / S.N0) / S.r;
+        if (tEsc > 0 && tEsc < S.T) {
+          chip(ctx, c, X(tEsc) + 6, y1 + (showPeak ? 29 : 13),
+            'exponential leaves the chart at day ' + F.dec(tEsc, 1),
+            fs, c.series[1], w, 'left', x0 + 2);
+        }
+
+        // playhead
+        var px0 = X(S.tm);
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(px0, y1); ctx.lineTo(px0, y0); ctx.stroke();
+        ctx.setLineDash([]);
+
+        var iNow = idxAt(S.tm);
+        var ne = nExp(S.tm);
+        if (ne <= yTop) dot(ctx, c, px0, Y(ne), 4, c.series[1]);
+        dot(ctx, c, px0, Y(sim.N[iNow]), 5, c.series[0]);
+        if (sim.lagN) dot(ctx, c, px0, Y(sim.lagN[iNow]), 5, c.series[2]);
+
+      }, { aspect: 0.60, minHeight: 230, maxHeight: 330 });
+
+      // ==================================================================
+      // PLOT 2 — dN/dt against N
+      // ==================================================================
+      var cvG = Demo.canvas('#plotG', function (ctx, w, h, c) {
+        if (!sim) return;
+        var narrow = w < 380;
+        var padL = narrow ? 42 : 54, padR = narrow ? 14 : 18, padT = 20, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var st = stats();
+        var i, px, v;
+
+        var xMax = Math.max(S.K * 1.20, sim.peak * 1.05, S.N0 * 1.05);
+        // The parabola's far tail (N >> K) dives much faster than anything else on
+        // this plot. Letting it set the scale would flatten the peak at K/2, which
+        // is the whole point of the panel — so the tail is clipped instead.
+        var span = st.gPeak;
+        var yTop = Math.min(Math.max(span, sim.gLagMax) * 1.15, span * 5);
+        var yBot = Math.max(Math.min(-span * 0.5, sim.gLagMin * 1.15), -span * 5);
+
+        function X(N) { return x0 + (x1 - x0) * Demo.clamp(N, 0, xMax) / xMax; }
+        function Y(g) { return y0 - (y0 - y1) * (Demo.clamp(g, yBot, yTop) - yBot) / (yTop - yBot); }
+
+        // y gridlines
+        var ys = tickStep(yTop - yBot);
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        var vStart = Math.ceil(yBot / ys) * ys;
+        for (v = vStart; v <= yTop + ys * 1e-6; v += ys) {
+          var isZero = Math.abs(v) < ys * 1e-6;
+          var gy = Y(isZero ? 0 : v);
+          ctx.strokeStyle = isZero ? c.line : c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(axisNum(isZero ? 0 : v, ys), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('dN/dt (individuals per day)', 1, 2);
+
+        // x ticks — K/2 and K always get one, because they are the lesson
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var xt = [0, S.K / 2, S.K];
+        if (xMax > S.K * 1.35) xt.push(Math.round(xMax / 100) * 100);
+        for (i = 0; i < xt.length; i++) {
+          px = X(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.comma(xt[i]), px, y0 + 6);
+        }
+        ctx.fillText('N (individuals)', (x0 + x1) / 2, y0 + 20);
+
+        // vertical guides at K/2 and K
+        ctx.setLineDash([2, 4]);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(X(S.K), y1); ctx.lineTo(X(S.K), y0); ctx.stroke();
+        ctx.strokeStyle = c.accentLine || c.lineSoft; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(X(S.K / 2), Y(st.gPeak)); ctx.lineTo(X(S.K / 2), y0); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the parabola — clipped, so the far tail exits the box instead of
+        // flat-lining along the bottom edge
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var N = (px - x0) / (x1 - x0) * xMax;
+          var g = gLogistic(N);
+          var yy = y0 - (y0 - y1) * (Demo.clamp(g, yBot - span, yTop + span) - yBot) / (yTop - yBot);
+          if (px === x0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // the lagged orbit — deliberately NOT on the parabola
+        if (sim.lagN) {
+          var stride = Math.max(1, Math.round(sim.n / 1400));
+          var iNowL = idxAt(S.tm);
+          ctx.save();
+          ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+          ctx.globalAlpha = 0.30;
+          ctx.strokeStyle = c.series[2]; ctx.lineWidth = 1.4; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (i = 0; i <= sim.n; i += stride) {
+            var xa = X(sim.lagN[i]), ya = Y(sim.gLag[i]);
+            if (i === 0) ctx.moveTo(xa, ya); else ctx.lineTo(xa, ya);
+          }
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = 2.1;
+          ctx.beginPath();
+          for (i = 0; i <= iNowL; i += stride) {
+            var xb = X(sim.lagN[i]), yb = Y(sim.gLag[i]);
+            if (i === 0) ctx.moveTo(xb, yb); else ctx.lineTo(xb, yb);
+          }
+          ctx.lineTo(X(sim.lagN[iNowL]), Y(sim.gLag[iNowL]));
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // the peak — the headline claim
+        dot(ctx, c, X(S.K / 2), Y(st.gPeak), 5.5, c.accentStrong);
+        chip(ctx, c, X(S.K / 2), Y(st.gPeak) - 9,
+          'fastest: ' + rate(st.gPeak) + '/day at N = K/2', fs, c.accentStrong, w, 'center', x0 + 1);
+
+        // zero at N = K
+        dot(ctx, c, X(S.K), Y(0), 4, c.muted);
+        chip(ctx, c, X(S.K), Y(0) + 20, 'growth = 0 at N = K', fs, c.muted, w, 'center', x0 + 1);
+
+        // 0.9K comparison point
+        var g90 = gLogistic(0.9 * S.K);
+        dot(ctx, c, X(0.9 * S.K), Y(g90), 4, c.series[0]);
+        dot(ctx, c, X(0.1 * S.K), Y(g90), 4, c.series[0]);
+
+        // playhead on the no-lag curve
+        var iNow = idxAt(S.tm);
+        var nNow = sim.N[iNow];
+        dot(ctx, c, X(nNow), Y(gLogistic(nNow)), 5, c.series[0]);
+        if (sim.lagN) dot(ctx, c, X(sim.lagN[iNow]), Y(sim.gLag[iNow]), 5, c.series[2]);
+      }, { aspect: 0.52, minHeight: 205, maxHeight: 285 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        rRange: document.getElementById('rRange'), rOut: document.getElementById('rOut'),
+        kRange: document.getElementById('kRange'), kOut: document.getElementById('kOut'),
+        n0Range: document.getElementById('n0Range'), n0Out: document.getElementById('n0Out'),
+        tRange: document.getElementById('tRange'), tOut: document.getElementById('tOut'),
+        lagRange: document.getElementById('lagRange'), lagOut: document.getElementById('lagOut'),
+        tmRange: document.getElementById('tmRange'), tmOut: document.getElementById('tmOut'),
+        btnPlay: document.getElementById('btnPlay'), btnReset: document.getElementById('btnReset'),
+        rtVal: document.getElementById('rtVal'), rtSub: document.getElementById('rtSub'),
+        osVal: document.getElementById('osVal'), osSub: document.getElementById('osSub'),
+        osBox: document.getElementById('osBox'),
+        gMax: document.getElementById('gMax'), nHalf: document.getElementById('nHalf'),
+        g90: document.getElementById('g90'), g50: document.getElementById('g50'),
+        g90Sub: document.getElementById('g90Sub'),
+        atDayTitle: document.getElementById('atDayTitle'),
+        rNlog: document.getElementById('rNlog'), rNlogSub: document.getElementById('rNlogSub'),
+        rGlog: document.getElementById('rGlog'), rNexp: document.getElementById('rNexp'),
+        rRatio: document.getElementById('rRatio'),
+        lagTile: document.getElementById('lagTile'),
+        rNlag: document.getElementById('rNlag'), rNlagSub: document.getElementById('rNlagSub'),
+        capN: document.getElementById('capN'), capG: document.getElementById('capG'),
+        numNote: document.getElementById('numNote'),
+        lgExpSw: document.getElementById('lgExpSw'), lgLogSw: document.getElementById('lgLogSw'),
+        lgLagSw: document.getElementById('lgLagSw'), lgLagWrap: document.getElementById('lgLagWrap')
+      };
+
+      el.lgExpSw.style.background = 'var(--series-2)';
+      el.lgLogSw.style.background = 'var(--series-1)';
+      el.lgLagSw.style.background = 'var(--series-3)';
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      var ready = false;
+
+      function rebuild() {
+        sim = simulate();
+        if (S.tm > S.T) S.tm = S.T;
+        el.tmRange.max = String(S.T);
+        el.tmRange.value = String(S.tm);
+      }
+
+      function render() {
+        if (!ready) return;
+        var st = stats();
+        var iNow = idxAt(S.tm);
+        var nLog = sim.N[iNow];
+        var gLog = gLogistic(nLog);
+        var ne = nExp(S.tm);
+
+        // --- slider readouts ---
+        el.rOut.innerHTML = F.dec(S.r, 2) + ' d⁻¹';
+        el.kOut.textContent = F.comma(S.K);
+        el.n0Out.textContent = F.comma(S.N0);
+        el.tOut.textContent = F.dec(S.T, 0) + ' d';
+        el.lagOut.textContent = F.dec(S.lag, 1) + ' d';
+        el.tmOut.textContent = F.dec(S.tm, 1) + ' d';
+
+        // --- lag panel ---
+        el.rtVal.textContent = F.dec(st.rt, 2);
+        el.lgLagWrap.hidden = S.lag <= 0;
+        el.lagTile.hidden = S.lag <= 0;
+
+        if (st.regime === 'none') {
+          el.rtSub.className = 'r-sub good';
+          el.rtSub.innerHTML = 'No lag. The continuous logistic can never pass K &mdash; not a drawing choice, a property of the equation.';
+        } else if (st.regime === 'smooth') {
+          el.rtSub.className = 'r-sub';
+          el.rtSub.innerHTML = 'Below 1/e = 0.368: the lag is short enough that the curve still rises straight to K.';
+        } else if (st.regime === 'damped') {
+          el.rtSub.className = 'r-sub bad';
+          el.rtSub.innerHTML = 'Between 0.368 and &pi;/2 = 1.571: overshoot, then oscillations that shrink back to K.';
+        } else {
+          el.rtSub.className = 'r-sub bad';
+          el.rtSub.innerHTML = 'Above &pi;/2 = 1.571: boom and bust that never settles. K is now a level it cycles <em>around</em>.';
+        }
+
+        // "overshoot" only means something if the population STARTED below K
+        var startedBelow = S.N0 < S.K;
+        var overshot = S.lag > 0 && startedBelow && st.over > 1.002;
+        el.osVal.textContent = F.dec(100 * st.over, 1) + '%';
+        el.osBox.className = 'readout span2' + (overshot ? ' is-bad' : '');
+        if (!startedBelow) {
+          el.osSub.className = 'r-sub';
+          el.osSub.innerHTML = 'N₀ = ' + F.comma(S.N0) + ' is already at or above K, so this is a starting value, '
+            + 'not an overshoot. The no-lag curve comes <em>down</em> to K.';
+        } else if (S.lag <= 0) {
+          el.osSub.className = 'r-sub good';
+          el.osSub.innerHTML = 'peak ' + F.comma(sim.peak) + ' individuals &mdash; with no lag the continuous '
+            + 'logistic can never rise above K, so this can never exceed 100%';
+        } else if (!overshot) {
+          el.osSub.className = 'r-sub good';
+          el.osSub.innerHTML = 'peak ' + F.comma(sim.peak) + ' individuals &mdash; no overshoot yet, lengthen the lag';
+        } else {
+          el.osSub.className = 'r-sub bad';
+          el.osSub.innerHTML = 'peak ' + F.comma(sim.peak) + ' individuals, ' + F.comma(sim.peak - S.K)
+            + ' above K &mdash; '
+            + (st.regime === 'cycles'
+              ? 'and it keeps cycling between ' + F.comma(sim.lateMin) + ' and ' + F.comma(sim.lateMax)
+              : 'then it settles back to ' + F.comma(sim.lateMin))
+            + (sim.lateMin < S.K * 0.02
+              ? '. The crash reaches essentially zero here: past about r&tau; = 3 this model is more violent than any population that actually survives.'
+              : '');
+        }
+
+        // --- the K/2 panel ---
+        el.gMax.textContent = rate(st.gPeak);
+        el.nHalf.textContent = F.comma(st.nPeak);
+        el.g90.textContent = rate(st.g90);
+        el.g50.textContent = rate(st.g50);
+        el.g90Sub.innerHTML = 'at N = ' + F.comma(0.9 * S.K) + ', and the same rate at N = '
+          + F.comma(0.1 * S.K);
+
+        // --- the playhead panel ---
+        el.atDayTitle.textContent = 'At day ' + F.dec(S.tm, 1);
+        el.rNlog.textContent = pop(nLog);
+        el.rNlogSub.textContent = 'individuals — ' + F.dec(100 * nLog / S.K, 1) + '% of K';
+        el.rGlog.textContent = rate(gLog);
+        el.rNexp.textContent = pop(ne);
+        el.rRatio.textContent = nLog > 0 ? (ne / nLog >= 1000 ? F.sci(ne / nLog, 1) : F.dec(ne / nLog, 2)) + '×' : '—';
+
+        if (S.lag > 0) {
+          var nl = sim.lagN[iNow], gl = sim.gLag[iNow];
+          el.rNlag.textContent = pop(nl) + '  /  ' + rate(gl);
+          el.rNlagSub.textContent = 'individuals and individuals per day. '
+            + (nl > S.K && gl > 0
+              ? 'Above K and STILL growing — it is reacting to the crowding of ' + F.dec(S.lag, 1) + ' days ago.'
+              : nl > S.K
+                ? 'Above K and now falling.'
+                : 'Below K.');
+        }
+
+        // --- captions ---
+        var capBits = 'Solid line: logistic. Dashed line: the same population with no limit at all, N₀e^(rt).';
+        if (st.tHalf != null && st.tHalf <= 0) {
+          capBits += ' N₀ already sits above K/2, so this population is past its steepest point on day 0 and only ever slows down.';
+        } else if (st.tHalf != null && st.tHalf <= S.T) {
+          capBits += ' The logistic passes K/2 on day ' + F.dec(st.tHalf, 2) + ', which is where it is steepest.';
+        } else if (st.tHalf != null) {
+          capBits += ' It does not even reach K/2 inside this ' + F.dec(S.T, 0) + '-day window — widen it.';
+        } else if (S.N0 === S.K) {
+          capBits += ' N₀ is exactly K, so the no-lag population never changes at all: dN/dt = 0.';
+        } else {
+          capBits += ' N₀ is above K, so this population falls to K instead of rising to it.';
+        }
+        el.capN.textContent = capBits;
+
+        el.capG.innerHTML = 'The parabola is dN/dt = rN(1 &minus; N/K) for the no-lag model. It is zero at N = 0, '
+          + 'zero again at N = K, and highest at N = K/2 &mdash; '
+          + rate(st.gPeak) + ' individuals per day.'
+          + (S.lag > 0
+            ? ' The pale loop is the lagged population, which leaves the parabola entirely: with a lag, growth is not a function of today&rsquo;s N.'
+            : '');
+
+        el.numNote.innerHTML = 'Numerics: the no-lag logistic is drawn from its exact solution '
+          + 'N(t) = KN₀ / [N₀ + (K &minus; N₀)e^(&minus;rt)], so it carries no integrator error. The lagged model '
+          + 'uses fourth-order Runge&ndash;Kutta with &Delta;t = 0.005 day &mdash; '
+          + F.comma(sim.n) + ' steps across this window, and the lag &tau; is at least 20 steps long whenever it is on.';
+
+        cvN.redraw();
+        cvG.redraw();
+      }
+
+      function full() { rebuild(); render(); }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#rRange', function (v) { S.r = v; if (ready) full(); });
+      Demo.range('#kRange', function (v) { S.K = v; if (ready) full(); });
+      Demo.range('#n0Range', function (v) { S.N0 = v; if (ready) full(); });
+      Demo.range('#lagRange', function (v) { S.lag = v; if (ready) full(); });
+      Demo.range('#tRange', function (v) { S.T = v; if (ready) full(); });
+      Demo.range('#tmRange', function (v) { S.tm = v; if (ready) render(); });
+
+      var anim = Demo.loop(function (dt) {
+        S.tm += dt * (S.T / 14);
+        if (S.tm >= S.T) S.tm = 0;
+        el.tmRange.value = String(S.tm);
+        render();
+      });
+
+      el.btnPlay.addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Play';
+      });
+
+      function setSliders(r, K, N0, lag, T) {
+        S.r = r; S.K = K; S.N0 = N0; S.lag = lag; S.T = T;
+        el.rRange.value = String(r);
+        el.kRange.value = String(K);
+        el.n0Range.value = String(N0);
+        el.lagRange.value = String(lag);
+        el.tRange.value = String(T);
+      }
+
+      document.querySelectorAll('[data-preset]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var p = b.dataset.preset;
+          if (p === 'none') setSliders(0.5, 1000, 10, 0, 60);
+          else if (p === 'damped') setSliders(0.5, 1000, 10, 2.0, 80);
+          else setSliders(0.5, 1000, 10, 3.5, 120);
+          full();
+        });
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        anim.stop();
+        el.btnPlay.textContent = 'Play';
+        setSliders(DEF.r, DEF.K, DEF.N0, DEF.lag, DEF.T);
+        S.tm = 0;
+        full();
+      });
+
+      // ==================================================================
+      // GO
+      // ==================================================================
+      ready = true;
+      full();
+    })();
+  </script>
+</body>
+
+</html>

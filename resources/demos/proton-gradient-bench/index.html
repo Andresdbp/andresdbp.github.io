@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Proton Gradient Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Run the electron transport chain with rotenone, cyanide, oligomycin and an uncoupler. Oxygen consumption, proton-motive force and ATP output move in different directions - which is how you can tell the chain from the synthase.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: unit-bearing tiles, stage labels, pmf split bar */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 25px; }
+
+    /* these tiles carry real units, longer than the shell's one-line default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub, .readout .r-label sup { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.up { color: var(--bad); font-weight: 600; }
+    .readout .r-sub.down { color: var(--accent-strong); font-weight: 600; }
+    .readout .r-sub.hold { color: var(--ok); font-weight: 600; }
+
+    /* long, unit-bearing button labels: let them wrap instead of overflowing
+       the 375 px column (the shell's .seg button is nowrap by default) */
+    .seg.wrap-seg { flex-wrap: wrap; }
+    .seg.wrap-seg button { flex: 1 1 40%; white-space: normal; line-height: 1.35; }
+
+    .split { display: flex; height: 17px; border-radius: 5px; overflow: hidden; background: var(--track); }
+    .split > span { height: 100%; display: block; transition: width 0.2s linear; }
+    .split-key { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 7px; font-size: 11.5px; color: var(--muted); }
+    .split-key .k { display: inline-flex; align-items: center; gap: 6px; }
+    .split-key .k i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+
+    .eqn {
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+    }
+    .eqn b { color: var(--text); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Proton Gradient Bench</h1>
+        <p class="demo-sub">Let it settle, then press <em>Uncoupler (DNP)</em>. Oxygen consumption goes <em>up</em> and ATP output goes to zero. Work out how both can be true at once.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Cellular energetics</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="memLabel">Inner mitochondrial membrane <span>&mdash; live</span></p>
+        <canvas id="mem" role="img"
+                aria-label="Cross-section of the inner mitochondrial membrane. Complexes I, II, III and IV sit in the membrane with ATP synthase beside them. Protons are pumped from the matrix into the intermembrane space and return through ATP synthase or through a leak channel."></canvas>
+        <p class="stage-caption" id="memCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:15px 0">
+
+        <p class="stage-label">Recorder <span>&mdash; the last 40 seconds, so you can see which way each number jumped</span></p>
+        <canvas id="trace" role="img"
+                aria-label="A three-channel recorder trace of oxygen consumption, proton-motive force and ATP output over the last forty seconds, with a marker each time a drug is added."></canvas>
+        <div class="legend">
+          <span class="lg"><i id="lgO2"></i>oxygen consumption</span>
+          <span class="lg"><i id="lgPmf"></i>proton-motive force</span>
+          <span class="lg"><i id="lgAtp"></i>ATP output</span>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Live readouts</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Electron flow</div>
+              <div class="r-value" id="rE">288</div>
+              <div class="r-sub">nmol e⁻ min⁻¹ mg⁻¹</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">O<sub>2</sub> consumption</div>
+              <div class="r-value" id="rO2">72.0</div>
+              <div class="r-sub">nmol O<sub>2</sub> min⁻¹ mg⁻¹</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">Proton-motive force</div>
+              <div class="r-value big" id="rPmf">175<span class="r-unit">mV</span></div>
+              <div class="r-sub" id="rPmfSub">the gradient itself</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">ATP output</div>
+              <div class="r-value big" id="rAtp">331<span class="r-unit">nmol min⁻¹ mg⁻¹</span></div>
+              <div class="r-sub" id="rAtpSub">made by ATP synthase only</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Electron flow and O<sub>2</sub> consumption are one measurement, not two: four electrons reduce one
+            O<sub>2</sub> to two H<sub>2</sub>O, so the top row always reads 4&times;. Measuring oxygen
+            <em>is</em> measuring the chain.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Drugs &mdash; the whole point</div>
+          <div class="stack">
+            <div class="seg wrap-seg" role="tablist" aria-label="Inhibitor" id="blkSeg">
+              <button role="tab" aria-selected="true" data-blk="none">No drug</button>
+              <button role="tab" aria-selected="false" data-blk="rot">Rotenone</button>
+              <button role="tab" aria-selected="false" data-blk="cn">Cyanide</button>
+              <button role="tab" aria-selected="false" data-blk="olig">Oligomycin</button>
+            </div>
+            <p class="ctrl-hint" id="blkHint">&nbsp;</p>
+
+            <hr class="sep">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="dnpRange">Uncoupler (DNP)</label>
+                <span class="ctrl-value" id="dnpOut">0 &micro;mol L⁻¹</span>
+              </div>
+              <input type="range" id="dnpRange" min="0" max="100" step="1" value="0">
+              <p class="ctrl-hint">
+                2,4-dinitrophenol is a weak acid that dissolves in the membrane, picks a proton up on the outside
+                and drops it in the matrix. It is a hole for protons only &mdash; it touches nothing else. This
+                slider is <strong>independent</strong> of the buttons above, so you can add it on top of
+                oligomycin.
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnDnp">Uncoupler (DNP), full dose</button>
+              <button class="btn" id="btnReset">Reset everything</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the force actually lives</div>
+          <div class="split">
+            <span id="barPsi" style="width:78%;background:var(--series-1)"></span>
+            <span id="barDpH" style="width:22%;background:var(--series-2)"></span>
+          </div>
+          <div class="split-key">
+            <span class="k"><i style="background:var(--series-1)"></i>&Delta;&psi; voltage</span>
+            <span class="k"><i style="background:var(--series-2)"></i>&Delta;pH chemical</span>
+          </div>
+          <div class="readouts two" style="margin-top:11px">
+            <div class="readout">
+              <div class="r-label">&Delta;&psi; membrane potential</div>
+              <div class="r-value" id="rPsi">137<span class="r-unit">mV</span></div>
+              <div class="r-sub" id="rPsiSub">78% of the pmf</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">&Delta;pH across membrane</div>
+              <div class="r-value" id="rDpH">0.65<span class="r-unit">units</span></div>
+              <div class="r-sub" id="rDpHSub">= 38 mV, 22% of the pmf</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Matrix pH</div>
+              <div class="r-value" id="rMatrix">7.85</div>
+              <div class="r-sub">alkaline &mdash; protons left</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Intermembrane space pH</div>
+              <div class="r-value" id="rIms">7.20</div>
+              <div class="r-sub">held at cytosol pH by porins</div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:11px">
+            <strong>The gradient is mostly voltage.</strong> Textbook cartoons draw a crowd of H⁺ outside and an
+            empty matrix, which makes it look like a concentration difference. It is not. A pH difference of
+            0.65 units is worth only about 38 mV; the other ~137 mV is charge separation across a membrane two
+            molecules thick. Adding up the protons needed to charge the membrane to 137 mV changes matrix pH by
+            about 0.004 units &mdash; the electrical part is almost free, which is exactly why it dominates.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Fuel and oxygen</div>
+          <div class="stack">
+            <div class="seg wrap-seg" role="tablist" aria-label="Electron donor" id="subSeg">
+              <button role="tab" aria-selected="true" data-sub="nadh">NADH &rarr; complex I</button>
+              <button role="tab" aria-selected="false" data-sub="fadh">FADH<sub>2</sub> &rarr; complex II</button>
+            </div>
+            <p class="ctrl-hint" style="margin-top:-4px">
+              NADH from the Krebs cycle enters at complex I (10 H⁺ pumped per electron pair). Succinate hands its
+              electrons to FAD inside complex II, which pumps <strong>nothing</strong>, so that route only gets
+              6 H⁺. Switching donors is also how you find out what rotenone really blocks.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="fuelRange">Substrate supply</label>
+                <span class="ctrl-value" id="fuelOut">100%</span>
+              </div>
+              <input type="range" id="fuelRange" min="0" max="100" step="1" value="100">
+              <p class="ctrl-hint">How fast reduced coenzyme arrives from the Krebs cycle. Saturating, so the last
+                20% buys very little.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="o2Range">Oxygen</label>
+                <span class="ctrl-value" id="o2Out">200 &micro;mol L⁻¹</span>
+              </div>
+              <input type="range" id="o2Range" min="-2" max="2.398" step="0.001" value="2.301">
+              <p class="ctrl-hint">
+                Logarithmic, 0.01 to 250 &micro;mol L⁻¹. Air-saturated water is about 200; working tissue sits
+                near 5 to 30. Complex IV binds O<sub>2</sub> with K<sub>m</sub> = 0.5 &micro;mol L⁻¹, so the rate
+                barely notices until you are almost out.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Energy budget</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Heat released</div>
+              <div class="r-value" id="rHeat">15.1<span class="r-unit">mJ min⁻¹ mg⁻¹</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Captured as ATP</div>
+              <div class="r-value" id="rEff">52%</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">P/O ratio &mdash; ATP made per oxygen atom reduced</div>
+              <div class="r-value" id="rPO">2.30</div>
+              <div class="r-sub" id="rPOSub">theoretical ceiling for NADH is 2.5</div>
+            </div>
+          </div>
+          <p class="note warn" id="verdict" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The equations being solved</div>
+          <p class="eqn">
+            <b>pmf</b> &nbsp; &Delta;p = &Delta;&psi; &minus; 59.2&nbsp;&Delta;pH &nbsp;(mV, 25&nbsp;&deg;C).
+            At rest that is &Delta;&psi; = &minus;137 mV and &Delta;pH = pH<sub>matrix</sub> &minus;
+            pH<sub>IMS</sub> = +0.65, so &Delta;p = &minus;175 mV. The tiles show magnitudes.<br>
+            <b>pumping</b> &nbsp; J<sub>H</sub> = 2&nbsp;n<sub>H</sub>&nbsp;v<sub>O2</sub>, with
+            n<sub>H</sub> = 10 H⁺ per NADH (4+4+2 at I, III, IV) or 6 per FADH<sub>2</sub> (0+4+2).<br>
+            <b>back-pressure</b> &nbsp; v<sub>O2</sub> = V<sub>max</sub> &middot; f(fuel) &middot; f(O<sub>2</sub>)
+            &middot; 1/(1 + e<sup>(&Delta;p &minus; 180)/22</sup>). The chain pumps against the gradient it built,
+            so a bigger gradient means slower electrons.<br>
+            <b>synthase</b> &nbsp; J<sub>syn</sub> = J<sub>max</sub> / (1 + e<sup>&minus;(&Delta;p &minus; 150)/10</sup>),
+            4 H⁺ per exported ATP (3 through the rotor, 1 for the ADP/ATP and phosphate carriers).<br>
+            <b>leak</b> &nbsp; J<sub>leak</sub> = 1.48 (e<sup>&Delta;p/40</sup> &minus; 1); &nbsp;
+            <b>uncoupler</b> &nbsp; J<sub>DNP</sub> = 0.648 &middot; [DNP] &middot; &Delta;p.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            What is simplified. This is one averaged mitochondrion in a stirred cuvette, not a cell: ADP,
+            phosphate and NAD⁺ are never allowed to run out, so ATP synthase is limited only by the pmf. Real
+            respiratory control also runs through ADP supply. The oxygen number is the concentration in the
+            medium and is held fixed rather than being consumed. The split between &Delta;&psi; and &Delta;pH is
+            modelled as relaxing toward a fixed ratio (59&nbsp;&Delta;pH = 0.28&nbsp;&Delta;&psi;) set by the
+            charge-compensating carriers &mdash; the phosphate carrier and the K⁺ cycle; a real membrane's ratio
+            drifts with the medium. Rates are in nmol per minute per milligram of mitochondrial protein, the
+            units an oxygen electrode actually reports, and the constants are chosen to land on textbook
+            values rather than being measured from one preparation. Cutting the chain here simply stops ATP
+            synthesis; in a real mitochondrion the synthase can spin <em>backwards</em>, hydrolysing ATP to
+            defend the gradient, which is why cyanide poisoning drains cellular ATP faster than this model
+            shows.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students say <em>"the electron transport chain makes ATP."</em> It
+        does not. The chain is a pump. Everything it does with the energy in NADH is move protons from the matrix
+        to the intermembrane space, building a force across the membrane. A completely separate machine, ATP
+        synthase, is the only thing on this page that makes ATP, and it does it by letting those protons fall
+        back. Two machines, one shared currency between them. Almost every hard question about respiration is
+        really asking whether you have noticed that they are separate.
+      </p>
+      <p>
+        <strong>The experiment that settles it.</strong> Let the bench settle: O<sub>2</sub> consumption 72,
+        pmf 175 mV, ATP 331. Now press <strong>Oligomycin</strong>, which jams ATP synthase and nothing else.
+        If the chain made ATP, blocking the synthase should leave the chain alone. Instead every number moves:
+        pmf climbs to <strong>220 mV</strong>, and oxygen consumption <em>falls</em> from 72 to
+        <strong>18</strong>. The protons have nowhere to go, the gradient piles up, and the pumps are pushing
+        against a wall they built. Electron flow is not blocked; it is <em>backed up</em>. That is the whole
+        idea of chemiosmotic coupling in one measurement.
+      </p>
+      <p>
+        <strong>Now the diagnostic.</strong> With oligomycin still on, drag the uncoupler slider to 100
+        &micro;mol L⁻¹. DNP does not touch a single protein. It just makes the membrane leaky to protons. Oxygen
+        consumption rockets from 18 back up to <strong>130</strong> &mdash; higher than it ever was with the
+        synthase working &mdash; while ATP output stays at <strong>zero</strong> and the pmf collapses to about
+        40 mV. There is no way to explain that if the chain makes the ATP. Take the wall away and the pumps run
+        flat out; they simply have nothing to show for it. The energy comes out as heat instead: the heat
+        readout goes from 15 to <strong>57 mJ min⁻¹ mg⁻¹</strong>. That is not a metaphor. Brown fat does this on
+        purpose with a protein called UCP1 to warm a newborn, and in the 1930s DNP was sold as a diet pill for
+        exactly this reason, until enough people cooked themselves to death that it was banned.
+      </p>
+      <p>
+        <strong>Three drugs, three different signatures.</strong> Rotenone and cyanide block the chain itself, so
+        pumping stops and the gradient drains away: O<sub>2</sub> consumption zero, pmf falling, ATP zero.
+        Oligomycin blocks the synthase: pmf <em>up</em>, O<sub>2</sub> consumption down, ATP zero. DNP blocks
+        nothing: pmf down, O<sub>2</sub> consumption <em>up</em>, ATP zero. All three kill ATP production. Only
+        the direction the other two numbers moved tells you which machine was hit &mdash; and you cannot read
+        those directions at all if the chain and the synthase are one thing in your head.
+      </p>
+      <p>
+        <strong>One more test, if you want it.</strong> Switch the electron donor to FADH<sub>2</sub> (succinate,
+        the Krebs-cycle step that feeds complex II) and press
+        <strong>Rotenone</strong>. Nothing happens: rotenone plugs complex I, and succinate hands its electrons
+        to complex II, downstream of the block. Cyanide still kills it, because complex IV is downstream of
+        everything. Compare the two donors with no drug at all and you get the other half of the story: succinate
+        makes the mitochondrion consume <em>more</em> oxygen (93 against 72) and produce <em>less</em> ATP (259
+        against 331). FADH<sub>2</sub> skips the four protons that complex I would have pumped, so each electron
+        pair buys 6 protons instead of 10 &mdash; a P/O of 1.39 instead of 2.30. Less back-pressure, faster
+        electrons, less ATP. The proton count, not the electron count, is what sets the ATP yield.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one averaged mitochondrion, chemiosmotic coupling
+      //
+      // State variables (integrated in real time):
+      //   psi  magnitude of the membrane potential, mV  (matrix negative)
+      //   u    the chemical component expressed in mV, u = 59.2 * dpH
+      //
+      // TRAP 1 — the pmf is mostly VOLTAGE. delta-psi and delta-pH are
+      //   tracked as two separate reservoirs and combined with the real
+      //   Nernst relation. In signed form (matrix-negative convention,
+      //   dpH = pH_matrix - pH_IMS > 0):
+      //        delta-p = delta-psi - 59.2 * delta-pH
+      //   e.g. -137 - 59.2(0.65) = -175 mV. The page shows magnitudes,
+      //   so on screen pmf = psi + u = 137 + 38 = 175 mV.
+      //   Charging the membrane costs almost no protons (tiny capacitance)
+      //   while a pH change costs a great many (large buffer capacity), so
+      //   almost every proton that contributes to delta-pH must have its
+      //   charge compensated by another ion. That compensation is modelled
+      //   as relaxation toward  u = 0.28 * psi.
+      //
+      // TRAP 2 — BACK-PRESSURE. The pump term carries a factor
+      //   1/(1 + exp((pmf - 179.8)/22)). Nothing about oligomycin is
+      //   special-cased: block the synthase, protons pile up, the factor
+      //   falls, and oxygen consumption drops out of the arithmetic.
+      //
+      // TRAP 3 — the UNCOUPLER SPEEDS ELECTRONS UP, for the same reason
+      //   read backwards: DNP drains the pmf, the back-pressure factor
+      //   goes to ~1, and v_O2 runs to its ceiling.
+      //
+      // Units: nmol O2 / min / mg protein; proton fluxes in nmol H+ /min/mg.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var VO2MAX = 130;          // nmol O2 min^-1 mg^-1, electron-delivery ceiling
+      var P50 = 179.8, WBP = 22.0;   // back-pressure sigmoid, mV
+      var JSYN = 1433;           // nmol H+ min^-1 mg^-1, synthase capacity
+      var PSYN = 150, WSYN = 10;     // synthase pmf threshold, mV
+      var GL = 1.477, KL = 40;       // basal proton leak
+      var GU = 0.648;            // uncoupler conductance per µmol/L DNP
+      var HPA = 4;               // H+ per ATP exported (3 rotor + 1 carriers)
+      var RSPLIT = 0.28;         // u / psi at charge-compensation equilibrium
+      var FRT = 59.2;            // 2.303 RT / F at 25 °C, mV per pH unit
+      var KM_O2 = 0.5;           // µmol L^-1, complex IV
+      var KM_SUB = 25;           // % units, substrate half-saturation
+      var PH_IMS = 7.20;         // held at cytosol pH through the porins
+      var DG_ATP = 50;           // kJ per mol ATP, cellular conditions
+      var KJ_NADH = 440, KJ_SUCC = 304;   // kJ per mol O2 reduced
+
+      var CPSI = 0.05, BU = 0.35, KEX = 0.28;   // reservoir sizes / exchange rate
+      var HIST_S = 40, SAMPLE = 0.05;
+
+      var S = {
+        sub: 'nadh', fuel: 100, o2: 200, blk: 'none', dnp: 0,
+        psi: 0, u: 0, t: 0, acc: 0,
+        hist: [], events: []
+      };
+
+      var rand = Demo.rng(20250725);
+
+      // ---------------- flux laws ----------------
+
+      function backP(p) { return 1 / (1 + Math.exp((p - P50) / WBP)); }
+      function gSyn(p) { return 1 / (1 + Math.exp(-(p - PSYN) / WSYN)); }
+      function leak(p) { return GL * (Math.exp(p / KL) - 1); }
+
+      function conditions() {
+        var nH = S.sub === 'nadh' ? 10 : 6;
+        var chain = 1;
+        if (S.blk === 'cn') chain = 0;                       // complex IV
+        if (S.blk === 'rot' && S.sub === 'nadh') chain = 0;   // complex I only
+        return {
+          nH: nH,
+          chain: chain,
+          oligo: S.blk === 'olig' ? 0 : 1,
+          fsub: (S.fuel / (S.fuel + KM_SUB)) / (100 / (100 + KM_SUB)),
+          fo2: S.o2 / (S.o2 + KM_O2),
+          dnp: S.dnp
+        };
+      }
+
+      function fluxes(p, o) {
+        var vO2 = VO2MAX * o.fsub * o.fo2 * o.chain * backP(p);
+        return {
+          vO2: vO2,
+          Jpump: 2 * o.nH * vO2,          // 2 electron pairs per O2
+          Jsyn: JSYN * gSyn(p) * o.oligo,
+          Jleak: leak(p),
+          Junc: GU * o.dnp * p
+        };
+      }
+
+      // ---------------- derived view of the current state ----------------
+
+      function derive() {
+        var o = conditions();
+        var p = S.psi + S.u;
+        var f = fluxes(p, o);
+        var atp = f.Jsyn / HPA;
+        var kj = o.nH === 10 ? KJ_NADH : KJ_SUCC;
+        var power = f.vO2 * kj * 1e-3;      // mJ min^-1 mg^-1
+        var atpPow = atp * DG_ATP * 1e-3;
+        return {
+          o: o, p: p, psi: S.psi, u: S.u, dpH: S.u / FRT,
+          vO2: f.vO2, e: 4 * f.vO2, atp: atp,
+          Jpump: f.Jpump, Jsyn: f.Jsyn, Jleak: f.Jleak, Junc: f.Junc,
+          PO: f.vO2 > 0.05 ? atp / (2 * f.vO2) : 0,
+          power: power, heat: Math.max(0, power - atpPow),
+          eff: power > 0.01 ? Demo.clamp(atpPow / power, 0, 1) : 0,
+          nHmax: o.nH
+        };
+      }
+
+      // ---------------- integration ----------------
+
+      function physics(dt) {
+        var o = conditions();
+        var p = S.psi + S.u;
+        var f = fluxes(p, o);
+        var net = (f.Jpump - f.Jsyn - f.Jleak - f.Junc) / 60;    // per second
+        var jex = KEX * (RSPLIT * S.psi - S.u);
+        S.psi = Math.max(0, S.psi + dt * (net - jex) / CPSI);
+        S.u = Math.max(0, S.u + dt * jex / BU);
+      }
+
+      // ==================================================================
+      // PARTICLES — protons, ATP, heat. Positions are resolved at draw
+      // time from the layout, so they survive a resize.
+      // ==================================================================
+      var parts = [];
+      var spawn = { I: 0, III: 0, IV: 0, syn: 0, leak: 0, atp: 0, heat: 0 };
+      var MAXP = 150;
+
+      function emit(kind, ratePerSec, dt) {
+        spawn[kind] += ratePerSec * dt;
+        while (spawn[kind] >= 1) {
+          spawn[kind] -= 1;
+          if (parts.length < MAXP) {
+            parts.push({ k: kind, t: 0, j: rand(), sp: 0.85 + 0.3 * rand() });
+          }
+        }
+        if (spawn[kind] > 3) spawn[kind] = 3;
+      }
+
+      function stepParts(dt, M) {
+        var K = 0.30;    // particles per second per (nmol H+ / s)
+        var pumpRate = Demo.clamp(M.Jpump / 60 * K, 0, 26);
+        var nH = M.nHmax;
+        var wI = S.sub === 'nadh' ? 4 : 0, wIII = 4, wIV = 2;
+        emit('I', pumpRate * wI / nH, dt);
+        emit('III', pumpRate * wIII / nH, dt);
+        emit('IV', pumpRate * wIV / nH, dt);
+        emit('syn', Demo.clamp(M.Jsyn / 60 * K, 0, 22), dt);
+        emit('leak', Demo.clamp((M.Jleak + M.Junc) / 60 * K, 0, 22), dt);
+        emit('atp', Demo.clamp(M.atp / 60 * K * 1.4, 0, 16), dt);
+        emit('heat', Demo.clamp((M.heat - 12) / 60 * 5, 0, 14), dt);
+
+        for (var i = parts.length - 1; i >= 0; i--) {
+          var q = parts[i];
+          q.t += dt * q.sp * (q.k === 'atp' || q.k === 'heat' ? 0.75 : 1.15);
+          if (q.t >= 1) parts.splice(i, 1);
+        }
+      }
+
+      // ==================================================================
+      // MEMBRANE CANVAS
+      // ==================================================================
+      function layout(w, h) {
+        var pad = 4;
+        var W = w - 2 * pad;
+        var g = w < 400 ? 4 : 7;
+        var unit = (W - 5 * g) / 5.5;      // 5 boxes + a half-width leak channel
+        var L = { memTop: h * 0.34, memBot: h * 0.66, imsY: h * 0.17, matY: h * 0.80, box: [] };
+        var x = pad;
+        var names = ['I', 'II', 'III', 'IV', 'syn'];
+        for (var i = 0; i < 5; i++) {
+          L.box.push({ n: names[i], x: x, w: unit, cx: x + unit / 2 });
+          x += unit + g;
+        }
+        L.leak = { x: x, w: unit / 2, cx: x + unit / 4 };
+        return L;
+      }
+
+      function rrect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function softFill(ctx, col, a) { ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = col; ctx.fill(); ctx.restore(); }
+
+      function cross(ctx, cx, cy, r, col) {
+        ctx.save();
+        ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - r, cy - r); ctx.lineTo(cx + r, cy + r);
+        ctx.moveTo(cx + r, cy - r); ctx.lineTo(cx - r, cy + r);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      var memCv = Demo.canvas('#mem', function (ctx, w, h, c) {
+        var M = derive();
+        var L = layout(w, h);
+        var narrow = w < 400;
+        var fs = narrow ? 8.4 : 9.8;
+        var i, b;
+
+        var blocked = {
+          I: (S.blk === 'rot'),
+          IV: (S.blk === 'cn'),
+          syn: (S.blk === 'olig')
+        };
+        var chainDead = M.o.chain === 0 || M.vO2 < 0.4;
+        var pumpCol = c.warn, eCol = c.series[0], atpCol = c.ok;
+
+        // ---- compartment labels ----
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('INTERMEMBRANE SPACE', 2, 1);
+        ctx.textAlign = 'right';
+        ctx.fillText('pH ' + F.dec(PH_IMS, 2), w - 2, 1);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText('MATRIX', 2, h - 1);
+        ctx.textAlign = 'right';
+        ctx.fillText('pH ' + F.dec(PH_IMS + M.dpH, 2), w - 2, h - 1);
+
+        // ---- live numbers, on their own line so nothing collides ----
+        ctx.font = '600 ' + (fs - 0.4) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.accentStrong;
+        ctx.fillText('pmf ' + F.dec(M.p, 0) + ' mV', 2, fs + 4);
+        ctx.fillStyle = c.muted;
+        ctx.fillText('=  Δψ ' + F.dec(M.psi, 0) + ' mV  +  ΔpH ' + F.dec(M.dpH, 2)
+          + ' (' + F.dec(M.u, 0) + ' mV)', 2 + ctx.measureText('pmf ' + F.dec(M.p, 0) + ' mV  ').width, fs + 4);
+
+        // ---- membrane slab ----
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(0, L.memTop, w, L.memBot - L.memTop);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, L.memTop); ctx.lineTo(w, L.memTop);
+        ctx.moveTo(0, L.memBot); ctx.lineTo(w, L.memBot);
+        ctx.stroke();
+
+        // ---- charge separation: + outside, − inside, count ∝ Δψ ----
+        var nq = Math.round(Demo.clamp(M.psi / 200, 0, 1) * (narrow ? 9 : 14));
+        ctx.font = '700 ' + (fs + 2) + FONT;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        for (i = 0; i < nq; i++) {
+          var qx = (w / (nq + 1)) * (i + 1);
+          ctx.fillStyle = c.warn;              // the positive charge IS the pumped protons
+          ctx.fillText('+', qx, L.memTop - 6);
+          ctx.fillStyle = c.series[3];
+          ctx.fillText('−', qx, L.memBot + 7);
+        }
+        // ---- electron path: I/II → Q → III → cyt c → IV ----
+        var eY = (L.memTop + L.memBot) / 2;
+        var xI = L.box[0].cx, xII = L.box[1].cx, xIII = L.box[2].cx, xIV = L.box[3].cx;
+        var flowFrac = Demo.clamp(M.vO2 / VO2MAX, 0, 1);
+        ctx.save();
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.lineDashOffset = -(S.t * 60 * (0.25 + flowFrac));
+        var liveFrom = S.sub === 'nadh' ? xI : xII;
+        ctx.strokeStyle = chainDead ? c.muted : eCol;
+        ctx.globalAlpha = chainDead ? 0.35 : 1;
+        ctx.beginPath();
+        ctx.moveTo(liveFrom, eY); ctx.lineTo(xIII, eY); ctx.lineTo(xIV, eY);
+        ctx.stroke();
+        ctx.restore();
+
+        // ---- complexes ----
+        var labels = { I: 'I', II: 'II', III: 'III', IV: 'IV', syn: 'ATP' };
+        for (i = 0; i < L.box.length; i++) {
+          b = L.box[i];
+          var isSyn = b.n === 'syn';
+          var top = isSyn ? L.memTop - h * 0.13 : L.memTop - 5;
+          var bot = L.memBot + 5;
+          var used = isSyn ? (M.o.oligo === 1) :
+            (b.n === 'II' ? S.sub === 'fadh' : (b.n === 'I' ? S.sub === 'nadh' : true));
+          var dead = blocked[b.n] || (!isSyn && chainDead) || (isSyn && M.atp < 1);
+
+          rrect(ctx, b.x, top, b.w, bot - top, 7);
+          softFill(ctx, isSyn ? atpCol : eCol, used && !dead ? 0.20 : 0.07);
+          ctx.strokeStyle = used && !dead ? (isSyn ? atpCol : c.accentLine) : c.line;
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+
+          ctx.font = '700 ' + (fs + (isSyn ? 0.6 : 2.4)) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = used ? c.text : c.muted;
+          if (isSyn) {
+            ctx.fillText('ATP', b.cx, eY - 6);
+            ctx.font = '600 ' + (fs - 0.4) + FONT;
+            ctx.fillText('synthase', b.cx, eY + 6);
+          } else {
+            ctx.fillText(labels[b.n], b.cx, eY);
+            ctx.font = '600 ' + (fs - 1.2) + FONT;
+            ctx.fillStyle = c.muted;
+            var np = b.n === 'II' ? '0 H⁺' : (b.n === 'IV' ? '2 H⁺' : '4 H⁺');
+            ctx.fillText(np, b.cx, L.memBot - 7);
+          }
+          // the X sits above the label on the tall synthase so the name stays readable
+          if (blocked[b.n]) {
+            cross(ctx, b.cx, isSyn ? top + (L.memTop - top) / 2 : eY,
+              Math.min(isSyn ? 8 : 11, b.w * 0.28), c.bad);
+          }
+        }
+
+        // ---- leak / uncoupler channel ----
+        var lk = L.leak;
+        var uncOn = S.dnp > 0;
+        rrect(ctx, lk.x, L.memTop - 5, lk.w, L.memBot - L.memTop + 10, 6);
+        softFill(ctx, uncOn ? c.bad : c.muted, uncOn ? 0.22 : 0.06);
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = uncOn ? c.bad : c.line;
+        ctx.lineWidth = 1.3; ctx.stroke();
+        ctx.restore();
+        ctx.font = '600 ' + (fs - 1) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillStyle = uncOn ? c.bad : c.muted;
+        ctx.fillText(uncOn ? 'DNP' : 'leak', lk.cx, L.memBot + 8);
+
+        // ---- particles ----
+        var synB = L.box[4], boxOf = { I: L.box[0], III: L.box[2], IV: L.box[3] };
+        ctx.save();
+        for (i = 0; i < parts.length; i++) {
+          var q = parts[i], px, py, r = 3, col = pumpCol, al = 1;
+          if (q.k === 'I' || q.k === 'III' || q.k === 'IV') {
+            b = boxOf[q.k];
+            px = b.x + b.w * (0.22 + 0.56 * q.j);
+            py = Demo.lerp(L.matY, L.imsY, q.t);
+          } else if (q.k === 'syn') {
+            px = synB.x + synB.w * (0.25 + 0.5 * q.j);
+            py = Demo.lerp(L.imsY, L.matY, q.t);
+          } else if (q.k === 'leak') {
+            px = lk.x + lk.w * (0.22 + 0.56 * q.j);
+            py = Demo.lerp(L.imsY, L.matY, q.t);
+            col = uncOn ? c.bad : pumpCol;
+          } else if (q.k === 'atp') {
+            px = synB.cx + (q.j - 0.5) * synB.w * 2.4 * q.t;
+            py = Demo.lerp(L.matY - 2, L.matY + 18, q.t);
+            col = atpCol; r = 3.4; al = 1 - q.t * 0.55;
+          } else {
+            // heat drifts left through the matrix, clear of the reaction labels
+            px = lk.cx - lk.w * 0.5 - (0.15 + q.j * 0.6) * w * q.t;
+            py = Demo.lerp(L.memBot + 6, L.matY - 6, q.t) + Math.sin(q.t * 9 + q.j * 6) * 3;
+            col = c.bad; r = 2.4; al = 1 - q.t;
+          }
+          ctx.globalAlpha = Demo.clamp(al, 0, 1);
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, 6.2832);
+          ctx.fillStyle = col; ctx.fill();
+        }
+        ctx.restore();
+
+        // ---- reactant / product notes, stacked so they cannot collide ----
+        ctx.font = '600 ' + (fs - 0.6) + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillStyle = chainDead ? c.muted : c.series[2];
+        ctx.fillText('O₂ + 4e⁻ + 4H⁺ → 2 H₂O', w - 2, L.matY + 3);
+        ctx.fillStyle = M.atp > 1 ? atpCol : c.muted;
+        ctx.fillText('ADP + Pi → ATP', w - 2, L.matY + 3 + fs + 4);
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(S.sub === 'nadh' ? 'NADH' : 'succinate', S.sub === 'nadh' ? xI : xII, L.matY - 2);
+
+        if (M.heat > 30) {
+          ctx.fillStyle = c.bad;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.font = '700 ' + fs + FONT;
+          ctx.fillText('HEAT', 2, L.matY + 3);
+        }
+      }, { aspect: 0.60, minHeight: 235, maxHeight: 330 });
+
+      // ==================================================================
+      // RECORDER TRACE
+      // ==================================================================
+      var CH = [
+        { key: 'vO2', max: 140, label: 'O₂' },
+        { key: 'p', max: 240, label: 'pmf' },
+        { key: 'atp', max: 360, label: 'ATP' }
+      ];
+
+      var traceCv = Demo.canvas('#trace', function (ctx, w, h, c) {
+        var narrow = w < 400;
+        var fs = narrow ? 8.6 : 9.8;
+        var padL = 3, padR = narrow ? 34 : 46, padT = 8, padB = 16;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var i, k, q;
+        var cols = [c.series[0], c.accentStrong, c.ok];
+
+        function X(t) { return x1 - (S.t - t) / HIST_S * (x1 - x0); }
+        function Y(v, mx) { return y0 - (y0 - y1) * Demo.clamp(v / mx, 0, 1); }
+
+        // frame + gridlines
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          ctx.strokeStyle = i === 0 ? c.line : c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+        }
+
+        // event markers
+        ctx.font = fs - 0.8 + FONT;
+        var lastLabelX = -999, labRow = 0;
+        for (i = 0; i < S.events.length; i++) {
+          q = S.events[i];
+          if (q.t < S.t - HIST_S) continue;
+          var ex = X(q.t);
+          ctx.save();
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(ex, y1); ctx.lineTo(ex, y0); ctx.stroke();
+          ctx.restore();
+          // stagger the rows so two drugs added close together stay legible
+          labRow = (ex - lastLabelX < 58) ? (labRow + 1) % 3 : 0;
+          lastLabelX = ex;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = ex > x1 - 52 ? 'right' : 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText(q.label, ex + (ex > x1 - 52 ? -3 : 3), y1 + labRow * (fs + 2));
+        }
+
+        // the three channels
+        ctx.lineJoin = 'round';
+        for (k = 0; k < CH.length; k++) {
+          ctx.strokeStyle = cols[k];
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          var started = false;
+          for (i = 0; i < S.hist.length; i++) {
+            q = S.hist[i];
+            var xx = X(q.t);
+            if (xx < x0 - 2) continue;
+            var yy = Y(q[CH[k].key], CH[k].max);
+            if (!started) { ctx.moveTo(xx, yy); started = true; } else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+        }
+
+        // right-hand scale labels, current value of each channel
+        var last = S.hist.length ? S.hist[S.hist.length - 1] : { vO2: 0, p: 0, atp: 0 };
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        var used = [];
+        for (k = 0; k < CH.length; k++) {
+          var vy = Y(last[CH[k].key], CH[k].max);
+          for (i = 0; i < used.length; i++) if (Math.abs(used[i] - vy) < 11) vy = used[i] + 11;
+          vy = Demo.clamp(vy, y1 + 4, y0 - 4);
+          used.push(vy);
+          ctx.fillStyle = cols[k];
+          ctx.beginPath(); ctx.arc(x1, Y(last[CH[k].key], CH[k].max), 3, 0, 6.2832); ctx.fill();
+          ctx.fillText(F.dec(last[CH[k].key], 0), x1 + 5, vy);
+        }
+
+        ctx.font = fs - 0.8 + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText('40 s ago', x0 + 1, h - 2);
+        ctx.textAlign = 'right';
+        ctx.fillText('now', x1, h - 2);
+      }, { aspect: 0.34, minHeight: 130, maxHeight: 180 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {};
+      ['rE', 'rO2', 'rPmf', 'rPmfSub', 'rAtp', 'rAtpSub', 'rPsi', 'rPsiSub', 'rDpH', 'rDpHSub',
+        'rMatrix', 'rIms', 'rHeat', 'rEff', 'rPO', 'rPOSub', 'barPsi', 'barDpH',
+        'fuelRange', 'fuelOut', 'o2Range', 'o2Out', 'dnpRange', 'dnpOut',
+        'btnDnp', 'btnReset', 'blkHint', 'memCap', 'verdict', 'memLabel',
+        'lgO2', 'lgPmf', 'lgAtp'].forEach(function (id) {
+          el[id] = document.getElementById(id);
+        });
+
+      el.lgO2.style.background = 'var(--series-1)';
+      el.lgPmf.style.background = 'var(--accent-strong)';
+      el.lgAtp.style.background = 'var(--ok)';
+
+      // ---------------- text ----------------
+
+      var BLK_HINT = {
+        none: 'Nothing added. Electrons flow, protons are pumped out, and ATP synthase lets them back in.',
+        rot: 'Rotenone plugs <strong>complex I</strong> only. On NADH the chain stops dead. Switch the donor to '
+          + 'succinate and rotenone does nothing at all &mdash; complex II is downstream of the block.',
+        cn: 'Cyanide binds <strong>complex IV</strong>, so oxygen can no longer accept the electrons. Everything '
+          + 'upstream jams. No donor gets round this one.',
+        olig: 'Oligomycin plugs the <strong>proton channel of ATP synthase</strong> and touches nothing else. '
+          + 'Watch the pmf climb and oxygen consumption fall &mdash; that is back-pressure, not a blocked chain.'
+      };
+
+      function stateName() {
+        if (S.dnp >= 60) return 'uncoupled';
+        if (S.dnp > 0) return 'partly uncoupled';
+        if (S.blk === 'olig') return 'oligomycin: resting (state 4)';
+        if (S.blk === 'rot') return S.sub === 'nadh' ? 'rotenone: chain blocked' : 'rotenone: no effect';
+        if (S.blk === 'cn') return 'cyanide: chain blocked';
+        return 'phosphorylating (state 3)';
+      }
+
+      function verdictText(M) {
+        if (S.fuel <= 0) {
+          return '<strong>No fuel.</strong> Nothing to oxidise means nothing to pump with, so the gradient '
+            + 'drains through the leak and ATP synthesis stops. Not a drug effect &mdash; an empty tank.';
+        }
+        if (S.dnp >= 20) {
+          return '<strong>Uncoupled.</strong> DNP blocks nothing. It just carries protons back across, so the '
+            + 'gradient never builds: pmf ' + F.dec(M.p, 0) + ' mV. With no back-pressure the chain runs at '
+            + F.dec(M.vO2, 0) + ' nmol O₂ min⁻¹ mg⁻¹ &mdash; <strong>faster than with the synthase '
+            + 'working</strong> &mdash; and makes ' + F.dec(M.atp, 0) + ' ATP. All ' + F.dec(M.heat, 0)
+            + ' mJ min⁻¹ mg⁻¹ of it comes out as heat. If the chain made the ATP, this reading would be '
+            + 'impossible.';
+        }
+        if (S.blk === 'olig') {
+          return '<strong>Synthase jammed, chain untouched.</strong> Protons cannot return, so the pmf rose to '
+            + F.dec(M.p, 0) + ' mV and the pumps are now working against it: oxygen consumption fell to '
+            + F.dec(M.vO2, 0) + '. Electron flow was never blocked &mdash; it backed up. Add DNP on top and it '
+            + 'comes straight back.';
+        }
+        if (M.o.chain === 0) {
+          return '<strong>Chain blocked.</strong> No electrons, no pumping. The gradient that is left is drainin'
+            + 'g away through the leak and the synthase, which is why ATP output does not hit zero instantly '
+            + '&mdash; the gradient is a store, and it is being spent.';
+        }
+        if (S.blk === 'rot' && S.sub === 'fadh') {
+          return '<strong>Rotenone with succinate: nothing happens.</strong> Complex I is plugged, but these '
+            + 'electrons enter at complex II, past the block. Cyanide would still stop it, because complex IV '
+            + 'is downstream of everything.';
+        }
+        if (S.sub === 'fadh') {
+          return '<strong>FADH<sub>2</sub> route.</strong> Complex I is bypassed, so only 6 H⁺ are pumped per '
+            + 'electron pair instead of 10. Lower pmf, therefore less back-pressure and <em>more</em> oxygen '
+            + 'consumed (' + F.dec(M.vO2, 0) + '), but a P/O of only ' + F.dec(M.PO, 2) + '. Proton count, not '
+            + 'electron count, sets the ATP yield.';
+        }
+        if (M.o.fo2 < 0.75) {
+          return '<strong>Running out of oxygen.</strong> Complex IV has nothing to hand its electrons to, so '
+            + 'the chain slows, the gradient falls and ATP output follows. Note how far you had to drag the '
+            + 'slider before anything happened: K<sub>m</sub> for O<sub>2</sub> is 0.5 &micro;mol L⁻¹.';
+        }
+        return '<strong>Normal coupled respiration.</strong> The chain pumps ' + F.dec(M.Jpump, 0)
+          + ' nmol H⁺ min⁻¹ mg⁻¹ out; ' + F.dec(M.Jsyn, 0) + ' of them come back through ATP synthase and '
+          + F.dec(M.Jleak, 0) + ' leak. Four protons per exported ATP gives ' + F.dec(M.atp, 0)
+          + ' ATP min⁻¹ mg⁻¹. Nothing here converts an electron into an ATP directly.';
+      }
+
+      function memCaption(M) {
+        var t = 'Orange dots are protons. They go <strong>up</strong> through complexes I, III and IV '
+          + '(the pumps) and <strong>down</strong> through ATP synthase or the leak. The + and − marks '
+          + 'along the membrane are the charge separation — that is &Delta;&psi;, and it is most of the '
+          + 'force. ';
+        if (M.o.chain === 0) t += 'The chain is blocked, so no protons are going up. ';
+        else if (S.blk === 'olig') t += 'The synthase is plugged, so protons pile up outside and the pumps slow. ';
+        else if (S.dnp > 0) t += 'The DNP channel is open, so protons short-circuit straight back without '
+          + 'turning the rotor. ';
+        t += 'Green dots are exported ATP; red dots are heat.';
+        return t;
+      }
+
+      // ---------------- render ----------------
+
+      var lastDom = -1;
+
+      function render(M, force) {
+        if (!force && S.t - lastDom < 0.08) return;
+        lastDom = S.t;
+
+        el.rE.textContent = F.comma(M.e);
+        el.rO2.textContent = F.dec(M.vO2, 1);
+        el.rPmf.innerHTML = F.dec(M.p, 0) + '<span class="r-unit">mV</span>';
+        el.rAtp.innerHTML = F.dec(M.atp, 0) + '<span class="r-unit">nmol min⁻¹ mg⁻¹</span>';
+
+        var pctPsi = M.p > 1 ? M.psi / M.p : 0.78;
+        el.rPsi.innerHTML = F.dec(M.psi, 0) + '<span class="r-unit">mV</span>';
+        el.rPsiSub.textContent = F.pct(pctPsi, 0) + ' of the pmf';
+        el.rDpH.innerHTML = F.dec(M.dpH, 2) + '<span class="r-unit">units</span>';
+        el.rDpHSub.textContent = '= ' + F.dec(M.u, 0) + ' mV, ' + F.pct(1 - pctPsi, 0) + ' of the pmf';
+        el.barPsi.style.width = F.dec(pctPsi * 100, 1) + '%';
+        el.barDpH.style.width = F.dec((1 - pctPsi) * 100, 1) + '%';
+        el.rMatrix.textContent = F.dec(PH_IMS + M.dpH, 2);
+        el.rIms.textContent = F.dec(PH_IMS, 2);
+
+        el.rHeat.innerHTML = F.dec(M.heat, 1) + '<span class="r-unit">mJ min⁻¹ mg⁻¹</span>';
+        el.rEff.textContent = F.pct(M.eff, 0);
+        el.rPO.textContent = M.vO2 > 0.05 ? F.dec(M.PO, 2) : '—';
+        el.rPOSub.innerHTML = S.sub === 'nadh'
+          ? 'theoretical ceiling for NADH is 2.5 (10 H⁺ pumped &divide; 4 H⁺ per ATP)'
+          : 'theoretical ceiling for FADH<sub>2</sub> is 1.5 (6 H⁺ pumped &divide; 4 H⁺ per ATP)';
+
+        // direction badges — the whole diagnostic in three words
+        var ref = { p: 175, vO2: 72, atp: 331 };
+        function badge(now, base, invert) {
+          var d = (now - base) / Math.max(base, 1);
+          if (Math.abs(d) < 0.06) return ['hold', 'unchanged'];
+          var up = d > 0;
+          return [(up === !invert) ? 'up' : 'down', up ? 'UP vs normal' : 'DOWN vs normal'];
+        }
+        var bp = badge(M.p, ref.p, false);
+        el.rPmfSub.className = 'r-sub ' + bp[0];
+        el.rPmfSub.textContent = bp[1];
+        el.rAtpSub.className = 'r-sub ' + (M.atp < 5 ? 'up' : M.atp > ref.atp * 0.94 ? 'hold' : 'down');
+        el.rAtpSub.textContent = M.atp < 5 ? 'ATP synthesis has stopped'
+          : (M.atp > ref.atp * 0.94 ? 'made by ATP synthase only' : 'below normal');
+
+        setHTML(el.verdict, verdictText(M));
+        setHTML(el.memLabel, 'Inner mitochondrial membrane <span>&mdash; ' + stateName() + '</span>');
+        setHTML(el.memCap, memCaption(M));
+      }
+
+      // innerHTML is expensive at 12 Hz; only touch the node when it changed
+      function setHTML(node, html) { if (node._h !== html) { node._h = html; node.innerHTML = html; } }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      function mark(label) {
+        S.events.push({ t: S.t, label: label });
+        while (S.events.length > 12) S.events.shift();
+      }
+
+      var blkBtns = Array.prototype.slice.call(document.querySelectorAll('#blkSeg button'));
+      blkBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          blkBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.blk = b.dataset.blk;
+          el.blkHint.innerHTML = BLK_HINT[S.blk];
+          mark(S.blk === 'none' ? 'no drug' : b.textContent.trim().toLowerCase());
+          render(derive(), true);
+        });
+      });
+
+      var subBtns = Array.prototype.slice.call(document.querySelectorAll('#subSeg button'));
+      subBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          subBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.sub = b.dataset.sub;
+          mark(S.sub === 'nadh' ? 'NADH' : 'succinate');
+          render(derive(), true);
+        });
+      });
+
+      Demo.range('#fuelRange', function (v) {
+        S.fuel = v;
+        el.fuelOut.textContent = F.dec(v, 0) + '%';
+      });
+
+      Demo.range('#o2Range', function (v) {
+        S.o2 = Math.pow(10, v);
+        el.o2Out.innerHTML = (S.o2 >= 10 ? F.dec(S.o2, 0) : F.sig(S.o2, 2)) + ' &micro;mol L⁻¹';
+      });
+
+      var dnpWas = 0;
+      Demo.range('#dnpRange', function (v) {
+        S.dnp = v;
+        el.dnpOut.innerHTML = F.dec(v, 0) + ' &micro;mol L⁻¹';
+        if ((v > 0) !== (dnpWas > 0)) mark(v > 0 ? 'DNP' : 'DNP washed out');
+        dnpWas = v;
+        if (el.btnDnp) syncDnpBtn();
+      });
+
+      function syncDnpBtn() {
+        el.btnDnp.textContent = S.dnp > 0 ? 'Wash the uncoupler out' : 'Uncoupler (DNP), full dose';
+      }
+
+      el.btnDnp.addEventListener('click', function () {
+        el.dnpRange.value = S.dnp > 0 ? 0 : 100;
+        el.dnpRange.dispatchEvent(new Event('input'));
+        syncDnpBtn();
+        render(derive(), true);
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        S.sub = 'nadh'; S.blk = 'none';
+        subBtns.forEach(function (o, i) { o.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); });
+        blkBtns.forEach(function (o, i) { o.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); });
+        el.fuelRange.value = 100; el.fuelRange.dispatchEvent(new Event('input'));
+        el.o2Range.value = 2.301; el.o2Range.dispatchEvent(new Event('input'));
+        el.dnpRange.value = 0; el.dnpRange.dispatchEvent(new Event('input'));
+        el.blkHint.innerHTML = BLK_HINT.none;
+        S.psi = 0; S.u = 0;
+        parts.length = 0;
+        S.events.length = 0;
+        mark('reset');
+        render(derive(), true);
+      });
+
+      // ==================================================================
+      // MAIN LOOP
+      // ==================================================================
+      var sampleAcc = 0;
+
+      Demo.loop(function (dt) {
+        // fixed sub-steps keep the stiff electrical reservoir stable
+        var n = Math.min(30, Math.max(1, Math.ceil(dt / (1 / 120))));
+        var h = dt / n;
+        for (var i = 0; i < n; i++) physics(h);
+        S.t += dt;
+
+        var M = derive();
+        stepParts(dt, M);
+
+        sampleAcc += dt;
+        if (sampleAcc >= SAMPLE) {
+          sampleAcc = 0;
+          S.hist.push({ t: S.t, vO2: M.vO2, p: M.p, atp: M.atp });
+          while (S.hist.length && S.hist[0].t < S.t - HIST_S - 1) S.hist.shift();
+        }
+
+        render(M, false);
+        memCv.paint();
+        traceCv.paint();
+      }).start();
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      el.blkHint.innerHTML = BLK_HINT.none;
+      mark('start');
+      render(derive(), true);
+    })();
+  </script>
+</body>
+
+</html>

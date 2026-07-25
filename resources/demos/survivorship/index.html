@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Survivorship: read the axis | Dr. Andres Barboza</title>
+  <meta name="description" content="The three survivorship curve types plotted from one shared life table. Flip the y-axis between logarithmic and linear and watch Type II stop being a straight line - same numbers, opposite reading.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend swatches, table trimming */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.ref i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+    .legend .lg.off { opacity: 0.35; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .r-value.big { font-size: 22px; }
+
+    /* the life table gets tight in a 360 px column: trim the shell padding */
+    .tbl.dense th, .tbl.dense td { padding: 5px 6px; font-size: 12px; }
+    .tbl.dense tr.is-mark td { background: var(--accent-soft); }
+    .tbl-key { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+    .axis-seg button { font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Survivorship: read the axis</h1>
+        <p class="demo-sub">Start on the logarithmic axis and find the straight Type II line. Now press <strong>Linear</strong>. Not one number changed.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Ecology</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg axis-seg" role="tablist" aria-label="Y-axis scale" id="axisSeg">
+          <button role="tab" aria-selected="true" data-axis="log">Logarithmic y-axis</button>
+          <button role="tab" aria-selected="false" data-axis="lin">Linear y-axis</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="plotLabel">Survivorship &mdash; <span id="plotLabelMode">logarithmic y-axis</span></p>
+        <canvas id="plot" role="img"
+                aria-label="Survivors per 1000 born plotted against age class for Type I, Type II and Type III survivorship, with a dashed straight reference line. The y-axis switches between logarithmic and linear."></canvas>
+
+        <div class="legend" id="legend">
+          <span class="lg" id="lgI"><i id="swI"></i>Type I &mdash; humans</span>
+          <span class="lg" id="lgII"><i id="swII"></i>Type II &mdash; many birds</span>
+          <span class="lg" id="lgIII"><i id="swIII"></i>Type III &mdash; oysters</span>
+          <span class="lg" id="lgYou"><i id="swYou"></i>your species</span>
+          <span class="lg ref" id="lgRef"><i></i>a straight line on screen</span>
+        </div>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Mortality rate q(x) <span>&mdash; percent of the survivors that dies during each age class, for the curve shown in the life table</span></p>
+        <canvas id="mort" role="img"
+                aria-label="Bar chart of the mortality rate for each age class. For Type II every bar is the same height."></canvas>
+        <p class="stage-caption" id="mortCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Which curves to draw</div>
+          <div class="stack-s">
+            <label class="check"><input type="checkbox" id="showI" checked> Type I &mdash; humans</label>
+            <label class="check"><input type="checkbox" id="showII" checked> Type II &mdash; many birds</label>
+            <label class="check"><input type="checkbox" id="showIII" checked> Type III &mdash; oysters</label>
+            <label class="check"><input type="checkbox" id="showRef" checked> Dashed straight-line reference</label>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note">
+            <strong>Same data, both ways.</strong> One life table is computed once. The Logarithmic / Linear
+            button changes nothing except how survivor counts are turned into screen height.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Your species &mdash; the three types are a continuum</div>
+          <div class="stack">
+            <label class="check"><input type="checkbox" id="showY"> Draw a fourth curve</label>
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pRange">Mortality shape p</label>
+                <span class="ctrl-value" id="pOut">1.00</span>
+              </div>
+              <input type="range" id="pRange" min="-0.6" max="0.9" step="0.01" value="0">
+              <p class="ctrl-hint" id="pClass">p = 1 is exactly Type II. Below 1 bends toward Type III, above 1 toward Type I. Real species land all over this slider.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="presetI">Type I</button>
+              <button class="btn" id="presetII">Type II</button>
+              <button class="btn" id="presetIII">Type III</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Life table</div>
+          <div class="seg" role="tablist" aria-label="Which curve to tabulate" id="tblSeg">
+            <button role="tab" aria-selected="false" data-curve="I">Type I</button>
+            <button role="tab" aria-selected="true" data-curve="II">Type II</button>
+            <button role="tab" aria-selected="false" data-curve="III">Type III</button>
+            <button role="tab" aria-selected="false" data-curve="Y">Yours</button>
+          </div>
+
+          <div class="readouts two" style="margin-top:13px">
+            <div class="readout is-accent">
+              <div class="r-label">Median lifespan</div>
+              <div class="r-value big" id="rMed">10<span class="r-unit">% of max</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Dies in age class 0</div>
+              <div class="r-value big" id="rQ0">49.9<span class="r-unit">%</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">q(x) range across life</div>
+              <div class="r-value" id="rQrange">49.9 &ndash; 49.9<span class="r-unit">%</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Bend off the straight log line</div>
+              <div class="r-value" id="rDev">0.00<span class="r-unit">decades</span></div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="table-scroll">
+            <table class="tbl dense">
+              <thead>
+                <tr>
+                  <th>Age<br>class x</th>
+                  <th>Alive<br>n(x)</th>
+                  <th>Surviving<br>l(x)</th>
+                  <th>Mortality<br>q(x)</th>
+                </tr>
+              </thead>
+              <tbody id="tblBody"></tbody>
+            </table>
+          </div>
+          <p class="tbl-key">
+            One age class = one tenth of the maximum lifespan. <strong>n(x)</strong> is survivors per 1000 born
+            &mdash; the quantity on the y-axis. <strong>l(x)</strong> = n(x)/1000, the proportion of the original
+            cohort still alive. <strong>q(x)</strong> = [n(x) &minus; n(x+1)] / n(x), the fraction of <em>those
+            still alive</em> that dies during class x. Undefined for the last class.
+          </p>
+          <p class="note warn" style="margin-top:11px" id="qNote">&nbsp;</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students memorise three curve shapes &mdash; one that sags, one
+        that is straight, one that plunges &mdash; and never notice the y-axis is logarithmic. They then read
+        any straight line as Type II and any plunging line as Type III, on whatever axis happens to be in
+        front of them. Press <strong>Linear</strong>: the Type II data is now a plunging curve that looks a
+        lot like Type III, and it did not change by a single individual.
+      </p>
+      <p>
+        <strong>What to notice:</strong> Type II does not mean "a straight line". It means a
+        <strong>constant proportional death rate</strong> &mdash; here 49.9% of whoever is still alive dies in
+        every age class, which the q(x) bars show as ten identical bars. Losing half of 1000 is a drop of 500
+        individuals; losing half of 32 is a drop of 16. A linear axis draws those as wildly different falls. A
+        log axis draws them as the same fall, because equal vertical distance on a log axis means equal
+        <em>proportion</em>, not equal count. That is the only reason the straight line appears.
+      </p>
+      <p>
+        <strong>Where the model simplifies:</strong> these curves come from one smooth equation,
+        n(x) = 1000 &times; 10<sup>&minus;3(x/10)<sup>p</sup></sup>, with p alone setting the type. Real cohorts
+        are ragged and almost never sit exactly on one of the three types &mdash; drag the "your species"
+        slider and most of its range is in between. Type I, II and III are reference shapes for comparison,
+        not three boxes that every species falls into. Every curve here is also forced to end at exactly 1
+        survivor per 1000 at maximum lifespan so the three can be compared; real species differ in that too.
+        And note the axis floor: the linear axis can show zero survivors, the log axis never can, because
+        log(0) does not exist.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================
+      // MODEL
+      // Survivors per 1000 born, age x in classes, X = 10 classes = max lifespan.
+      //   n(x) = 1000 * 10^(-3 * u^p),  u = x/X
+      // so log10 n = 3(1 - u^p).  p = 1 gives a true exponential decay
+      // (constant proportion dying per class) and therefore a straight
+      // line on a log axis. p < 1 -> Type III, p > 1 -> Type I.
+      // Every curve runs 1000 -> 1 survivor, i.e. exactly three decades.
+      // =========================================================
+      var X = 10;                 // age classes to maximum lifespan
+      var TOP = 1000, BOT = 1;    // survivors per 1000: axis anchors
+
+      function n(u, p) { return Math.pow(10, 3 * (1 - Math.pow(u, p))); }
+      function logFrac(u, p) { return 1 - Math.pow(u, p); }   // = log10(n)/3, in [0,1]
+
+      var TYPES = {
+        I:   { p: 5.00, name: 'Type I',   who: 'humans',    ci: 0 },
+        II:  { p: 1.00, name: 'Type II',  who: 'many birds', ci: 1 },
+        III: { p: 0.35, name: 'Type III', who: 'oysters',   ci: 2 },
+        // series-4 (purple), not --accent: --accent is the same hex as --series-1
+        // in the light palette, which would make this curve a clone of Type I.
+        Y:   { p: 1.00, name: 'Your species', who: '', ci: 3 }
+      };
+
+      var state = { axis: 'log', p: 1, curve: 'II', showI: true, showII: true, showIII: true, showY: false, ref: true };
+
+      function colorFor(key, c) { return c.series[TYPES[key].ci]; }
+
+      // ---- ONE sampling of the model, shared by both axis modes ----
+      // u = t^2 so the samples crowd near birth, where Type III falls off a cliff.
+      var NS = 600, SAMP = new Float64Array(NS + 1);
+      for (var i = 0; i <= NS; i++) { var t = i / NS; SAMP[i] = t * t; }
+
+      // ---- life table for a given p ----
+      function lifeTable(p) {
+        var rows = [], k;
+        for (k = 0; k <= X; k++) rows.push({ x: k, n: n(k / X, p) });
+        for (k = 0; k < X; k++) rows[k].q = (rows[k].n - rows[k + 1].n) / rows[k].n;
+        rows[X].q = null;
+        return rows;
+      }
+
+      // median lifespan as a fraction of maximum lifespan: n = 500
+      function medianU(p) {
+        return Math.pow(1 - Math.log10(500) / 3, 1 / p);
+      }
+
+      // biggest vertical gap, in decades, between this curve and a screen-straight
+      // line on the LOG axis. Zero exactly when p = 1.
+      function bendDecades(p) {
+        var m = 0;
+        for (var i = 0; i <= NS; i++) {
+          var u = SAMP[i];
+          var d = Math.abs(logFrac(u, p) - (1 - u));
+          if (d > m) m = d;
+        }
+        return m * 3;
+      }
+
+      // =========================================================
+      // AXIS MAPPING — the ONLY thing the toggle changes
+      // =========================================================
+      function mapY(val, y0, y1) {
+        if (state.axis === 'log') return y0 + (y1 - y0) * (Math.log10(val) / 3);
+        return y0 + (y1 - y0) * (val / TOP);
+      }
+
+      function fmtN(v) {
+        if (v >= 999.95) return '1000';
+        if (v >= 10) return Demo.fmt.dec(v, 1);
+        return Demo.fmt.dec(v, 2);
+      }
+      function fmtPct(q) {
+        var v = q * 100;
+        if (v < 0.1) return Demo.fmt.sig(v, 2) + '%';
+        return Demo.fmt.dec(v, 1) + '%';
+      }
+
+      // =========================================================
+      // MAIN PLOT
+      // =========================================================
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var padL = narrow ? 44 : 56, padR = 12, padT = narrow ? 26 : 12, padB = 40;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var pw = x1 - x0;
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+
+        // ---- horizontal gridlines + y tick labels ----
+        var majors = state.axis === 'log' ? [1, 10, 100, 1000] : [0, 200, 400, 600, 800, 1000];
+        var minors = [];
+        if (state.axis === 'log') {
+          for (var d = 0; d < 3; d++) for (var m = 2; m <= 9; m++) minors.push(m * Math.pow(10, d));
+        }
+
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        minors.forEach(function (v) {
+          var py = Math.round(mapY(v, y0, y1)) + 0.5;
+          ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x0 + 5, py); ctx.stroke();
+        });
+
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        majors.forEach(function (v) {
+          var py = Math.round(mapY(v, y0, y1)) + 0.5;
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(Demo.fmt.comma(v), x0 - 7, py);
+        });
+
+        // ---- axes ----
+        ctx.strokeStyle = c.line;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 0.5, y1); ctx.lineTo(x0 + 0.5, y0 + 0.5); ctx.lineTo(x1, y0 + 0.5);
+        ctx.stroke();
+
+        // ---- x ticks: age classes ----
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var k = 0; k <= X; k++) {
+          var px = x0 + pw * (k / X);
+          ctx.strokeStyle = c.line;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + (k % 2 ? 3 : 5)); ctx.stroke();
+          if (k % 2 === 0) ctx.fillText(String(k), px, y0 + 8);
+        }
+        ctx.fillStyle = c.text2;
+        ctx.fillText(narrow ? 'age class (0 = birth, 10 = max lifespan)'
+                            : 'Age class  (0 = birth, 10 = maximum lifespan)', (x0 + x1) / 2, y0 + 23);
+
+        // ---- y-axis title: the quantity AND the scale, named in both modes ----
+        var yTitle = 'Survivors per 1000 born (' +
+          (state.axis === 'log' ? 'LOG scale' : 'LINEAR scale') + ')';
+        ctx.fillStyle = c.text2;
+        if (narrow) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.fillText(yTitle, 2, 4);
+        } else {
+          ctx.save();
+          ctx.translate(13, (y0 + y1) / 2);
+          ctx.rotate(-Math.PI / 2);
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(yTitle, 0, 0);
+          ctx.restore();
+        }
+
+        // ---- the curves: identical n() values in both axis modes ----
+        function stroke(key, p, on, wide) {
+          if (!on) return;
+          ctx.strokeStyle = colorFor(key, c);
+          ctx.lineWidth = wide ? 3 : 2;
+          ctx.lineJoin = 'round';
+          // "your species" is dashed: at p = 1 it lies exactly on Type II, and a
+          // solid line would simply hide the curve it is being compared with.
+          ctx.setLineDash(key === 'Y' ? [7, 4] : []);
+          ctx.beginPath();
+          for (var i = 0; i <= NS; i++) {
+            var u = SAMP[i];
+            var px = x0 + pw * u;
+            var py = mapY(n(u, p), y0, y1);
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        stroke('I', TYPES.I.p, state.showI, false);
+        stroke('III', TYPES.III.p, state.showIII, false);
+        stroke('II', TYPES.II.p, state.showII, true);
+        stroke('Y', state.p, state.showY, false);
+
+        // ---- end-point dots, so the shared endpoints are obvious ----
+        [['I', TYPES.I.p, state.showI], ['II', TYPES.II.p, state.showII],
+         ['III', TYPES.III.p, state.showIII], ['Y', state.p, state.showY]].forEach(function (r) {
+          if (!r[2]) return;
+          ctx.fillStyle = colorFor(r[0], c);
+          ctx.beginPath();
+          ctx.arc(x1, mapY(n(1, r[1]), y0, y1), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // ---- dashed screen-straight reference, drawn LAST so it stays visible
+        // where a curve coincides with it (log mode: Type II sits exactly on it) ----
+        if (state.ref) {
+          ctx.strokeStyle = c.text2;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([6, 5]);
+          ctx.beginPath();
+          ctx.moveTo(x0, mapY(TOP, y0, y1));
+          ctx.lineTo(x1, mapY(BOT, y0, y1));
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+      }, { aspect: 0.68, minHeight: 280, maxHeight: 420 });
+
+      // =========================================================
+      // MORTALITY BARS
+      // =========================================================
+      var mort = Demo.canvas('#mort', function (ctx, w, h, c) {
+        var padL = 40, padR = 12, padT = 10, padB = 38;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var key = state.curve;
+        var p = key === 'Y' ? state.p : TYPES[key].p;
+        var rows = lifeTable(p);
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        [0, 50, 100].forEach(function (v) {
+          var py = Math.round(y0 + (y1 - y0) * (v / 100)) + 0.5;
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(v + '%', x0 - 7, py);
+        });
+
+        ctx.strokeStyle = c.line;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 0.5, y1); ctx.lineTo(x0 + 0.5, y0 + 0.5); ctx.lineTo(x1, y0 + 0.5);
+        ctx.stroke();
+
+        var slot = (x1 - x0) / X, bw = Math.max(4, slot * 0.62);
+        ctx.fillStyle = colorFor(key, c);
+        for (var k = 0; k < X; k++) {
+          var q = rows[k].q;
+          var bx = x0 + slot * k + (slot - bw) / 2;
+          var bh = Math.max(1, (y0 - y1) * q);
+          ctx.fillRect(bx, y0 - bh, bw, bh);
+        }
+
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var j = 0; j < X; j += 2) ctx.fillText(String(j), x0 + slot * j + slot / 2, y0 + 6);
+        ctx.fillStyle = c.text2;
+        ctx.fillText('Age class', (x0 + x1) / 2, y0 + 21);
+      }, { aspect: 0.3, minHeight: 130, maxHeight: 170 });
+
+      // =========================================================
+      // DOM
+      // =========================================================
+      var el = function (id) { return document.getElementById(id); };
+
+      function paintLegend() {
+        var c = Demo.colors();
+        el('swI').style.background = c.series[0];
+        el('swII').style.background = c.series[1];
+        el('swIII').style.background = c.series[2];
+        el('swYou').style.background =
+          'repeating-linear-gradient(90deg,' + c.series[3] + ' 0 5px, transparent 5px 8px)';
+        el('lgI').classList.toggle('off', !state.showI);
+        el('lgII').classList.toggle('off', !state.showII);
+        el('lgIII').classList.toggle('off', !state.showIII);
+        el('lgYou').classList.toggle('off', !state.showY);
+        el('lgRef').classList.toggle('off', !state.ref);
+      }
+      Demo.onTheme(paintLegend);
+
+      function classify(p) {
+        if (p < 0.7) return 'Type III territory: a huge share of the cohort dies before it is out of the first age class.';
+        if (p < 0.88) return 'Between Type III and Type II. Plenty of real fish and insects sit right here.';
+        if (p <= 1.14) return 'Type II: a constant proportional death rate. This is the only shape that is straight on a log axis.';
+        if (p < 1.8) return 'Between Type II and Type I. Many mammals and reptiles sit right here.';
+        return 'Type I territory: mortality is low for most of life, then climbs steeply near the maximum lifespan.';
+      }
+
+      function refresh() {
+        var key = state.curve;
+        var p = key === 'Y' ? state.p : TYPES[key].p;
+        var rows = lifeTable(p);
+
+        // ---- table ----
+        var html = '';
+        for (var k = 0; k <= X; k++) {
+          var r = rows[k];
+          html += '<tr' + (k === 0 ? ' class="is-mark"' : '') + '>'
+            + '<td>' + r.x + '</td>'
+            + '<td>' + fmtN(r.n) + '</td>'
+            + '<td>' + Demo.fmt.sig(r.n / 1000, 4) + '</td>'
+            + '<td>' + (r.q === null ? '&mdash;' : fmtPct(r.q)) + '</td>'
+            + '</tr>';
+        }
+        el('tblBody').innerHTML = html;
+
+        // ---- readouts ----
+        var med = medianU(p) * 100;
+        el('rMed').innerHTML = (med < 1 ? Demo.fmt.sig(med, 2) : Demo.fmt.dec(med, 0))
+          + '<span class="r-unit">% of max lifespan</span>';
+        el('rQ0').innerHTML = fmtPct(rows[0].q).replace('%', '') + '<span class="r-unit">% dead</span>';
+
+        var qmin = Infinity, qmax = -Infinity;
+        for (var j = 0; j < X; j++) { if (rows[j].q < qmin) qmin = rows[j].q; if (rows[j].q > qmax) qmax = rows[j].q; }
+        var flat = (qmax - qmin) < 1e-9;
+        el('rQrange').innerHTML = flat
+          ? fmtPct(qmin).replace('%', '') + ' &ndash; ' + fmtPct(qmax).replace('%', '') + '<span class="r-unit">% (constant)</span>'
+          : fmtPct(qmin).replace('%', '') + ' &ndash; ' + fmtPct(qmax).replace('%', '') + '<span class="r-unit">%</span>';
+
+        el('rDev').innerHTML = Demo.fmt.dec(bendDecades(p), 2) + '<span class="r-unit">decades</span>';
+
+        var label = key === 'Y' ? 'Your species (p = ' + Demo.fmt.dec(p, 2) + ')'
+                                : TYPES[key].name + ' (' + TYPES[key].who + ', p = ' + Demo.fmt.dec(p, 2) + ')';
+        el('qNote').innerHTML = flat
+          ? '<strong>' + label + ':</strong> q(x) is the same in every row — ' + fmtPct(qmin)
+            + ' of whoever is still alive dies in each age class. A constant proportion is exactly what makes the log plot straight.'
+          : '<strong>' + label + ':</strong> q(x) is <em>not</em> constant — it runs from ' + fmtPct(qmin)
+            + ' to ' + fmtPct(qmax) + ' across the ten classes. The proportion dying changes with age, so the log plot bends.';
+
+        // ---- captions ----
+        el('plotLabelMode').textContent = state.axis === 'log' ? 'logarithmic y-axis' : 'linear y-axis';
+        el('plotCap').innerHTML = state.axis === 'log'
+          ? 'Log y-axis, survivors per 1000 born, 1 to 1000 in three decades. Each gridline is 10&times; the one below it, so equal height means equal <em>proportion</em> lost. Type II lands on the dashed straight line. Now press Linear — the numbers behind these curves do not change.'
+          : 'Linear y-axis, survivors per 1000 born, 0 to 1000 in equal steps of 200. Identical data. Type II now plunges and hugs the floor, looking much like Type III, and nothing is straight. The dashed line is still a straight line on screen — no curve is near it.';
+        el('mortCap').textContent = flat
+          ? 'Ten identical bars. That flatness is the definition of Type II, and the reason its log plot is a straight line.'
+          : 'The bars are not equal, so the proportion dying depends on age and no log axis can straighten this curve.';
+
+        paintLegend();
+        plot.redraw();
+        mort.redraw();
+      }
+
+      // ---- axis toggle: the core control ----
+      document.querySelectorAll('#axisSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#axisSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.axis = b.dataset.axis;
+          refresh();
+        });
+      });
+
+      // ---- which curve the table describes ----
+      function selectTable(key) {
+        state.curve = key;
+        document.querySelectorAll('#tblSeg button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.curve === key ? 'true' : 'false');
+        });
+        if (key === 'Y') { state.showY = true; el('showY').checked = true; }
+      }
+
+      document.querySelectorAll('#tblSeg button').forEach(function (b) {
+        b.addEventListener('click', function () { selectTable(b.dataset.curve); refresh(); });
+      });
+
+      // ---- visibility checkboxes ----
+      [['showI', 'showI'], ['showII', 'showII'], ['showIII', 'showIII']].forEach(function (pair) {
+        el(pair[0]).addEventListener('change', function () { state[pair[1]] = this.checked; refresh(); });
+      });
+      el('showRef').addEventListener('change', function () { state.ref = this.checked; refresh(); });
+      el('showY').addEventListener('change', function () { state.showY = this.checked; refresh(); });
+
+      // ---- shape slider (slider value is log10 p, so p = 1 is dead centre) ----
+      // Demo.range fires once on wiring; hold refresh() off until the first
+      // deliberate full refresh at the bottom of this script.
+      var refreshReady = false;
+
+      var pSlider = Demo.range('#pRange', function (v) {
+        state.p = Math.pow(10, v);
+        if (Math.abs(v) < 0.005) state.p = 1;
+        el('pOut').textContent = 'p = ' + Demo.fmt.dec(state.p, 2);
+        el('pClass').textContent = classify(state.p);
+        // touching the shape slider means you are asking about YOUR species,
+        // so point the life table and its readouts at it
+        if (refreshReady) { selectTable('Y'); refresh(); }
+      });
+
+      el('presetI').addEventListener('click', function () { pSlider.set(Math.log10(TYPES.I.p)); });
+      el('presetII').addEventListener('click', function () { pSlider.set(0); });
+      el('presetIII').addEventListener('click', function () { pSlider.set(Math.log10(TYPES.III.p)); });
+
+      refreshReady = true;
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

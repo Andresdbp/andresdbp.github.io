@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Photosynthesis Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Light reactions and the Calvin cycle as one connected system. Cut the light and watch carbon fixation run on for a few seconds off the ATP and NADPH pools, then stop - and find out which input is actually limiting the rate.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, unit-bearing readout tiles, ceiling bars */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 25px; }
+
+    /* These tiles carry real units, which run longer than the shell's
+       single-line label default. Let them wrap instead of ellipsing. */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub, .readout .r-label sup { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.hit { color: var(--bad); font-weight: 600; }
+    .readout .r-sub.free { color: var(--ok); font-weight: 600; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dash i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+
+    /* the two ceilings, side by side — the whole Blackman idea in two bars */
+    .ceil + .ceil { margin-top: 11px; }
+    .ceil-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 8px; font-size: 12px; margin-bottom: 4px;
+    }
+    .ceil-head b { font-weight: 600; color: var(--text); }
+    .ceil-head .v { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+    .ceil.is-limiting .ceil-head .v { color: var(--bad); }
+    .ceil.is-slack .ceil-head .v { color: var(--muted); }
+    .ceil .bar { height: 13px; }
+    .ceil-note { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Photosynthesis Bench</h1>
+        <p class="demo-sub">Let it settle, then press <em>Lights out</em> and stare at the Calvin cycle. It keeps turning &mdash; for about fourteen seconds &mdash; and then it stops.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Cellular energetics</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">One chloroplast, running live <span>&mdash; thylakoid on the left, stroma on the right, the two carrier pools in between</span></p>
+        <canvas id="diagram" role="img"
+                aria-label="A chloroplast diagram: light reactions in the thylakoid feed an ATP pool and an NADPH pool, which the Calvin cycle in the stroma spends to fix carbon dioxide. Pool levels, flow arrows and the turning Calvin cycle all respond live to the sliders."></canvas>
+        <p class="stage-caption" id="diagCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <div class="seg" role="tablist" aria-label="Plot view" id="plotSeg">
+          <button role="tab" aria-selected="true" data-view="trace">Live trace</button>
+          <button role="tab" aria-selected="false" data-view="light">Rate vs light</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="plotLabel">The last 60 seconds</p>
+        <canvas id="plot" role="img"
+                aria-label="Either a rolling 60 second trace of carbon fixation, oxygen evolution and the ATP and NADPH pool levels, or a plot of steady-state fixation rate against light intensity at two carbon dioxide concentrations."></canvas>
+
+        <div class="legend" id="legend"></div>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Conditions</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="lightRange">Light intensity</label>
+                <span class="ctrl-value" id="lightOut">1000 &micro;mol m⁻² s⁻¹</span>
+              </div>
+              <input type="range" id="lightRange" min="0" max="2000" step="10" value="1000">
+              <p class="ctrl-hint">Photons landing on the leaf per second (PPFD, &micro;mol photons m⁻² s⁻¹). Full midday sun is about 2000; a bright room is about 20.</p>
+            </div>
+
+            <div class="btn-row" id="lightPresets">
+              <button class="btn" data-i="0">Night</button>
+              <button class="btn" data-i="150">Shade</button>
+              <button class="btn" data-i="600">Overcast</button>
+              <button class="btn is-on" data-i="1000">Bright</button>
+              <button class="btn" data-i="2000">Full sun</button>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="co2Range">CO<sub>2</sub> around the leaf</label>
+                <span class="ctrl-value" id="co2Out">415 ppm</span>
+              </div>
+              <input type="range" id="co2Range" min="100" max="1500" step="5" value="415">
+              <p class="ctrl-hint" id="co2Hint">Today&rsquo;s air is about 420 ppm. Rubisco sees the <em>intercellular</em> concentration, taken here as 0.70 of the outside air: C<sub>i</sub> = 291 ppm.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tempRange">Temperature</label>
+                <span class="ctrl-value" id="tempOut">25.0 &deg;C</span>
+              </div>
+              <input type="range" id="tempRange" min="0" max="50" step="0.5" value="25">
+              <p class="ctrl-hint">Temperature does not act on one stage &mdash; it scales <strong>both</strong> ceilings, and by different amounts. Push it to 45 &deg;C and watch which one collapses first.</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnDark">Lights out</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The two ceilings &mdash; the rate is the lower one</div>
+
+          <div class="ceil" id="ceilLight">
+            <div class="ceil-head">
+              <b>Light reactions can supply</b>
+              <span class="v" id="ceilLightVal">25.9</span>
+            </div>
+            <div class="bar"><span id="ceilLightBar" style="width:0%"></span></div>
+            <p class="ceil-note">ATP + NADPH delivered, expressed as the CO<sub>2</sub> they could pay for</p>
+          </div>
+
+          <div class="ceil" id="ceilCO2">
+            <div class="ceil-head">
+              <b>CO<sub>2</sub> + Rubisco can support</b>
+              <span class="v" id="ceilCO2Val">18.7</span>
+            </div>
+            <div class="bar"><span id="ceilCO2Bar" style="width:0%"></span></div>
+            <p class="ceil-note">Carboxylation capacity at this C<sub>i</sub>, temperature and enzyme activation</p>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">What is limiting right now</div>
+              <div class="r-value big" id="rLimit">CO<sub>2</sub></div>
+              <div class="r-sub" id="rLimitSub">&nbsp;</div>
+            </div>
+          </div>
+          <p class="note" id="limitNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Live readouts</div>
+          <div class="readouts two">
+            <div class="readout is-accent">
+              <div class="r-label">Carbon fixed (gross)</div>
+              <div class="r-value" id="rFix">18.7</div>
+              <div class="r-sub">&micro;mol CO<sub>2</sub> m⁻² s⁻¹</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">O<sub>2</sub> evolved</div>
+              <div class="r-value" id="rO2">18.7</div>
+              <div class="r-sub">&micro;mol O<sub>2</sub> m⁻² s⁻¹</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">ATP pool</div>
+              <div class="r-value" id="rATP">93.8%</div>
+              <div class="r-sub" id="rATPSub">422 of 450 &micro;mol m⁻²</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">NADPH pool</div>
+              <div class="r-value" id="rNADPH">93.8%</div>
+              <div class="r-sub" id="rNADPHSub">281 of 300 &micro;mol m⁻²</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Calvin enzymes active</div>
+              <div class="r-value" id="rAct">95%</div>
+              <div class="r-sub">switched on by light, not by ATP</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Net CO<sub>2</sub> exchange</div>
+              <div class="r-value" id="rNet">17.5</div>
+              <div class="r-sub" id="rNetSub">fixation minus respiration</div>
+            </div>
+            <div class="readout span2" id="darkBox">
+              <div class="r-label">Carbon fixation after the light went out</div>
+              <div class="r-value big" id="rDark">&mdash;</div>
+              <div class="r-sub" id="rDarkSub">press <em>Lights out</em> and time it</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Read this before you trust the numbers</div>
+
+          <p class="note warn">
+            <strong>&ldquo;Dark reactions&rdquo; is a bad name and this bench is built to prove it.</strong>
+            The Calvin cycle is <em>light-independent</em> in exactly one narrow sense: a photon is never a
+            substrate of any of its reactions. It is not light-avoiding, it does not prefer night, and it does not
+            wait for the sun to go down. It runs <em>while</em> the light reactions are running, in the same
+            chloroplast, at the same moment &mdash; because it is spending the ATP and NADPH they are making right
+            then. On top of that, four Calvin enzymes (rubisco activase, GAPDH, FBPase, SBPase and PRK) are
+            switched on by light through the ferredoxin&ndash;thioredoxin system. That is the
+            <em>&ldquo;Calvin enzymes active&rdquo;</em> tile. In the dark they switch off over minutes, so a real
+            chloroplast at night is not just out of fuel &mdash; the machinery is powered down too.
+          </p>
+
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>What is simplified.</strong> The two ceilings combine as a <em>minimum</em>, following
+            Blackman: the rate is set by whichever input runs out first, not by multiplying the inputs together.
+            The carrier pools here hold 450 &micro;mol ATP and 300 &micro;mol NADPH per m&sup2;, roughly a hundred
+            times a real chloroplast&rsquo;s, purely so the drain is slow enough to watch &mdash; a real leaf stops
+            fixing carbon within a second or two of the light going out. Stoichiometry is the AP-level one:
+            4 electrons &rarr; 1 O<sub>2</sub> + 2 NADPH + 3 ATP, and 3 ATP + 2 NADPH per CO<sub>2</sub> fixed, so
+            supply and demand match exactly and both pools move together; real linear flow makes slightly less ATP
+            than that, and cyclic electron flow around photosystem I makes up the difference.
+            <strong>Photorespiration is not modelled</strong>, so there is no O<sub>2</sub>-versus-CO<sub>2</sub>
+            competition at rubisco and no CO<sub>2</sub> compensation point &mdash; that is a separate topic, and
+            leaving it out is what lets the low-light curves lie exactly on top of each other. Stomata are held
+            open at a fixed C<sub>i</sub>/C<sub>a</sub> = 0.70, so nothing here closes in the heat.
+            <strong>C<sub>4</sub> and CAM plants are not on this bench at all</strong>: CAM separates
+            CO<sub>2</sub> uptake (at night) from the Calvin cycle (by day) in <em>time</em>, and C<sub>4</sub>
+            separates them in <em>space</em> between two cell types. Neither can be represented by a single
+            steady-state CO<sub>2</sub> slider, so pretending otherwise would teach you something false. This is
+            one mesophyll cell of an ordinary C<sub>3</sub> leaf.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> somebody once called the Calvin cycle &ldquo;the dark reactions&rdquo;,
+        and half of every biology class has concluded that plants do the light reactions in the day and the Calvin
+        cycle at night, like a factory running two shifts. They do not. Both run at once, in the light, in the same
+        chloroplast &mdash; and the moment the light goes out the Calvin cycle has only a few seconds of fuel left.
+        The second half of the misconception is quieter and costs more marks: asked <em>which factor is limiting
+        the rate</em>, students reach for whichever input the question mentioned last, or assume that raising any
+        input raises the rate a bit.
+      </p>
+      <p>
+        <strong>What to notice, part one &mdash; press <em>Lights out</em> and watch the clock.</strong> Oxygen
+        evolution goes to zero <em>instantly</em>: no photons, no water splitting, nothing. But the Calvin cycle
+        does not even flinch. Two seconds into total darkness it is still fixing carbon at 98% of its lit rate,
+        because the ATP and NADPH pools are still nearly full. Four seconds in, still 96%. Then the pools hit
+        bottom and the whole thing falls off a cliff: 64% at six seconds, 32% at eight, 16% at ten, and by
+        13.7 seconds it is under 5% and done. That is the entire relationship in one experiment. The Calvin cycle
+        does not need light. It needs <strong>ATP and NADPH</strong>, and the only thing that makes those is the
+        light reactions. Leave it dark and watch the &ldquo;Calvin enzymes active&rdquo; tile fall too &mdash; the
+        cycle is not merely out of fuel at night, it has been switched off.
+      </p>
+      <p>
+        <strong>What to notice, part two &mdash; the pool levels tell you what is limiting.</strong> At 1000
+        &micro;mol photons, 415 ppm, 25 &deg;C, the ATP pool sits at 94% full. Full pools mean the light reactions
+        are making carriers faster than the Calvin cycle can spend them, so the traffic jam is downstream:
+        <strong>CO<sub>2</sub> is limiting</strong>. Now drag light down to 150. The pools crash to 23% and stay
+        there, because now every ATP is spent the instant it appears: <strong>light is limiting</strong>. You can
+        diagnose the whole system from one bar.
+      </p>
+      <p>
+        <strong>What to notice, part three &mdash; the test that separates A from C on the exam.</strong> Set
+        light to 150 and read the fixation rate: 9.82 &micro;mol CO<sub>2</sub> m⁻² s⁻¹. Now drag CO<sub>2</sub>
+        from 415 ppm all the way to 1200. The rate reads <strong>9.82</strong>. Not a rounding-error change &mdash;
+        <em>no</em> change, exactly zero, because CO<sub>2</sub> was never the thing running out. Now put the light
+        at 2000 and repeat: 19.2 &rarr; <strong>28.1</strong>, a 46% jump, from the identical CO<sub>2</sub> move.
+        Same slider, same distance, and it does nothing in one case and a great deal in the other. That is what
+        <em>limiting factor</em> means, and it is why the answer &ldquo;more CO<sub>2</sub> gives more
+        photosynthesis&rdquo; is marked wrong without the conditions attached. Switch to <em>Rate vs light</em> and
+        you can see it: below about 305 &micro;mol photons the 400 ppm and 1200 ppm curves are the same line. They
+        only separate once the low-CO<sub>2</sub> leaf hits its CO<sub>2</sub> ceiling and flattens off &mdash; and
+        the high-CO<sub>2</sub> leaf keeps climbing to a higher plateau. The plateau moved; the initial slope did
+        not.
+      </p>
+      <p>
+        <strong>And temperature is not a third slider like the others.</strong> It does not have its own ceiling
+        &mdash; it multiplies both of the other two, and it multiplies them differently. Take the temperature to
+        45 &deg;C: the CO<sub>2</sub> ceiling only drops to about 70% of its 25 &deg;C value, but the light-reaction
+        ceiling collapses to 16%, because the thylakoid membranes and photosystem II are the heat-sensitive part.
+        A leaf frying in the sun is not short of light or CO<sub>2</sub>. It has broken the machine that turns
+        light into ATP.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one C3 mesophyll chloroplast, per m² of leaf, per second.
+      //
+      // LIGHT REACTIONS.  Electron transport capacity from a non-rectangular
+      // hyperbola in photon flux (Farquhar / Ögren form):
+      //     θJ² − (αI + Jmax)J + αI·Jmax = 0
+      //     J  = [ (αI+Jmax) − √((αI+Jmax)² − 4θ·αI·Jmax) ] / 2θ
+      //   α = 0.30 mol e⁻ per mol incident photons (quantum yield; NOT
+      //   temperature dependent — photon capture and charge separation are
+      //   physics, the enzymes downstream are what care about heat).
+      //   Jmax = 120 µmol e⁻ m⁻² s⁻¹ at 25 °C, scaled by a peaked
+      //   temperature function fJ(T) with a maximum near 31 °C.
+      //
+      //   Stoichiometry (AP level): 4 e⁻ → 1 O₂ + 2 NADPH + 3 ATP.
+      //   So the light reactions' ceiling on carbon fixation is J/4, since
+      //   the Calvin cycle spends 3 ATP + 2 NADPH per CO₂.
+      //
+      // CALVIN CYCLE.  Carboxylation capacity, Michaelis–Menten in the
+      // intercellular CO₂ Ci = 0.70·Ca:
+      //     Acap = Vc(T) · Ci/(Ci + Km),  Vc25 = 40, Km = 300 µmol mol⁻¹
+      //   times an activation state `act` set by LIGHT (ferredoxin–
+      //   thioredoxin), which relaxes toward I/(I+50) with τ = 40 s on and
+      //   90 s off. That is the light-ACTIVATION of Calvin enzymes: the
+      //   reason "dark reactions" is the wrong name twice over.
+      //
+      // THE TWO COMBINE AS A MINIMUM, NOT A PRODUCT (Blackman):
+      //     A_steady = min( J/4 , Acap·act )
+      //   Multiplying them would make extra CO₂ help at low light, which is
+      //   exactly the wrong answer. Here it helps by exactly nothing.
+      //
+      // DYNAMICS (what makes the light-off experiment work). The pools are
+      // real state variables:
+      //     throttle = 1 − max(fATP,fNADPH)^20      photosynthetic control
+      //     Jact     = J · throttle                 actual electron flow
+      //     O₂       = Jact/4
+      //     gate     = clamp( min(fATP,fNADPH)/0.35, 0, 1 )
+      //     A        = Acap · act · gate
+      //     d[ATP]/dt   = 0.75·Jact − 3·A
+      //     d[NADPH]/dt = 0.50·Jact − 2·A
+      //   Steady states of this system reproduce min(J/4, Acap·act) exactly:
+      //   when CO₂ limits, the pools back up to ~94% and the light reactions
+      //   throttle down; when light limits, the pools sit near empty and the
+      //   gate holds the Calvin cycle at J/4.
+      //
+      // Pool capacities are inflated ~100× so the drain is watchable.
+      // Photorespiration, stomatal closure, C4 and CAM are NOT modelled.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var ALPHA = 0.30;        // mol e⁻ per mol incident photons
+      var THETA = 0.7;         // curvature of the light response
+      var JMAX25 = 120;        // µmol e⁻ m⁻² s⁻¹
+      var VC25 = 40;           // µmol CO₂ m⁻² s⁻¹, carboxylation capacity
+      var KMC = 300;           // µmol mol⁻¹ intercellular CO₂ for half capacity
+      var CI_FRAC = 0.70;      // Ci / Ca, stomata held open
+      var RD25 = 1.2, RD_Q10 = 2.0;   // mitochondrial respiration, µmol CO₂ m⁻² s⁻¹
+      var ATP_CAP = 450, NADPH_CAP = 300;  // µmol m⁻² — inflated ~100× on purpose
+      var GATE = 0.35;         // pool fraction below which the cycle starves
+      var NTHR = 20;           // photosynthetic-control exponent
+      var IHALF = 50;          // µmol photons m⁻² s⁻¹ for half enzyme activation
+      var TAU_ON = 40, TAU_OFF = 90;   // s
+      var RATE_TOP = 36;       // µmol m⁻² s⁻¹, fixed y-axis on both plots
+      var IMAX = 2000;         // µmol photons m⁻² s⁻¹, slider + plot top
+      var CO2_LO = 400, CO2_HI = 1200;  // the two reference curves
+      var TRACE_WIN = 60, TRACE_DT = 0.15;
+
+      var FJ_N = 1 / (1 + Math.exp(-11 / 3));     // normalisers so f(25 °C) = 1
+      var FC_N = 1 / (1 + Math.exp(-5));
+
+      function fJ(T) { return (Math.pow(1.8, (T - 25) / 10) / (1 + Math.exp((T - 36) / 3))) / FJ_N; }
+      function fC(T) { return (Math.pow(2.1, (T - 25) / 10) / (1 + Math.exp((T - 40) / 3))) / FC_N; }
+
+      function Jcap(I, T) {
+        var jm = JMAX25 * fJ(T), a = ALPHA * I;
+        if (jm <= 0 || a <= 0) return 0;
+        var b = a + jm, d = b * b - 4 * THETA * a * jm;
+        if (d < 0) d = 0;
+        return (b - Math.sqrt(d)) / (2 * THETA);
+      }
+      function ci(ca) { return CI_FRAC * ca; }
+      function calvinCap(ca, T) { var c = ci(ca); return VC25 * fC(T) * c / (c + KMC); }
+      function actTarget(I) { return I / (I + IHALF); }
+      function rd(T) { return RD25 * Math.pow(RD_Q10, (T - 25) / 10); }
+
+      // the steady-state rate — a strict minimum, never a product
+      function ssRate(I, ca, T) {
+        return Math.min(Jcap(I, T) / 4, calvinCap(ca, T) * actTarget(I));
+      }
+
+      // ---------------- live state ----------------
+      var S = {
+        I: 1000, ca: 415, T: 25,
+        atp: 0.9, nadph: 0.9, act: actTarget(1000),
+        A: 0, O2: 0, J: 0, Jact: 0,
+        clock: 0, phase: 0, calvinAngle: 0,
+        view: 'trace',
+        darkStart: null, darkPre: 0, darkStop: null,
+        lastI: 1000
+      };
+
+      var trace = { t: [], A: [], O2: [], atp: [], nad: [], act: [], I: [] };
+      var traceAcc = 0;
+
+      function step(dt) {
+        var J = Jcap(S.I, S.T);
+        var full = Math.max(S.atp, S.nadph);
+        var thr = Demo.clamp(1 - Math.pow(full, NTHR), 0, 1);
+        var Jact = J * thr;
+        var gate = Demo.clamp(Math.min(S.atp, S.nadph) / GATE, 0, 1);
+        var A = calvinCap(S.ca, S.T) * S.act * gate;
+
+        S.atp = Demo.clamp(S.atp + dt * (0.75 * Jact - 3 * A) / ATP_CAP, 0, 1);
+        S.nadph = Demo.clamp(S.nadph + dt * (0.5 * Jact - 2 * A) / NADPH_CAP, 0, 1);
+
+        var tg = actTarget(S.I);
+        S.act = Demo.clamp(S.act + dt * (tg - S.act) / (tg > S.act ? TAU_ON : TAU_OFF), 0, 1);
+
+        S.J = J; S.Jact = Jact; S.A = A; S.O2 = Jact / 4;
+        S.clock += dt;
+        S.calvinAngle += dt * A * 0.11;   // spin rate ∝ fixation rate — visual only
+      }
+
+      // integrate with a fixed small sub-step so the stiff throttle stays stable
+      function advance(dt) {
+        var n = Math.max(1, Math.ceil(dt / 0.02));
+        var h = dt / n;
+        for (var i = 0; i < n; i++) step(h);
+      }
+
+      function pushTrace(dt) {
+        traceAcc += dt;
+        if (traceAcc < TRACE_DT) return;
+        traceAcc = 0;
+        trace.t.push(S.clock); trace.A.push(S.A); trace.O2.push(S.O2);
+        trace.atp.push(S.atp); trace.nad.push(S.nadph); trace.act.push(S.act);
+        trace.I.push(S.I);
+        while (trace.t.length && trace.t[0] < S.clock - TRACE_WIN) {
+          trace.t.shift(); trace.A.shift(); trace.O2.shift();
+          trace.atp.shift(); trace.nad.shift(); trace.act.shift(); trace.I.shift();
+        }
+      }
+
+      function clearTrace() {
+        trace.t = []; trace.A = []; trace.O2 = []; trace.atp = [];
+        trace.nad = []; trace.act = []; trace.I = [];
+        traceAcc = 0;
+      }
+
+      // watch the light going out, and time how long fixation survives
+      function watchDark() {
+        if (S.I === 0 && S.lastI > 0) {
+          S.darkStart = S.clock; S.darkPre = Math.max(S.A, 0.001); S.darkStop = null;
+        } else if (S.I > 0) {
+          S.darkStart = null; S.darkStop = null;
+        }
+        if (S.darkStart !== null && S.darkStop === null && S.A < 0.05 * S.darkPre) {
+          S.darkStop = S.clock - S.darkStart;
+        }
+        S.lastI = S.I;
+      }
+
+      // ---------------- formatting ----------------
+      function fmtRate(v) { return Math.abs(v) >= 10 ? F.dec(v, 1) : F.dec(v, 2); }
+
+      // ==================================================================
+      // canvas helpers
+      // ==================================================================
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function head(ctx, x, y, ang, size, col) {
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(ang);
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(-size, -size * 0.55); ctx.lineTo(-size, size * 0.55);
+        ctx.closePath();
+        ctx.fillStyle = col; ctx.fill();
+        ctx.restore();
+      }
+
+      // a flowing dashed arrow; dash offset animates so flow direction reads
+      function flow(ctx, x1, y1, x2, y2, lw, col, speed, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = lw;
+        ctx.lineCap = 'butt';
+        ctx.setLineDash([7, 5]);
+        ctx.lineDashOffset = -S.phase * speed;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.setLineDash([]);
+        head(ctx, x2, y2, Math.atan2(y2 - y1, x2 - x1), Math.max(5, lw * 1.6), col);
+        ctx.restore();
+      }
+
+      function label(ctx, txt, x, y, fs, col, align, weight) {
+        ctx.font = (weight ? weight + ' ' : '') + fs + FONT;
+        ctx.fillStyle = col;
+        ctx.textAlign = align || 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(txt, x, y);
+      }
+
+      // ==================================================================
+      // THE CHLOROPLAST DIAGRAM
+      // ==================================================================
+      var diagCv = Demo.canvas('#diagram', function (ctx, w, h, c) {
+        var vert = w < 440;
+        var pad = 2, gap = vert ? 13 : 15;
+        var COL_L = c.series[2];   // light reactions, green
+        var COL_A = c.series[1];   // ATP, orange
+        var COL_N = c.series[3];   // NADPH, purple
+        var COL_C = c.series[0];   // Calvin, blue
+
+        var Lb, Pb, Cb;   // box rects {x,y,w,h}
+        if (vert) {
+          var inner = h - 2 * pad - 2 * gap;
+          var r1 = inner * 0.40, r2 = inner * 0.18, r3 = inner - r1 - r2;
+          Lb = { x: pad, y: pad, w: w - 2 * pad, h: r1 };
+          Pb = { x: pad, y: pad + r1 + gap, w: w - 2 * pad, h: r2 };
+          Cb = { x: pad, y: pad + r1 + gap + r2 + gap, w: w - 2 * pad, h: r3 };
+        } else {
+          var innerW = w - 2 * pad - 2 * gap;
+          var w1 = innerW * 0.355, w2 = innerW * 0.245, w3 = innerW - w1 - w2;
+          var by = pad + 2, bh = h - by - 20;
+          Lb = { x: pad, y: by, w: w1, h: bh };
+          Pb = { x: pad + w1 + gap, y: by, w: w2, h: bh };
+          Cb = { x: pad + w1 + gap + w2 + gap, y: by, w: w3, h: bh };
+        }
+
+        var fs = vert ? 9.2 : (w < 620 ? 9.6 : 10.4);
+        var lit = S.I > 0;
+        var relFlow = Demo.clamp(S.O2 / 30, 0, 1);   // carriers made, in CO₂ units
+        var relFix = Demo.clamp(S.A / 30, 0, 1);     // carriers spent, same units
+
+        drawLightBox(ctx, c, Lb, COL_L, fs, lit, relFlow);
+        drawPools(ctx, c, Pb, COL_A, COL_N, fs, vert);
+        drawCalvin(ctx, c, Cb, COL_C, fs, relFix, vert);
+
+        // ---- connectors ----
+        var lwProd = 1.6 + 5 * Math.sqrt(relFlow);
+        var lwUse = 1.6 + 5 * Math.sqrt(relFix);
+        var spdP = 22 + 90 * relFlow, spdU = 22 + 90 * relFix;
+        var aP = 0.30 + 0.70 * Math.min(1, relFlow * 4);
+        var aU = 0.30 + 0.70 * Math.min(1, relFix * 4);
+
+        if (vert) {
+          flow(ctx, w / 2, Lb.y + Lb.h + 1, w / 2, Pb.y - 2, lwProd, COL_A, spdP, aP);
+          flow(ctx, w / 2, Pb.y + Pb.h + 1, w / 2, Cb.y - 2, lwUse, COL_C, spdU, aU);
+        } else {
+          var my = Lb.y + Lb.h * 0.52;
+          flow(ctx, Lb.x + Lb.w + 1, my, Pb.x - 2, my, lwProd, COL_A, spdP, aP);
+          flow(ctx, Pb.x + Pb.w + 1, my, Cb.x - 2, my, lwUse, COL_C, spdU, aU);
+          var ry = h - 9;
+          var lMid = Lb.x + Lb.w * 0.5, cMid = Cb.x + Cb.w * 0.5;
+          ctx.save();
+          ctx.globalAlpha = 0.5; ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]);
+          ctx.beginPath();
+          ctx.moveTo(cMid, Cb.y + Cb.h + 2);
+          ctx.lineTo(cMid, ry);
+          ctx.lineTo(lMid, ry);
+          ctx.lineTo(lMid, Lb.y + Lb.h + 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+          head(ctx, lMid, Lb.y + Lb.h + 2, -Math.PI / 2, 4.5, c.muted);
+          label(ctx, 'ADP + Pi and NADP⁺ go back', (lMid + cMid) / 2, ry - 4,
+            fs - 0.6, c.muted, 'center');
+        }
+      }, { aspect: 0.5, minHeight: 360, maxHeight: 380 });
+
+      function drawLightBox(ctx, c, B, col, fs, lit, relFlow) {
+        ctx.save();
+        rr(ctx, B.x, B.y, B.w, B.h, 12);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
+
+        var px = B.x + 9, py = B.y + 13;
+        label(ctx, 'LIGHT REACTIONS', px, py, fs, col, 'left', '600');
+        label(ctx, 'thylakoid membrane', px, py + fs + 3, fs - 1, c.muted);
+
+        // photons coming in
+        var memY = B.y + B.h * 0.52;
+        var top = py + fs + 8;
+        var rayLo = memY - 22;
+        var n = Math.round(Demo.clamp(S.I / 190, 0, 10));
+        var i, rx;
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.7;
+        ctx.lineCap = 'round';
+        for (i = 0; i < n; i++) {
+          rx = B.x + 16 + (B.w - 32) * ((i + 0.5) / Math.max(n, 1));
+          var t = (S.phase * 1.3 + i * 0.41) % 1;
+          var yy = top + (rayLo - top) * t;
+          ctx.globalAlpha = 0.9 * Math.sin(Math.PI * Demo.clamp(t, 0, 1)) + 0.1;
+          ctx.beginPath();
+          ctx.moveTo(rx - 3.5, yy - 8); ctx.lineTo(rx, yy);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(rx, yy); ctx.lineTo(rx - 3, yy - 2.5);
+          ctx.moveTo(rx, yy); ctx.lineTo(rx + 0.5, yy - 4);
+          ctx.stroke();
+        }
+        ctx.restore();
+        if (!lit) {
+          label(ctx, 'no photons arriving', B.x + B.w / 2, memY - 18, fs - 1, c.muted, 'center', '600');
+        }
+
+        // the membrane itself — electron flow above the label, both inside the bar
+        var mx0 = B.x + 10, mx1 = B.x + B.w - 10;
+        ctx.save();
+        rr(ctx, mx0, memY - 11, mx1 - mx0, 22, 10);
+        ctx.fillStyle = col; ctx.globalAlpha = 0.16; ctx.fill();
+        ctx.globalAlpha = 0.55; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
+
+        if (S.Jact > 0.05) {
+          flow(ctx, mx0 + 7, memY - 5, mx1 - 7, memY - 5,
+            1.4 + 3.2 * Math.sqrt(Demo.clamp(S.Jact / 120, 0, 1)), col,
+            30 + 140 * Demo.clamp(S.Jact / 120, 0, 1), 0.95);
+        }
+        label(ctx, 'PS II  →  ETC  →  PS I', (mx0 + mx1) / 2, memY + 8,
+          fs - 1.6, c.text2, 'center', '600');
+
+        // water in, electrons through, oxygen out — one line each, never side by side
+        var by = B.y + B.h - 9, ln = fs + 4;
+        label(ctx, '2 H₂O → 4 e⁻ + 4 H⁺ + O₂', B.x + 9, by - 2 * ln, fs - 0.8, c.text2);
+        label(ctx, 'electron flow ' + fmtRate(S.Jact) + ' µmol e⁻ m⁻² s⁻¹',
+          B.x + 9, by - ln, fs - 1.2, c.muted);
+        label(ctx, 'O₂ out: ' + fmtRate(S.O2) + ' µmol m⁻² s⁻¹',
+          B.x + 9, by, fs - 0.4, S.O2 > 0.05 ? col : c.muted, 'left', '600');
+      }
+
+      function drawPools(ctx, c, B, colA, colN, fs, vert) {
+        label(ctx, vert ? 'CARRIER POOLS — ADP + Pi and NADP⁺ go back up' : 'CARRIER POOLS',
+          B.x + (vert ? 9 : B.w / 2), B.y + 11, fs - (vert ? 1.8 : 0.6),
+          c.muted, vert ? 'left' : 'center', '600');
+
+        var pools = [
+          { name: 'ATP', f: S.atp, cap: ATP_CAP, col: colA },
+          { name: 'NADPH', f: S.nadph, cap: NADPH_CAP, col: colN }
+        ];
+        var i;
+
+        if (vert) {
+          // two horizontal bars
+          var y = B.y + 19;
+          var bh = 14, sp = 9;
+          for (i = 0; i < 2; i++) {
+            var p = pools[i];
+            var yy = y + i * (bh + sp);
+            label(ctx, p.name, B.x + 9, yy + bh - 3, fs, p.col, 'left', '600');
+            var bx = B.x + 58, bw = B.w - 58 - 62;
+            ctx.save();
+            rr(ctx, bx, yy, bw, bh, 5);
+            ctx.fillStyle = c.track; ctx.fill();
+            ctx.restore();
+            ctx.save();
+            rr(ctx, bx, yy, Math.max(2, bw * p.f), bh, 5);
+            ctx.fillStyle = p.col; ctx.fill();
+            ctx.restore();
+            // the starvation threshold
+            var gx = bx + bw * GATE;
+            ctx.strokeStyle = c.text2; ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath(); ctx.moveTo(gx, yy - 2); ctx.lineTo(gx, yy + bh + 2); ctx.stroke();
+            ctx.setLineDash([]);
+            label(ctx, F.dec(p.f * 100, 0) + '%', B.x + B.w - 9, yy + bh - 3, fs, p.col, 'right', '600');
+          }
+        } else {
+          // two vertical tanks
+          var tw = Math.min(38, (B.w - 26) / 2);
+          var gapT = Math.max(8, B.w - 12 - 2 * tw);
+          var tx0 = B.x + (B.w - (2 * tw + gapT)) / 2;
+          var ty = B.y + 34, th = B.h - 34 - 30;
+          for (i = 0; i < 2; i++) {
+            var q = pools[i];
+            var x = tx0 + i * (tw + gapT);
+            ctx.save();
+            rr(ctx, x, ty, tw, th, 7);
+            ctx.fillStyle = c.track; ctx.fill();
+            ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+            ctx.restore();
+            var fh = Math.max(2, th * q.f);
+            ctx.save();
+            ctx.beginPath(); rr(ctx, x, ty, tw, th, 7); ctx.clip();
+            ctx.fillStyle = q.col;
+            ctx.fillRect(x, ty + th - fh, tw, fh);
+            ctx.restore();
+            var gy = ty + th * (1 - GATE);
+            ctx.strokeStyle = c.text2; ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            ctx.beginPath(); ctx.moveTo(x - 2, gy); ctx.lineTo(x + tw + 2, gy); ctx.stroke();
+            ctx.setLineDash([]);
+            label(ctx, q.name, x + tw / 2, ty - 7, fs - 0.4, q.col, 'center', '600');
+            label(ctx, F.dec(q.f * 100, 0) + '%', x + tw / 2, ty + th + fs + 4, fs, q.col, 'center', '600');
+          }
+        }
+      }
+
+      function drawCalvin(ctx, c, B, col, fs, relFix, vert) {
+        ctx.save();
+        rr(ctx, B.x, B.y, B.w, B.h, 12);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+        ctx.restore();
+
+        var px = B.x + 9, py = B.y + 13;
+        label(ctx, 'CALVIN CYCLE', px, py, fs, col, 'left', '600');
+        label(ctx, 'stroma — light-independent', px, py + fs + 3, fs - 1.6, c.muted);
+
+        var cx = B.x + B.w / 2, cy = B.y + B.h * 0.50;
+        var r = Demo.clamp(Math.min(B.w * 0.26, B.h * 0.20), 17, 44);
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, 6.28318); ctx.stroke();
+
+        // an arc whose length shows the rate, spinning at the rate
+        var span = 0.35 + 4.4 * Demo.clamp(relFix, 0, 1);
+        ctx.save();
+        ctx.strokeStyle = col; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        ctx.globalAlpha = S.A > 0.02 ? 1 : 0.25;
+        ctx.beginPath(); ctx.arc(cx, cy, r, S.calvinAngle, S.calvinAngle + span); ctx.stroke();
+        ctx.restore();
+
+        // the marker that visibly stops when the pools run dry
+        var mx = cx + r * Math.cos(S.calvinAngle), my = cy + r * Math.sin(S.calvinAngle);
+        ctx.beginPath(); ctx.arc(mx, my, 4.2, 0, 6.28318);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface2; ctx.lineWidth = 1.5; ctx.stroke();
+
+        label(ctx, fmtRate(S.A), cx, cy + 5, Math.max(13, fs + 5), S.A > 0.02 ? c.text : c.muted, 'center', '600');
+        label(ctx, 'µmol CO₂ m⁻² s⁻¹', cx, cy + r + fs + 4, fs - 1.8, c.muted, 'center');
+
+        // CO2 in on the left of the ring, sugar out on the right
+        var arrowY = cy;
+        var aIn = 0.3 + 0.7 * Math.min(1, relFix * 4);
+        flow(ctx, B.x + 8, arrowY, cx - r - 5, arrowY, 1.4 + 3 * Math.sqrt(Demo.clamp(relFix, 0, 1)),
+          col, 20 + 80 * relFix, aIn);
+        label(ctx, 'CO₂', B.x + 8, arrowY - 7, fs - 0.8, col, 'left', '600');
+        label(ctx, 'inside: ' + F.dec(ci(S.ca), 0) + ' ppm', B.x + 8, arrowY + fs + 5, fs - 1.8, c.muted);
+
+        flow(ctx, cx + r + 5, arrowY, B.x + B.w - 8, arrowY, 1.4 + 3 * Math.sqrt(Demo.clamp(relFix, 0, 1)),
+          col, 20 + 80 * relFix, aIn);
+        label(ctx, 'G3P', B.x + B.w - 8, arrowY - 7, fs - 0.8, col, 'right', '600');
+        label(ctx, 'sugar', B.x + B.w - 8, arrowY + fs + 5, fs - 1.8, c.muted, 'right');
+
+        var by = B.y + B.h - 9;
+        if (!vert) label(ctx, '3 ATP + 2 NADPH spent per CO₂', B.x + 9, by - fs - 4, fs - 1.2, c.text2);
+        var actCol = S.act > 0.5 ? c.ok : S.act > 0.15 ? c.warn : c.bad;
+        label(ctx, 'enzymes ' + F.dec(S.act * 100, 0) + '% activated by light',
+          B.x + 9, by, fs - 0.8, actCol, 'left', '600');
+      }
+
+      // ==================================================================
+      // SECOND CANVAS — live trace, or rate vs light
+      // ==================================================================
+      var plotCv = Demo.canvas('#plot', function (ctx, w, h, c) {
+        if (S.view === 'light') drawLightCurve(ctx, w, h, c);
+        else drawTrace(ctx, w, h, c);
+      }, { aspect: 0.52, minHeight: 240, maxHeight: 290 });
+
+      function drawTrace(ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 9.2 : 10.2;
+        var padL = narrow ? 30 : 36, padR = narrow ? 30 : 36, padT = 22, padB = 26;
+        var x0 = padL, x1 = w - padR;
+        var gapMid = 24;
+        var topH = (h - padT - padB - gapMid) * 0.60;
+        var yA1 = padT, yA0 = padT + topH;                 // rates pane
+        var yB1 = yA0 + gapMid, yB0 = h - padB;            // pools pane
+        var t1 = S.clock, t0 = t1 - TRACE_WIN;
+        var i, n = trace.t.length;
+
+        function X(t) { return x0 + (x1 - x0) * Demo.clamp((t - t0) / TRACE_WIN, 0, 1); }
+        function YA(v) { return yA0 - (yA0 - yA1) * Demo.clamp(v, 0, RATE_TOP) / RATE_TOP; }
+        function YB(f) { return yB0 - (yB0 - yB1) * Demo.clamp(f, 0, 1); }
+
+        // shade every stretch where the light was off
+        ctx.save();
+        ctx.fillStyle = c.text2; ctx.globalAlpha = 0.09;
+        var runStart = null;
+        for (i = 0; i < n; i++) {
+          if (trace.I[i] === 0 && runStart === null) runStart = trace.t[i];
+          if ((trace.I[i] > 0 || i === n - 1) && runStart !== null) {
+            ctx.fillRect(X(runStart), yA1, Math.max(1, X(trace.t[i]) - X(runStart)), yB0 - yA1);
+            runStart = null;
+          }
+        }
+        ctx.restore();
+
+        // ---- rates pane ----
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 3; i++) {
+          var gy = yA0 - (yA0 - yA1) * i / 3;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(Math.round(RATE_TOP * i / 3)), x0 - 4, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, yA1); ctx.lineTo(x0, yA0); ctx.lineTo(x1, yA0); ctx.stroke();
+        label(ctx, 'rate, µmol m⁻² s⁻¹', x0 + 2, yA1 - 6, fs - 1, c.muted, 'left', '600');
+
+        function line(key, Y, col, lw, dash) {
+          if (n < 2) return;
+          ctx.save();
+          ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round';
+          if (dash) ctx.setLineDash(dash);
+          ctx.beginPath();
+          for (var k = 0; k < n; k++) {
+            var xx = X(trace.t[k]), yy = Y(trace[key][k]);
+            k === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        line('O2', YA, c.series[2], 2.6);
+        line('A', YA, c.series[0], 2.2);
+
+        // ---- pools pane ----
+        for (i = 0; i <= 2; i++) {
+          var hy = yB0 - (yB0 - yB1) * i / 2;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, hy); ctx.lineTo(x1, hy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.font = fs + FONT;
+          ctx.fillText(String(i * 50) + '%', x0 - 4, hy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, yB1); ctx.lineTo(x0, yB0); ctx.lineTo(x1, yB0); ctx.stroke();
+        label(ctx, 'pool level, % full', x0 + 2, yB1 - 6, fs - 1, c.muted, 'left', '600');
+
+        // the starvation threshold the Calvin cycle falls through
+        ctx.save();
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 1; ctx.globalAlpha = 0.55;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(x0, YB(GATE)); ctx.lineTo(x1, YB(GATE)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // NADPH is drawn wide and ATP narrow on top of it: the purple halo IS
+        // the point — linear flow delivers the two in the ratio Calvin spends them.
+        line('act', YB, c.muted, 1.4, [4, 3]);
+        line('nad', YB, c.series[3], 5.0);
+        line('atp', YB, c.series[1], 2.0);
+
+        // time axis
+        ctx.font = fs + FONT; ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('−' + TRACE_WIN + ' s', x0, yB0 + 6);
+        ctx.textAlign = 'right';
+        ctx.fillText('now', x1, yB0 + 6);
+        ctx.textAlign = 'center';
+        ctx.fillText('time', (x0 + x1) / 2, yB0 + 6);
+
+        // current values pinned at the right edge
+        if (n) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.font = '600 ' + (fs - 0.6) + FONT;
+          ctx.fillStyle = c.series[2];
+          ctx.fillText(fmtRate(S.O2), x1 + 3, YA(S.O2));
+          ctx.fillStyle = c.series[0];
+          ctx.fillText(fmtRate(S.A), x1 + 3, YA(S.A) + (Math.abs(S.A - S.O2) < 1.5 ? 11 : 0));
+          ctx.fillStyle = c.series[1];
+          ctx.fillText(F.dec(S.atp * 100, 0) + '%', x1 + 3, YB(S.atp));
+        }
+      }
+
+      function drawLightCurve(ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 9.2 : 10.2;
+        var padL = narrow ? 32 : 38, padR = narrow ? 12 : 16, padT = 26, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var i, px;
+
+        function X(I) { return x0 + (x1 - x0) * Demo.clamp(I / IMAX, 0, 1); }
+        function Y(v) { return y0 - (y0 - y1) * Demo.clamp(v, 0, RATE_TOP) / RATE_TOP; }
+        function invX(p) { return (p - x0) / (x1 - x0) * IMAX; }
+
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(Math.round(RATE_TOP * i / 4)), x0 - 4, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        label(ctx, 'CO₂ fixed (µmol m⁻² s⁻¹)', 1, y1 - 8, fs - 1, c.muted, 'left', '600');
+
+        ctx.font = fs + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var xt = [0, 500, 1000, 1500, 2000];
+        for (i = 0; i < xt.length; i++) {
+          px = X(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(xt[i]), px, y0 + 6);
+        }
+        ctx.fillText('light intensity (µmol photons m⁻² s⁻¹)', (x0 + x1) / 2, y0 + 20);
+
+        // where the two reference curves part company
+        var split = null;
+        for (i = 0; i <= IMAX; i += 5) {
+          if (calvinCap(CO2_LO, S.T) * actTarget(i) < Jcap(i, S.T) / 4 - 1e-9) { split = i; break; }
+        }
+        if (split !== null && split > 0) {
+          ctx.save();
+          ctx.strokeStyle = c.text2; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(X(split), y0); ctx.lineTo(X(split), y1); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        function curve(ca, col, lw, dash) {
+          ctx.save();
+          ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round';
+          if (dash) ctx.setLineDash(dash);
+          ctx.beginPath();
+          for (var p = x0; p <= x1; p++) {
+            var yy = Y(ssRate(invX(p), ca, S.T));
+            p === x0 ? ctx.moveTo(p, yy) : ctx.lineTo(p, yy);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        var showCur = Math.abs(S.ca - CO2_LO) > 25 && Math.abs(S.ca - CO2_HI) > 25;
+        curve(CO2_HI, c.series[1], 2.4);
+        curve(CO2_LO, c.series[0], 2.4);
+        if (showCur) curve(S.ca, c.accentStrong, 1.8, [5, 4]);
+
+        // the operating point, live (it sits off the curve during transients)
+        var opx = X(S.I), opy = Y(S.A);
+        ctx.save();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(opx, y1); ctx.lineTo(opx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(opx, opy, 5.2, 0, 6.28318);
+        ctx.fillStyle = c.accentStrong; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+
+        // curve labels
+        ctx.textBaseline = 'alphabetic';
+        var yHi = Y(ssRate(IMAX, CO2_HI, S.T)), yLo = Y(ssRate(IMAX, CO2_LO, S.T));
+        label(ctx, CO2_HI + ' ppm', x1 - 2, yHi - 6, fs, c.series[1], 'right', '600');
+        label(ctx, CO2_LO + ' ppm', x1 - 2, yLo + fs + 4, fs, c.series[0], 'right', '600');
+        if (split !== null && split > 20) {
+          ctx.font = '600 ' + (fs - 0.6) + FONT;
+          var msg = 'same line: light limits';
+          var tw = ctx.measureText(msg).width;
+          if (X(split) - 12 - tw > x0) {
+            label(ctx, msg, X(split) - 5, y0 - 6, fs - 0.6, c.text2, 'right', '600');
+          } else {
+            label(ctx, '← ' + msg, X(split) + 5, y0 - 6, fs - 0.6, c.text2, 'left', '600');
+          }
+        }
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        lightRange: document.getElementById('lightRange'),
+        lightOut: document.getElementById('lightOut'),
+        co2Range: document.getElementById('co2Range'),
+        co2Out: document.getElementById('co2Out'),
+        co2Hint: document.getElementById('co2Hint'),
+        tempRange: document.getElementById('tempRange'),
+        tempOut: document.getElementById('tempOut'),
+        btnDark: document.getElementById('btnDark'),
+        btnReset: document.getElementById('btnReset'),
+        ceilLight: document.getElementById('ceilLight'),
+        ceilLightVal: document.getElementById('ceilLightVal'),
+        ceilLightBar: document.getElementById('ceilLightBar'),
+        ceilCO2: document.getElementById('ceilCO2'),
+        ceilCO2Val: document.getElementById('ceilCO2Val'),
+        ceilCO2Bar: document.getElementById('ceilCO2Bar'),
+        rLimit: document.getElementById('rLimit'),
+        rLimitSub: document.getElementById('rLimitSub'),
+        limitNote: document.getElementById('limitNote'),
+        rFix: document.getElementById('rFix'),
+        rO2: document.getElementById('rO2'),
+        rATP: document.getElementById('rATP'),
+        rATPSub: document.getElementById('rATPSub'),
+        rNADPH: document.getElementById('rNADPH'),
+        rNADPHSub: document.getElementById('rNADPHSub'),
+        rAct: document.getElementById('rAct'),
+        rNet: document.getElementById('rNet'),
+        rNetSub: document.getElementById('rNetSub'),
+        rDark: document.getElementById('rDark'),
+        rDarkSub: document.getElementById('rDarkSub'),
+        darkBox: document.getElementById('darkBox'),
+        diagCap: document.getElementById('diagCap'),
+        plotCap: document.getElementById('plotCap'),
+        plotLabel: document.getElementById('plotLabel'),
+        legend: document.getElementById('legend')
+      };
+
+      function limitState() {
+        var lc = Jcap(S.I, S.T) / 4;
+        var cc = calvinCap(S.ca, S.T) * S.act;
+        var kind;
+        if (lc < 0.05 && cc < 0.05) kind = 'none';
+        else if (lc < cc * 0.92) kind = 'light';
+        else if (cc < lc * 0.92) kind = 'co2';
+        else kind = 'both';
+        return { lc: lc, cc: cc, kind: kind };
+      }
+
+      // ==================================================================
+      // RENDER (DOM only — the canvases repaint every frame)
+      // ==================================================================
+      function renderDOM() {
+        var L = limitState();
+        var R = rd(S.T);
+        var net = S.A - R;
+
+        el.lightOut.innerHTML = F.dec(S.I, 0) + ' &micro;mol m⁻² s⁻¹';
+        el.co2Out.textContent = F.dec(S.ca, 0) + ' ppm';
+        el.tempOut.innerHTML = F.dec(S.T, 1) + ' &deg;C';
+        el.co2Hint.innerHTML = 'Today&rsquo;s air is about 420 ppm. Rubisco sees the <em>intercellular</em> '
+          + 'concentration, taken here as 0.70 of the outside air: C<sub>i</sub> = '
+          + F.dec(ci(S.ca), 0) + ' ppm.';
+
+        el.ceilLightVal.textContent = fmtRate(L.lc);
+        el.ceilCO2Val.textContent = fmtRate(L.cc);
+        el.ceilLightBar.style.width = Demo.clamp(L.lc / RATE_TOP * 100, 0, 100) + '%';
+        el.ceilCO2Bar.style.width = Demo.clamp(L.cc / RATE_TOP * 100, 0, 100) + '%';
+
+        var lLim = L.kind === 'light' || L.kind === 'both';
+        var cLim = L.kind === 'co2' || L.kind === 'both';
+        el.ceilLight.className = 'ceil' + (L.kind === 'none' ? '' : lLim ? ' is-limiting' : ' is-slack');
+        el.ceilCO2.className = 'ceil' + (L.kind === 'none' ? '' : cLim ? ' is-limiting' : ' is-slack');
+        el.ceilLightBar.style.background = lLim ? 'var(--bad)' : 'var(--series-3)';
+        el.ceilCO2Bar.style.background = cLim ? 'var(--bad)' : 'var(--series-1)';
+
+        var tHit = fJ(S.T) < 0.7 || fC(S.T) < 0.7;
+        if (L.kind === 'none') {
+          el.rLimit.innerHTML = 'Nothing is running';
+          el.rLimitSub.textContent = 'both ceilings are essentially zero';
+        } else if (L.kind === 'light') {
+          el.rLimit.innerHTML = 'Light';
+          el.rLimitSub.innerHTML = 'the ATP/NADPH supply runs out first &mdash; '
+            + fmtRate(L.lc) + ' vs ' + fmtRate(L.cc);
+        } else if (L.kind === 'co2') {
+          el.rLimit.innerHTML = 'CO<sub>2</sub>';
+          el.rLimitSub.innerHTML = 'rubisco runs out of substrate first &mdash; '
+            + fmtRate(L.cc) + ' vs ' + fmtRate(L.lc);
+        } else {
+          el.rLimit.innerHTML = 'Both, equally';
+          el.rLimitSub.innerHTML = 'the two ceilings are within 8% of each other';
+        }
+
+        var note;
+        if (S.I === 0) {
+          note = '<strong>The light is off.</strong> The light reactions have stopped dead &mdash; '
+            + 'O<sub>2</sub> evolution is zero. Whatever carbon is still being fixed is being paid for out '
+            + 'of the pools, and when they hit the dashed line the Calvin cycle stops too.';
+        } else if (L.kind === 'light') {
+          note = '<strong>Light is limiting.</strong> Look at the pools: they are running near empty, because '
+            + 'every ATP is spent the moment it is made. Raising CO<sub>2</sub> from here changes the rate by '
+            + '<strong>nothing at all</strong> &mdash; try it, the number will not move. Raise the light instead.';
+        } else if (L.kind === 'co2') {
+          note = '<strong>CO<sub>2</sub> is limiting.</strong> Look at the pools: nearly full, because the light '
+            + 'reactions are making carriers faster than rubisco can spend them. More light does almost nothing '
+            + 'here. More CO<sub>2</sub> works immediately.';
+        } else {
+          note = '<strong>Co-limited.</strong> Both ceilings are almost the same height, which is where a real '
+            + 'leaf tends to sit &mdash; building more of either machine than you can use is wasted nitrogen. '
+            + 'From here, raising <em>either</em> input helps a little.';
+        }
+        if (tHit && L.kind !== 'none') {
+          note += ' Temperature is dragging both ceilings down at once: light reactions at '
+            + F.pct(fJ(S.T), 0) + ' of their 25 &deg;C capacity, rubisco at ' + F.pct(fC(S.T), 0) + '.';
+        }
+        el.limitNote.innerHTML = note;
+
+        el.rFix.textContent = fmtRate(S.A);
+        el.rO2.textContent = fmtRate(S.O2);
+        el.rATP.textContent = F.dec(S.atp * 100, 1) + '%';
+        el.rNADPH.textContent = F.dec(S.nadph * 100, 1) + '%';
+        el.rATPSub.innerHTML = F.dec(S.atp * ATP_CAP, 0) + ' of ' + ATP_CAP + ' &micro;mol m⁻²';
+        el.rNADPHSub.innerHTML = F.dec(S.nadph * NADPH_CAP, 0) + ' of ' + NADPH_CAP + ' &micro;mol m⁻²';
+        el.rAct.textContent = F.dec(S.act * 100, 0) + '%';
+        el.rNet.textContent = (net >= 0 ? '' : '−') + fmtRate(Math.abs(net));
+        el.rNetSub.innerHTML = net >= 0
+          ? 'taking CO<sub>2</sub> in &mdash; respiration is ' + fmtRate(R)
+          : '<strong>releasing</strong> CO<sub>2</sub> &mdash; respiration is ' + fmtRate(R);
+
+        if (S.darkStart === null) {
+          el.rDark.innerHTML = '&mdash;';
+          el.rDarkSub.innerHTML = 'press <em>Lights out</em> and time it';
+          el.darkBox.className = 'readout span2';
+        } else if (S.darkStop === null) {
+          el.rDark.innerHTML = F.dec(S.clock - S.darkStart, 1) + '<span class="r-unit">s</span>';
+          el.rDarkSub.innerHTML = 'still running in total darkness, at '
+            + F.pct(Demo.clamp(S.A / S.darkPre, 0, 1), 0) + ' of its lit rate';
+          el.darkBox.className = 'readout span2 is-ok';
+        } else {
+          el.rDark.innerHTML = F.dec(S.darkStop, 1) + '<span class="r-unit">s</span>';
+          el.rDarkSub.innerHTML = 'ran on that long, then stopped &mdash; that is how far the pools stretched, '
+            + 'and it is nothing like a whole night';
+          el.darkBox.className = 'readout span2 is-bad';
+        }
+
+        el.diagCap.innerHTML = diagCaption(L);
+        el.plotCap.innerHTML = plotCaption(L);
+      }
+
+      function diagCaption(L) {
+        var t = 'Photons drive electrons through the thylakoid, splitting water and releasing '
+          + '<strong>' + fmtRate(S.O2) + ' &micro;mol O<sub>2</sub> m⁻² s⁻¹</strong>. Four electrons buy '
+          + '1 O<sub>2</sub>, 2 NADPH and 3 ATP; the Calvin cycle spends 3 ATP + 2 NADPH per CO<sub>2</sub>, '
+          + 'which is why the two pools move together and why O<sub>2</sub> out equals CO<sub>2</sub> in '
+          + 'once things settle. ';
+        if (S.I === 0 && S.A > 0.2) {
+          t += '<strong>The light is off and the wheel is still turning.</strong> Nothing is entering the '
+            + 'thylakoid; the cycle is living on stored ATP and NADPH, and you can watch the tanks empty.';
+        } else if (S.I === 0) {
+          t += '<strong>Dark, pools empty, wheel stopped.</strong> The Calvin cycle needs no photons, but it '
+            + 'cannot run without what photons pay for. The enzymes are switching off too.';
+        } else if (L.kind === 'light') {
+          t += 'The tanks are low and the dashed line on each is the level below which the cycle starves.';
+        } else {
+          t += 'The tanks are high, so the light reactions are throttling themselves back &mdash; that is real, '
+            + 'and it is called photosynthetic control.';
+        }
+        return t;
+      }
+
+      function plotCaption(L) {
+        if (S.view === 'light') {
+          var lo = ssRate(S.I, CO2_LO, S.T), hi = ssRate(S.I, CO2_HI, S.T);
+          var split = null, i;
+          for (i = 0; i <= IMAX; i += 5) {
+            if (calvinCap(CO2_LO, S.T) * actTarget(i) < Jcap(i, S.T) / 4 - 1e-9) { split = i; break; }
+          }
+          var t = 'Steady-state rate against light at two CO<sub>2</sub> levels, both at ' + F.dec(S.T, 1)
+            + ' &deg;C. ';
+          if (split === null) {
+            t += 'At this temperature the 400 ppm curve never reaches its CO<sub>2</sub> ceiling on this axis, '
+              + 'so the two curves stay together: light limits everywhere here.';
+          } else {
+            t += 'Below <strong>' + split + ' &micro;mol photons m⁻² s⁻¹</strong> the two curves are the '
+              + '<strong>same line</strong> &mdash; extra CO<sub>2</sub> buys you exactly nothing, because '
+              + 'light is what has run out. Above it they separate and the plateau moves up. ';
+          }
+          t += ' At your current light of ' + F.dec(S.I, 0) + ', the same CO<sub>2</sub> move from 400 to 1200 ppm '
+            + 'takes the rate from ' + fmtRate(lo) + ' to ' + fmtRate(hi) + ' &micro;mol m⁻² s⁻¹'
+            + (Math.abs(hi - lo) < 0.02 ? ' &mdash; that is <strong>no change</strong>.' : '.')
+            + ' The blue dot is the live rate, so during a transient it sits off the curves.';
+          return t;
+        }
+        return 'Top: carbon fixed (blue) and O<sub>2</sub> evolved (green), &micro;mol m⁻² s⁻¹. '
+          + 'Bottom: ATP (orange) and NADPH (purple) pool levels, with Calvin enzyme activation dashed. '
+          + 'Shaded stretches are darkness. Watch the green line hit zero the instant the light goes out '
+          + 'while the blue line carries on &mdash; that gap is the whole point of this bench.';
+      }
+
+      function renderLegend() {
+        if (S.view === 'light') {
+          el.legend.innerHTML =
+            '<span class="lg"><i style="background:var(--series-1)"></i>400 ppm CO<sub>2</sub></span>'
+            + '<span class="lg"><i style="background:var(--series-2)"></i>1200 ppm CO<sub>2</sub></span>'
+            + '<span class="lg dash"><i style="border-top-color:var(--accent-strong)"></i>your CO<sub>2</sub> setting</span>'
+            + '<span class="lg"><i style="background:var(--accent-strong)"></i>live operating point</span>';
+          el.plotLabel.innerHTML = 'Rate against light at two CO<sub>2</sub> levels '
+            + '<span>&mdash; the plateau shifts, the initial slope does not</span>';
+        } else {
+          el.legend.innerHTML =
+            '<span class="lg"><i style="background:var(--series-1)"></i>CO<sub>2</sub> fixed</span>'
+            + '<span class="lg"><i style="background:var(--series-3)"></i>O<sub>2</sub> evolved</span>'
+            + '<span class="lg"><i style="background:var(--series-2)"></i>ATP pool</span>'
+            + '<span class="lg"><i style="background:var(--series-4)"></i>NADPH pool (the wider band under it)</span>'
+            + '<span class="lg dash"><i></i>enzyme activation</span>';
+          el.plotLabel.innerHTML = 'The last 60 seconds <span>&mdash; shaded where the light was off</span>';
+        }
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#lightPresets .btn'));
+
+      function markPresets() {
+        presetBtns.forEach(function (b) {
+          b.classList.toggle('is-on', Math.abs(parseFloat(b.dataset.i) - S.I) < 1);
+        });
+        el.btnDark.textContent = S.I === 0 ? 'Lights back on' : 'Lights out';
+        el.btnDark.classList.toggle('primary', S.I !== 0);
+      }
+
+      var lastLit = 1000;
+
+      function setLight(v, fromSlider) {
+        if (S.I > 0) lastLit = S.I;
+        S.I = v;
+        if (!fromSlider) el.lightRange.value = v;
+        watchDark();
+        markPresets();
+        renderDOM();
+      }
+
+      Demo.range('#lightRange', function (v) { setLight(v, true); });
+      Demo.range('#co2Range', function (v) { S.ca = v; renderDOM(); });
+      Demo.range('#tempRange', function (v) { S.T = v; renderDOM(); });
+
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setLight(parseFloat(b.dataset.i), false); });
+      });
+
+      el.btnDark.addEventListener('click', function () {
+        setLight(S.I === 0 ? (lastLit > 0 ? lastLit : 1000) : 0, false);
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        S.ca = 415; S.T = 25;
+        el.co2Range.value = 415;
+        el.tempRange.value = 25;
+        lastLit = 1000;
+        setLight(1000, false);
+        S.atp = 0.9; S.nadph = 0.9; S.act = actTarget(1000);
+        S.darkStart = null; S.darkStop = null; S.lastI = 1000;
+        settle(30);
+        clearTrace();
+        renderDOM();
+      });
+
+      var segBtns = Array.prototype.slice.call(document.querySelectorAll('#plotSeg button'));
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          segBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.view = b.dataset.view;
+          renderLegend();
+          renderDOM();
+          plotCv.redraw();
+        });
+      });
+
+      // ==================================================================
+      // BOOT + LOOP
+      // ==================================================================
+      function settle(seconds) {
+        var n = Math.round(seconds / 0.02);
+        for (var i = 0; i < n; i++) step(0.02);
+      }
+
+      settle(30);          // start the page already at steady state
+      clearTrace();
+      markPresets();
+      renderLegend();
+      renderDOM();
+
+      var domAcc = 0;
+      Demo.loop(function (dt) {
+        S.phase += dt;
+        advance(dt);
+        pushTrace(dt);
+        watchDark();
+        domAcc += dt;
+        if (domAcc > 0.1) { domAcc = 0; renderDOM(); }
+        diagCv.paint();
+        plotCv.paint();
+      }).start();
+    })();
+  </script>
+</body>
+
+</html>

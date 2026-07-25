@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Gamete Machine | Dr. Andres Barboza</title>
+  <meta name="description" content="Step through meiosis at the allele level. Independent assortment, crossing over, and the one thing free resources never separate: a meiosis I nondisjunction gives an n+1 gamete two DIFFERENT alleles, a meiosis II nondisjunction gives it the SAME allele twice.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: gamete cards, allele chips, origin legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: none; }
+
+    /* --- the four gametes --- */
+    .gams { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 10px; }
+    .gam {
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-left-width: 3px;
+      border-radius: 11px;
+      padding: 9px 10px;
+      min-width: 0;
+    }
+    .gam.ok  { border-left-color: var(--ok); }
+    .gam.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+    .gam-h {
+      display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 2px 8px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+    }
+    .gam-h > span { white-space: nowrap; }
+    .gam-h b { font-size: 11.5px; letter-spacing: 0; text-transform: none; white-space: nowrap; }
+    .gam.ok  .gam-h b { color: var(--ok); }
+    .gam.bad .gam-h b { color: var(--bad); }
+    .gam-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+    .gam-cl { font-size: 10.5px; color: var(--muted); width: 34px; flex: none; }
+    .chip {
+      display: inline-flex; gap: 4px; align-items: center;
+      padding: 2px 7px; border-radius: 7px;
+      border: 1px solid var(--line); background: var(--surface);
+      font-size: 12.5px; font-weight: 700; letter-spacing: 0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+    .chip.rec { border-color: var(--accent-line); box-shadow: 0 0 0 1px var(--accent-soft) inset; }
+    .chip.none { font-weight: 500; font-size: 11px; color: var(--bad); border-style: dashed; letter-spacing: 0; }
+    .gam-note { font-size: 10.5px; color: var(--muted); margin-top: 7px; line-height: 1.4; }
+
+    .mini-tbl th, .mini-tbl td { text-align: left; vertical-align: top; font-size: 12px; padding: 6px 7px; }
+    .mini-tbl td { color: var(--text-2); }
+    .mini-tbl td.mi { color: var(--text); }
+    .mini-tbl th:first-child, .mini-tbl td:first-child { color: var(--muted); font-size: 11px; }
+
+    .steprow { display: flex; align-items: center; gap: 8px; }
+    .steprow .btn { flex: 0 0 auto; padding: 8px 12px; }
+    .steprow .btn.wide { flex: 1 1 auto; }
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sup, .readout .r-label sub { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Gamete Machine</h1>
+        <p class="demo-sub">Step through meiosis with the alleles labelled. Then set nondisjunction to
+          <em>meiosis I</em>, look at the four gametes, and set it to <em>meiosis II</em> and look again.
+          The difference is the whole point.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Meiosis &amp; nondisjunction</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="stageLabel">Meiosis, one cell at a time
+          <span>&mdash; 2n = 4, two chromosome pairs, three tracked genes</span></p>
+
+        <canvas id="plot" role="img"
+                aria-label="A schematic cell going through meiosis. Chromosomes are drawn as rods with a centromere and labelled allele beads; colour shows which parent each stretch of DNA came from."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--series-1)"></i>from parent 1 (maternal homologue)</span>
+          <span class="lg"><i style="background:var(--series-2)"></i>from parent 2 (paternal homologue)</span>
+        </div>
+        <p class="stage-caption" id="cap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">The four gametes this meiosis made
+          <span>&mdash; each chip is one chromatid; letters are the alleles it carries</span></p>
+        <div class="gams" id="gams"></div>
+        <p class="note" id="verdict" style="margin-top:12px">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Step through it</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="stepRange">Stage</label>
+                <span class="ctrl-value" id="stepOut">1 of 8</span>
+              </div>
+              <input type="range" id="stepRange" min="1" max="8" step="1" value="1">
+              <p class="ctrl-hint" id="stepName">G1 &mdash; before DNA replication</p>
+            </div>
+            <div class="steprow">
+              <button class="btn" id="btnPrev" aria-label="Previous stage">Back</button>
+              <button class="btn primary wide" id="btnPlay">Play</button>
+              <button class="btn" id="btnNext" aria-label="Next stage">Next</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Nondisjunction &mdash; the whole point</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Nondisjunction mode" id="ndSeg">
+              <button role="tab" aria-selected="true" data-nd="none">None</button>
+              <button role="tab" aria-selected="false" data-nd="mi">Meiosis I</button>
+              <button role="tab" aria-selected="false" data-nd="mii">Meiosis II</button>
+            </div>
+            <div class="seg" role="tablist" aria-label="Which chromosome fails" id="ndChrSeg">
+              <button role="tab" aria-selected="false" data-chr="1">Chr 1 (A, B)</button>
+              <button role="tab" aria-selected="true" data-chr="2">Chr 2 (D)</button>
+            </div>
+            <p class="ctrl-hint" style="margin-top:-2px">Which chromosome pair mis-sorts.</p>
+            <p class="ctrl-hint">
+              <strong>Meiosis I failure:</strong> the two <em>homologues</em> go to the same pole in anaphase I.
+              <strong>Meiosis II failure:</strong> homologues separate normally, then two <em>sister chromatids</em>
+              fail to separate in anaphase II &mdash; modelled here in the daughter cell holding the maternal
+              homologue.
+            </p>
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Abnormal gametes</div>
+                <div class="r-value" id="rAbn">0<span class="r-unit">of 4</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">n+1 / n&minus;1</div>
+                <div class="r-value" id="rPM">0 / 0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Crossing over (chromosome 1)</div>
+          <div class="stack">
+            <label class="check"><input type="checkbox" id="coChk" checked> Show a cell that got the crossover</label>
+            <p class="ctrl-hint" id="coChkHint" style="margin-top:-4px">
+              Untick it to watch a meiosis from the same population that happened not to get one.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="coPos">Crossover position</label>
+                <span class="ctrl-value" id="coPosOut">0.50</span>
+              </div>
+              <input type="range" id="coPos" min="0.05" max="0.95" step="0.01" value="0.50">
+              <p class="ctrl-hint" id="coPosHint">
+                Distance from the centromere along the long arm, 0 = centromere, 1 = tip.
+                Gene <strong>A</strong> sits at 0.30, gene <strong>B</strong> at 0.75. Only the DNA
+                <em>distal</em> to the crossover is exchanged.
+              </p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="coFreq">Crossover frequency</label>
+                <span class="ctrl-value" id="coFreqOut">40%</span>
+              </div>
+              <input type="range" id="coFreq" min="0" max="100" step="1" value="40">
+              <p class="ctrl-hint">
+                Across many meioses, the fraction that get a crossover at this position. A chiasma involves only
+                <strong>2 of the 4</strong> chromatids, so the recombination frequency is half of this &mdash; and
+                can never exceed 50%.
+              </p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent">
+                <div class="r-label">Recombination frequency A&ndash;B</div>
+                <div class="r-value" id="rRF">20.0%</div>
+                <div class="r-sub" id="rMap">= 20.0 map units (cM)</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Recombinant chromatids in this cell</div>
+                <div class="r-value" id="rRecNow">2<span class="r-unit">of 4</span></div>
+                <div class="r-sub" id="rRecSub">chromosome 1 only</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Independent assortment</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Metaphase I arrangement" id="arrSeg">
+              <button role="tab" aria-selected="true" data-arr="1">Arrangement 1</button>
+              <button role="tab" aria-selected="false" data-arr="2">Arrangement 2</button>
+            </div>
+            <p class="ctrl-hint">
+              Each bivalent decides which way it faces at the metaphase I plate on its own, and the two decisions
+              are unrelated. Flip this and watch which chromosome 2 travels with chromosome 1.
+            </p>
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Combinations from two pairs, 2<sup>n</sup></div>
+                <div class="r-value">4</div>
+                <div class="r-sub">one meiosis shows only 2 of them</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Human, 2<sup>23</sup></div>
+                <div class="r-value" id="rHuman">8,388,608</div>
+                <div class="r-sub">before any crossing over</div>
+              </div>
+              <div class="readout is-accent span2">
+                <div class="r-label">Distinct gamete genotypes possible over many meioses</div>
+                <div class="r-value" id="rDistinct">8</div>
+                <div class="r-sub" id="rDistinctSub">4 chromosome-1 chromatid types &times; 2 chromosome-2 types</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">MI versus MII, side by side</div>
+          <div class="table-scroll">
+            <table class="tbl mini-tbl">
+              <thead>
+                <tr><th></th><th>Meiosis I failure</th><th>Meiosis II failure</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>What fails to separate</td>
+                  <td class="mi">the two homologues</td>
+                  <td class="mi">two sister chromatids</td>
+                </tr>
+                <tr>
+                  <td>When</td>
+                  <td>anaphase I</td>
+                  <td>anaphase II</td>
+                </tr>
+                <tr>
+                  <td>Abnormal gametes</td>
+                  <td class="mi"><strong>all 4</strong><br>2 are n+1, 2 are n&minus;1</td>
+                  <td class="mi"><strong>2 of 4</strong><br>1 is n+1, 1 is n&minus;1, 2 normal</td>
+                </tr>
+                <tr>
+                  <td>The n+1 gamete carries</td>
+                  <td class="mi">one chromatid from <em>each</em> homologue &rarr; <strong>two different
+                    alleles</strong></td>
+                  <td class="mi">two <em>sister</em> chromatids &rarr; <strong>the same allele twice</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            This is not a bookkeeping detail. Human trisomies are traced to MI or MII by genotyping markers
+            <em>near the centromere</em>: three alleles or heterozygosity there means the homologues failed
+            (MI); homozygosity there means sisters failed (MII).
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>Sister chromatids are only identical proximal to a crossover.</strong> Replication makes
+            perfect copies, but a crossover swaps everything <em>distal</em> to the exchange point on one of the
+            two sisters. Set nondisjunction to <em>meiosis II</em>, make it fail on <em>chromosome 1</em>, turn
+            crossing over on and drag the position to 0.50 &mdash; the n+1 gamete then holds <strong>A and A</strong>
+            (proximal, still identical) but <strong>B and b</strong> (distal, no longer identical). That is exactly
+            why real trisomy studies only trust markers near the centromere.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. Two chromosome pairs instead of 23, three tracked genes instead of thousands, and at
+            most one crossover per meiosis &mdash; real human bivalents get at least one crossover each and often
+            more. Chromosome 2 carries a single tracked gene here, so a crossover on it would be invisible; only
+            chromosome 1 can show recombinants. Chromosomes are drawn with one long arm carrying every gene. The
+            nondisjunction switch forces the error to happen; in a real cell it is rare, and the spindle assembly
+            checkpoint exists to make it rarer. Which daughter cell fails at meiosis II is fixed here (the one
+            holding the maternal homologue) so that the picture stays comparable when you flip the other controls.
+            Finally, all four products are drawn as gametes: that is true of human sperm, but in human eggs three of
+            the four become polar bodies and meiosis II only finishes if a sperm arrives.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn nondisjunction as one thing &mdash; "chromosomes did not
+        separate, so a gamete got an extra one" &mdash; and stop there. Asked what is different about a meiosis I
+        error versus a meiosis II error, they say "one is earlier". That is true and useless. The real difference
+        is <em>which two pieces of DNA</em> end up in the same gamete, and it changes both how many gametes are
+        ruined and what alleles the extra chromosome carries.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Leave crossing over off for a moment and set nondisjunction to
+        <em>meiosis I</em> on chromosome 2. The two homologues travel to the same pole in anaphase I, so
+        <strong>all four</strong> gametes come out wrong: two carry three chromosomes and two carry only one. Look
+        at the extra chromosome in an n+1 gamete &mdash; it holds <strong>D and d</strong>, one allele from each
+        parent, because it is holding both <em>homologues</em>. Now switch to <em>meiosis I&thinsp;I</em>. Anaphase
+        I goes perfectly; the error happens one division later, in only one of the two daughter cells. So only
+        <strong>two of the four</strong> gametes are abnormal &mdash; the other two are ordinary, healthy, haploid
+        gametes. And the n+1 gamete now holds <strong>D and D</strong>: the same allele twice, because those two
+        chromatids are <em>sisters</em>, copies of each other.
+      </p>
+      <p>
+        <strong>Why it works out that way.</strong> Meiosis I separates homologues; meiosis II separates sisters.
+        An error in a division can only mis-sort the things that division was supposed to sort. A meiosis I error
+        happens before the cell has divided at all, so every downstream product inherits the mistake &mdash; four
+        for four. A meiosis II error happens after the cell has already split in two, so it can only spoil the
+        two products of the one daughter cell that made it &mdash; two for four. Same for the alleles: at anaphase
+        I the two things being pulled apart came from different parents, so keeping them together gives you two
+        different alleles. At anaphase II the two things being pulled apart are copies made in S phase, so keeping
+        them together gives you the same allele twice.
+      </p>
+      <p>
+        <strong>The honest caveat, and it matters.</strong> "Sisters are identical" is only true for the part of the
+        chromosome <em>between the centromere and the crossover</em>. Make the failure happen at meiosis II on
+        chromosome 1 with a crossover at 0.50 and read the n+1 gamete: <strong>A and A</strong> at the gene
+        proximal to the exchange, but <strong>B and b</strong> at the gene distal to it. This is not a quibble
+        invented for a demo &mdash; it is why geneticists who want to know whether a real trisomy came from MI or
+        MII only genotype markers close to the centromere, and treat distal markers as scrambled.
+      </p>
+      <p>
+        <strong>And the everyday half of the machine.</strong> With no errors at all, this cell still has two
+        independent sources of variation. Flipping the metaphase I arrangement swaps which chromosome 2 rides with
+        which chromosome 1 &mdash; two arrangements, 2<sup>2</sup> = 4 gamete combinations from two pairs, and
+        2<sup>23</sup> = 8,388,608 from a human set. Then crossing over goes further: it makes chromatids that
+        neither parent had. Watch the tetrad at prophase I with a crossover between A and B and the four chromatids
+        read <strong>A B, A b, a B, a b</strong> &mdash; all four different, from a cell whose parents supplied only
+        A B and a b. Notice too that a crossover placed at 0.10, proximal to both genes, swaps the colours but
+        produces no new allele combinations at all: recombination is only detectable between markers that the
+        exchange point falls between.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one diploid cell, 2n = 4 (two chromosome pairs)
+      //
+      //   Chromosome 1 (long)  carries two linked genes:
+      //       maternal homologue  A B          paternal homologue  a b
+      //       gene A at 0.30 and gene B at 0.75 of the long arm,
+      //       measured from the centromere (0) to the tip (1).
+      //   Chromosome 2 (short) carries one gene:
+      //       maternal  D                       paternal  d
+      //
+      //   CROSSING OVER: one maternal and one paternal chromatid — 2 of the
+      //   4 in the tetrad — exchange everything DISTAL to the crossover
+      //   point p. So a locus swaps only if its position > p. That single
+      //   rule gives all three behaviours:
+      //       p between A and B  ->  recombinant chromatids A b and a B
+      //       p proximal to both ->  a wholesale swap, no new combinations
+      //       p distal to both   ->  nothing detectable at all
+      //   Because only 2 of the 4 chromatids take part, the recombination
+      //   frequency is HALF the crossover frequency, capped at 50%.
+      //       RF(A–B) = 0.5 * f   when p is inside the A–B interval, else 0
+      //
+      //   MEIOSIS I separates HOMOLOGUES. Bivalent 1 always sends its
+      //   maternal homologue to pole L. Bivalent 2 chooses independently:
+      //   arrangement 1 sends its maternal homologue to L, arrangement 2 to
+      //   R. That is independent assortment, and it gives 2^n = 4 gamete
+      //   combinations over many meioses.
+      //
+      //   MEIOSIS II separates SISTER CHROMATIDS.
+      //
+      //   NONDISJUNCTION, the reason this page exists:
+      //     MI  — both homologues of the affected chromosome go to one pole.
+      //           Both daughter cells are already wrong, so ALL FOUR gametes
+      //           are abnormal: 2 are n+1 and 2 are n-1. Each n+1 gamete
+      //           holds one chromatid from EACH homologue -> two DIFFERENT
+      //           alleles.
+      //     MII — anaphase I is normal; in ONE daughter cell the sisters of
+      //           the affected dyad fail to part. Only TWO of the four
+      //           gametes are abnormal (1 n+1, 1 n-1); the other two are
+      //           perfectly normal. The n+1 gamete holds two SISTER
+      //           chromatids -> the SAME allele twice, except distal to a
+      //           crossover, where sisters are no longer identical.
+      //   Both consequences fall out of the assignment code below rather
+      //   than being asserted, so the readouts cannot drift from the rule.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var GENES = {
+        1: [{ id: 'A', pos: 0.30 }, { id: 'B', pos: 0.75 }],
+        2: [{ id: 'D', pos: 0.45 }]
+      };
+      var ALLELE = {
+        1: { M: { A: 'A', B: 'B' }, P: { A: 'a', B: 'b' } },
+        2: { M: { D: 'D' }, P: { D: 'd' } }
+      };
+      var ARM = { 1: 1.0, 2: 0.62 };   // long-arm length, chr1 = 1 unit
+      var SHORT = 0.25;                // short arm, as a fraction of the long arm
+
+      var S = { step: 1, co: true, p: 0.50, f: 40, arr: 1, nd: 'none', ndChr: 2 };
+
+      var STEPS = [
+        'G1 — before DNA replication',
+        'S phase — every chromosome is copied',
+        'Prophase I — homologues pair; crossing over',
+        'Metaphase I — bivalents line up',
+        'Anaphase I — homologues separate',
+        'Metaphase II — dyads line up in two cells',
+        'Anaphase II — sister chromatids separate',
+        'Four gametes'
+      ];
+
+      // ---------------- building the chromosomes ----------------
+
+      function mkCd(chrom, home) {
+        var al = {};
+        GENES[chrom].forEach(function (g) { al[g.id] = { a: ALLELE[chrom][home][g.id], o: home }; });
+        return { chrom: chrom, home: home, al: al, segs: [{ from: -SHORT, to: 1, o: home }] };
+      }
+      function mkDyad(chrom, home) {
+        return { chrom: chrom, home: home, sisters: [mkCd(chrom, home), mkCd(chrom, home)] };
+      }
+      function mkTetrad(chrom) { return { M: mkDyad(chrom, 'M'), P: mkDyad(chrom, 'P') }; }
+
+      // exchange everything distal to p between ONE maternal and ONE paternal chromatid
+      function crossOver(tet, p) {
+        var a = tet.M.sisters[1], b = tet.P.sisters[1];
+        GENES[tet.M.chrom].forEach(function (g) {
+          if (g.pos > p) { var t = a.al[g.id]; a.al[g.id] = b.al[g.id]; b.al[g.id] = t; }
+        });
+        a.segs = [{ from: -SHORT, to: p, o: 'M' }, { from: p, to: 1, o: 'P' }];
+        b.segs = [{ from: -SHORT, to: p, o: 'P' }, { from: p, to: 1, o: 'M' }];
+      }
+
+      function isRec(cd) {
+        if (cd.chrom !== 1) return false;
+        var A = cd.al.A.a, B = cd.al.B.a;
+        return !((A === 'A' && B === 'B') || (A === 'a' && B === 'b'));
+      }
+      function inInterval(p) { return p > GENES[1][0].pos && p < GENES[1][1].pos; }
+      function alleleString(cd) {
+        return GENES[cd.chrom].map(function (g) { return cd.al[g.id].a; }).join(' ');
+      }
+
+      // ---------------- one whole meiosis ----------------
+
+      function build() {
+        var T0 = { 1: mkTetrad(1), 2: mkTetrad(2) };          // before crossing over
+        var T = { 1: mkTetrad(1), 2: mkTetrad(2) };
+        if (S.co) crossOver(T[1], S.p);
+
+        // ---- meiosis I: homologues to poles ----
+        var poleN = {
+          '1M': 'L', '1P': 'R',
+          '2M': S.arr === 1 ? 'L' : 'R',
+          '2P': S.arr === 1 ? 'R' : 'L'
+        };
+        var pole = { '1M': poleN['1M'], '1P': poleN['1P'], '2M': poleN['2M'], '2P': poleN['2P'] };
+        if (S.nd === 'mi') pole[S.ndChr + 'P'] = pole[S.ndChr + 'M'];   // both homologues, one pole
+
+        var cells = { L: [], R: [] };
+        [1, 2].forEach(function (ch) {
+          ['M', 'P'].forEach(function (hm) { cells[pole[ch + hm]].push(T[ch][hm]); });
+        });
+
+        // ---- meiosis II: sisters to poles ----
+        function split(dyads) {
+          var a = [], b = [];
+          dyads.forEach(function (d) {
+            var fail = (S.nd === 'mii' && d.chrom === S.ndChr && d.home === 'M');
+            d.fail = fail;
+            if (fail) { a.push(d.sisters[0]); a.push(d.sisters[1]); }
+            else { a.push(d.sisters[0]); b.push(d.sisters[1]); }
+          });
+          return [a, b];
+        }
+        var gl = split(cells.L), gr = split(cells.R);
+
+        var gams = [gl[0], gl[1], gr[0], gr[1]].map(function (cds) {
+          var cnt = { 1: 0, 2: 0 };
+          cds.forEach(function (cd) { cnt[cd.chrom]++; });
+          var kind = 'n';
+          if (cnt[1] === 2 || cnt[2] === 2) kind = 'n+1';
+          else if (cnt[1] === 0 || cnt[2] === 0) kind = 'n-1';
+          return { cds: cds, cnt: cnt, kind: kind, abn: kind !== 'n' };
+        });
+
+        var recNow = 0;
+        [T[1].M.sisters[0], T[1].M.sisters[1], T[1].P.sisters[0], T[1].P.sisters[1]]
+          .forEach(function (cd) { if (isRec(cd)) recNow++; });
+
+        return {
+          T0: T0, T: T, poleN: poleN, pole: pole, cells: cells, gams: gams,
+          recNow: recNow,
+          rf: (inInterval(S.p) ? 0.5 * S.f / 100 : 0),
+          chr1Types: (S.f > 0 && inInterval(S.p)) ? 4 : 2
+        };
+      }
+
+      // ==================================================================
+      // CANVAS
+      // ==================================================================
+
+      function oc(c, o) { return o === 'M' ? c.series[0] : c.series[1]; }
+
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+        ctx.closePath();
+      }
+
+      function cdW(base) { return Demo.clamp(base * 0.11, 5, 9); }
+      function beadR(base) { return Demo.clamp(base * 0.085, 4.6, 6.2); }
+      function dyadGap(base) { return Math.max(13.5, base * 0.20); }
+
+      // one chromatid: rod from short-arm tip to long-arm tip, centromere, allele beads
+      function drawCd(ctx, c, cd, x, yc, base) {
+        var L = base * ARM[cd.chrom];
+        var W = cdW(base);
+        var yTop = yc - SHORT * L, yBot = yc + L;
+
+        ctx.save();
+        rr(ctx, x - W / 2, yTop, W, yBot - yTop, W / 2);
+        ctx.clip();
+        cd.segs.forEach(function (s) {
+          ctx.fillStyle = oc(c, s.o);
+          ctx.fillRect(x - W / 2 - 1, yc + s.from * L, W + 2, (s.to - s.from) * L + 0.5);
+        });
+        ctx.restore();
+
+        rr(ctx, x - W / 2, yTop, W, yBot - yTop, W / 2);
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1; ctx.stroke();
+
+        ctx.beginPath(); ctx.arc(x, yc, W * 0.30, 0, 6.2832);
+        ctx.fillStyle = c.surface; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 0.9; ctx.stroke();
+
+        var r = beadR(base);
+        GENES[cd.chrom].forEach(function (g) {
+          var al = cd.al[g.id], gy = yc + g.pos * L;
+          ctx.beginPath(); ctx.arc(x, gy, r, 0, 6.2832);
+          ctx.fillStyle = oc(c, al.o); ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.2; ctx.stroke();
+          ctx.fillStyle = c.bg;
+          ctx.font = '700 ' + (r * 1.52) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(al.a, x, gy + 0.5);
+        });
+      }
+
+      function drawDyad(ctx, c, d, x, yc, base) {
+        var gap = dyadGap(base);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(x - gap / 2, yc); ctx.lineTo(x + gap / 2, yc); ctx.stroke();
+        drawCd(ctx, c, d.sisters[0], x - gap / 2, yc, base);
+        drawCd(ctx, c, d.sisters[1], x + gap / 2, yc, base);
+      }
+
+      function ycOf(chrom, bandY, base) { return bandY - 0.375 * ARM[chrom] * base; }
+
+      function cellShape(ctx, c, cx, cy, rx, ry, bad) {
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, rx, ry, 0, 0, 6.2832);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = bad ? c.bad : c.line;
+        ctx.lineWidth = bad ? 1.8 : 1.3;
+        ctx.stroke();
+      }
+
+      function bands(n, top, bot) {
+        var out = [], s = (bot - top) / n, i;
+        for (i = 0; i < n; i++) out.push(top + s * (i + 0.5));
+        return out;
+      }
+
+      function tag(ctx, c, x, y, txt, fs, col, align) {
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = align || 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, x, y);
+      }
+
+      function arrow(ctx, c, x1, x2, y, col) {
+        ctx.strokeStyle = col; ctx.lineWidth = 1.1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+        ctx.setLineDash([]);
+        var d = x2 > x1 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(x2, y); ctx.lineTo(x2 - 6 * d, y - 4); ctx.lineTo(x2 - 6 * d, y + 4);
+        ctx.closePath(); ctx.fillStyle = col; ctx.fill();
+      }
+
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var B = build();
+        var narrow = w < 430;
+        var fs = narrow ? 9.5 : 10.5;
+
+        ctx.font = '600 ' + (fs + 1.5) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.text;
+        ctx.fillText(S.step + '. ' + STEPS[S.step - 1], 2, 1);
+
+        var top = fs + 15;
+        var st = S.step;
+        if (st <= 3) drawEarly(ctx, w, h, c, B, top, fs, narrow);
+        else if (st <= 5) drawMI(ctx, w, h, c, B, top, fs, narrow);
+        else if (st <= 7) drawMII(ctx, w, h, c, B, top, fs, narrow);
+        else drawGametes(ctx, w, h, c, B, top, fs, narrow);
+      }, { aspect: 0.68, minHeight: 300, maxHeight: 430 });
+
+      // ---- steps 1-3: one cell ----
+      function drawEarly(ctx, w, h, c, B, top, fs, narrow) {
+        var cy = (top + h) / 2;
+        cellShape(ctx, c, w / 2, cy, w * 0.47, (h - top) * 0.47, false);
+
+        var base = Demo.clamp((h - top) * 0.58 / 1.25, 20, narrow ? 66 : 80);
+        var bandY = cy - (h - top) * 0.03;
+
+        // every label sits on one line, set by the longest chromosome
+        var labelY = ycOf(1, bandY, base) + base + 13;
+
+        if (S.step === 3) {
+          var sp = Math.min(w * 0.44, 210);
+          drawTetrad(ctx, c, B.T[1], w / 2 - sp / 2, bandY, base, fs, true, labelY);
+          drawTetrad(ctx, c, B.T[2], w / 2 + sp / 2, bandY, base, fs, false, labelY);
+        } else {
+          var sp2 = Math.min(w * 0.205, 82);
+          var order = [[1, 'M'], [1, 'P'], [2, 'M'], [2, 'P']];
+          order.forEach(function (o, i) {
+            var x = w / 2 + (i - 1.5) * sp2;
+            var yc = ycOf(o[0], bandY, base);
+            if (S.step === 1) drawCd(ctx, c, B.T0[o[0]][o[1]].sisters[0], x, yc, base);
+            else drawDyad(ctx, c, B.T0[o[0]][o[1]], x, yc, base);
+            tag(ctx, c, x, labelY, 'chr ' + o[0], fs - 0.5, c.muted);
+          });
+        }
+
+        // count strip
+        var n = S.step === 1 ? 4 : 8;
+        tag(ctx, c, w / 2, h - 8,
+          '2n = 4 chromosomes  ·  ' + n + ' chromatids' + (S.step === 1 ? '' : '  ·  ploidy unchanged'),
+          fs, c.muted);
+      }
+
+      function drawTetrad(ctx, c, tet, xc, bandY, base, fs, isChr1, labelY) {
+        var gap = dyadGap(base);
+        var cds = [tet.M.sisters[0], tet.M.sisters[1], tet.P.sisters[1], tet.P.sisters[0]];
+        var chrom = tet.M.chrom;
+        var yc = ycOf(chrom, bandY, base);
+        var L = base * ARM[chrom];
+        var xs = cds.map(function (_, i) { return xc + (i - 1.5) * gap; });
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(xs[0], yc); ctx.lineTo(xs[1], yc); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(xs[2], yc); ctx.lineTo(xs[3], yc); ctx.stroke();
+
+        cds.forEach(function (cd, i) { drawCd(ctx, c, cd, xs[i], yc, base); });
+
+        var chi = isChr1 && S.co;
+        if (chi) {
+          var gy = yc + S.p * L;
+          ctx.strokeStyle = c.text; ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(xs[1], gy - 8); ctx.lineTo(xs[2], gy + 8);
+          ctx.moveTo(xs[1], gy + 8); ctx.lineTo(xs[2], gy - 8);
+          ctx.stroke();
+        }
+
+        tag(ctx, c, xc, labelY,
+          isChr1
+            ? 'bivalent 1' + (chi ? ' — chiasma (✕) at ' + F.dec(S.p, 2) : ' — no crossover')
+            : 'bivalent 2',
+          fs - 0.5, chi ? c.text : c.muted);
+      }
+
+      // ---- steps 4-5: one cell, poles left and right ----
+      function drawMI(ctx, w, h, c, B, top, fs, narrow) {
+        var ana = S.step === 5;
+        var cy = (top + h) / 2;
+        var rx = w * (ana ? 0.48 : 0.46), ry = (h - top) * (ana ? 0.44 : 0.47);
+        var nd = (S.nd === 'mi');
+        cellShape(ctx, c, w / 2, cy, rx, ry, ana && nd);
+
+        var base = Demo.clamp((h - top) * 0.66 / 2.5, 18, narrow ? 46 : 58);
+        var bs = bands(2, top + (h - top) * 0.12, h - (h - top) * 0.20);
+        var dx = ana ? Math.min(w * 0.30, 150) : Math.min(w * 0.115, 58);
+        var gap = dyadGap(base);
+
+        if (!ana) {
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1.2;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(w / 2, top + 4); ctx.lineTo(w / 2, h - 16); ctx.stroke();
+          ctx.setLineDash([]);
+          tag(ctx, c, w / 2, h - 8, 'metaphase I plate', fs - 0.5, c.muted);
+        }
+
+        tag(ctx, c, 3, top + 4, 'pole 1', fs - 0.5, c.muted, 'left');
+        ctx.textAlign = 'right';
+        tag(ctx, c, w - 3, top + 4, 'pole 2', fs - 0.5, c.muted, 'right');
+
+        [1, 2].forEach(function (ch, bi) {
+          var bandY = bs[bi];
+          var yc = ycOf(ch, bandY, base);
+          ['M', 'P'].forEach(function (hm) {
+            var side = ana ? B.pole[ch + hm] : B.poleN[ch + hm];
+            var x = w / 2 + (side === 'L' ? -dx : dx);
+            // if both homologues share a pole (MI failure), sit them side by side
+            if (ana && nd && ch === S.ndChr) x += (hm === 'M' ? -(gap * 0.5 + 9) : (gap * 0.5 + 9));
+            drawDyad(ctx, c, B.T[ch][hm], x, yc, base);
+          });
+          tag(ctx, c, w / 2, yc + ARM[ch] * base + 11, 'chr ' + ch, fs - 0.5, c.muted);
+        });
+
+        if (ana) {
+          if (nd) {
+            var sd = B.pole[S.ndChr + 'M'];
+            tag(ctx, c, w / 2, h - 7,
+              'NONDISJUNCTION: both chromosome-' + S.ndChr + ' homologues went to pole ' +
+              (sd === 'L' ? '1' : '2'), fs, c.bad);
+          } else {
+            tag(ctx, c, w / 2, h - 7, 'homologues separate — each pole gets one of each pair', fs, c.muted);
+          }
+        } else {
+          tag(ctx, c, w / 2, top + 4,
+            'arrangement ' + S.arr + ' — each bivalent faces its own way', fs - 0.5, c.muted);
+        }
+      }
+
+      // ---- steps 6-7: two cells. Always two bands, one per chromosome pair,
+      //      so a cell that received both homologues of one pair (an MI
+      //      failure) shows them side by side instead of stacking. ----
+      function drawMII(ctx, w, h, c, B, top, fs, narrow) {
+        var ana = S.step === 7;
+        var cyc = (top + h) / 2;
+        var cxs = [w * 0.26, w * 0.74];
+        var rx = w * 0.225, ry = (h - top) * 0.40;
+        var base = Demo.clamp((h - top) * 0.60 / 2.5, 16, narrow ? 44 : 54);
+        var bs = bands(2, cyc - ry * 0.74, cyc + ry * 0.56);
+        var dx2 = Math.min(rx * 0.50, base * 1.2 + 14);
+        var spread = dyadGap(base) + 11;
+
+        ['L', 'R'].forEach(function (side, si) {
+          var all = B.cells[side];
+          var cx = cxs[si];
+          var failsHere = ana && all.some(function (d) { return d.fail; });
+          cellShape(ctx, c, cx, cyc, rx, ry, failsHere);
+
+          if (!ana) {
+            ctx.strokeStyle = c.line; ctx.lineWidth = 1.1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(cx, cyc - ry + 6); ctx.lineTo(cx, cyc + ry - 6); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+
+          [1, 2].forEach(function (ch, bi) {
+            var dyads = all.filter(function (d) { return d.chrom === ch; });
+            var bandY = bs[bi];
+            if (!dyads.length) {
+              tag(ctx, c, cx, bandY, 'no chromosome ' + ch, fs - 1, c.bad);
+              tag(ctx, c, cx, bandY + 12, 'arrived here', fs - 1, c.bad);
+              return;
+            }
+            var yc = ycOf(ch, bandY, base);
+            dyads.forEach(function (d, j) {
+              var ox = (j - (dyads.length - 1) / 2) * spread;
+              if (!ana) {
+                drawDyad(ctx, c, d, cx + ox, yc, base);
+              } else if (d.fail) {
+                drawDyad(ctx, c, d, cx - dx2 + ox, yc, base);
+              } else {
+                drawCd(ctx, c, d.sisters[0], cx - dx2 + ox, yc, base);
+                drawCd(ctx, c, d.sisters[1], cx + dx2 + ox, yc, base);
+              }
+            });
+            if (ana && dyads.length === 1 && !dyads[0].fail) {
+              arrow(ctx, c, cx - dx2 + 12, cx - dx2 - 5, yc, c.muted);
+              arrow(ctx, c, cx + dx2 - 12, cx + dx2 + 5, yc, c.muted);
+            }
+            tag(ctx, c, cx, yc + ARM[ch] * base + 10, 'chr ' + ch, fs - 1, c.muted);
+          });
+
+          tag(ctx, c, cx, cyc - ry - 5, 'daughter cell ' + (si + 1), fs - 0.5, c.muted);
+          if (failsHere) tag(ctx, c, cx, cyc + ry + 9, 'sisters stayed stuck', fs - 0.5, c.bad);
+        });
+
+        tag(ctx, c, w / 2, h - 5,
+          ana ? 'meiosis II separates SISTER CHROMATIDS' : 'each dyad lines up on its own cell’s plate',
+          fs, ana && S.nd === 'mii' ? c.bad : c.muted);
+      }
+
+      // ---- step 8: four gametes ----
+      function drawGametes(ctx, w, h, c, B, top, fs, narrow) {
+        var cols = narrow ? 2 : 4, rows = narrow ? 2 : 1;
+        var cw = w / cols, chh = (h - top) / rows;
+        var rx = Math.min(cw * 0.44, 96);
+        var ry = Math.min(chh * 0.38, rx * 1.35, 118);
+        var base = Demo.clamp(chh * 0.42 / 1.25, 16, narrow ? 46 : 60);
+
+        B.gams.forEach(function (g, i) {
+          var col = i % cols, row = Math.floor(i / cols);
+          var cx = cw * (col + 0.5);
+          var cy = top + chh * (row + (rows === 1 ? 0.44 : 0.42));
+          cellShape(ctx, c, cx, cy, rx, ry, g.abn);
+
+          var n = Math.max(1, g.cds.length);
+          var sp = Math.min(rx * 1.35 / n, dyadGap(base) + 12);
+          g.cds.forEach(function (cd, k) {
+            var x = cx + (k - (n - 1) / 2) * sp;
+            drawCd(ctx, c, cd, x, ycOf(cd.chrom, cy, base), base);
+          });
+          if (!g.cds.length) tag(ctx, c, cx, cy, 'empty', fs, c.muted);
+
+          var lab = g.kind === 'n' ? 'n = 2' : g.kind === 'n+1' ? 'n + 1 = 3' : 'n − 1 = 1';
+          tag(ctx, c, cx, cy + ry + 9, 'gamete ' + (i + 1), fs - 0.5, c.muted);
+          tag(ctx, c, cx, cy + ry + 21, lab, fs, g.abn ? c.bad : c.ok);
+        });
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        stepRange: document.getElementById('stepRange'),
+        stepOut: document.getElementById('stepOut'),
+        stepName: document.getElementById('stepName'),
+        btnPrev: document.getElementById('btnPrev'),
+        btnNext: document.getElementById('btnNext'),
+        btnPlay: document.getElementById('btnPlay'),
+        coChk: document.getElementById('coChk'),
+        coPos: document.getElementById('coPos'),
+        coPosOut: document.getElementById('coPosOut'),
+        coPosHint: document.getElementById('coPosHint'),
+        coFreq: document.getElementById('coFreq'),
+        coFreqOut: document.getElementById('coFreqOut'),
+        coChkHint: document.getElementById('coChkHint'),
+        rRF: document.getElementById('rRF'),
+        rMap: document.getElementById('rMap'),
+        rRecNow: document.getElementById('rRecNow'),
+        rRecSub: document.getElementById('rRecSub'),
+        rDistinct: document.getElementById('rDistinct'),
+        rDistinctSub: document.getElementById('rDistinctSub'),
+        rHuman: document.getElementById('rHuman'),
+        rAbn: document.getElementById('rAbn'),
+        rPM: document.getElementById('rPM'),
+        gams: document.getElementById('gams'),
+        verdict: document.getElementById('verdict'),
+        cap: document.getElementById('cap')
+      };
+
+      var SERIES_VAR = { M: 'var(--series-1)', P: 'var(--series-2)' };
+
+      function chipHTML(cd) {
+        var letters = GENES[cd.chrom].map(function (g) {
+          var al = cd.al[g.id];
+          return '<span style="color:' + SERIES_VAR[al.o] + '">' + al.a + '</span>';
+        }).join('');
+        return '<span class="chip' + (isRec(cd) ? ' rec' : '') + '">' + letters + '</span>';
+      }
+
+      function gameteCards(B) {
+        return B.gams.map(function (g, i) {
+          var kindTxt = g.kind === 'n' ? 'n = 2 &middot; normal'
+            : g.kind === 'n+1' ? 'n + 1 = 3' : 'n &minus; 1 = 1';
+          var rows = [1, 2].map(function (ch) {
+            var cds = g.cds.filter(function (cd) { return cd.chrom === ch; });
+            var chips = cds.length
+              ? cds.map(chipHTML).join(' ')
+              : '<span class="chip none">missing</span>';
+            return '<div class="gam-row"><span class="gam-cl">Chr ' + ch + '</span>' + chips + '</div>';
+          }).join('');
+
+          var note = '';
+          if (g.kind === 'n+1') {
+            var ex = g.cds.filter(function (cd) { return g.cnt[cd.chrom] === 2; });
+            var ch = ex[0].chrom;
+            var same = [], diff = [];
+            GENES[ch].forEach(function (gn) {
+              var a1 = ex[0].al[gn.id].a, a2 = ex[1].al[gn.id].a;
+              (a1 === a2 ? same : diff).push('gene ' + gn.id + ' (' + a1 + ', ' + a2 + ')');
+            });
+            note = (S.nd === 'mi' ? 'both homologues' : 'two sister chromatids') + ' &mdash; '
+              + (diff.length ? '<strong>different</strong> at ' + diff.join(', ') : '')
+              + (diff.length && same.length ? '; ' : '')
+              + (same.length ? '<strong>same</strong> at ' + same.join(', ') : '');
+          } else if (g.kind === 'n-1') {
+            note = 'one whole chromosome never arrived';
+          } else if (isRec(g.cds.filter(function (cd) { return cd.chrom === 1; })[0] || { chrom: 0 })) {
+            note = 'recombinant chromosome 1 &mdash; a combination neither parent had';
+          }
+
+          return '<div class="gam ' + (g.abn ? 'bad' : 'ok') + '">'
+            + '<div class="gam-h"><span>Gamete ' + (i + 1) + '</span><b>' + kindTxt + '</b></div>'
+            + rows
+            + (note ? '<p class="gam-note">' + note + '</p>' : '')
+            + '</div>';
+        }).join('');
+      }
+
+      function verdictHTML(B) {
+        if (S.nd === 'none') {
+          return {
+            cls: 'note',
+            html: '<strong>No error.</strong> Four haploid gametes, n = 2 chromosomes each. '
+              + (S.co && inInterval(S.p)
+                ? 'Two of them carry a recombinant chromosome 1 &mdash; A b and a B &mdash; which neither parent had. '
+                : '')
+              + 'Now set nondisjunction to <em>meiosis I</em>, read the four cards, then set it to '
+              + '<em>meiosis II</em> and read them again. Count how many gametes are ruined each time, and look '
+              + 'at what the extra chromosome is carrying.'
+          };
+        }
+
+        var plus = B.gams.filter(function (g) { return g.kind === 'n+1'; });
+        var minus = B.gams.filter(function (g) { return g.kind === 'n-1'; });
+        var norm = B.gams.filter(function (g) { return g.kind === 'n'; });
+        var g0 = plus[0];
+        var ex = g0.cds.filter(function (cd) { return g0.cnt[cd.chrom] === 2; });
+        var ch = ex[0].chrom;
+        var same = [], diff = [];
+        GENES[ch].forEach(function (gn) {
+          var a1 = ex[0].al[gn.id].a, a2 = ex[1].al[gn.id].a;
+          (a1 === a2 ? same : diff).push({ id: gn.id, a1: a1, a2: a2, pos: gn.pos });
+        });
+        function list(arr) {
+          return arr.map(function (o) {
+            return '<strong>' + o.a1 + ' and ' + o.a2 + '</strong> at gene ' + o.id;
+          }).join(', and ');
+        }
+
+        if (S.nd === 'mi') {
+          return {
+            cls: 'note bad',
+            html: '<strong>Meiosis I failure on chromosome ' + ch + '.</strong> The homologues never came apart, '
+              + 'so the mistake was made before the cell had divided at all: <strong>all four</strong> gametes are '
+              + 'abnormal &mdash; ' + plus.length + ' with n + 1 = 3 chromosomes and ' + minus.length
+              + ' with n &minus; 1 = 1. The extra chromosome in an n+1 gamete is <em>one chromatid from each '
+              + 'homologue</em>, so it carries ' + list(diff.length ? diff : same)
+              + ' &mdash; two <strong>different</strong> alleles, one from each parent. That heterozygosity is the '
+              + 'signature of an MI error.'
+          };
+        }
+
+        var tail = '';
+        if (same.length && diff.length) {
+          tail = ' It carries ' + list(same) + ' &mdash; the <strong>same</strong> allele twice, because the '
+            + 'centromere-side stretch of two sisters really is identical &mdash; but ' + list(diff)
+            + ', because that gene sits <em>distal</em> to the crossover at ' + F.dec(S.p, 2)
+            + ', where this sister was swapped for paternal DNA. Sisters are identical only proximal to a '
+            + 'crossover, which is exactly why real trisomy studies genotype markers near the centromere.';
+        } else if (same.length) {
+          tail = ' It carries ' + list(same) + ' &mdash; the <strong>same</strong> allele twice, because those two '
+            + 'chromatids are sister copies made in S phase.';
+        } else {
+          tail = ' The crossover at ' + F.dec(S.p, 2) + ' lies proximal to every tracked gene on this chromosome, '
+            + 'so the two sisters were swapped wholesale and now read ' + list(diff)
+            + '. Move the crossover distal to a gene, or switch it off, to see the usual identical-sisters result.';
+        }
+
+        return {
+          cls: 'note warn',
+          html: '<strong>Meiosis II failure on chromosome ' + ch + '.</strong> Anaphase I went perfectly, so the '
+            + 'error could only spoil the products of one daughter cell: <strong>' + (plus.length + minus.length)
+            + ' of the 4</strong> gametes are abnormal and <strong>' + norm.length
+            + ' are completely normal</strong>. The n+1 gamete holds <em>two sister chromatids</em>.' + tail
+        };
+      }
+
+      function stepCaption(B) {
+        var s = S.step;
+        if (s === 1) {
+          return 'Two chromosome pairs, <strong>2n = 4</strong>. Blue came from one parent, orange from the other. '
+            + 'Chromosome 1 carries genes <strong>A</strong> and <strong>B</strong>; chromosome 2 carries '
+            + '<strong>D</strong>. Nothing has been copied yet: four chromosomes, four chromatids.';
+        }
+        if (s === 2) {
+          return 'S phase copied every chromosome. There are now <strong>8 chromatids</strong> but still '
+            + '<strong>4 chromosomes</strong> &mdash; a chromosome with two sisters joined at one centromere is '
+            + 'still one chromosome. Replication does not change ploidy; it is still 2n = 4.';
+        }
+        if (s === 3) {
+          if (!S.co) {
+            return 'Homologues have paired into two bivalents (tetrads), four chromatids each. No crossover in this '
+              + 'cell, so all four chromosome-1 chromatids still read A B or a b. Tick the crossover box and watch '
+              + 'two of them change.';
+          }
+          if (inInterval(S.p)) {
+            return 'A chiasma at <strong>' + F.dec(S.p, 2) + '</strong> falls <em>between</em> A and B, so the two '
+              + 'chromatids taking part swap everything below it. The bivalent now reads <strong>A B, A b, a B, '
+              + 'a b</strong> &mdash; all four chromatids different, from parents who only supplied A B and a b. '
+              + 'The other two chromatids were never touched: that is why the recombination frequency tops out at 50%.';
+          }
+          if (S.p <= GENES[1][0].pos) {
+            return 'The chiasma at <strong>' + F.dec(S.p, 2) + '</strong> is <em>proximal</em> to both genes, so '
+              + 'both A and B get exchanged together. The colours moved, but the allele combinations did not: still '
+              + 'only A B and a b. <strong>No detectable recombinants.</strong> Drag the crossover between 0.30 and '
+              + '0.75 to make it count.';
+          }
+          return 'The chiasma at <strong>' + F.dec(S.p, 2) + '</strong> is <em>distal</em> to both genes, so nothing '
+            + 'in the tracked region is exchanged at all &mdash; only the tip past gene B. Recombination is only '
+            + 'detectable between markers the exchange point falls between.';
+        }
+        if (s === 4) {
+          return 'Metaphase I. Whole <em>bivalents</em> line up, one homologue on each side of the plate, and each '
+            + 'bivalent picks its side independently of the other. <strong>Arrangement ' + S.arr + '</strong> is '
+            + 'showing; the other arrangement is equally likely and sends chromosome 2 the other way. Two bivalents '
+            + '&rarr; 2<sup>2</sup> = 4 possible combinations.';
+        }
+        if (s === 5) {
+          if (S.nd === 'mi') {
+            var sd = B.pole[S.ndChr + 'M'] === 'L' ? '1' : '2';
+            return '<strong>Nondisjunction at anaphase I.</strong> Both chromosome-' + S.ndChr + ' homologues were '
+              + 'pulled to pole ' + sd + '. One daughter cell will have an extra chromosome and the other will have '
+              + 'none &mdash; and because this happened <em>before</em> the first division, <strong>every one of '
+              + 'the four final gametes</strong> inherits the mistake.';
+          }
+          return 'Anaphase I separates <strong>homologues</strong>, not sisters. Each pole receives one complete '
+            + 'haploid set: two chromosomes, each still a pair of sister chromatids. This is where the chromosome '
+            + 'number halves.';
+        }
+        if (s === 6) {
+          return 'Metaphase II, in both daughter cells at once. Each cell is already haploid; the dyads line up '
+            + 'individually on their own plates. Nothing about ploidy changes here.';
+        }
+        if (s === 7) {
+          if (S.nd === 'mii') {
+            return '<strong>Nondisjunction at anaphase II.</strong> The sister chromatids of chromosome ' + S.ndChr
+              + ' stayed stuck together in <em>one</em> daughter cell. The other daughter cell is dividing normally, '
+              + 'which is why only two of the four gametes will be abnormal.';
+          }
+          return 'Anaphase II separates <strong>sister chromatids</strong>. Every gamete ends with one chromatid per '
+            + 'chromosome. Compare this with step 5: different structures come apart in the two divisions, which is '
+            + 'why an error in each one has a different consequence.';
+        }
+        var ab = B.gams.filter(function (g) { return g.abn; }).length;
+        return ab === 0
+          ? 'Four haploid gametes, n = 2 each. Read the cards below: the letters are what each gamete would pass on.'
+          : '<strong>' + ab + ' of the 4 gametes are aneuploid.</strong> Read the cards below &mdash; how many are '
+            + 'wrong, and what the extra chromosome is carrying, are both determined by <em>which division</em> failed.';
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        var B = build();
+
+        el.stepOut.textContent = S.step + ' of 8';
+        el.stepName.textContent = STEPS[S.step - 1];
+        el.stepRange.value = S.step;
+        el.btnPrev.disabled = S.step === 1;
+        el.btnNext.disabled = S.step === 8;
+
+        el.coPosOut.textContent = F.dec(S.p, 2);
+        el.coFreqOut.textContent = F.dec(S.f, 0) + '%';
+        el.coPos.disabled = !S.co;
+        el.coChk.disabled = (S.f === 0);
+        el.coChk.checked = S.co;
+        el.coChkHint.textContent = S.f === 0
+          ? 'At 0% no meiosis gets a crossover, so there is no such cell to show. Raise the frequency above 0%.'
+          : 'Untick it to watch a meiosis from the same population that happened not to get one.';
+
+        el.rRF.textContent = F.dec(B.rf * 100, 1) + '%';
+        el.rMap.textContent = '= ' + F.dec(B.rf * 100, 1) + ' map units (cM)';
+        el.rRecNow.innerHTML = B.recNow + '<span class="r-unit">of 4</span>';
+        el.rRecSub.textContent = S.co
+          ? (inInterval(S.p) ? 'this cell, chromosome 1' : 'crossover outside the A–B interval')
+          : 'no crossover in this cell';
+
+        el.rDistinct.textContent = String(B.chr1Types * 2);
+        el.rDistinctSub.innerHTML = B.chr1Types + ' chromosome-1 chromatid type'
+          + (B.chr1Types > 1 ? 's' : '') + ' &times; 2 chromosome-2 types';
+
+        el.rHuman.textContent = F.comma(Math.pow(2, 23));
+
+        var ab = B.gams.filter(function (g) { return g.abn; }).length;
+        var np = B.gams.filter(function (g) { return g.kind === 'n+1'; }).length;
+        var nm = B.gams.filter(function (g) { return g.kind === 'n-1'; }).length;
+        el.rAbn.innerHTML = ab + '<span class="r-unit">of 4</span>';
+        el.rPM.textContent = np + ' / ' + nm;
+
+        el.gams.innerHTML = gameteCards(B);
+        var v = verdictHTML(B);
+        el.verdict.className = v.cls;
+        el.verdict.innerHTML = v.html;
+        el.cap.innerHTML = stepCaption(B);
+
+        plot.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var play = null;
+
+      function stopPlay() {
+        if (play && play.running) play.stop();
+        el.btnPlay.textContent = 'Play';
+      }
+
+      function setStep(n) {
+        S.step = Demo.clamp(Math.round(n), 1, 8);
+        render();
+      }
+
+      Demo.range('#stepRange', function (v) { stopPlay(); setStep(v); });
+      Demo.range('#coPos', function (v) { S.p = v; render(); });
+      // A crossover frequency of 0 means no meiosis anywhere got one, so the
+      // single-cell view must not be showing one either.
+      Demo.range('#coFreq', function (v) {
+        S.f = v;
+        if (v === 0) S.co = false;
+        render();
+      });
+
+      el.btnPrev.addEventListener('click', function () { stopPlay(); setStep(S.step - 1); });
+      el.btnNext.addEventListener('click', function () { stopPlay(); setStep(S.step + 1); });
+
+      el.coChk.addEventListener('change', function () { S.co = this.checked; render(); });
+
+      function wireSeg(id, fn) {
+        var btns = Array.prototype.slice.call(document.querySelectorAll('#' + id + ' button'));
+        btns.forEach(function (b) {
+          b.addEventListener('click', function () {
+            btns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+            fn(b);
+          });
+        });
+      }
+
+      wireSeg('ndSeg', function (b) { S.nd = b.dataset.nd; render(); });
+      wireSeg('ndChrSeg', function (b) { S.ndChr = parseInt(b.dataset.chr, 10); render(); });
+      wireSeg('arrSeg', function (b) { S.arr = parseInt(b.dataset.arr, 10); render(); });
+
+      var acc = 0;
+      play = Demo.loop(function (dt) {
+        acc += dt;
+        if (acc < 1.5) return;
+        acc = 0;
+        if (S.step >= 8) { stopPlay(); return; }
+        setStep(S.step + 1);
+      });
+
+      el.btnPlay.addEventListener('click', function () {
+        if (play.running) { stopPlay(); return; }
+        if (S.step >= 8) setStep(1);
+        acc = 0;
+        el.btnPlay.textContent = 'Pause';
+        play.start();
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      render();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Break a Gene | Dr. Andres Barboza</title>
+  <meta name="description" content="Mutate a real coding sequence one base at a time and watch the consequence get classified. Five hundred random substitutions show that the genetic code's redundancy is structured: third-base changes are usually silent, second-base changes never are.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: the sequence grid, the codon table, small legends */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+
+    /* ---- the sequence: one box per codon ---- */
+    .seq { display: flex; flex-wrap: wrap; gap: 5px; }
+    .cod {
+      flex: 0 0 auto;
+      width: 52px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface-2);
+      padding: 2px 1px 4px;
+      text-align: center;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .cod.is-sel { border-color: var(--accent); background: var(--accent-soft); }
+    .cod.is-dead { opacity: 0.38; }
+    .cod.is-partial { border-style: dashed; }
+    .cod .cn { display: block; font-size: 8.5px; line-height: 1.4; color: var(--muted); }
+    .brow { display: flex; justify-content: center; gap: 1px; }
+    .brow .b {
+      font: inherit;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      line-height: 1;
+      width: 15px;
+      height: 20px;
+      padding: 0;
+      border: 0;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s ease, color 0.12s ease;
+    }
+    .brow .b:hover { background: var(--accent-soft); color: var(--accent-strong); }
+    .brow .b.is-sub { background: var(--warn-soft); color: var(--warn); font-weight: 700; }
+    .brow .b.is-ins { background: var(--accent-soft); color: var(--accent-strong); font-weight: 700; cursor: default; }
+    .brow .b.is-ins:hover { background: var(--accent-soft); color: var(--accent-strong); }
+    .cod .rna {
+      display: block;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.055em;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .cod .aa { display: block; font-size: 10px; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .cod .aa.ch { color: var(--warn); }
+    .cod .aa.stop { color: var(--bad); }
+    .cod .aa.none { color: var(--muted); font-weight: 400; }
+
+    .seq-key { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 9px; font-size: 11px; color: var(--muted); }
+    .seq-key span { display: inline-flex; align-items: center; gap: 5px; }
+    .seq-key i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+
+    /* ---- peptide before / after ---- */
+    .pep { display: flex; flex-wrap: wrap; gap: 2px; }
+    .pc {
+      width: 15px;
+      text-align: center;
+      border-radius: 4px;
+      padding: 1px 0 2px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .pc em { display: block; font-style: normal; font-size: 9.5px; color: var(--muted); line-height: 1.3; }
+    .pc strong { display: block; font-size: 11.5px; font-weight: 500; color: var(--text); line-height: 1.3; }
+    .pc.diff { background: var(--warn-soft); }
+    .pc.diff strong { color: var(--warn); font-weight: 700; }
+    .pc.gone { background: var(--bad-soft); }
+    .pc.gone strong { color: var(--bad); font-weight: 700; }
+    .pc.extra { background: var(--accent-soft); }
+    .pc.extra strong { color: var(--accent-strong); font-weight: 700; }
+
+    /* ---- codon table: rows are 1st+2nd base, columns are the 3rd base ---- */
+    .ctbl { width: 100%; border-collapse: separate; border-spacing: 2px; }
+    .ctbl th {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 0 2px;
+    }
+    .ctbl th.rh {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      text-transform: none;
+      color: var(--text-2);
+      text-align: right;
+      padding-right: 5px;
+      width: 34px;
+    }
+    .ctbl td {
+      border: 1px solid var(--line-soft);
+      border-radius: 6px;
+      background: var(--surface-2);
+      padding: 3px 1px;
+      text-align: center;
+      font-size: 10.5px;
+      color: var(--text-2);
+      line-height: 1.25;
+    }
+    .ctbl td.dim { opacity: 0.42; }
+    .ctbl td i { font-style: normal; display: block; font-size: 8px; opacity: 0.9; }
+    .ctbl td.cur { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 700; }
+    .ctbl td.sil { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); font-weight: 600; cursor: pointer; }
+    .ctbl td.mis { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); font-weight: 600; cursor: pointer; }
+    .ctbl td.non { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); font-weight: 600; cursor: pointer; }
+    .ctbl td.pick { box-shadow: 0 0 0 2px var(--accent); }
+    .ctbl tr.fourfold th.rh { color: var(--ok); }
+
+    /* ---- chips for the three positions of the selected codon ---- */
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .chip {
+      font: inherit;
+      font-size: 11px;
+      line-height: 1.3;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text-2);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .chip .cd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; opacity: 0.75; }
+    .chip.sil { background: var(--ok-soft); border-color: transparent; color: var(--ok); font-weight: 600; }
+    .chip.mis { background: var(--warn-soft); border-color: transparent; color: var(--warn); font-weight: 600; }
+    .chip.non { background: var(--bad-soft); border-color: transparent; color: var(--bad); font-weight: 600; }
+    .chip.on { box-shadow: 0 0 0 2px var(--accent); }
+    .poslab { font-size: 11.5px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .poslab span { font-weight: 400; color: var(--muted); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 5px 13px; margin-top: 10px; font-size: 11px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2px 9px;
+      border-radius: 20px;
+    }
+    .badge.wt  { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+    .badge.sil { background: var(--ok-soft); color: var(--ok); }
+    .badge.mis { background: var(--warn-soft); color: var(--warn); }
+    .badge.non { background: var(--bad-soft); color: var(--bad); }
+    .badge.fs  { background: var(--bad-soft); color: var(--bad); }
+    .badge.inf { background: var(--accent-soft); color: var(--accent-strong); }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-value.sm { font-size: 15px; line-height: 1.35; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Break a Gene</h1>
+        <p class="demo-sub">Click any base in the sequence to change it. Then click a base in the <em>third</em> position of a codon, and a base in the <em>second</em> position, and see whether the protein notices.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Mutation &amp; the genetic code</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Human <em>HBB</em>, first 30 codons
+          <span>&mdash; the &beta;-globin gene, coding strand (DNA), its mRNA, and the peptide</span></p>
+
+        <div class="seq" id="seqGrid"></div>
+
+        <div class="seq-key">
+          <span><i style="background:var(--warn)"></i>changed base</span>
+          <span><i style="background:var(--accent)"></i>inserted base</span>
+          <span><i style="background:var(--surface-2);border:1px solid var(--line)"></i>faded = never translated</span>
+        </div>
+
+        <p class="stage-caption" id="capSeq">&nbsp;</p>
+
+        <p class="note" id="verdict" style="margin-top:11px">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Peptide before and after
+          <span>&mdash; one-letter codes; top row is wild type, bottom row is the mutant</span></p>
+        <div class="pep" id="pepCmp"></div>
+        <p class="stage-caption" id="capPep">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <div class="seg" role="tablist" aria-label="Second view" id="viewSeg">
+          <button role="tab" aria-selected="true" data-view="table">Codon table</button>
+          <button role="tab" aria-selected="false" data-view="spec">Mutation spectrum</button>
+        </div>
+
+        <!-- codon table view -->
+        <div id="viewTable" style="margin-top:12px">
+          <p class="stage-label">The standard genetic code
+            <span>&mdash; rows are the 1st and 2nd mRNA bases, columns are the 3rd. All 64 codons.</span></p>
+          <div class="table-scroll">
+            <table class="ctbl" id="codonTable"></table>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--accent)"></i>the codon you are on</span>
+            <span><i style="background:var(--ok)"></i>silent</span>
+            <span><i style="background:var(--warn)"></i>missense</span>
+            <span><i style="background:var(--bad)"></i>nonsense (stop)</span>
+          </div>
+          <p class="stage-caption" id="capTable">&nbsp;</p>
+        </div>
+
+        <!-- spectrum view -->
+        <div id="viewSpec" style="margin-top:12px" hidden>
+          <p class="stage-label">Where random single-base substitutions land
+            <span>&mdash; sampled from this sequence using the real code, not assumed</span></p>
+          <canvas id="spectrum" role="img"
+                  aria-label="Stacked bars showing the proportion of random single-base substitutions that are silent, missense or nonsense, split by which position within the codon was hit."></canvas>
+          <div class="legend">
+            <span><i style="background:var(--ok)"></i>silent</span>
+            <span><i style="background:var(--warn)"></i>missense</span>
+            <span><i style="background:var(--bad)"></i>nonsense</span>
+            <span>&#9650; exact value from all 270 possible substitutions</span>
+          </div>
+          <p class="stage-caption" id="capSpec">&nbsp;</p>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Make a mutation</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Mutation type" id="modeSeg">
+              <button role="tab" aria-selected="true" data-mode="sub">Substitution</button>
+              <button role="tab" aria-selected="false" data-mode="ins">Insertion</button>
+              <button role="tab" aria-selected="false" data-mode="del">Deletion</button>
+            </div>
+
+            <div id="sizeWrap" hidden>
+              <div class="ctrl-row">
+                <span class="ctrl-label">How many bases</span>
+                <span class="ctrl-value" id="sizeOut">1 base</span>
+              </div>
+              <div class="seg" role="tablist" aria-label="Indel size" id="sizeSeg">
+                <button role="tab" aria-selected="true" data-size="1">1</button>
+                <button role="tab" aria-selected="false" data-size="2">2</button>
+                <button role="tab" aria-selected="false" data-size="3">3</button>
+              </div>
+              <p class="ctrl-hint" id="sizeHint">One base in or out shifts the reading frame for everything downstream.</p>
+            </div>
+
+            <p class="ctrl-hint" id="modeHint">
+              Click any DNA base in the sequence. Click the same base again to cycle through the other two
+              possible bases, and once more to return it to wild type.
+            </p>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnRandom">Random mutation</button>
+              <button class="btn" id="btnReset">Wild type</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnSickle">The sickle-cell mutation</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">This mutation</div>
+          <div class="readouts two">
+            <div class="readout span2">
+              <div class="r-label">Consequence</div>
+              <div class="r-value sm" id="rClass"><span class="badge wt">Wild type</span></div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">What changed in the DNA</div>
+              <div class="r-value sm" id="rType">nothing yet</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Codon and amino acid</div>
+              <div class="r-value sm" id="rCodon">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Peptide length</div>
+              <div class="r-value" id="rLen">30<span class="r-unit">aa</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Residues altered</div>
+              <div class="r-value" id="rDiff">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Codon <span id="posCodonNo">7</span> &mdash; all nine possible substitutions</div>
+          <div class="stack-s" id="posGrid"></div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            Every chip is a real single-base change to this codon. Click one to apply it. Count the green ones in
+            each row &mdash; that is the whole lesson, one codon at a time.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The spectrum &mdash; sampled, not asserted</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnRun">Run 500 more</button>
+              <button class="btn" id="btnClear">Clear tally</button>
+            </div>
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead>
+                  <tr><th>Outcome</th><th>Count</th><th>Share</th><th>Exact</th></tr>
+                </thead>
+                <tbody id="tallyBody"></tbody>
+              </table>
+            </div>
+            <p class="ctrl-hint" id="tallyHint"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note">
+            <strong>Most missense mutations are tolerated.</strong> This page labels a change
+            &ldquo;missense&rdquo; when the amino acid is different. That is a statement about the code, not a
+            prediction of disease. Swap one hydrophobic residue for another on the outside of a protein and
+            usually nothing measurable happens; every human carries roughly 10,000 missense variants and is
+            fine. What matters is <em>which</em> residue, <em>where</em> it sits, and <em>what</em> it is
+            replaced by. The sickle-cell change is famous precisely because it is unusual: a charged, water-loving
+            glutamate becomes a greasy valine on the surface of a protein packed at 300 g/L.
+          </p>
+          <p class="note warn" style="margin-top:10px">
+            <strong>Silent does not always mean harmless either.</strong> A synonymous change makes the same
+            protein, so it is silent in the sense this page means. In real cells a few synonymous changes still
+            matter &mdash; they can alter splicing signals, mRNA folding or how fast the ribosome moves. Rare, but
+            real. Nothing on this page models that.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>What is simplified.</strong> Real <em>HBB</em> is 147 codons long and split by two introns;
+            this is the first 30 codons of the coding sequence, spliced, with no promoter, no UTRs and no
+            regulatory sequence. Only one mutation is applied at a time. The DNA row is the <em>coding</em>
+            strand &mdash; the template strand is its complement, and transcription of the template gives an mRNA
+            identical to the coding strand except that T is replaced by U, which is why those two rows always
+            match. Frameshifted peptides are read to the end of this 90-base window; in the real gene translation
+            would keep going until it hit a stop codon in the new frame. Translation here always begins at base 1
+            of the window, so if you destroy or displace the AUG the peptide drawn is what <em>would</em> be made
+            if the ribosome started there anyway &mdash; a real ribosome scans for the first AUG instead. Amino acid groupings
+            (nonpolar / polar / acidic / basic) are the standard AP simplification of a continuous property.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students treat every mutation as a coin toss between &ldquo;broken&rdquo;
+        and &ldquo;really broken.&rdquo; A base changes, so the protein changes, so something goes wrong. They have
+        been told the code is &ldquo;redundant,&rdquo; and they can recite that six codons spell leucine, but they
+        file it away as trivia &mdash; a quirk of a table they have to memorise. What they never see is that the
+        redundancy is <strong>organised</strong>, and that the organisation is what decides whether a mutation
+        matters at all.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Take codon 4, CTG, leucine. Click its third base: you get CTA, CTC or CTT
+        &mdash; still leucine, all three times. The protein is identical. Now click its second base: CAG is
+        glutamine, CCG is proline, CGG is arginine. Three changes, three different proteins, no exceptions. Same
+        codon. Same one-base change. Completely different odds, depending only on <em>which of the three positions
+        you hit</em>.
+      </p>
+      <p>
+        <strong>That is not a fluke of this codon.</strong> Press <em>Run 500 more</em> and read the stacked bars.
+        Across this sequence there are exactly 270 possible single-base substitutions &mdash; 90 bases &times; 3
+        alternatives &mdash; and enumerating every one of them gives <strong>69 silent, 193 missense and 8
+        nonsense</strong>: 25.6%, 71.5% and 3.0%. Split that by position and the structure jumps out:
+        <strong>73.3% of third-base changes are silent, and 0.0% of second-base changes are.</strong> Not
+        &ldquo;hardly any.&rdquo; Zero. There is no pair of codons anywhere in the standard genetic code that
+        differ only at the middle base and still spell the same amino acid. First-base changes sit in between at
+        3.3%, and every one of those exceptions is either leucine or arginine.
+      </p>
+      <p>
+        <strong>Why the code is built that way.</strong> There are exactly eight fourfold boxes &mdash; every
+        codon beginning UC, CU, CC, CG, AC, GU, GC or GG &mdash; and they ignore the third base entirely. That is
+        32 of the 64 codons, half the code, where a mistake at the third position costs literally nothing. Switch
+        to the codon table and look for the green row labels: those eight rows have the same amino acid four times
+        across. And chemically similar amino acids are parked in neighbouring rows, so even
+        when a change is missense it is often a conservative one &mdash; every single codon with U in the middle
+        position (UUx, CUx, AUx, GUx) spells a hydrophobic amino acid, so hitting the first base of one of those
+        usually swaps one greasy residue for another. The result is a code that absorbs the most error-prone kind
+        of change and quarantines the most dangerous one. Only 3.0% of substitutions here produce a premature
+        stop, and that is the outcome that reliably destroys the protein.
+      </p>
+      <p>
+        <strong>Then there is the indel.</strong> Switch to <em>Deletion</em>, size 1, and click almost anywhere:
+        the peptide downstream turns into gibberish and usually crashes into a stop codon within a few residues.
+        Now set size to 3 and click the same base. One amino acid disappears and everything after it is
+        <em>exactly as before</em>. Three bases in or out is not three times worse than one &mdash; it is
+        enormously less bad, because the reading frame survives. The frame, not the number of bases, is what
+        matters.
+      </p>
+      <p>
+        <strong>The honest caveat.</strong> &ldquo;Missense&rdquo; on this page means the amino acid is different,
+        not that the organism is sick. Most missense changes do nothing you could measure. Click the sickle-cell
+        button: codon 7, GAG &rarr; GTG, glutamate to valine. It is a single missense change out of the 193
+        possible ones in this window, and it is the one that causes sickle cell disease &mdash; not because
+        missense is destructive in general, but because that particular acidic residue, on that particular
+        surface, was the thing holding haemoglobin apart.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // THE STANDARD GENETIC CODE — all 64 codons.
+      //
+      // Written in the canonical U,C,A,G x U,C,A,G x U,C,A,G order, so the
+      // string below is read straight off a textbook codon table. Checked
+      // against the three stops (UAA, UAG, UGA), the single start (AUG = Met)
+      // and the two single-codon residues (AUG = Met, UGG = Trp).
+      //
+      //   UUU F  UUC F  UUA L  UUG L | UCU S UCC S UCA S UCG S
+      //   UAU Y  UAC Y  UAA *  UAG * | UGU C UGC C UGA * UGG W
+      //   ... and so on for C**, A**, G**.
+      // ==================================================================
+      var BASES_RNA = ['U', 'C', 'A', 'G'];
+      var BASES_DNA = ['A', 'C', 'G', 'T'];
+
+      var CODE_STRING =
+        'FFLLSSSSYY**CC*W' +   // U U*, U C*, U A*, U G*
+        'LLLLPPPPHHQQRRRR' +   // C ...
+        'IIIMTTTTNNKKSSRR' +   // A ...
+        'VVVVAAAADDEEGGGG';    // G ...
+
+      var CODE = {};           // 'GAG' -> 'E'
+      (function () {
+        var k = 0, i, j, m;
+        for (i = 0; i < 4; i++) {
+          for (j = 0; j < 4; j++) {
+            for (m = 0; m < 4; m++) {
+              CODE[BASES_RNA[i] + BASES_RNA[j] + BASES_RNA[m]] = CODE_STRING.charAt(k++);
+            }
+          }
+        }
+      })();
+
+      var AA3 = {
+        F: 'Phe', L: 'Leu', I: 'Ile', M: 'Met', V: 'Val', S: 'Ser', P: 'Pro', T: 'Thr',
+        A: 'Ala', Y: 'Tyr', H: 'His', Q: 'Gln', N: 'Asn', K: 'Lys', D: 'Asp', E: 'Glu',
+        C: 'Cys', W: 'Trp', R: 'Arg', G: 'Gly', '*': 'Stop'
+      };
+      var AAFULL = {
+        F: 'phenylalanine', L: 'leucine', I: 'isoleucine', M: 'methionine', V: 'valine',
+        S: 'serine', P: 'proline', T: 'threonine', A: 'alanine', Y: 'tyrosine',
+        H: 'histidine', Q: 'glutamine', N: 'asparagine', K: 'lysine', D: 'aspartate',
+        E: 'glutamate', C: 'cysteine', W: 'tryptophan', R: 'arginine', G: 'glycine',
+        '*': 'a stop signal'
+      };
+      // Standard AP grouping. A simplification of a continuous property — said so on screen.
+      var GROUP = {
+        G: 'nonpolar', A: 'nonpolar', V: 'nonpolar', L: 'nonpolar', I: 'nonpolar',
+        M: 'nonpolar', F: 'nonpolar', W: 'nonpolar', P: 'nonpolar',
+        S: 'polar', T: 'polar', C: 'polar', Y: 'polar', N: 'polar', Q: 'polar',
+        D: 'acidic', E: 'acidic',
+        K: 'basic', R: 'basic', H: 'basic'
+      };
+
+      // ==================================================================
+      // THE SEQUENCE — human HBB (beta-globin), first 30 codons of the CDS,
+      // coding strand. Translates to MVHLTPEEKSAVTALWGKVNVDEVGGEALG, which
+      // is beta-globin residues 1-30. Codon 7 (GAG, Glu) is the sickle site.
+      // ==================================================================
+      var WT = 'ATGGTGCACCTGACTCCTGAGGAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAGGTGAACGTGGATGAAGTTGGTGGTGAGGCCCTGGGC';
+      var NCOD = WT.length / 3;                 // 30
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      function toRNA(s) { return s.replace(/T/g, 'U'); }
+
+      function translate(dna) {
+        var rna = toRNA(dna), pep = '', stopAt = -1, i, a;
+        for (i = 0; i + 3 <= rna.length; i += 3) {
+          a = CODE[rna.substr(i, 3)];
+          if (a === '*') { stopAt = i / 3; break; }
+          pep += a;
+        }
+        return { rna: rna, pep: pep, stopAt: stopAt, ranOff: stopAt < 0 };
+      }
+
+      var WTT = translate(WT);                 // wild-type translation
+
+      // ==================================================================
+      // EXHAUSTIVE ENUMERATION — every one of the 3 x 90 = 270 possible
+      // single-base substitutions, classified with the table above. This is
+      // the exact answer the random sampling has to converge on; nothing here
+      // is a hard-coded percentage.
+      // ==================================================================
+      function classifySub(pos, newBase) {
+        var ci = Math.floor(pos / 3), off = pos % 3;
+        var oldCod = WTT.rna.substr(ci * 3, 3);
+        var newCod = oldCod.substr(0, off) + toRNA(newBase) + oldCod.substr(off + 1);
+        var oa = CODE[oldCod], na = CODE[newCod];
+        return {
+          ci: ci, off: off, oldCod: oldCod, newCod: newCod, oa: oa, na: na,
+          kind: na === oa ? 'sil' : (na === '*' ? 'non' : 'mis')
+        };
+      }
+
+      var EXACT = { all: { sil: 0, mis: 0, non: 0, n: 0 }, pos: [] };
+      (function () {
+        var p, b, r, i;
+        for (i = 0; i < 3; i++) EXACT.pos.push({ sil: 0, mis: 0, non: 0, n: 0 });
+        for (p = 0; p < WT.length; p++) {
+          for (i = 0; i < 4; i++) {
+            b = BASES_DNA[i];
+            if (b === WT.charAt(p)) continue;
+            r = classifySub(p, b);
+            EXACT.all[r.kind]++; EXACT.all.n++;
+            EXACT.pos[r.off][r.kind]++; EXACT.pos[r.off].n++;
+          }
+        }
+      })();
+
+      // ==================================================================
+      // STATE
+      // ==================================================================
+      var rand = Demo.rng(20260725);
+
+      var S = {
+        mode: 'sub',
+        size: 1,
+        sel: 19,                 // selected base, 0-based index into WT (sickle site)
+        mut: null,               // {type:'sub',pos,base} | {type:'ins',pos,bases} | {type:'del',pos,size}
+        view: 'table',
+        tally: { sil: 0, mis: 0, non: 0, n: 0 },
+        byPos: [
+          { sil: 0, mis: 0, non: 0, n: 0 },
+          { sil: 0, mis: 0, non: 0, n: 0 },
+          { sil: 0, mis: 0, non: 0, n: 0 }
+        ]
+      };
+
+      function selCodon() { return Math.floor(S.sel / 3); }
+
+      // ---- build the mutant sequence and a map back to wild-type indices ----
+      function buildMutant() {
+        var seq = WT.split(''), map = [], i, ins, im;
+        for (i = 0; i < WT.length; i++) map.push(i);
+        var m = S.mut;
+        if (m) {
+          if (m.type === 'sub') {
+            seq[m.pos] = m.base;
+          } else if (m.type === 'del') {
+            seq.splice(m.pos, m.size);
+            map.splice(m.pos, m.size);
+          } else {
+            ins = m.bases.split(''); im = [];
+            for (i = 0; i < ins.length; i++) im.push(-1);
+            seq.splice.apply(seq, [m.pos, 0].concat(ins));
+            map.splice.apply(map, [m.pos, 0].concat(im));
+          }
+        }
+        return { dna: seq.join(''), map: map };
+      }
+
+      // ==================================================================
+      // CLASSIFY THE CURRENT MUTATION
+      // ==================================================================
+      function verdictOf(MU, T) {
+        var m = S.mut, r;
+        if (!m) {
+          return {
+            key: 'wt', badge: 'wt', label: 'Wild type',
+            html: 'No mutation yet. This is the normal <em>HBB</em> sequence: 90 bases, 30 codons, 30 amino '
+              + 'acids, starting with AUG. <strong>Click any base</strong> to change it.'
+          };
+        }
+
+        if (m.type === 'sub') {
+          r = classifySub(m.pos, m.base);
+          var startLost = (r.ci === 0 && r.na !== r.oa);
+          var head = 'DNA base ' + (m.pos + 1) + ', ' + WT.charAt(m.pos) + ' &rarr; ' + m.base
+            + ' &mdash; the ' + ordinal(r.off + 1) + ' base of codon ' + (r.ci + 1) + '. '
+            + 'mRNA codon ' + r.oldCod + ' &rarr; ' + r.newCod + '. ';
+
+          if (startLost) {
+            return {
+              key: 'startloss', badge: 'non', label: 'Start codon lost',
+              html: head + 'That was the <strong>start codon</strong>. AUG is the only codon for methionine, so '
+                + 'no change to it can ever be silent &mdash; and worse, the ribosome now has nothing to start on '
+                + 'here. The peptide drawn below is what <em>would</em> be made if translation began at this '
+                + 'position anyway; in a real cell it would not begin here at all.'
+            };
+          }
+          if (r.kind === 'sil') {
+            return {
+              key: 'sil', badge: 'sil', label: 'Silent',
+              html: head + 'Both codons still mean <strong>' + AA3[r.oa] + '</strong>. The DNA changed, the mRNA '
+                + 'changed, and <strong>the protein did not</strong>. Redundancy in the code absorbed it.'
+            };
+          }
+          if (r.kind === 'non') {
+            return {
+              key: 'non', badge: 'non', label: 'Nonsense',
+              html: head + '<strong>' + AA3[r.oa] + ' &rarr; Stop.</strong> Translation halts at codon '
+                + (r.ci + 1) + ', so the peptide is ' + r.ci + ' amino acids long instead of 30 &mdash; '
+                + (NCOD - r.ci) + ' residues are missing. This is the outcome that reliably wrecks a protein, and '
+                + 'it is also the rarest: only ' + F.dec(100 * EXACT.all.non / EXACT.all.n, 1)
+                + '% of the 270 possible substitutions here do it.'
+            };
+          }
+          var same = GROUP[r.oa] === GROUP[r.na];
+          return {
+            key: 'mis', badge: 'mis', label: 'Missense',
+            html: head + '<strong>' + AA3[r.oa] + ' &rarr; ' + AA3[r.na] + '</strong> at residue ' + (r.ci + 1)
+              + ' &mdash; ' + AAFULL[r.oa] + ' (' + GROUP[r.oa] + ') becomes ' + AAFULL[r.na] + ' ('
+              + GROUP[r.na] + '). ' + (same
+                ? 'Same chemical group, so this is a <strong>conservative</strong> substitution &mdash; the sort a '
+                + 'protein usually shrugs off.'
+                : 'Different chemical group, so this is a <strong>radical</strong> substitution &mdash; more likely '
+                + 'to matter, though most missense changes are still tolerated.')
+              + ' The protein is still full length.'
+          };
+        }
+
+        // ---- indels: the frame is what matters, not the number of bases ----
+        var n = (m.type === 'ins') ? m.bases.length : m.size;
+        var frame = n % 3 !== 0;
+        var word = m.type === 'ins' ? 'Insertion' : 'Deletion';
+        // A deletion anywhere in bases 1-3 removes part of AUG. An insertion
+        // *before* base 1 leaves AUG intact (just preceded by junk), so only
+        // insertions at base 2 or 3 break the start codon.
+        var hitStart = (m.type === 'del') ? (m.pos < 3) : (m.pos > 0 && m.pos < 3);
+        var h = word + ' of <strong>' + n + ' base' + (n === 1 ? '' : 's') + '</strong> '
+          + (m.type === 'ins' ? 'before' : 'starting at') + ' DNA base ' + (m.pos + 1) + '. ';
+
+        if (!frame) {
+          return {
+            key: 'inf', badge: 'inf', label: 'In-frame indel — no frameshift',
+            html: h + '3 is a multiple of 3, so <strong>the reading frame survives</strong>. Every codon '
+              + (m.type === 'ins' ? 'after' : 'past') + ' the change is grouped exactly as before; the protein is '
+              + 'simply one amino acid ' + (m.type === 'ins' ? 'longer' : 'shorter')
+              + ' (and the residue at the join may differ). Compare this with a 1- or 2-base indel at the same '
+              + 'spot &mdash; it is not three times worse, it is enormously less bad.'
+              + (hitStart ? ' Note this one lands inside the start codon, which is a separate problem.' : '')
+          };
+        }
+        var tailTxt = T.ranOff
+          ? 'No stop codon appears before the end of this 90-base window, so the garbled reading simply runs off '
+          + 'the edge of what we are showing. In the real gene it would keep going in the new frame until it hit '
+          + 'one, which on average takes about 20 codons.'
+          : 'A stop codon turns up in the new frame at codon ' + (T.stopAt + 1) + ', so the peptide is only '
+          + T.pep.length + ' amino acids long instead of 30.';
+        return {
+          key: 'fs', badge: 'fs', label: 'Frameshift',
+          html: h + n + ' is not a multiple of 3, so <strong>every codon downstream is regrouped</strong>. '
+            + 'The bases themselves are almost all still there &mdash; they are just being read in the wrong '
+            + 'triplets, which makes them mean something completely different. ' + tailTxt
+            + (hitStart ? ' It also destroys the start codon.' : '')
+        };
+      }
+
+      function ordinal(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : '3rd'; }
+
+      // ==================================================================
+      // RENDER: THE SEQUENCE GRID
+      // ==================================================================
+      var elSeq = document.getElementById('seqGrid');
+
+      function renderSeq(MU, T) {
+        var rna = T.rna, dna = MU.dna, map = MU.map;
+        var sc = selCodon();
+        var html = '', ci, j, idx, tri, full, aa, dead, cls, bcls, o;
+
+        for (ci = 0; ci * 3 < dna.length; ci++) {
+          tri = rna.substr(ci * 3, 3);
+          full = tri.length === 3;
+          aa = full ? CODE[tri] : null;
+          dead = (T.stopAt >= 0 && ci > T.stopAt);
+
+          cls = 'cod';
+          if (!full) cls += ' is-partial';
+          if (dead) cls += ' is-dead';
+          // highlight the box that holds the selected wild-type codon
+          for (j = 0; j < 3 && ci * 3 + j < dna.length; j++) {
+            o = map[ci * 3 + j];
+            if (o >= 0 && Math.floor(o / 3) === sc) { cls += ' is-sel'; break; }
+          }
+
+          html += '<div class="' + cls + '"><span class="cn">' + (ci + 1) + '</span><span class="brow">';
+          for (j = 0; j < 3; j++) {
+            idx = ci * 3 + j;
+            if (idx >= dna.length) { html += '<span class="b" style="visibility:hidden">-</span>'; continue; }
+            o = map[idx];
+            bcls = 'b';
+            if (o < 0) bcls += ' is-ins';
+            else if (S.mut && S.mut.type === 'sub' && S.mut.pos === o) bcls += ' is-sub';
+            html += '<button type="button" class="' + bcls + '" data-o="' + o + '" '
+              + 'aria-label="DNA base ' + (o >= 0 ? (o + 1) : 'inserted') + ', ' + dna.charAt(idx) + '">'
+              + dna.charAt(idx) + '</button>';
+          }
+          html += '</span><span class="rna">' + tri + (full ? '' : '&nbsp;') + '</span>';
+
+          if (!full) html += '<span class="aa none">&mdash;</span>';
+          else if (aa === '*') html += '<span class="aa stop">Stop</span>';
+          else if (dead) html += '<span class="aa none">' + AA3[aa] + '</span>';
+          else {
+            var changed = ci >= T.pep.length ? false
+              : (ci < WTT.pep.length ? WTT.pep.charAt(ci) !== aa : true);
+            html += '<span class="aa' + (changed ? ' ch' : '') + '">' + AA3[aa] + '</span>';
+          }
+          html += '</div>';
+        }
+        elSeq.innerHTML = html;
+      }
+
+      // ==================================================================
+      // RENDER: PEPTIDE BEFORE / AFTER
+      // ==================================================================
+      var elPep = document.getElementById('pepCmp');
+
+      function renderPep(T) {
+        var a = WTT.pep;
+        var b = T.pep + (T.stopAt >= 0 ? '*' : '');
+        var n = Math.max(a.length, b.length), i, html = '', top, bot, cls;
+        for (i = 0; i < n; i++) {
+          top = i < a.length ? a.charAt(i) : '&middot;';
+          bot = i < b.length ? b.charAt(i) : '&mdash;';
+          cls = 'pc';
+          if (i >= a.length) cls += ' extra';
+          else if (i >= b.length) cls += ' gone';
+          else if (a.charAt(i) !== b.charAt(i)) cls += (b.charAt(i) === '*' ? ' gone' : ' diff');
+          html += '<div class="' + cls + '"><em>' + top + '</em><strong>' + bot + '</strong></div>';
+        }
+        elPep.innerHTML = html;
+      }
+
+      function pepDiffCount(T) {
+        var a = WTT.pep, b = T.pep, n = Math.min(a.length, b.length), i, d = 0;
+        for (i = 0; i < n; i++) if (a.charAt(i) !== b.charAt(i)) d++;
+        return d + Math.abs(a.length - b.length);
+      }
+
+      // ==================================================================
+      // RENDER: THE CODON TABLE
+      // ==================================================================
+      var elTable = document.getElementById('codonTable');
+
+      (function buildTable() {
+        var html = '<thead><tr><th class="rh"></th>';
+        var i, j, m, r, c;
+        for (i = 0; i < 4; i++) html += '<th>3rd = ' + BASES_RNA[i] + '</th>';
+        html += '</tr></thead><tbody>';
+        for (i = 0; i < 4; i++) {
+          for (j = 0; j < 4; j++) {
+            r = BASES_RNA[i] + BASES_RNA[j];
+            // a fourfold box: all four third bases give the same amino acid
+            var four = true;
+            for (m = 1; m < 4; m++) {
+              if (CODE[r + BASES_RNA[m]] !== CODE[r + BASES_RNA[0]]) { four = false; break; }
+            }
+            html += '<tr' + (four ? ' class="fourfold"' : '') + '><th class="rh">' + r + '</th>';
+            for (m = 0; m < 4; m++) {
+              c = r + BASES_RNA[m];
+              html += '<td data-c="' + c + '" title="' + c + ' = ' + AA3[CODE[c]] + '">'
+                + AA3[CODE[c]] + '<i>&nbsp;</i></td>';
+            }
+            html += '</tr>';
+          }
+        }
+        elTable.innerHTML = html + '</tbody>';
+      })();
+
+      var TD = {};
+      Array.prototype.forEach.call(elTable.querySelectorAll('td'), function (td) { TD[td.dataset.c] = td; });
+
+      function paintTable() {
+        var sc = selCodon();
+        var cur = WTT.rna.substr(sc * 3, 3);
+        var picked = (S.mut && S.mut.type === 'sub' && Math.floor(S.mut.pos / 3) === sc)
+          ? classifySub(S.mut.pos, S.mut.base).newCod : null;
+        var codon, td, diffs, off, i, r;
+
+        for (codon in TD) {
+          if (!Object.prototype.hasOwnProperty.call(TD, codon)) continue;
+          td = TD[codon];
+          td.className = '';
+          td.querySelector('i').innerHTML = '&nbsp;';
+          if (codon === cur) { td.className = 'cur'; td.querySelector('i').textContent = 'you are here'; continue; }
+          diffs = 0; off = -1;
+          for (i = 0; i < 3; i++) if (codon.charAt(i) !== cur.charAt(i)) { diffs++; off = i; }
+          if (diffs !== 1) { td.className = 'dim'; continue; }
+          r = CODE[codon] === CODE[cur] ? 'sil' : (CODE[codon] === '*' ? 'non' : 'mis');
+          td.className = r + (codon === picked ? ' pick' : '');
+          td.querySelector('i').textContent = ordinal(off + 1) + ' base';
+        }
+
+        document.getElementById('capTable').innerHTML =
+          'Codon ' + (sc + 1) + ' of the mRNA is <strong>' + cur + '</strong> ('
+          + AA3[CODE[cur]] + '). The nine coloured cells are every codon one base away from it &mdash; three per '
+          + 'position. Click one to apply that exact substitution. Row labels shown in green are '
+          + '<strong>fourfold boxes</strong>: all four third bases spell the same amino acid, so the third base is '
+          + 'ignored entirely. There are eight of them, and they cover 32 of the 64 codons.';
+      }
+
+      // clicking a coloured cell applies that substitution
+      elTable.addEventListener('click', function (ev) {
+        var td = ev.target.closest ? ev.target.closest('td') : null;
+        if (!td || !td.dataset.c) return;
+        if (!/\b(sil|mis|non)\b/.test(td.className)) return;
+        var sc = selCodon(), cur = WTT.rna.substr(sc * 3, 3), codon = td.dataset.c, i, off = -1;
+        for (i = 0; i < 3; i++) if (codon.charAt(i) !== cur.charAt(i)) off = i;
+        if (off < 0) return;
+        setMode('sub');
+        S.sel = sc * 3 + off;
+        S.mut = { type: 'sub', pos: S.sel, base: codon.charAt(off) === 'U' ? 'T' : codon.charAt(off) };
+        render();
+      });
+
+      // ==================================================================
+      // RENDER: THE NINE SUBSTITUTIONS OF THE SELECTED CODON
+      // ==================================================================
+      var elPos = document.getElementById('posGrid');
+
+      function renderPos() {
+        var sc = selCodon(), cur = WTT.rna.substr(sc * 3, 3);
+        var html = '', off, i, b, r, cls, on, nSil;
+
+        for (off = 0; off < 3; off++) {
+          nSil = 0;
+          var chips = '';
+          for (i = 0; i < 4; i++) {
+            b = BASES_DNA[i];
+            if (b === WT.charAt(sc * 3 + off)) continue;
+            r = classifySub(sc * 3 + off, b);
+            if (r.kind === 'sil') nSil++;
+            on = (S.mut && S.mut.type === 'sub' && S.mut.pos === sc * 3 + off && S.mut.base === b);
+            cls = 'chip ' + r.kind + (on ? ' on' : '');
+            chips += '<button type="button" class="' + cls + '" data-p="' + (sc * 3 + off) + '" data-b="' + b + '">'
+              + '<span class="cd">' + r.newCod + '</span> ' + AA3[r.na] + '</button>';
+          }
+          html += '<div><div class="poslab">' + ordinal(off + 1) + ' base <span>&mdash; '
+            + (nSil === 0 ? 'no silent option' : nSil + ' of 3 silent') + '</span></div>'
+            + '<div class="chips">' + chips + '</div></div>';
+        }
+        elPos.innerHTML = html;
+        document.getElementById('posCodonNo').textContent = String(sc + 1);
+      }
+
+      elPos.addEventListener('click', function (ev) {
+        var b = ev.target.closest ? ev.target.closest('.chip') : null;
+        if (!b) return;
+        setMode('sub');
+        S.sel = parseInt(b.dataset.p, 10);
+        S.mut = { type: 'sub', pos: S.sel, base: b.dataset.b };
+        render();
+      });
+
+      // ==================================================================
+      // THE SPECTRUM — sampled from the real code
+      // ==================================================================
+      function runBatch(n) {
+        var i, p, alts, b, r, k;
+        for (i = 0; i < n; i++) {
+          p = Math.floor(rand() * WT.length);
+          if (p >= WT.length) p = WT.length - 1;
+          alts = [];
+          for (k = 0; k < 4; k++) if (BASES_DNA[k] !== WT.charAt(p)) alts.push(BASES_DNA[k]);
+          b = alts[Math.min(2, Math.floor(rand() * 3))];
+          r = classifySub(p, b);
+          S.tally[r.kind]++; S.tally.n++;
+          S.byPos[r.off][r.kind]++; S.byPos[r.off].n++;
+        }
+      }
+
+      var specCv = Demo.canvas('#spectrum', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 56 : 74, padR = narrow ? 8 : 12, padT = 26, padB = 24;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.2 : 10.4;
+        var rows = [
+          { lab: 'All bases', d: S.tally, e: EXACT.all },
+          { lab: '1st base', d: S.byPos[0], e: EXACT.pos[0] },
+          { lab: '2nd base', d: S.byPos[1], e: EXACT.pos[1] },
+          { lab: '3rd base', d: S.byPos[2], e: EXACT.pos[2] }
+        ];
+        var rowH = (y0 - y1) / rows.length;
+        var barH = Math.min(26, rowH * 0.5);
+        var i, k;
+
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillText('0%', x0, 2);
+        ctx.textAlign = 'right';
+        ctx.fillText('100%', x1, 2);
+
+        for (i = 0; i < rows.length; i++) {
+          var cy = y1 + rowH * i + rowH / 2;
+          var by = cy - barH / 2;
+          var d = rows[i].d, e = rows[i].e;
+
+          // row label
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.text;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(rows[i].lab, x0 - 7, cy - 1);
+          ctx.font = (fs - 1) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText('n = ' + F.comma(d.n), x0 - 7, cy + fs + 1);
+
+          if (d.n === 0) {
+            ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+            ctx.strokeRect(x0 + 0.5, by + 0.5, x1 - x0 - 1, barH - 1);
+          } else {
+            var segs = [
+              { v: d.sil / d.n, col: c.ok, lab: 'silent' },
+              { v: d.mis / d.n, col: c.warn, lab: 'missense' },
+              { v: d.non / d.n, col: c.bad, lab: 'nonsense' }
+            ];
+            var xa = x0;
+            for (k = 0; k < segs.length; k++) {
+              var ww = (x1 - x0) * segs[k].v;
+              ctx.fillStyle = segs[k].col;
+              ctx.fillRect(xa, by, Math.max(0, ww), barH);
+              if (ww >= (narrow ? 30 : 38)) {
+                ctx.fillStyle = c.bg;
+                ctx.font = '600 ' + fs + FONT;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(F.dec(segs[k].v * 100, 1) + '%', xa + ww / 2, cy);
+              }
+              xa += ww;
+            }
+            // nonsense is usually too thin to label inside — put it above, right
+            if ((x1 - x0) * (d.non / d.n) < (narrow ? 30 : 38)) {
+              ctx.fillStyle = c.bad;
+              ctx.font = '600 ' + (fs - 0.6) + FONT;
+              ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
+              ctx.fillText('nonsense ' + F.dec(100 * d.non / d.n, 1) + '%', x1, by - 3);
+            }
+          }
+
+          // exact-value markers: little triangles under the segment boundaries
+          var e1 = x0 + (x1 - x0) * (e.sil / e.n);
+          var e2 = x0 + (x1 - x0) * ((e.sil + e.mis) / e.n);
+          ctx.fillStyle = c.text2;
+          [e1, e2].forEach(function (ex) {
+            ctx.beginPath();
+            ctx.moveTo(ex, by + barH + 7);
+            ctx.lineTo(ex - 4, by + barH + 13);
+            ctx.lineTo(ex + 4, by + barH + 13);
+            ctx.closePath();
+            ctx.fill();
+          });
+        }
+
+        // frame
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 0.5, y1); ctx.lineTo(x0 + 0.5, y0);
+        ctx.moveTo(x1 - 0.5, y1); ctx.lineTo(x1 - 0.5, y0);
+        ctx.stroke();
+
+        ctx.font = (fs - 0.4) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(F.comma(S.tally.n) + ' random substitutions — share at each codon position',
+          (x0 + x1) / 2, y0 + 6);
+      }, { aspect: 0.66, minHeight: 235, maxHeight: 300 });
+
+      function renderTally() {
+        var t = S.tally, e = EXACT.all;
+        var rows = [
+          ['Silent', t.sil, e.sil],
+          ['Missense', t.mis, e.mis],
+          ['Nonsense', t.non, e.non]
+        ];
+        var html = '', i;
+        for (i = 0; i < rows.length; i++) {
+          html += '<tr><td>' + rows[i][0] + '</td><td>' + F.comma(rows[i][1]) + '</td><td>'
+            + (t.n ? F.dec(100 * rows[i][1] / t.n, 1) + '%' : '&mdash;') + '</td><td>'
+            + F.dec(100 * rows[i][2] / e.n, 1) + '%</td></tr>';
+        }
+        html += '<tr><td>Total</td><td>' + F.comma(t.n) + '</td><td>' + (t.n ? '100.0%' : '&mdash;')
+          + '</td><td>100.0%</td></tr>';
+        document.getElementById('tallyBody').innerHTML = html;
+
+        document.getElementById('tallyHint').innerHTML =
+          '&ldquo;Exact&rdquo; is not a target typed in by hand: it is every one of the '
+          + EXACT.all.n + ' possible single-base substitutions in this 90-base sequence (90 bases &times; 3 other '
+          + 'bases), each one classified with the same 64-codon table the rest of the page uses. The sampled '
+          + 'column has to converge on it, and does. <strong>3 of the 90 bases sit in the start codon</strong>; '
+          + 'those are counted as missense here, but losing AUG is really a failure to start at all.';
+
+        document.getElementById('capSpec').innerHTML =
+          'Read the bottom two bars against each other. <strong>2nd base: '
+          + F.dec(100 * S.byPos[1].sil / Math.max(1, S.byPos[1].n), 1) + '% silent. 3rd base: '
+          + F.dec(100 * S.byPos[2].sil / Math.max(1, S.byPos[2].n), 1)
+          + '% silent.</strong> Same gene, same kind of mutation, same number of bases changed &mdash; the only '
+          + 'difference is which slot in the codon got hit. The triangles mark the exact answers from enumerating '
+          + 'all ' + EXACT.all.n + ' possibilities; the bars are random draws creeping up on them.';
+      }
+
+      // ==================================================================
+      // MAIN RENDER
+      // ==================================================================
+      var elVerdict = document.getElementById('verdict');
+      var elCapSeq = document.getElementById('capSeq');
+      var elCapPep = document.getElementById('capPep');
+
+      function render() {
+        var MU = buildMutant();
+        var T = translate(MU.dna);
+        var V = verdictOf(MU, T);
+
+        renderSeq(MU, T);
+        renderPep(T);
+        paintTable();
+        renderPos();
+        renderTally();
+        specCv.redraw();
+
+        // verdict note
+        elVerdict.className = 'note'
+          + (V.key === 'sil' ? '' : (V.key === 'mis' || V.key === 'inf' ? ' warn'
+            : (V.key === 'wt' ? '' : ' bad')));
+        elVerdict.innerHTML = '<strong>' + V.label + '.</strong> ' + V.html;
+
+        // readouts
+        var badgeCls = V.badge;
+        document.getElementById('rClass').innerHTML =
+          '<span class="badge ' + badgeCls + '">' + V.label + '</span>';
+
+        var m = S.mut;
+        document.getElementById('rType').innerHTML = !m ? 'nothing yet'
+          : m.type === 'sub'
+            ? 'base ' + (m.pos + 1) + ': ' + WT.charAt(m.pos) + ' &rarr; ' + m.base
+            : m.type === 'ins'
+              ? '+' + m.bases + ' before base ' + (m.pos + 1)
+              : '&minus;' + WT.substr(m.pos, m.size) + ' from base ' + (m.pos + 1);
+
+        var sc = selCodon();
+        if (m && m.type === 'sub') {
+          var r = classifySub(m.pos, m.base);
+          document.getElementById('rCodon').innerHTML =
+            r.oldCod + ' &rarr; ' + r.newCod + '<br>' + AA3[r.oa] + ' &rarr; ' + AA3[r.na];
+        } else {
+          document.getElementById('rCodon').innerHTML =
+            'codon ' + (sc + 1) + ': ' + WTT.rna.substr(sc * 3, 3) + '<br>'
+            + AA3[CODE[WTT.rna.substr(sc * 3, 3)]] + (m ? ' (indel &mdash; see the peptide)' : '');
+        }
+
+        document.getElementById('rLen').innerHTML =
+          T.pep.length + '<span class="r-unit">aa</span>';
+        document.getElementById('rDiff').textContent = String(pepDiffCount(T));
+
+        elCapSeq.innerHTML = 'Top row of each box is the <strong>coding strand of the DNA</strong> (click to '
+          + 'mutate); middle row is the <strong>mRNA</strong>, identical except T&nbsp;&rarr;&nbsp;U; bottom row '
+          + 'is the <strong>amino acid</strong>. ' + MU.dna.length + ' bases, '
+          + (T.stopAt >= 0 ? 'translation stopping at codon ' + (T.stopAt + 1) : 'no stop codon in this window')
+          + '.';
+
+        elCapPep.innerHTML = T.pep.length === WTT.pep.length && pepDiffCount(T) === 0
+          ? 'Identical. Whatever you did to the DNA, the protein came out the same.'
+          : 'Wild type is ' + WTT.pep.length + ' aa; this mutant is ' + T.pep.length + ' aa, with '
+          + pepDiffCount(T) + ' residue' + (pepDiffCount(T) === 1 ? '' : 's') + ' altered or lost. '
+          + '&middot; = no wild-type residue there, &mdash; = nothing made, * = stop codon reached.';
+      }
+
+      // ==================================================================
+      // INTERACTION
+      // ==================================================================
+      function altsFor(p) {
+        var out = [], i;
+        for (i = 0; i < 4; i++) if (BASES_DNA[i] !== WT.charAt(p)) out.push(BASES_DNA[i]);
+        return out;
+      }
+
+      function randomBases(n) {
+        var s = '', i;
+        for (i = 0; i < n; i++) s += BASES_DNA[Math.min(3, Math.floor(rand() * 4))];
+        return s;
+      }
+
+      function applyAt(p) {
+        S.sel = p;
+        if (S.mode === 'sub') {
+          var alts = altsFor(p);
+          if (S.mut && S.mut.type === 'sub' && S.mut.pos === p) {
+            var k = alts.indexOf(S.mut.base);
+            S.mut = (k >= alts.length - 1) ? null : { type: 'sub', pos: p, base: alts[k + 1] };
+          } else {
+            S.mut = { type: 'sub', pos: p, base: alts[0] };
+          }
+        } else if (S.mode === 'ins') {
+          S.mut = { type: 'ins', pos: p, bases: randomBases(S.size), size: S.size };
+        } else {
+          S.mut = { type: 'del', pos: p, size: Math.min(S.size, WT.length - p) };
+        }
+        render();
+      }
+
+      elSeq.addEventListener('click', function (ev) {
+        var b = ev.target.closest ? ev.target.closest('.b') : null;
+        if (!b || !b.dataset || b.dataset.o == null) return;
+        var o = parseInt(b.dataset.o, 10);
+        if (!(o >= 0)) return;
+        applyAt(o);
+      });
+
+      // ---- mode / size segmented controls ----
+      var modeBtns = Array.prototype.slice.call(document.querySelectorAll('#modeSeg button'));
+      var sizeBtns = Array.prototype.slice.call(document.querySelectorAll('#sizeSeg button'));
+      var elSizeWrap = document.getElementById('sizeWrap');
+      var elModeHint = document.getElementById('modeHint');
+      var elSizeHint = document.getElementById('sizeHint');
+      var elSizeOut = document.getElementById('sizeOut');
+
+      function setMode(mode) {
+        S.mode = mode;
+        modeBtns.forEach(function (o) { o.setAttribute('aria-selected', o.dataset.mode === mode ? 'true' : 'false'); });
+        elSizeWrap.hidden = (mode === 'sub');
+        elModeHint.innerHTML = mode === 'sub'
+          ? 'Click any DNA base in the sequence. Click the same base again to cycle through the other two possible '
+          + 'bases, and once more to return it to wild type.'
+          : mode === 'ins'
+            ? 'Click a base: ' + S.size + ' random base' + (S.size === 1 ? '' : 's') + ' will be inserted '
+            + 'immediately before it.'
+            : 'Click a base: it and the next ' + (S.size - 1) + ' will be deleted.';
+      }
+
+      function setSize(n) {
+        S.size = n;
+        sizeBtns.forEach(function (o) { o.setAttribute('aria-selected', +o.dataset.size === n ? 'true' : 'false'); });
+        elSizeOut.textContent = n + ' base' + (n === 1 ? '' : 's');
+        elSizeHint.innerHTML = n === 3
+          ? '3 is a multiple of 3, so the reading frame is <strong>preserved</strong>: one amino acid is simply '
+          + 'added or removed and the rest of the protein is untouched.'
+          : n + ' base' + (n === 1 ? '' : 's') + ' in or out is <strong>not</strong> a multiple of 3, so every '
+          + 'codon downstream is regrouped &mdash; a frameshift.';
+        if (S.mode !== 'sub') setMode(S.mode);
+      }
+
+      modeBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          setMode(b.dataset.mode);
+          S.mut = null;             // one mutation at a time; changing type starts over
+          render();
+        });
+      });
+      sizeBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          setSize(parseInt(b.dataset.size, 10));
+          if (S.mut && S.mut.type !== 'sub') applyAt(S.mut.pos); else render();
+        });
+      });
+
+      // ---- buttons ----
+      document.getElementById('btnRandom').addEventListener('click', function () {
+        var p = Math.min(WT.length - 1, Math.floor(rand() * WT.length));
+        S.sel = p;
+        if (S.mode === 'sub') {
+          var alts = altsFor(p);
+          S.mut = { type: 'sub', pos: p, base: alts[Math.min(2, Math.floor(rand() * 3))] };
+        } else if (S.mode === 'ins') {
+          S.mut = { type: 'ins', pos: p, bases: randomBases(S.size), size: S.size };
+        } else {
+          S.mut = { type: 'del', pos: p, size: Math.min(S.size, WT.length - p) };
+        }
+        render();
+      });
+
+      document.getElementById('btnReset').addEventListener('click', function () {
+        S.mut = null;
+        render();
+      });
+
+      // HBB codon 7 GAG -> GTG: DNA base 20, A -> T. Glu6Val in mature-protein
+      // numbering, because the initiator Met is removed from the finished chain.
+      document.getElementById('btnSickle').addEventListener('click', function () {
+        setMode('sub');
+        S.sel = 19;
+        S.mut = { type: 'sub', pos: 19, base: 'T' };
+        render();
+      });
+
+      document.getElementById('btnRun').addEventListener('click', function () {
+        runBatch(500);
+        render();
+      });
+
+      document.getElementById('btnClear').addEventListener('click', function () {
+        S.tally = { sil: 0, mis: 0, non: 0, n: 0 };
+        S.byPos = [
+          { sil: 0, mis: 0, non: 0, n: 0 },
+          { sil: 0, mis: 0, non: 0, n: 0 },
+          { sil: 0, mis: 0, non: 0, n: 0 }
+        ];
+        render();
+      });
+
+      // ---- view tabs ----
+      var viewBtns = Array.prototype.slice.call(document.querySelectorAll('#viewSeg button'));
+      var elViewTable = document.getElementById('viewTable');
+      var elViewSpec = document.getElementById('viewSpec');
+      viewBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          viewBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.view = b.dataset.view;
+          elViewTable.hidden = S.view !== 'table';
+          elViewSpec.hidden = S.view !== 'spec';
+          if (S.view === 'spec') specCv.resize();
+        });
+      });
+
+      // ==================================================================
+      // BOOT — one batch so the chart is never empty on load
+      // ==================================================================
+      setMode('sub');
+      setSize(1);
+      runBatch(500);
+      render();
+    })();
+  </script>
+</body>
+
+</html>

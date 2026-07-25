@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Selection Shaper | Dr. Andres Barboza</title>
+  <meta name="description" content="Selection acting on a whole trait distribution. Stabilizing selection holds the mean dead still and eats the variance - which is evolution, not stasis. Directional, stabilizing and disruptive selection with heritability and the breeder's equation.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend swatches, unit-bearing tiles */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 16px; height: 9px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.ln i { height: 3px; }
+    .legend .lg.dash i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub, .readout .r-label sup { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.hold { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.moved { color: var(--bad); font-weight: 600; }
+    .r-value.big { font-size: 24px; }
+
+    /* three mode names have to fit a 375px phone without a scrollbar */
+    @media (max-width: 430px) {
+      #modeSeg button { padding: 7px 3px; font-size: 11.5px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Selection Shaper</h1>
+        <p class="demo-sub">Stabilizing selection is already loaded. Press <strong>Step generation</strong> ten
+          times and watch two numbers at once: the mean refuses to move, and the variance falls every single
+          generation. Then set heritability to 0 and try again.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Natural selection</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Mode of selection" id="modeSeg">
+          <button role="tab" aria-selected="false" data-mode="dir">Directional</button>
+          <button role="tab" aria-selected="true" data-mode="stab">Stabilizing</button>
+          <button role="tab" aria-selected="false" data-mode="dis">Disruptive</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="distLabel">The whole distribution
+          <span>&mdash; beak depth in millimetres, with the fitness function drawn on the same axis</span></p>
+
+        <canvas id="dist" role="img"
+                aria-label="Histogram of beak depth for the current generation, the distribution of the individuals that go on to breed, the predicted next generation, and the relative fitness curve drawn on a second vertical axis."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i id="lgNow"></i>this generation</span>
+          <span class="lg ln"><i id="lgSurv"></i>the ones that breed</span>
+          <span class="lg ln" id="lgNextWrap"><i id="lgNext"></i>next generation</span>
+          <span class="lg ln"><i id="lgFit"></i>relative fitness (right axis)</span>
+        </div>
+        <p class="stage-caption" id="distCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Mean and variance, tracked separately
+          <span>&mdash; the pairing is the whole demonstration</span></p>
+        <canvas id="hist" role="img"
+                aria-label="Two small line plots against generation number: the mean beak depth in millimetres, and the phenotypic variance in square millimetres, each with a dashed line marking the starting value."></canvas>
+        <p class="stage-caption" id="histCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Run it</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnStep">Step generation</button>
+              <button class="btn" id="btnRun">Run</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+            <div class="readouts two">
+              <div class="readout is-accent">
+                <div class="r-label">Generation</div>
+                <div class="r-value" id="rGen">0</div>
+                <div class="r-sub">of 30</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Population size</div>
+                <div class="r-value">&infin;</div>
+                <div class="r-sub">drift excluded on purpose</div>
+              </div>
+            </div>
+            <label class="check"><input type="checkbox" id="chkNext" checked> Draw the predicted next generation</label>
+            <p class="note warn" id="edgeNote" hidden>&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Selection</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sRange">Strength of selection</label>
+                <span class="ctrl-value" id="sOut">0.40</span>
+              </div>
+              <input type="range" id="sRange" min="0" max="1" step="0.05" value="0.4">
+              <p class="ctrl-hint" id="sHint">0 means the fitness curve is flat &mdash; every beak depth does
+                equally well and nothing happens. 1 is about as hard as selection ever gets in the field.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="hRange">Heritability h<sup>2</sup></label>
+                <span class="ctrl-value" id="hOut">0.50</span>
+              </div>
+              <input type="range" id="hRange" min="0" max="1" step="0.05" value="0.5">
+              <p class="ctrl-hint">The share of the variation in beak depth that comes from breeding values
+                that parents actually pass on; the rest is diet, injury and luck. In this model h<sup>2</sup>
+                is exactly the parent&ndash;offspring regression slope.
+                <strong>Moving this slider restarts the population at generation 0.</strong></p>
+            </div>
+
+            <div class="btn-row" id="presets">
+              <button class="btn" data-mode="stab" data-s="0.6" data-h="0.6">Stabilizing, strong</button>
+              <button class="btn" data-mode="dis" data-s="1" data-h="0.7">Disruptive, strong</button>
+              <button class="btn" data-mode="dir" data-s="0.6" data-h="0">The h&sup2; = 0 test</button>
+            </div>
+            <p class="ctrl-hint">The favoured beak depth &theta; is fixed at <strong>10.00 mm</strong> &mdash;
+              it is a property of the seeds available, not of the birds. The population also starts there,
+              with a mean of 10.00 mm and a standard deviation of 1.00 mm.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The two numbers to watch</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Mean beak depth</div>
+              <div class="r-value big" id="rMean">10.000<span class="r-unit">mm</span></div>
+              <div class="r-sub" id="rMeanSub">started at 10.000 mm</div>
+            </div>
+            <div class="readout is-accent span2">
+              <div class="r-label">Variance of beak depth</div>
+              <div class="r-value big" id="rVar">1.000<span class="r-unit">mm&sup2;</span></div>
+              <div class="r-sub" id="rVarSub">started at 1.000 mm&sup2;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Standard deviation</div>
+              <div class="r-value" id="rSD">1.000<span class="r-unit">mm</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">h<sup>2</sup> right now</div>
+              <div class="r-value" id="rH2">0.500</div>
+              <div class="r-sub" id="rH2Sub">V<sub>A</sub> / V<sub>P</sub></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Differential vs response &mdash; not the same thing</div>
+          <div class="readouts two">
+            <div class="readout span2">
+              <div class="r-label">S &mdash; selection differential, <em>within</em> this generation</div>
+              <div class="r-value" id="rS">0.000<span class="r-unit">mm</span></div>
+              <div class="r-sub" id="rSSub">mean of the breeders minus mean of everybody</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">R &mdash; response, <em>between</em> generations</div>
+              <div class="r-value" id="rR">0.000<span class="r-unit">mm</span></div>
+              <div class="r-sub" id="rRSub">how far the mean will actually move when you press Step</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Predicted h<sup>2</sup> &times; S</div>
+              <div class="r-value" id="rPred">0.000<span class="r-unit">mm</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Variance of the breeders</div>
+              <div class="r-value" id="rVs">1.000<span class="r-unit">mm&sup2;</span></div>
+            </div>
+          </div>
+          <p class="note" id="srNote" style="margin-top:11px">&nbsp;</p>
+          <p class="note warn" id="normNote" style="margin-top:10px" hidden>&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Fitness right now</div>
+          <div class="readouts two">
+            <div class="readout span2">
+              <div class="r-label">Relative fitness of an average bird, w(mean) / w&#772;</div>
+              <div class="r-value" id="rWmu">1.000</div>
+              <div class="r-sub" id="rWmuSub">1.000 means exactly average</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            Fitness here is <em>relative</em> fitness: each bird's expected contribution of offspring divided by
+            the population average. The dashed horizontal line on the plot is 1.000. Only ratios matter, so the
+            curve is never a survival percentage.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note">
+            <strong>The population is infinite and there is no drift.</strong> This is deliberate. The whole
+            distribution is tracked as a smooth density and every number is computed exactly, so anything you see
+            move is selection, not sampling luck. In a real finch population of a few hundred birds the mean would
+            wobble by a few hundredths of a millimetre every generation for no reason at all, and that noise would
+            bury the effect this demonstration exists to show.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>What is simplified.</strong> Each bird's beak depth is z = g + e: a breeding value g that it
+            passes on, plus a non-heritable deviation e drawn fresh from a normal distribution with variance
+            V<sub>E</sub>, held fixed for the run. Offspring inherit g unchanged, so h<sup>2</sup> =
+            V<sub>A</sub>/V<sub>P</sub> is exactly the parent&ndash;offspring regression slope. There is no
+            mutation, no recombination or segregation variance and no mating system, which means selection can
+            only <em>reshape</em> the genetic variation already present, never create new variation. That is why
+            stabilizing selection here drives the variance down to the environmental floor V<sub>E</sub> and stops:
+            with mutation it would settle at a low equilibrium instead of hitting a hard floor. Real disruptive
+            selection also needs mates to pair up assortatively before two peaks can become two species; random
+            mating and blending inheritance would keep filling the valley back in. Finally, R = h<sup>2</sup>S is
+            exact only while the distribution is bell-shaped &mdash; the page warns you when it is not.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear &ldquo;stabilizing selection&rdquo; and file it under
+        <em>nothing is happening</em>. The mean does not move, so surely nothing is evolving. Underneath sits a
+        second wrong idea that causes the first: that natural selection is a thing that <em>moves the average</em>,
+        and that the average is the only number a population has. Both are false. A population is a whole
+        distribution, and it has at least two numbers &mdash; where it sits and how spread out it is. Selection can
+        hammer the second one while leaving the first untouched.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Load the page and press <em>Step generation</em> ten times with
+        Stabilizing selected, strength 0.40 and h<sup>2</sup> = 0.50. The mean reads
+        <strong>10.000 mm at generation 0 and 10.000 mm at generation 10</strong> &mdash; not approximately, exactly,
+        because the fitness curve is symmetric about the population and the pull from each side cancels. Now read
+        the other tile. The variance has gone from <strong>1.000 mm&sup2; to 0.710 mm&sup2;</strong>, a fall of 29%,
+        and the standard deviation from 1.000 mm to 0.843 mm. Every generation, birds with unusually deep or
+        unusually shallow beaks left fewer offspring, and the alleles making beaks unusual got rarer. Allele
+        frequencies changed. That is evolution, by the definition you were given, happening in a population whose
+        average never budged.
+      </p>
+      <p>
+        <strong>Disruptive selection is the mirror image.</strong> Press <em>Disruptive, strong</em> and step
+        through. The mean sits at 10.000 mm the whole time &mdash; again, symmetry &mdash; while the variance climbs
+        past 3 mm&sup2; and the histogram splits into two humps with a hollow in the middle. Nothing about the mean
+        tells you that happened; in fact by generation 8 there is barely a bird left <em>at</em> the mean. That is
+        not a made-up scenario: in the African black-bellied seedcracker, birds with small bills eat soft sedge
+        seeds and birds with large bills crack hard ones, and the intermediates are worst at both.
+      </p>
+      <p>
+        <strong>Now separate S from R.</strong> S, the selection differential, is measured <em>inside</em> one
+        generation: how much better the birds that actually bred were than the population they came from. R, the
+        response, is measured <em>between</em> generations: how far the mean really moved. They are not the same
+        number, and the gap between them is heritability, R = h<sup>2</sup>S. Press <em>The h&sup2; = 0 test</em>.
+        Selection is switched hard on and it works &mdash; the orange curve of breeders is visibly shifted to the
+        right of the blue histogram, and S reads <strong>0.300 mm</strong>. But nothing about being a deep-beaked
+        bird was inherited, so R reads <strong>0.000 mm</strong>, the dashed next-generation curve lies exactly on
+        top of the current one, and you can press Step forever without the mean moving a micrometre. Selection
+        without heritable variation is not evolution. Turn h<sup>2</sup> up to 0.50 and the same selection now
+        gives S = 0.300 mm and R = 0.150 mm: half of what the survivors had is passed on, because half of what made
+        them different was never genetic in the first place.
+      </p>
+      <p>
+        <strong>Where the model stops being true.</strong> The population here is infinite, so nothing drifts.
+        There is no mutation, so the variance stabilizing selection removes is gone for good and the run bottoms
+        out at the environmental floor &mdash; in a real population, mutation keeps feeding variance back in and
+        the two forces settle at a balance well above zero. And two peaks under disruptive selection are not two
+        species: real birds mate, and blending a large-billed parent with a small-billed one puts offspring right
+        back in the valley. Splitting into species needs the two groups to stop interbreeding, which is a separate
+        story this page does not tell.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      // A quantitative trait z (beak depth, mm) in an INFINITE population.
+      // Every individual: z = g + e
+      //   g  breeding value, inherited unchanged by its offspring
+      //   e  non-heritable deviation ~ Normal(0, V_E), redrawn every birth
+      // so V_P = V_A + V_E and h² = V_A/V_P is exactly the parent–offspring
+      // regression slope.
+      //
+      // The population is carried as a density of BREEDING VALUES, Pg, on a
+      // fixed grid. Everything else follows:
+      //
+      //   Pz  = Pg ⊛ φ(V_E)                    phenotype distribution
+      //   Pz* ∝ Pz · w(z)                      the birds that breed
+      //   Pg* ∝ Pg · W(g),  W(g) = E_e[w(g+e)] their breeding values
+      //   Pg(next) = Pg*                       g is inherited unchanged
+      //
+      // W is the fitness function smeared by the environmental noise. All
+      // three fitness modes are built from Gaussians, so W is closed-form:
+      //
+      //   DIRECTIONAL  w = exp(β(z−θ))            W = exp(β(g−θ)) · const
+      //   STABILIZING  w = exp(−γ(z−θ)²/2)        W = exp(−(g−θ)²/(2(1/γ+V_E)))
+      //   DISRUPTIVE   w = 1 − d·exp(−(z−θ)²/2σd²)
+      //                W = 1 − d·(σd/√(σd²+V_E))·exp(−(g−θ)²/(2(σd²+V_E)))
+      //
+      // Why this reproduces the breeder's equation exactly. For a bivariate
+      // normal (g, z), E[g|z] is linear with slope h², so weighting by ANY
+      // fitness function gives E[g|bred] − E[g] = h²(E[z|bred] − E[z]), i.e.
+      // R = h²S. Checked here against closed form:
+      //   directional, s = 0.40, h² = 0.50:  S = 0.200000, R = 0.100000 mm
+      //   stabilizing, s = 0.40, h² = 0.50:  S = 0, V(breeders) = 0.757576,
+      //                                      V next gen = 0.939394 mm²
+      // With h² = 0, V_A = 0 and Pg is a single point: multiplying it by W
+      // cannot move it, so R = 0 structurally, for any S.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      // ---- trait grid (mm) ----
+      var ZMIN = 3, ZMAX = 34, DZ = 0.025;
+      var M = Math.round((ZMAX - ZMIN) / DZ) + 1;
+      var Z = new Float64Array(M);
+      for (var gi = 0; gi < M; gi++) Z[gi] = ZMIN + gi * DZ;
+
+      // ---- fixed biology ----
+      var MU0 = 10.0;        // mm,  starting mean beak depth
+      var VP0 = 1.0;         // mm², starting phenotypic variance
+      var THETA = 10.0;      // mm,  the beak depth the seeds favour
+      var SIGD = 1.0;        // mm,  half-width of the disruptive fitness valley
+      var BETA_MAX = 0.5;    // mm⁻¹
+      var GAM_MAX = 0.8;     // mm⁻²
+      var DEP_MAX = 0.9;     // dimensionless, deepest the valley can get
+      var MAXGEN = 30;
+      var EDGE = 28.0;       // mm, stop before the density reaches the grid edge
+      var FMAX = 3.0;        // top of the relative-fitness axis
+      var NBIN = 56;
+
+      // ---- state ----
+      var St = { mode: 'stab', s: 0.4, h2: 0.5, gen: 0, showNext: true, stalled: false };
+      var VA0 = 0.5, VE = 0.5;
+      var Pg = null, PzCache = null, KE = null;
+      var hist = [];
+      var xlo = 6, xhi = 14;
+
+      // ==================================================================
+      // grid utilities
+      // ==================================================================
+      function gaussMass(mu, V) {
+        var P = new Float64Array(M), sum = 0, i;
+        if (V <= 1e-12) {
+          P[Demo.clamp(Math.round((mu - ZMIN) / DZ), 0, M - 1)] = 1;
+          return P;
+        }
+        for (i = 0; i < M; i++) { var d = Z[i] - mu; P[i] = Math.exp(-d * d / (2 * V)); sum += P[i]; }
+        for (i = 0; i < M; i++) P[i] /= sum;
+        return P;
+      }
+
+      function kernel(V) {
+        if (V <= 1e-12) return { k: new Float64Array([1]), h: 0 };
+        var h = Math.ceil(5 * Math.sqrt(V) / DZ), n = 2 * h + 1;
+        var k = new Float64Array(n), sum = 0, j;
+        for (j = 0; j < n; j++) { var d = (j - h) * DZ; k[j] = Math.exp(-d * d / (2 * V)); sum += k[j]; }
+        for (j = 0; j < n; j++) k[j] /= sum;
+        return { k: k, h: h };
+      }
+
+      function conv(P, K) {
+        if (K.k.length === 1) return P.slice();
+        var out = new Float64Array(M), n = K.k.length, hh = K.h, sum = 0, i, j, t, p;
+        for (i = 0; i < M; i++) {
+          p = P[i];
+          if (p < 1e-15) continue;
+          for (j = 0; j < n; j++) { t = i + j - hh; if (t >= 0 && t < M) out[t] += p * K.k[j]; }
+        }
+        for (i = 0; i < M; i++) sum += out[i];
+        if (sum > 0) for (i = 0; i < M; i++) out[i] /= sum;
+        return out;
+      }
+
+      function moments(P) {
+        var mu = 0, v = 0, i, d;
+        for (i = 0; i < M; i++) mu += Z[i] * P[i];
+        for (i = 0; i < M; i++) { d = Z[i] - mu; v += d * d * P[i]; }
+        return { mu: mu, v: v };
+      }
+
+      // ==================================================================
+      // fitness
+      // ==================================================================
+      function beta() { return BETA_MAX * St.s; }
+      function gam() { return GAM_MAX * St.s; }
+      function dep() { return DEP_MAX * St.s; }
+
+      // w(z): relative fitness of an individual whose PHENOTYPE is z
+      function wOf(z) {
+        var d = z - THETA;
+        if (St.mode === 'dir') return Math.exp(beta() * d);
+        if (St.mode === 'stab') return Math.exp(-gam() * d * d / 2);
+        return 1 - dep() * Math.exp(-d * d / (2 * SIGD * SIGD));
+      }
+
+      // W(g) = E_e[ w(g + e) ]: the same fitness seen through environmental noise
+      function WOf(g) {
+        var d = g - THETA, vW;
+        if (St.mode === 'dir') return Math.exp(beta() * d);
+        if (St.mode === 'stab') {
+          if (gam() <= 0) return 1;
+          vW = 1 / gam() + VE;
+          return Math.exp(-d * d / (2 * vW));
+        }
+        vW = SIGD * SIGD + VE;
+        return 1 - dep() * (SIGD / Math.sqrt(vW)) * Math.exp(-d * d / (2 * vW));
+      }
+
+      // ==================================================================
+      // one generation's worth of derived quantities
+      // ==================================================================
+      function derive() {
+        var i, sum, d;
+        var Pz = PzCache;
+        var mp = moments(Pz);
+        var mg = moments(Pg);
+
+        var wv = new Float64Array(M), wbar = 0;
+        for (i = 0; i < M; i++) { wv[i] = wOf(Z[i]); wbar += Pz[i] * wv[i]; }
+
+        var Ps = new Float64Array(M); sum = 0;
+        for (i = 0; i < M; i++) { Ps[i] = Pz[i] * wv[i]; sum += Ps[i]; }
+        for (i = 0; i < M; i++) Ps[i] /= sum;
+        var ms = moments(Ps);
+
+        var Pgn = new Float64Array(M); sum = 0;
+        for (i = 0; i < M; i++) { Pgn[i] = Pg[i] * WOf(Z[i]); sum += Pgn[i]; }
+        for (i = 0; i < M; i++) Pgn[i] /= sum;
+        var mgn = moments(Pgn);
+
+        var h2r = mp.v > 0 ? mg.v / mp.v : 0;
+        d = ms.mu - mp.mu;
+        return {
+          Pz: Pz, Ps: Ps, Pgn: Pgn,
+          mean: mp.mu, V: mp.v, VA: mg.v, VE: VE,
+          Vs: ms.v, muS: ms.mu,
+          S: d, R: mgn.mu - mg.mu, pred: h2r * d,
+          Vnext: mgn.v + VE, meanNext: mgn.mu,
+          h2r: h2r, wbar: wbar, wmu: wOf(mp.mu) / wbar
+        };
+      }
+
+      // ==================================================================
+      // population lifecycle
+      // ==================================================================
+      function resetPop() {
+        VA0 = St.h2 * VP0;
+        VE = (1 - St.h2) * VP0;
+        KE = kernel(VE);
+        Pg = gaussMass(MU0, VA0);
+        PzCache = conv(Pg, KE);
+        St.gen = 0;
+        St.stalled = false;
+        xlo = 6; xhi = 14;
+        var m = moments(PzCache);
+        hist = [{ mean: m.mu, V: m.v }];
+      }
+
+      function stepGen() {
+        if (St.gen >= MAXGEN || St.stalled) return false;
+        var D = derive();
+        if (D.meanNext > EDGE) { St.stalled = true; return false; }
+        Pg = D.Pgn;
+        PzCache = conv(Pg, KE);
+        St.gen++;
+        var m = moments(PzCache);
+        hist.push({ mean: m.mu, V: m.v });
+        return true;
+      }
+
+      // ==================================================================
+      // binning for the histogram
+      // ==================================================================
+      function binned(P, lo, hi, nb) {
+        var out = new Float64Array(nb), bw = (hi - lo) / nb, i, b;
+        for (i = 0; i < M; i++) {
+          if (P[i] < 1e-15) continue;
+          b = Math.floor((Z[i] - lo) / bw);
+          if (b >= 0 && b < nb) out[b] += P[i];
+        }
+        for (b = 0; b < nb; b++) out[b] /= bw;   // density, per mm
+        return out;
+      }
+
+      function peakOf(a) { var m = 0, i; for (i = 0; i < a.length; i++) if (a[i] > m) m = a[i]; return m; }
+
+      // ==================================================================
+      // canvas helpers
+      // ==================================================================
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var loX = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, loX, Math.max(loX, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function stepLine(ctx, vals, lo, hi, Xp, Yp) {
+        var nb = vals.length, bw = (hi - lo) / nb, b, xa, xb, y;
+        ctx.beginPath();
+        for (b = 0; b < nb; b++) {
+          xa = Xp(lo + b * bw); xb = Xp(lo + (b + 1) * bw); y = Yp(vals[b]);
+          if (b === 0) ctx.moveTo(xa, y); else ctx.lineTo(xa, y);
+          ctx.lineTo(xb, y);
+        }
+        ctx.stroke();
+      }
+
+      // ==================================================================
+      // MAIN CANVAS — distribution + fitness
+      // ==================================================================
+      var distCv = Demo.canvas('#dist', function (ctx, w, h, c) {
+        if (!Pg) return;
+        var D = derive();
+        var narrow = w < 380;
+        var padL = narrow ? 34 : 42, padR = narrow ? 32 : 44, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.2 : 10.5;
+        var i, b, px;
+
+        // --- window (ratchets outward only, so generations stay comparable) ---
+        var sd = Math.sqrt(D.V), sdS = Math.sqrt(D.Vs), sdN = Math.sqrt(D.Vnext);
+        var wide = Math.max(sd, sdS, sdN);
+        var needLo = Math.min(D.mean - 4.2 * wide, THETA - 2.5);
+        var needHi = Math.max(D.mean + 4.2 * wide, THETA + 2.5);
+        // never show trait values the grid does not carry (no negative beaks)
+        xlo = Math.max(ZMIN, Math.min(xlo, Math.floor(needLo)));
+        xhi = Math.min(ZMAX, Math.max(xhi, Math.ceil(needHi)));
+
+        var bNow = binned(D.Pz, xlo, xhi, NBIN);
+        var bSur = binned(D.Ps, xlo, xhi, NBIN);
+        var bNext = St.showNext ? binned(conv(D.Pgn, KE), xlo, xhi, NBIN) : null;
+        var dmax = Math.max(peakOf(bNow), peakOf(bSur), bNext ? peakOf(bNext) : 0);
+        dmax = Math.max(0.55, dmax * 1.14);
+
+        function Xz(z) { return x0 + (x1 - x0) * (z - xlo) / (xhi - xlo); }
+        function Yd(d) { return y0 - (y0 - y1) * Demo.clamp(d, 0, dmax) / dmax; }
+        function Yf(f) { return y0 - (y0 - y1) * Demo.clamp(f, 0, FMAX) / FMAX; }
+
+        // --- gridlines + left axis (density) ---
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(dmax * i / 4, 2), x0 - 5, gy);
+          ctx.fillStyle = c.series[2]; ctx.textAlign = 'left';
+          ctx.fillText(F.dec(FMAX * i / 4, 1), x1 + 5, gy);
+        }
+
+        // --- relative fitness = 1 reference ---
+        ctx.strokeStyle = c.series[2]; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Yf(1)); ctx.lineTo(x1, Yf(1)); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+        // --- bars: this generation ---
+        var bw = (xhi - xlo) / NBIN;
+        ctx.fillStyle = c.series[0];
+        ctx.globalAlpha = 0.42;
+        for (b = 0; b < NBIN; b++) {
+          if (bNow[b] <= 0) continue;
+          var bx = Xz(xlo + b * bw), bx2 = Xz(xlo + (b + 1) * bw), by = Yd(bNow[b]);
+          ctx.fillRect(bx, by, Math.max(1, bx2 - bx - 0.6), y0 - by);
+        }
+        ctx.globalAlpha = 1;
+
+        // --- fitness curve (right axis) ---
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+        ctx.strokeStyle = c.series[2]; ctx.lineWidth = 2.1; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var zz = xlo + (px - x0) / (x1 - x0) * (xhi - xlo);
+          var yy = Yf(wOf(zz) / D.wbar);
+          if (px === x0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // --- the breeders ---
+        ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2.1; ctx.lineJoin = 'round';
+        stepLine(ctx, bSur, xlo, xhi, Xz, Yd);
+
+        // --- next generation ---
+        if (bNext) {
+          ctx.save();
+          ctx.strokeStyle = c.series[3]; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+          stepLine(ctx, bNext, xlo, xhi, Xz, Yd);
+          ctx.restore();
+        }
+
+        // --- theta and the current mean ---
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(Xz(THETA), y1); ctx.lineTo(Xz(THETA), y0); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(Xz(D.mean), y1 + 12); ctx.lineTo(Xz(D.mean), y0); ctx.stroke();
+
+        // --- axes ---
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // --- x ticks ---
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var span = xhi - xlo;
+        var tick = span <= 10 ? 1 : span <= 20 ? 2 : 4;
+        for (var zt = Math.ceil(xlo / tick) * tick; zt <= xhi + 1e-9; zt += tick) {
+          px = Xz(zt);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(Math.round(zt)), px, y0 + 6);
+        }
+        ctx.fillStyle = c.muted;
+        ctx.fillText('beak depth (mm)', (x0 + x1) / 2, y0 + 20);
+
+        // --- axis titles ---
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('density (per mm)', 1, 3);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = c.series[2];
+        ctx.fillText('relative fitness', w - 1, 3);
+
+        // --- labels ---
+        chip(ctx, c, Xz(D.mean), y1 + 11, 'mean ' + F.dec(D.mean, 3) + ' mm', fs, c.series[0], w, 'center', x0 + 1);
+        chip(ctx, c, Xz(THETA), y0 - 4, 'θ ' + F.dec(THETA, 2) + ' mm', fs, c.muted, w, 'center', x0 + 1);
+      }, { aspect: 0.6, minHeight: 235, maxHeight: 330 });
+
+      // ==================================================================
+      // HISTORY CANVAS — mean and variance, side by side
+      // ==================================================================
+      var histCv = Demo.canvas('#hist', function (ctx, w, h, c) {
+        if (!hist.length) return;
+        var gap = 12, pw = (w - gap) / 2;
+        panel(ctx, c, 0, pw, h, true);
+        panel(ctx, c, pw + gap, pw, h, false);
+      }, { aspect: 0.47, minHeight: 150, maxHeight: 215 });
+
+      function panel(ctx, c, ox, pw, h, isMean) {
+        var fs = pw < 170 ? 8.6 : 9.6;
+        var padL = pw < 170 ? 28 : 32, padR = 6, padT = 28, padB = 24;
+        var x0 = ox + padL, x1 = ox + pw - padR, y1 = padT, y0 = h - padB;
+        var col = isMean ? c.series[0] : c.series[2];
+        var i, n, lo, hi, ref;
+
+        if (isMean) {
+          lo = MU0 - 1; hi = MU0 + 1;
+          for (i = 0; i < hist.length; i++) {
+            lo = Math.min(lo, hist[i].mean - 0.3);
+            hi = Math.max(hi, hist[i].mean + 0.3);
+          }
+          ref = MU0;
+        } else {
+          lo = 0; hi = 1.3;
+          for (i = 0; i < hist.length; i++) hi = Math.max(hi, hist[i].V * 1.15);
+          ref = VP0;
+        }
+
+        function Xg(g) { return x0 + (x1 - x0) * g / MAXGEN; }
+        function Yv(v) { return y0 - (y0 - y1) * Demo.clamp((v - lo) / (hi - lo), 0, 1); }
+
+        // title
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + (fs + 1.6) + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(isMean ? 'Mean' : 'Variance', ox + 2, 1);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        var last = hist[hist.length - 1];
+        ctx.fillText(isMean ? F.dec(last.mean, 3) + ' mm' : F.dec(last.V, 3) + ' mm²', ox + 2, 14);
+
+        // gridlines
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+        for (i = 0; i <= 3; i++) {
+          var val = lo + (hi - lo) * i / 3;
+          var gy = Yv(val);
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(val, isMean ? 1 : 2), x0 - 4, gy);
+        }
+
+        // starting-value reference
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.2; ctx.globalAlpha = 0.75;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Yv(ref)); ctx.lineTo(x1, Yv(ref)); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+        // axes
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // the trace
+        ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (n = 0; n < hist.length; n++) {
+          var yy = Yv(isMean ? hist[n].mean : hist[n].V);
+          if (n === 0) ctx.moveTo(Xg(n), yy); else ctx.lineTo(Xg(n), yy);
+        }
+        ctx.stroke();
+
+        // current point
+        var cy = Yv(isMean ? last.mean : last.V);
+        ctx.beginPath(); ctx.arc(Xg(hist.length - 1), cy, 3.6, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.5; ctx.stroke();
+
+        // x ticks
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.font = (fs - 0.4) + FONT;
+        [0, 10, 20, 30].forEach(function (g) {
+          var px = Xg(g);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(g), px, y0 + 5);
+        });
+        ctx.fillText('generation', (x0 + x1) / 2, y0 + 14);
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        sRange: document.getElementById('sRange'),
+        sOut: document.getElementById('sOut'),
+        sHint: document.getElementById('sHint'),
+        hRange: document.getElementById('hRange'),
+        hOut: document.getElementById('hOut'),
+        btnStep: document.getElementById('btnStep'),
+        btnRun: document.getElementById('btnRun'),
+        btnReset: document.getElementById('btnReset'),
+        chkNext: document.getElementById('chkNext'),
+        edgeNote: document.getElementById('edgeNote'),
+        rGen: document.getElementById('rGen'),
+        rMean: document.getElementById('rMean'),
+        rMeanSub: document.getElementById('rMeanSub'),
+        rVar: document.getElementById('rVar'),
+        rVarSub: document.getElementById('rVarSub'),
+        rSD: document.getElementById('rSD'),
+        rH2: document.getElementById('rH2'),
+        rH2Sub: document.getElementById('rH2Sub'),
+        rS: document.getElementById('rS'),
+        rSSub: document.getElementById('rSSub'),
+        rR: document.getElementById('rR'),
+        rRSub: document.getElementById('rRSub'),
+        rPred: document.getElementById('rPred'),
+        rVs: document.getElementById('rVs'),
+        srNote: document.getElementById('srNote'),
+        normNote: document.getElementById('normNote'),
+        rWmu: document.getElementById('rWmu'),
+        rWmuSub: document.getElementById('rWmuSub'),
+        distLabel: document.getElementById('distLabel'),
+        distCap: document.getElementById('distCap'),
+        histCap: document.getElementById('histCap'),
+        lgNow: document.getElementById('lgNow'),
+        lgSurv: document.getElementById('lgSurv'),
+        lgNext: document.getElementById('lgNext'),
+        lgNextWrap: document.getElementById('lgNextWrap'),
+        lgFit: document.getElementById('lgFit')
+      };
+
+      el.lgNow.style.background = 'var(--series-1)';
+      el.lgSurv.style.background = 'var(--series-2)';
+      el.lgNext.style.background = 'var(--series-4)';
+      el.lgFit.style.background = 'var(--series-3)';
+
+      function modeName() {
+        return St.mode === 'dir' ? 'Directional' : St.mode === 'stab' ? 'Stabilizing' : 'Disruptive';
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        var D = derive();
+        var start = hist[0];
+
+        el.sOut.textContent = F.dec(St.s, 2);
+        el.hOut.textContent = F.dec(St.h2, 2);
+        el.rGen.textContent = String(St.gen);
+
+        el.rMean.innerHTML = F.dec(D.mean, 3) + '<span class="r-unit">mm</span>';
+        el.rVar.innerHTML = F.dec(D.V, 3) + '<span class="r-unit">mm&sup2;</span>';
+        el.rSD.innerHTML = F.dec(Math.sqrt(D.V), 3) + '<span class="r-unit">mm</span>';
+        el.rH2.textContent = F.dec(D.h2r, 3);
+        el.rH2Sub.innerHTML = 'V<sub>A</sub> ' + F.dec(D.VA, 3) + ' / V<sub>P</sub> ' + F.dec(D.V, 3) + ' mm&sup2;';
+
+        var dMean = D.mean - start.mean, dVar = D.V - start.V;
+        if (St.gen === 0) {
+          el.rMeanSub.className = 'r-sub';
+          el.rMeanSub.textContent = 'generation 0 — nothing has happened yet';
+          el.rVarSub.className = 'r-sub';
+          el.rVarSub.textContent = 'generation 0 — nothing has happened yet';
+        } else {
+          if (Math.abs(dMean) < 5e-4) {
+            el.rMeanSub.className = 'r-sub hold';
+            el.rMeanSub.textContent = 'UNMOVED since generation 0 (' + F.dec(start.mean, 3) + ' mm)';
+          } else {
+            el.rMeanSub.className = 'r-sub moved';
+            el.rMeanSub.textContent = 'MOVED ' + (dMean > 0 ? '+' : '−') + F.dec(Math.abs(dMean), 3)
+              + ' mm since generation 0';
+          }
+          if (Math.abs(dVar) < 5e-4) {
+            el.rVarSub.className = 'r-sub hold';
+            el.rVarSub.textContent = 'UNCHANGED since generation 0';
+          } else {
+            el.rVarSub.className = 'r-sub moved';
+            el.rVarSub.textContent = (dVar < 0 ? 'FALLEN ' : 'RISEN ') + F.pct(Math.abs(dVar) / start.V, 1)
+              + ' since generation 0 (' + F.dec(start.V, 3) + ' mm²)';
+          }
+        }
+
+        el.rS.innerHTML = F.dec(D.S, 3) + '<span class="r-unit">mm</span>';
+        el.rR.innerHTML = F.dec(D.R, 3) + '<span class="r-unit">mm</span>';
+        el.rPred.innerHTML = F.dec(D.pred, 3) + '<span class="r-unit">mm</span>';
+        el.rVs.innerHTML = F.dec(D.Vs, 3) + '<span class="r-unit">mm&sup2;</span>';
+        el.rSSub.textContent = 'breeders average ' + F.dec(D.muS, 3) + ' mm, everybody averages '
+          + F.dec(D.mean, 3) + ' mm';
+        el.rRSub.textContent = 'next generation would average ' + F.dec(D.meanNext, 3) + ' mm';
+
+        el.rWmu.textContent = F.dec(D.wmu, 3);
+        if (D.wmu > 1.002) {
+          el.rWmuSub.textContent = 'above average — being typical pays here';
+        } else if (D.wmu < 0.998) {
+          el.rWmuSub.textContent = 'below average — the average bird is worse off than average';
+        } else {
+          el.rWmuSub.textContent = '1.000 means exactly average';
+        }
+
+        // --- S vs R note ---
+        var absS = Math.abs(D.S);
+        if (St.s === 0) {
+          el.srNote.className = 'note';
+          el.srNote.innerHTML = '<strong>Selection is switched off.</strong> The fitness curve is flat at 1.000, '
+            + 'so the breeders are a random sample of everybody: S = 0, R = 0, and nothing will ever change. '
+            + 'Push the strength slider up.';
+        } else if (St.h2 === 0) {
+          el.srNote.className = 'note bad';
+          el.srNote.innerHTML = '<strong>h<sup>2</sup> = 0, so R = 0 no matter what S does.</strong> S is '
+            + F.dec(D.S, 3) + ' mm &mdash; selection really is picking winners, and the orange curve of breeders '
+            + 'is genuinely different from the blue histogram. But none of what made them winners is inherited, '
+            + 'so the dashed next-generation curve sits exactly on top of the current one. '
+            + 'Selection without heritable variation is not evolution.';
+        } else if (absS < 5e-4) {
+          el.srNote.className = 'note';
+          el.srNote.innerHTML = '<strong>S = 0, so R = 0 &mdash; and yet selection is hard at work.</strong> '
+            + 'The fitness curve is symmetric about the population, so the pull to the left exactly cancels the '
+            + 'pull to the right and the mean cannot move. Look at the variance instead: the breeders have '
+            + 'variance ' + F.dec(D.Vs, 3) + ' mm² against the population’s ' + F.dec(D.V, 3)
+            + ' mm². The mean is simply the wrong number to be watching.';
+        } else {
+          el.srNote.className = 'note';
+          el.srNote.innerHTML = '<strong>R = h<sup>2</sup>S.</strong> The breeders beat the population average by '
+            + '<strong>S = ' + F.dec(D.S, 3) + ' mm</strong>, but only the heritable share of that advantage is '
+            + 'passed on: ' + F.dec(D.h2r, 3) + ' &times; ' + F.dec(D.S, 3) + ' = <strong>'
+            + F.dec(D.pred, 3) + ' mm</strong>, and the mean really does move '
+            + F.dec(D.R, 3) + ' mm. The rest of the survivors’ advantage was diet and luck, and luck is '
+            + 'not inherited.';
+        }
+
+        // R = h²S is exact only for a bell-shaped distribution; say so when it is not
+        var mismatch = Math.abs(D.R - D.pred);
+        if (absS > 0.01 && mismatch > 0.02 * Math.max(Math.abs(D.R), 1e-9) && mismatch > 0.004) {
+          el.normNote.hidden = false;
+          el.normNote.innerHTML = '<strong>The breeder’s equation is drifting off here.</strong> R = '
+            + F.dec(D.R, 3) + ' mm but h<sup>2</sup>S predicts ' + F.dec(D.pred, 3) + ' mm. R = h<sup>2</sup>S '
+            + 'is exact only while the distribution is bell-shaped, and this one is not any more — you have '
+            + 'carved it up with disruptive selection. The measured R is the truth; the prediction is the '
+            + 'approximation.';
+        } else {
+          el.normNote.hidden = true;
+        }
+
+        // --- edge guard ---
+        if (St.stalled) {
+          el.edgeNote.hidden = false;
+          el.edgeNote.innerHTML = '<strong>Stopped.</strong> The population has evolved past the range of beak '
+            + 'depths this model tracks (up to ' + F.dec(EDGE, 0) + ' mm). Press Reset, or ease the selection '
+            + 'strength down and start again.';
+        } else {
+          el.edgeNote.hidden = true;
+        }
+
+        el.btnStep.disabled = St.gen >= MAXGEN || St.stalled;
+        if (St.gen >= MAXGEN) {
+          el.edgeNote.hidden = false;
+          el.edgeNote.innerHTML = '<strong>Generation ' + MAXGEN + ' reached.</strong> Press Reset to run it '
+            + 'again with different settings.';
+        }
+
+        el.sHint.innerHTML = hintFor();
+        el.distLabel.innerHTML = modeName() + ' selection <span>&mdash; beak depth in millimetres, with the '
+          + 'fitness function drawn on the same axis</span>';
+        el.distCap.innerHTML = distCaption(D);
+        el.histCap.innerHTML = histCaption(D);
+        el.lgNextWrap.hidden = !St.showNext;
+
+        if (fast) { distCv.paint(); histCv.paint(); }
+        else { distCv.redraw(); histCv.redraw(); }
+      }
+
+      function hintFor() {
+        if (St.mode === 'dir') {
+          return 'Directional: relative fitness rises steadily with beak depth, w = e<sup>β(z−θ)</sup> '
+            + 'with β = ' + F.dec(beta(), 3) + ' mm⁻¹. Deeper is always better, with no best value.';
+        }
+        if (St.mode === 'stab') {
+          return 'Stabilizing: fitness peaks at θ = 10.00 mm and falls off either side, '
+            + 'w = e<sup>−γ(z−θ)²/2</sup> with γ = ' + F.dec(gam(), 3)
+            + ' mm⁻². Being unusual in either direction costs you.';
+        }
+        return 'Disruptive: fitness dips at θ = 10.00 mm and recovers on both sides, so the extremes win and '
+          + 'the middle loses. The valley is ' + F.pct(dep(), 0) + ' deep and about 1.00 mm wide either side.';
+      }
+
+      function distCaption(D) {
+        var s = '';
+        if (St.s === 0) {
+          return 'Selection strength is 0, so the green fitness line is flat at 1.000 and the orange breeders '
+            + 'curve lies exactly on the blue histogram. Nothing distinguishes anybody. Raise the strength slider.';
+        }
+        if (St.mode === 'dir') {
+          s = 'The green fitness curve climbs to the right, so deeper-beaked birds out-reproduce shallower ones '
+            + 'at every depth. The orange breeders curve is the blue histogram shifted right by S = '
+            + F.dec(D.S, 3) + ' mm. The dashed next generation is shifted by only R = ' + F.dec(D.R, 3)
+            + ' mm — that gap is heritability.';
+        } else if (St.mode === 'stab') {
+          s = 'The green fitness curve peaks right where the population already sits, so nothing pulls the mean '
+            + 'sideways: the orange breeders curve is centred on the same ' + F.dec(D.mean, 3)
+            + ' mm as the blue histogram. It is <em>narrower</em>. Variance among the breeders is '
+            + F.dec(D.Vs, 3) + ' mm² against ' + F.dec(D.V, 3) + ' mm² for everybody, and the dashed '
+            + 'next generation inherits part of that narrowing: ' + F.dec(D.Vnext, 3) + ' mm².';
+        } else {
+          s = 'The green fitness curve dips exactly where most of the birds are, so the average bird is the '
+            + 'worst off. The orange breeders curve has a hollow in the middle: variance among them is '
+            + F.dec(D.Vs, 3) + ' mm² against ' + F.dec(D.V, 3) + ' mm² for everybody. Keep stepping '
+            + 'and the single hump splits into two.';
+        }
+        if (St.h2 === 0) {
+          s += ' With h<sup>2</sup> = 0 the dashed next-generation curve is pinned on top of the blue histogram, '
+            + 'however far the orange curve moves.';
+        }
+        return s;
+      }
+
+      function histCaption(D) {
+        var start = hist[0];
+        var dV = D.V - start.V, dM = D.mean - start.mean;
+        if (St.gen === 0) {
+          return 'Generation 0. Both traces start on their dashed reference lines: mean '
+            + F.dec(start.mean, 3) + ' mm, variance ' + F.dec(start.V, 3)
+            + ' mm². Press Step generation and watch which one leaves its line.';
+        }
+        var a = 'After ' + St.gen + ' generation' + (St.gen === 1 ? '' : 's') + ': mean ';
+        a += Math.abs(dM) < 5e-4
+          ? '<strong>still exactly ' + F.dec(D.mean, 3) + ' mm</strong>'
+          : F.dec(start.mean, 3) + ' → <strong>' + F.dec(D.mean, 3) + ' mm</strong>';
+        a += ', variance ';
+        a += Math.abs(dV) < 5e-4
+          ? '<strong>still ' + F.dec(D.V, 3) + ' mm²</strong>'
+          : F.dec(start.V, 3) + ' → <strong>' + F.dec(D.V, 3) + ' mm²</strong> ('
+            + (dV < 0 ? 'down ' : 'up ') + F.pct(Math.abs(dV) / start.V, 0) + ')';
+        a += '.';
+        if (Math.abs(dM) < 5e-4 && Math.abs(dV) > 5e-4) {
+          a += ' A flat mean line and a moving variance line at the same time is the whole point: the population '
+            + 'is changing and the average is not reporting it.';
+        }
+        if (St.mode === 'stab' && St.h2 > 0 && St.gen > 3) {
+          a += ' The variance is heading for the environmental floor V<sub>E</sub> = ' + F.dec(VE, 3)
+            + ' mm² — selection can only remove the genetic part of the spread, and there is no '
+            + 'mutation in this model to put any back.';
+        }
+        return a;
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var runner;
+
+      function stopRun() {
+        if (runner && runner.running) runner.stop();
+        el.btnRun.textContent = 'Run';
+      }
+
+      var modeBtns = Array.prototype.slice.call(document.querySelectorAll('#modeSeg button'));
+      function setMode(m) {
+        St.mode = m;
+        modeBtns.forEach(function (b) {
+          b.setAttribute('aria-selected', b.dataset.mode === m ? 'true' : 'false');
+        });
+      }
+      modeBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setMode(b.dataset.mode); render(false); });
+      });
+
+      Demo.range('#sRange', function (v) { St.s = v; if (Pg) render(false); });
+
+      Demo.range('#hRange', function (v) {
+        St.h2 = v;
+        stopRun();
+        resetPop();
+        render(false);
+      });
+
+      el.chkNext.addEventListener('change', function () { St.showNext = this.checked; render(false); });
+
+      el.btnStep.addEventListener('click', function () { stepGen(); render(false); });
+
+      el.btnReset.addEventListener('click', function () { stopRun(); resetPop(); render(false); });
+
+      Array.prototype.slice.call(document.querySelectorAll('#presets .btn')).forEach(function (b) {
+        b.addEventListener('click', function () {
+          stopRun();
+          setMode(b.dataset.mode);
+          St.s = parseFloat(b.dataset.s);
+          St.h2 = parseFloat(b.dataset.h);
+          el.sRange.value = St.s;
+          el.hRange.value = St.h2;
+          resetPop();
+          render(false);
+        });
+      });
+
+      // auto-stepper: about 2.5 generations a second
+      var acc = 0;
+      runner = Demo.loop(function (dt) {
+        acc += dt;
+        while (acc >= 0.4) {
+          acc -= 0.4;
+          if (!stepGen()) { stopRun(); break; }
+        }
+        render(true);
+      });
+
+      el.btnRun.addEventListener('click', function () {
+        if (runner.running) { stopRun(); return; }
+        if (St.gen >= MAXGEN || St.stalled) { resetPop(); }
+        acc = 0;
+        runner.start();
+        el.btnRun.textContent = 'Pause';
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      setMode('stab');
+      render(false);
+    })();
+  </script>
+</body>
+
+</html>

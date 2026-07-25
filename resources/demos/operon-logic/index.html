@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Operon Logic: predict the mutant | Dr. Andres Barboza</title>
+  <meta name="description" content="The lac operon is an AND gate: it needs lactose present AND glucose absent. Toggle all four conditions, predict what four classic mutants do, then switch to eukaryotic enhancers and turn the same gene on in liver and off in neuron.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, the prediction rows, TF swatches */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 26px; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .btn.is-on {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+    .btn.is-on.tog-off {
+      background: var(--surface-2);
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    /* prediction rows */
+    .qrow { display: block; }
+    .qrow + .qrow { margin-top: 9px; border-top: 1px solid var(--line-soft); padding-top: 9px; }
+    .qlab { font-size: 12.5px; font-weight: 500; color: var(--text); display: block; margin-bottom: 5px; }
+    .qrow .seg button { font-size: 11.5px; padding: 6px 3px; }
+    .qres { font-size: 11.5px; color: var(--muted); display: block; margin-top: 5px; line-height: 1.45; }
+    .qres.ok  { color: var(--ok);  font-weight: 600; }
+    .qres.bad { color: var(--bad); font-weight: 600; }
+
+    /* transcription-factor list */
+    .tf-list { display: flex; flex-direction: column; gap: 8px; }
+    .tf-line { display: flex; align-items: center; gap: 9px; }
+    .tf-line .check { flex: 1; min-width: 0; gap: 7px; }
+    .tfdot { width: 11px; height: 11px; border-radius: 3px; flex: none; display: inline-block; }
+    .tf-tag {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.03em;
+      padding: 2px 7px; border-radius: 20px; white-space: nowrap; flex: none;
+      background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+    }
+    .tf-tag.on  { background: var(--ok-soft);  border-color: transparent; color: var(--ok); }
+    .tf-tag.off { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Operon Logic: predict the mutant</h1>
+        <p class="demo-sub">Turn lactose on. Now turn glucose on as well and watch transcription collapse. Then pick a mutant and predict all four boxes before you reveal them.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Gene expression &amp; regulation</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ======================= STAGE ======================= -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Which regulation system" id="tabSeg">
+          <button role="tab" aria-selected="true" data-tab="lac">lac operon</button>
+          <button role="tab" aria-selected="false" data-tab="euk">Eukaryotic enhancers</button>
+        </div>
+
+        <!-- ---------- TAB 1 ---------- -->
+        <div id="stageLac">
+          <p class="stage-label" style="margin-top:12px" id="lacLabel">The operon right now <span>&mdash; wild type</span></p>
+          <canvas id="operon" role="img"
+                  aria-label="Map of the lac operon showing the lacI gene, the CAP site, promoter and operator, and the lacZ, lacY and lacA genes, with the repressor, CAP-cAMP and RNA polymerase drawn in or out of position, plus a transcription-level bar on a logarithmic and a linear scale."></canvas>
+
+          <div class="legend">
+            <span class="lg"><i style="background:var(--series-4)"></i>lac repressor</span>
+            <span class="lg"><i style="background:var(--series-3)"></i>CAP&ndash;cAMP</span>
+            <span class="lg"><i style="background:var(--series-1)"></i>RNA polymerase</span>
+            <span class="lg"><i style="background:var(--warn)"></i>allolactose / cAMP</span>
+          </div>
+          <p class="stage-caption" id="operonCap">&nbsp;</p>
+
+          <hr class="sep" style="margin:16px 0">
+
+          <p class="stage-label">All four conditions <span id="grid4Sub">&mdash; wild type</span></p>
+          <canvas id="grid4" role="img"
+                  aria-label="Bar chart of transcription level in all four combinations of lactose and glucose for the selected genotype, on a logarithmic axis."></canvas>
+          <p class="stage-caption" id="grid4Cap">&nbsp;</p>
+        </div>
+
+        <!-- ---------- TAB 2 ---------- -->
+        <div id="stageEuk" hidden>
+          <p class="stage-label" style="margin-top:12px" id="eukLabel">One gene, one genome <span>&mdash; hepatocyte</span></p>
+          <canvas id="euk" role="img"
+                  aria-label="Map of a eukaryotic gene with two distant enhancers, a silencer, a GC box and a transcription start site, showing which transcription factors are bound in the chosen cell type and DNA loops carrying bound activators to the mediator complex at the promoter."></canvas>
+
+          <div class="legend">
+            <span class="lg"><i style="background:var(--series-1)"></i>HNF-4&alpha;</span>
+            <span class="lg"><i style="background:var(--series-3)"></i>C/EBP&alpha;</span>
+            <span class="lg"><i style="background:var(--series-2)"></i>Sp1</span>
+            <span class="lg"><i style="background:var(--bad)"></i>REST (repressor)</span>
+            <span class="lg"><i style="background:var(--series-4)"></i>MyoD</span>
+          </div>
+          <p class="stage-caption" id="eukCap">&nbsp;</p>
+
+          <hr class="sep" style="margin:16px 0">
+
+          <p class="stage-label">The same gene in three cells <span>&mdash; identical DNA sequence in all three</span></p>
+          <canvas id="cells3" role="img"
+                  aria-label="Bar chart comparing transcription of the same gene in a hepatocyte, a skeletal muscle cell and a neuron, on a logarithmic axis."></canvas>
+          <p class="stage-caption" id="cells3Cap">&nbsp;</p>
+        </div>
+      </div>
+
+      <!-- ======================= CONTROLS ======================= -->
+      <div class="controls">
+
+        <!-- ---------- TAB 1 CONTROLS ---------- -->
+        <div id="ctrlLac">
+
+          <div class="panel">
+            <div class="panel-title">Conditions in the medium</div>
+            <div class="stack">
+              <div class="btn-row">
+                <button class="btn is-on tog-off" id="btnLac">Lactose: absent</button>
+                <button class="btn is-on tog-off" id="btnGlu">Glucose: absent</button>
+              </div>
+              <p class="ctrl-hint">Two independent switches, four combinations. Try all four before you touch the mutants.</p>
+              <div class="btn-row" id="condPresets">
+                <button class="btn" data-l="0" data-g="0">lac&minus; glu&minus;</button>
+                <button class="btn" data-l="0" data-g="1">lac&minus; glu+</button>
+                <button class="btn" data-l="1" data-g="0">lac+ glu&minus;</button>
+                <button class="btn" data-l="1" data-g="1">lac+ glu+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Output</div>
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Transcription of lacZ Y A</div>
+                <div class="r-value big" id="rLevel">0.500<span class="r-unit">% of max</span></div>
+                <div class="r-sub" id="rVerdict">operon OFF (basal only)</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Repressor on operator</div>
+                <div class="r-value" id="rRep" style="font-size:15px">YES</div>
+                <div class="r-sub" id="rRepSub">promoter blocked</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">CAP&ndash;cAMP on CAP site</div>
+                <div class="r-value" id="rCap" style="font-size:15px">YES</div>
+                <div class="r-sub" id="rCapSub">cAMP high</div>
+              </div>
+            </div>
+            <p class="note" id="lacNote" style="margin-top:11px">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Genotype</div>
+            <div class="stack">
+              <select id="genotype" aria-label="Genotype">
+                <option value="wt">Wild type</option>
+                <option value="lacI">lacI&#8315; &mdash; no functional repressor</option>
+                <option value="oc">O&#7580; &mdash; operator cannot bind repressor</option>
+                <option value="lacIs">lacI&#738; &mdash; super-repressor, cannot be induced</option>
+                <option value="cap">CAP&#8315; &mdash; no functional CAP protein</option>
+              </select>
+              <p class="ctrl-hint" id="genoHint">Everything works. Repressor sits on the operator until allolactose lifts it off; CAP&ndash;cAMP only shows up when glucose is gone.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Predict the mutant</div>
+            <div class="stack">
+              <div class="btn-row">
+                <button class="btn primary" id="btnQuizStart">Start prediction round</button>
+                <button class="btn" id="btnReveal" disabled>Reveal</button>
+              </div>
+              <p class="ctrl-hint" id="quizHint">
+                Starting a round hides the transcription numbers. The molecular picture keeps working, so
+                you reason from the diagram, not from the answer.
+              </p>
+              <div id="quizRows"></div>
+              <div class="readouts two" id="scoreWrap" hidden>
+                <div class="readout span2" id="scoreBox">
+                  <div class="r-label">Score</div>
+                  <div class="r-value" id="quizScore">0 / 4</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Honest limits</div>
+            <p class="note warn">
+              <strong>The inducer is allolactose, not lactose.</strong> Lactose that gets into the cell is
+              converted by &beta;-galactosidase into allolactose, and <em>that</em> is the molecule that binds
+              the repressor. This page draws lactose and allolactose as one amber ligand for clarity.
+            </p>
+            <p class="note" style="margin-top:10px">
+              <strong>&ldquo;Off&rdquo; is never zero.</strong> A fully repressed lac operon still transcribes at
+              about 0.5% of maximum here. That leak is not a rounding error &mdash; it is the reason the cell owns
+              a few permease and &beta;-galactosidase molecules at all times, which is the only way lactose can get
+              in and be turned into allolactose in the first place. A truly silent operon could never be induced.
+            </p>
+            <p class="ctrl-hint" style="margin-top:11px">
+              What is simplified. The real operon has three operators (O<sub>1</sub>, O<sub>2</sub>, O<sub>3</sub>)
+              and the repressor is a tetramer that loops the DNA between them; here there is one operator.
+              Glucose is modelled only through cAMP and CAP. In a real cell glucose <em>also</em> blocks lactose
+              uptake directly &mdash; unphosphorylated EIIA<sup>Glc</sup> shuts down the lac permease, which is
+              called inducer exclusion. Levels are percentages of the fully induced rate, not molecules per
+              minute; the exact percentages are illustrative, the ordering and the logic are not.
+            </p>
+          </div>
+        </div>
+
+        <!-- ---------- TAB 2 CONTROLS ---------- -->
+        <div id="ctrlEuk" hidden>
+
+          <div class="panel">
+            <div class="panel-title">Which cell are you in?</div>
+            <div class="stack">
+              <select id="cellType" aria-label="Cell type">
+                <option value="liver">Hepatocyte (liver cell)</option>
+                <option value="muscle">Skeletal muscle cell</option>
+                <option value="neuron">Neuron</option>
+              </select>
+              <p class="ctrl-hint">
+                Every one of these cells carries the <strong>same</strong> gene, the same enhancers and the same
+                silencer &mdash; the same DNA sequence, letter for letter. Only the set of transcription factor
+                proteins in the nucleus differs.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Transcription factors in the nucleus</div>
+            <div class="tf-list">
+              <div class="tf-line">
+                <label class="check"><input type="checkbox" id="tfHNF4"><span class="tfdot" style="background:var(--series-1)"></span>HNF-4&alpha;</label>
+                <span class="tf-tag" id="tagHNF4">Enhancer 1</span>
+              </div>
+              <div class="tf-line">
+                <label class="check"><input type="checkbox" id="tfCEBP"><span class="tfdot" style="background:var(--series-3)"></span>C/EBP&alpha;</label>
+                <span class="tf-tag" id="tagCEBP">Enhancer 2</span>
+              </div>
+              <div class="tf-line">
+                <label class="check"><input type="checkbox" id="tfSP1" checked><span class="tfdot" style="background:var(--series-2)"></span>Sp1</label>
+                <span class="tf-tag" id="tagSP1">GC box</span>
+              </div>
+              <div class="tf-line">
+                <label class="check"><input type="checkbox" id="tfREST"><span class="tfdot" style="background:var(--bad)"></span>REST</label>
+                <span class="tf-tag" id="tagREST">Silencer</span>
+              </div>
+              <div class="tf-line">
+                <label class="check"><input type="checkbox" id="tfMYOD"><span class="tfdot" style="background:var(--series-4)"></span>MyoD</label>
+                <span class="tf-tag" id="tagMYOD">no site</span>
+              </div>
+            </div>
+            <p class="ctrl-hint" style="margin-top:11px">
+              Tick a box that the cell type did not give you and you have built a cell that does not exist &mdash;
+              which is exactly the experiment. Put HNF-4&alpha; and C/EBP&alpha; into the neuron and the gene
+              still barely moves; now untick REST as well.
+            </p>
+            <div class="btn-row" style="margin-top:11px">
+              <button class="btn" id="btnCellReset">Back to the real cell</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Output</div>
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Transcription of the gene</div>
+                <div class="r-value big" id="rEukLevel">100.0<span class="r-unit">% of max</span></div>
+                <div class="r-sub" id="rEukVerdict">gene ON</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Activators bound</div>
+                <div class="r-value" id="rEukAct" style="font-size:15px">3 of 3</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Silencer occupied</div>
+                <div class="r-value" id="rEukSil" style="font-size:15px">NO</div>
+              </div>
+            </div>
+            <p class="note" id="eukNote" style="margin-top:11px">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">How the number is built</div>
+            <p class="ctrl-hint">
+              Basal promoter 2.0 units. Each bound activator <em>multiplies</em>: Sp1 &times;1.5, HNF-4&alpha;
+              &times;5, C/EBP&alpha; &times;6. REST on the silencer divides by 12. Full activation is
+              2.0 &times; 1.5 &times; 5 &times; 6 = 90.0 units, and the readout is that raw figure as a
+              percentage of 90.0. Multiplying, not adding, is the point: two activators together give far more
+              than the two of them separately, which is why enhancers behave as combinations rather than as a
+              tally.
+            </p>
+            <p class="note warn" style="margin-top:11px">
+              <strong>What is simplified.</strong> The horizontal axis of the map is not to scale; the enhancers
+              really are thousands of base pairs away and their positions here are squashed so they fit. Real
+              enhancers also work in either orientation and from either side of the gene. Chromatin is left out
+              entirely &mdash; in a real neuron REST does not just sit there, it recruits histone deacetylases
+              and the region is packed away, which is a far more durable off switch than the twelve-fold
+              division used here. The factor names are real proteins; the numbers attached to them are
+              illustrative.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======================= THE POINT ======================= -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn one sentence &mdash; &ldquo;lactose present, lac operon
+        on&rdquo; &mdash; and then get taken apart by the question that actually gets asked. Lactose is only half
+        the input. The operon is an <strong>AND gate</strong>: it runs hard only when lactose is
+        <em>present</em> <strong>and</strong> glucose is <em>absent</em>. Set both sugars present on this page and
+        transcription reads <strong>4.94%</strong> of maximum, not 100%. The cell is doing the sensible thing: if
+        glucose is on the table, why build the machinery for the second-choice sugar?
+      </p>
+      <p>
+        <strong>Glucose is not a second repressor.</strong> This is the other half of the trap, and it is the one
+        that survives into college. Glucose never touches the operator and never touches the repressor. Glucose
+        lowers <strong>cAMP</strong>. With cAMP low, CAP has no cAMP to bind, so CAP does not sit on its site, so
+        it never bends the DNA and never helps RNA polymerase get started. Removing a helper is not the same event
+        as adding a blocker, and the page is built so you can see the difference: the repressor readout and the
+        CAP readout move independently, and the CAP&#8315; strain proves it. Delete CAP entirely and lactose still
+        induces the operon &mdash; from 0.010% up to 2.00% &mdash; but it can never reach 100%, because the
+        positive control is gone. Notice too that in a CAP&#8315; strain the glucose switch stops doing anything
+        at all. That is only possible if glucose was acting <em>through</em> CAP the whole time.
+      </p>
+      <p>
+        <strong>Read the four mutants as logic, not as vocabulary.</strong> lacI&#8315; has no working repressor,
+        so the operator is always free: the operon is constitutive with respect to lactose &mdash; 100% with no
+        lactose at all. O&#7580; has a working repressor that has nowhere to land, and gives the identical four
+        numbers. (They are indistinguishable in one cell. You separate them with a partial diploid: a good
+        <em>lacI</em> gene on an F&prime; plasmid rescues lacI&#8315;, because the repressor protein diffuses; it
+        cannot rescue O&#7580;, because a broken operator only ruins the copy of the operon it is physically
+        attached to.) lacI&#738; is the mirror image &mdash; a repressor that grips the operator but can no longer
+        feel allolactose &mdash; so it reads OFF in all four boxes and lactose does nothing. And here is the
+        detail worth catching: <strong>lacI&#8315; and O&#7580; are still glucose-sensitive.</strong> They drop
+        from 100% to 4.94% the moment you add glucose, because losing the repressor does not give you CAP.
+      </p>
+      <p>
+        <strong>Two honest things about &ldquo;off&rdquo;.</strong> The repressed operon still transcribes at
+        about 0.5%, and it has to. Something has to make the handful of permease molecules that let the first
+        lactose in and the handful of &beta;-galactosidase molecules that turn it into allolactose; a genuinely
+        silent operon could never notice that lactose had arrived. And the inducer is allolactose, an isomer
+        &beta;-galactosidase makes from lactose &mdash; not lactose itself.
+      </p>
+      <p>
+        <strong>Then the second tab, which is the whole reason the first one is on the syllabus.</strong>
+        Bacteria switch a few genes with a repressor sitting in the way. You do not. Your liver cell and your
+        neuron carry byte-for-byte the same DNA &mdash; the same gene, the same two enhancers twelve and six and
+        a half kilobases upstream, the same silencer. The gene reads 100% in the hepatocyte and
+        <strong>0.278%</strong> in the neuron, and not one base pair differs between them. What differs is which
+        transcription factor <em>proteins</em> are in the nucleus: HNF-4&alpha; and C/EBP&alpha; are made in liver
+        and not in neurons, REST is made in neurons and not in liver. Note the third cell too. The muscle cell
+        sits at 3.33%, off simply because nobody is there to switch it on, while the neuron is pushed down to
+        0.278% because REST is actively holding it shut. &ldquo;Off by absence&rdquo; and &ldquo;off by
+        repression&rdquo; are different states, and MyoD makes the last point: it is abundant in muscle, it is a
+        powerful activator, and it does nothing here, because this gene has no site for it to bind. Having the
+        protein is not enough. The DNA has to have the address.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      // TAB 1 — lac operon, as an explicit AND of two independent factors.
+      //
+      //   level(%) = 100 * openFrac * promoterActivity
+      //
+      //   openFrac         fraction of time the operator is FREE of repressor
+      //                    0.005 when the repressor is sitting on it (basal
+      //                    leak — real, and necessary), 1 when it is not.
+      //
+      //   promoterActivity = PMIN + (1 - PMIN) * fCAP
+      //                    PMIN = 0.02 is the bare lac promoter, which is a
+      //                    weak promoter on its own. fCAP is CAP-cAMP
+      //                    occupancy: 1 with glucose absent (cAMP high),
+      //                    0.03 with glucose present (cAMP low), 0 in CAP-.
+      //
+      //   The two factors are computed by two separate functions that cannot
+      //   see each other's inputs. Glucose can only ever reach fCAP, and
+      //   lactose can only ever reach openFrac. That structural separation is
+      //   the lesson: CAP-cAMP is a POSITIVE control that glucose removes, it
+      //   is not a second repressor.
+      //
+      //   Verified by hand (see the four-condition chart):
+      //     WT   lac+ glu+ : 1 * (0.02 + 0.98*0.03) = 0.0494 -> 4.94%  LOW
+      //     CAP- lac+ glu- : 1 * (0.02 + 0)         = 0.0200 -> 2.00%  LOW
+      //
+      // TAB 2 — eukaryotic enhancers, multiplicative (enhancer synergy).
+      //
+      //   raw = 2.0 * (Sp1 ? 1.5) * (HNF4 ? 5) * (CEBP ? 6) / (REST ? 12)
+      //   level(%) = 100 * raw / 90.0        (90.0 = all three activators)
+      //
+      //     hepatocyte 2*1.5*5*6      = 90.00 -> 100.0%   ON
+      //     muscle     2*1.5          =  3.00 ->   3.33%  low, off by absence
+      //     neuron     2*1.5/12       =  0.25 ->   0.278% off by repression
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var BASAL_OPEN = 0.005;   // operator free 0.5% of the time when repressed
+      var GLU_CAMP = 0.03;      // CAP-cAMP occupancy when glucose is present
+      var PMIN = 0.02;          // bare promoter, no CAP help
+      var HIGH_T = 25, LOW_T = 1;   // % thresholds for HIGH / LOW / OFF
+
+      var DEC_LO = -3, DEC_HI = 2;  // log axis: 0.001% .. 100%, five decades
+
+      var CONDS = [
+        { lac: false, glu: false, label: 'no lactose, no glucose', s1: 'lac −', s2: 'glu −' },
+        { lac: false, glu: true, label: 'no lactose, glucose present', s1: 'lac −', s2: 'glu +' },
+        { lac: true, glu: false, label: 'lactose present, no glucose', s1: 'lac +', s2: 'glu −' },
+        { lac: true, glu: true, label: 'lactose AND glucose present', s1: 'lac +', s2: 'glu +' }
+      ];
+
+      var GENO = {
+        wt: {
+          name: 'wild type',
+          hint: 'Everything works. The repressor sits on the operator until allolactose lifts it off; CAP–cAMP only appears when glucose is gone.'
+        },
+        lacI: {
+          name: 'lacI⁻',
+          hint: 'No functional repressor protein is made, so the operator is permanently free. Constitutive with respect to lactose — but watch what glucose still does.'
+        },
+        oc: {
+          name: 'Oᶜ',
+          hint: 'The operator sequence is mutated. A perfectly good repressor is made; it simply has nowhere to bind. Same four numbers as lacI⁻ — you separate them with a partial diploid, not with a plate reader.'
+        },
+        lacIs: {
+          name: 'lacIˢ',
+          hint: 'A super-repressor: it still binds the operator but can no longer bind allolactose, so nothing lifts it off. Non-inducible.'
+        },
+        cap: {
+          name: 'CAP⁻',
+          hint: 'No functional CAP protein. The repressor still works normally, so lactose still induces — but the promoter never gets its positive help, and glucose becomes irrelevant.'
+        }
+      };
+
+      var CELLS = {
+        liver: { name: 'Hepatocyte (liver cell)', tf: { hnf4: true, cebp: true, sp1: true, rest: false, myod: false } },
+        muscle: { name: 'Skeletal muscle cell', tf: { hnf4: false, cebp: false, sp1: true, rest: false, myod: true } },
+        neuron: { name: 'Neuron', tf: { hnf4: false, cebp: false, sp1: true, rest: true, myod: false } }
+      };
+
+      var S = {
+        tab: 'lac',
+        lac: false, glu: false, geno: 'wt',
+        cell: 'liver', tf: { hnf4: true, cebp: true, sp1: true, rest: false, myod: false }
+      };
+      var Q = { active: false, revealed: false, pred: [null, null, null, null] };
+
+      // ---------------- lac operon model ----------------
+
+      function openFrac(g, lac) {
+        if (g === 'lacI' || g === 'oc') return 1;      // operator never occupied
+        if (g === 'lacIs') return BASAL_OPEN;          // operator always occupied
+        return lac ? 1 : BASAL_OPEN;                   // wt and cap-: inducible
+      }
+      function capFrac(g, glu) {
+        if (g === 'cap') return 0;                     // no CAP protein at all
+        return glu ? GLU_CAMP : 1;                     // glucose lowers cAMP
+      }
+      function lacLevel(g, lac, glu) {
+        return 100 * openFrac(g, lac) * (PMIN + (1 - PMIN) * capFrac(g, glu));
+      }
+      function repressorOnOperator(g, lac) { return openFrac(g, lac) < 1; }
+      function repressorExists(g) { return g !== 'lacI'; }
+      function operatorWorks(g) { return g !== 'oc'; }
+      function capExists(g) { return g !== 'cap'; }
+      function capBound(g, glu) { return capExists(g) && !glu; }
+
+      // ---------------- eukaryotic model ----------------
+
+      var EUK_FULL = 2.0 * 1.5 * 5 * 6;   // 90.0
+      function eukRaw(tf) {
+        var r = 2.0;
+        if (tf.sp1) r *= 1.5;
+        if (tf.hnf4) r *= 5;
+        if (tf.cebp) r *= 6;
+        if (tf.rest) r /= 12;
+        return r;
+      }
+      function eukLevel(tf) { return 100 * eukRaw(tf) / EUK_FULL; }
+
+      // ---------------- shared ----------------
+
+      function cat(L) { return L >= HIGH_T ? 'high' : L >= LOW_T ? 'low' : 'off'; }
+      var CAT_WORD = { off: 'OFF', low: 'LOW', high: 'HIGH' };
+      function catColor(k, c) { return k === 'high' ? c.ok : k === 'low' ? c.warn : c.muted; }
+
+      function logFrac(L) {
+        var x = Math.log10(Math.max(L, 1e-6));
+        return Demo.clamp((x - DEC_LO) / (DEC_HI - DEC_LO), 0, 1);
+      }
+      function fmtLevel(L) {
+        if (L >= 10) return F.dec(L, 1);
+        if (L >= 1) return F.dec(L, 2);
+        if (L >= 0.01) return F.dec(L, 3);
+        return F.sig(L, 2);
+      }
+
+      // ==================================================================
+      // CANVAS HELPERS
+      // ==================================================================
+
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.max(0, Math.min(r, w / 2, h / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function fitFont(ctx, txt, maxW, fs, weight) {
+        var f = fs;
+        while (f > 6.5) {
+          ctx.font = (weight ? weight + ' ' : '') + f + FONT;
+          if (ctx.measureText(txt).width <= maxW) return f;
+          f -= 0.5;
+        }
+        ctx.font = (weight ? weight + ' ' : '') + f + FONT;
+        return f;
+      }
+
+      function slash(ctx, x, y, w, h, col) {
+        ctx.save();
+        ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y + h - 2); ctx.lineTo(x + w - 2, y + 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // A generic protein: rounded box with a short caption inside.
+      function protein(ctx, c, cx, bottomY, w, h, col, txt, ghost) {
+        var x = cx - w / 2, y = bottomY - h;
+        ctx.save();
+        if (ghost) ctx.globalAlpha = 0.32;
+        ctx.fillStyle = col;
+        rr(ctx, x, y, w, h, 6); ctx.fill();
+        ctx.restore();
+        fitFont(ctx, txt, w - 6, Math.min(10, h - 7), '600');
+        ctx.fillStyle = ghost ? col : c.surface;
+        if (ghost) { ctx.save(); ctx.globalAlpha = 0.9; }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(txt, cx, y + h / 2 + 0.5);
+        if (ghost) ctx.restore();
+        if (ghost) slash(ctx, x, y, w, h, c.bad);
+        return { x: x, y: y, w: w, h: h };
+      }
+
+      // Shared log-scale bar with OFF / LOW / HIGH zones.
+      // Zone names are painted BEFORE the fill, so the fill covering one is
+      // never left as a half-legible word; the current verdict is then written
+      // on top of the fill in surface colour, which reads on every zone tint.
+      function zoneBar(ctx, c, x0, x1, by, bh, L, fs, hide) {
+        var barW = x1 - x0, i;
+        var zones = [
+          { t: 'OFF', a: 0, b: logFrac(LOW_T), col: c.muted },
+          { t: 'LOW', a: logFrac(LOW_T), b: logFrac(HIGH_T), col: c.warn },
+          { t: 'HIGH', a: logFrac(HIGH_T), b: 1, col: c.ok }
+        ];
+        for (i = 0; i < zones.length; i++) {
+          ctx.save(); ctx.globalAlpha = 0.15; ctx.fillStyle = zones[i].col;
+          ctx.fillRect(x0 + barW * zones[i].a, by, barW * (zones[i].b - zones[i].a), bh);
+          ctx.restore();
+        }
+        var fr = hide ? -1 : logFrac(L);
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        ctx.font = '600 ' + (fs - 0.5) + FONT;
+        for (i = 0; i < zones.length; i++) {
+          if (barW * (zones[i].b - zones[i].a) < 28) continue;
+          // a zone the fill ends inside would be left as a half-cut word
+          if (fr > zones[i].a && fr < zones[i].b) continue;
+          ctx.fillStyle = zones[i].col;
+          ctx.fillText(zones[i].t, x0 + barW * (zones[i].a + zones[i].b) / 2, by + bh / 2);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.strokeRect(x0 + 0.5, by + 0.5, barW - 1, bh - 1);
+
+        if (hide) return;
+        var k = cat(L), fw = Math.max(2, barW * fr);
+        ctx.fillStyle = catColor(k, c);
+        rr(ctx, x0, by, fw, bh, 3); ctx.fill();
+        ctx.font = '700 ' + (fs - 0.5) + FONT;
+        var word = CAT_WORD[k];
+        var need = ctx.measureText(word).width + 12;
+        if (fw > need) {
+          ctx.fillStyle = c.surface;
+          ctx.textAlign = 'right';
+          ctx.fillText(word, x0 + fw - 6, by + bh / 2);
+        }
+      }
+
+      // Log-scale level bar with OFF / LOW / HIGH zones, plus a linear twin.
+      function levelBars(ctx, c, x0, x1, top, L, fs, hide) {
+        var barW = x1 - x0;
+        var i, px;
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('transcription, % of maximum — log scale, each tick × 10', x0, top + 9);
+
+        var by = top + 14, bh = 15;
+        zoneBar(ctx, c, x0, x1, by, bh, L, fs, hide);
+
+        // decade ticks
+        ctx.font = (fs - 0.5) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var labs = ['0.001', '0.01', '0.1', '1', '10', '100'];
+        for (i = 0; i <= 5; i++) {
+          px = x0 + barW * i / 5;
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, by + bh); ctx.lineTo(px, by + bh + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(labs[i], Demo.clamp(px, x0 + 10, x1 - 10), by + bh + 5);
+        }
+
+        // linear twin — clears the decade tick labels above it
+        var ly = by + bh + 28;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('the same number on a linear scale — true proportion', x0, ly);
+        var ly2 = ly + 5, lh = 9;
+        ctx.fillStyle = c.track;
+        rr(ctx, x0, ly2, barW, lh, 4); ctx.fill();
+        if (!hide) {
+          ctx.fillStyle = catColor(cat(L), c);
+          rr(ctx, x0, ly2, Math.max(1.5, barW * Demo.clamp(L / 100, 0, 1)), lh, 4); ctx.fill();
+        }
+
+        if (hide) {
+          ctx.fillStyle = c.accentStrong;
+          ctx.font = '700 ' + (fs + 5) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('?  predict first', (x0 + x1) / 2, by + bh / 2);
+        }
+      }
+
+      // ==================================================================
+      // TAB 1 CANVAS — the operon map
+      // ==================================================================
+
+      var SEGS = [
+        { id: 'lacI', w: 15, lab: 'lacI', kind: 'rep' },
+        { id: 'gap1', w: 5, lab: '', kind: 'gap' },
+        { id: 'cap', w: 11, lab: 'CAP', kind: 'cap' },
+        { id: 'prom', w: 10, lab: 'P', kind: 'pro' },
+        { id: 'op', w: 10, lab: 'O', kind: 'op' },
+        { id: 'lacZ', w: 18, lab: 'lacZ', kind: 'gene' },
+        { id: 'lacY', w: 16, lab: 'lacY', kind: 'gene' },
+        { id: 'lacA', w: 15, lab: 'lacA', kind: 'gene' }
+      ];
+
+      var operonCv = Demo.canvas('#operon', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 8.6 : 10;
+        var x0 = 3, x1 = w - 3, span = x1 - x0;
+        var hide = Q.active && !Q.revealed;
+
+        var L = lacLevel(S.geno, S.lac, S.glu);
+        var repOn = repressorOnOperator(S.geno, S.lac);
+        var capOn = capBound(S.geno, S.glu);
+
+        var barTop = h - 84;
+        var dnaH = 16;
+        var dnaY = barTop - 32 - dnaH;
+        var labY = dnaY + dnaH + 11;
+
+        // ---- DNA segments ----
+        var rect = {}, cur = x0, i, sg, sw;
+        var COL = {
+          rep: c.series[3], cap: c.series[2], pro: c.accent,
+          op: c.series[1], gene: c.series[0], gap: c.lineSoft
+        };
+        for (i = 0; i < SEGS.length; i++) {
+          sg = SEGS[i]; sw = span * sg.w / 100;
+          rect[sg.id] = { x: cur, w: sw, cx: cur + sw / 2 };
+          var col = COL[sg.kind];
+          var dead = (sg.id === 'lacI' && !repressorExists(S.geno)) ||
+                     (sg.id === 'op' && !operatorWorks(S.geno));
+          ctx.save();
+          ctx.globalAlpha = sg.kind === 'gap' ? 1 : (dead ? 0.3 : 0.9);
+          ctx.fillStyle = col;
+          rr(ctx, cur + 0.6, dnaY, sw - 1.2, dnaH, 4); ctx.fill();
+          ctx.restore();
+          if (dead) slash(ctx, cur, dnaY, sw, dnaH, c.bad);
+          if (sg.lab) {
+            var f = fitFont(ctx, sg.lab, sw - 2, fs, '600');
+            ctx.fillStyle = dead ? c.muted : c.text2;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText(sg.lab, rect[sg.id].cx, labY);
+          }
+          cur += sw;
+        }
+
+        // "site" hint labels under the control region
+        ctx.font = (fs - 1.4) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        if (!narrow) {
+          ctx.fillText('site', rect.cap.cx, labY + 4);
+          ctx.fillText('promoter', rect.prom.cx, labY + 4);
+          ctx.fillText('operator', rect.op.cx, labY + 4);
+        }
+
+        // ---- proteins ----
+        var pw = Math.min(38, span * 0.11);
+        var baseY = dnaY - 3;
+        var floatY = dnaY - 52;
+
+        // CAP-cAMP
+        if (!capExists(S.geno)) {
+          protein(ctx, c, rect.cap.cx, floatY, pw, 19, c.series[2], 'CAP', true);
+          ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.bad;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('no CAP made', rect.cap.cx, floatY - 24);
+        } else if (capOn) {
+          protein(ctx, c, rect.cap.cx, baseY, pw, 19, c.series[2], 'CAP');
+          // cAMP ligand
+          ctx.fillStyle = c.warn;
+          ctx.beginPath(); ctx.arc(rect.cap.cx + pw / 2 - 3, baseY - 19, 4, 0, 6.2832); ctx.fill();
+          ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.ok;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('cAMP high', rect.cap.cx, baseY - 26);
+        } else {
+          protein(ctx, c, rect.cap.cx, floatY, pw, 19, c.series[2], 'CAP');
+          ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.warn;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('cAMP low', rect.cap.cx, floatY - 24);
+          ctx.save();
+          ctx.strokeStyle = c.warn; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(rect.cap.cx, floatY + 3); ctx.lineTo(rect.cap.cx, dnaY - 3); ctx.stroke();
+          ctx.restore();
+        }
+
+        // repressor
+        if (!repressorExists(S.geno)) {
+          protein(ctx, c, rect.op.cx, floatY, pw, 21, c.series[3], 'R', true);
+          ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.bad;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('none made', rect.op.cx, floatY - 26);
+        } else if (repOn) {
+          protein(ctx, c, rect.op.cx, baseY, pw, 21, c.series[3], 'R');
+          if (S.geno === 'lacIs' && S.lac) {
+            // allolactose is there; the super-repressor simply cannot feel it
+            var lx = rect.op.cx, ly3 = baseY - 42;
+            ctx.fillStyle = c.warn;
+            ctx.beginPath(); ctx.arc(lx, ly3, 4.5, 0, 6.2832); ctx.fill();
+            ctx.save();
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(lx - 6, ly3 + 6); ctx.lineTo(lx + 6, ly3 - 6);
+            ctx.stroke(); ctx.restore();
+            ctx.font = (fs - 1.4) + FONT; ctx.fillStyle = c.bad;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('cannot bind allolactose', lx, ly3 - 11);
+          }
+          ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.bad;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText('blocking', rect.op.cx, baseY - 26);
+        } else {
+          var fx = rect.op.cx + (operatorWorks(S.geno) ? pw * 0.75 : 0);
+          protein(ctx, c, fx, floatY, pw, 21, c.series[3], 'R');
+          if (operatorWorks(S.geno)) {
+            // allolactose bound, repressor changed shape and fell off
+            ctx.fillStyle = c.warn;
+            ctx.beginPath(); ctx.arc(fx - pw / 2 + 2, floatY - 21, 4.5, 0, 6.2832); ctx.fill();
+            ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.warn;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('allolactose bound', fx, floatY - 28);
+          } else {
+            ctx.save();
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.2; ctx.setLineDash([2, 3]);
+            ctx.beginPath(); ctx.moveTo(rect.op.cx, floatY + 3); ctx.lineTo(rect.op.cx, dnaY - 6); ctx.stroke();
+            ctx.restore();
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.7; ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(rect.op.cx - 4, dnaY - 9); ctx.lineTo(rect.op.cx + 4, dnaY - 1);
+            ctx.moveTo(rect.op.cx + 4, dnaY - 9); ctx.lineTo(rect.op.cx - 4, dnaY - 1);
+            ctx.stroke();
+            ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.bad;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('cannot bind', rect.op.cx, floatY - 26);
+          }
+        }
+
+        // kept inside its own segment so it never overlaps CAP or the repressor
+        var polW = Math.min(36, span * 0.10);
+        protein(ctx, c, rect.prom.cx, baseY, polW, 21, c.series[0], 'Pol');
+
+        // mRNA is drawn in EVERY state, because "off" is never zero: a fully
+        // repressed operon still leaks about 0.5%, and that leak is the only
+        // reason the cell can ever notice lactose. Length uses a compressed
+        // power law so the leak stays visible beside the induced case.
+        var mStart = rect.lacZ.x;
+        var mFull = rect.lacA.x + rect.lacA.w - mStart;
+        var frac = 0.06 + 0.94 * Math.pow(Demo.clamp(L / 100, 0, 1), 0.35);
+        var mLen = Math.max(6, mFull * frac);
+        var my = dnaY - 10;
+        ctx.save();
+        ctx.strokeStyle = repOn ? c.muted : c.accentStrong;
+        ctx.lineWidth = repOn ? 1.4 : 2;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var px = 0; px <= mLen; px += 2) {
+          var py = my + Math.sin(px / 5) * 3;
+          if (px === 0) ctx.moveTo(mStart + px, py); else ctx.lineTo(mStart + px, py);
+        }
+        ctx.stroke();
+        ctx.fillStyle = repOn ? c.muted : c.accentStrong;
+        ctx.beginPath();
+        ctx.moveTo(mStart + mLen, my - 4);
+        ctx.lineTo(mStart + mLen + 7, my);
+        ctx.lineTo(mStart + mLen, my + 4);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+        ctx.font = (fs - 1.2) + FONT; ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(repOn ? 'basal mRNA only' : 'mRNA', mStart + 2, my - 8);
+
+        // CAP-to-promoter "help" arrow
+        if (capOn) {
+          ctx.save();
+          ctx.strokeStyle = c.ok; ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(rect.cap.cx + pw / 2 - 2, baseY - 10);
+          ctx.lineTo(rect.prom.cx - polW / 2 + 2, baseY - 10);
+          ctx.stroke();
+          ctx.fillStyle = c.ok;
+          ctx.beginPath();
+          ctx.moveTo(rect.prom.cx - polW / 2 + 2, baseY - 10);
+          ctx.lineTo(rect.prom.cx - polW / 2 - 4, baseY - 13.5);
+          ctx.lineTo(rect.prom.cx - polW / 2 - 4, baseY - 6.5);
+          ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+
+        // ---- level bars ----
+        levelBars(ctx, c, x0 + 2, x1 - 2, barTop, L, fs, hide);
+      }, { aspect: 0.58, minHeight: 245, maxHeight: 290 });
+
+      // ==================================================================
+      // TAB 1 CANVAS — four-condition chart
+      // ==================================================================
+
+      var gridCv = Demo.canvas('#grid4', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 8.6 : 10;
+        var padL = narrow ? 30 : 36, padR = 8, padT = 16, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var hide = Q.active && !Q.revealed;
+        var i, j;
+
+        function Y(fr) { return y0 - (y0 - y1) * fr; }
+
+        // decade gridlines
+        ctx.font = (fs - 0.5) + FONT;
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+        var labs = ['0.001', '0.01', '0.1', '1', '10', '100'];
+        for (i = 0; i <= 5; i++) {
+          var gy = Y(i / 5);
+          ctx.strokeStyle = i === 0 ? c.line : c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(labs[i], x0 - 4, gy);
+        }
+        // threshold lines
+        [{ v: LOW_T, col: c.warn }, { v: HIGH_T, col: c.ok }].forEach(function (t) {
+          ctx.save();
+          ctx.strokeStyle = t.col; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(x0, Y(logFrac(t.v))); ctx.lineTo(x1, Y(logFrac(t.v))); ctx.stroke();
+          ctx.restore();
+        });
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('% of max (log)', 1, 1);
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        var gw = (x1 - x0) / 4;
+        var isMut = S.geno !== 'wt';
+
+        // highlight the column matching the toggles FIRST, so the tint sits
+        // behind the bars instead of washing them out
+        for (i = 0; i < 4; i++) {
+          if (CONDS[i].lac === S.lac && CONDS[i].glu === S.glu) {
+            ctx.save();
+            ctx.globalAlpha = 0.14; ctx.fillStyle = c.accent;
+            ctx.fillRect(x0 + gw * i + 1, y1, gw - 2, y0 - y1);
+            ctx.restore();
+          }
+        }
+
+        for (i = 0; i < 4; i++) {
+          var gx = x0 + gw * i;
+          var L = lacLevel(S.geno, CONDS[i].lac, CONDS[i].glu);
+          var Lw = lacLevel('wt', CONDS[i].lac, CONDS[i].glu);
+          var bw = Math.min(30, gw * 0.42);
+
+          // wild-type reference: outlined, never solid, so it cannot be
+          // mistaken for a grey "OFF" bar of the mutant itself
+          if (isMut) {
+            var wx = gx + gw / 2 - bw - 2, wy = Y(logFrac(Lw));
+            ctx.save();
+            ctx.globalAlpha = 0.14; ctx.fillStyle = c.text2;
+            ctx.fillRect(wx, wy, bw, y0 - wy);
+            ctx.restore();
+            ctx.save();
+            ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+            ctx.strokeRect(wx + 0.5, wy + 0.5, bw - 1, y0 - wy - 1);
+            ctx.restore();
+          }
+          var bx = isMut ? gx + gw / 2 + 2 : gx + gw / 2 - bw / 2;
+
+          if (hide) {
+            ctx.save();
+            ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+            ctx.strokeRect(bx + 0.5, y1 + 6.5, bw - 1, y0 - y1 - 7);
+            ctx.restore();
+            ctx.fillStyle = c.accentStrong;
+            ctx.font = '700 ' + (fs + 4) + FONT;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('?', bx + bw / 2, (y0 + y1) / 2);
+          } else {
+            var byT = Y(logFrac(L));
+            ctx.fillStyle = catColor(cat(L), c);
+            ctx.fillRect(bx, byT, bw, y0 - byT);
+            fitFont(ctx, fmtLevel(L), gw - 4, fs - 0.5, '600');
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            // a bar that reaches the top would push its label into the
+            // axis title, so that one label moves inside the bar
+            if (byT - 3 < y1 + 9) {
+              ctx.fillStyle = c.surface;
+              ctx.fillText(fmtLevel(L), bx + bw / 2, byT + 12);
+            } else {
+              ctx.fillStyle = catColor(cat(L), c);
+              ctx.fillText(fmtLevel(L), bx + bw / 2, byT - 3);
+            }
+          }
+
+          // prediction chip
+          if (Q.pred[i]) {
+            var ok = Q.revealed && Q.pred[i] === cat(L);
+            var col = !Q.revealed ? c.accentStrong : (ok ? c.ok : c.bad);
+            ctx.font = '600 ' + (fs - 1) + FONT;
+            ctx.fillStyle = col;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText('you: ' + CAT_WORD[Q.pred[i]], gx + gw / 2, y1 - 1);
+          }
+
+          // condition labels
+          ctx.font = (fs - 0.5) + FONT;
+          ctx.fillStyle = c.text2;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(CONDS[i].s1, gx + gw / 2, y0 + 4);
+          ctx.fillText(CONDS[i].s2, gx + gw / 2, y0 + 4 + fs + 1);
+        }
+
+        if (isMut) {
+          ctx.font = (fs - 1) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+          ctx.fillText('dashed outline = wild type', x1, 1);
+        }
+      }, { aspect: 0.5, minHeight: 190, maxHeight: 240 });
+
+      // ==================================================================
+      // TAB 2 CANVAS — enhancers
+      // ==================================================================
+
+      var SITES = [
+        { id: 'e1', f: 0.06, short: 'E1', pos: '−12 kb', tf: 'hnf4', full: 'Enhancer 1' },
+        { id: 'e2', f: 0.26, short: 'E2', pos: '−6.5 kb', tf: 'cebp', full: 'Enhancer 2' },
+        { id: 'sil', f: 0.46, short: 'Sil', pos: '−1.2 kb', tf: 'rest', full: 'Silencer' },
+        { id: 'gc', f: 0.62, short: 'GC', pos: '−80', tf: 'sp1', full: 'GC box' },
+        { id: 'tss', f: 0.73, short: 'TSS', pos: '+1', tf: null, full: 'core promoter' }
+      ];
+
+      function tfColor(id, c) {
+        return { hnf4: c.series[0], cebp: c.series[2], sp1: c.series[1], rest: c.bad, myod: c.series[3] }[id];
+      }
+      var TF_SHORT = { hnf4: 'HNF4', cebp: 'C/EBP', sp1: 'Sp1', rest: 'REST', myod: 'MyoD' };
+
+      var eukCv = Demo.canvas('#euk', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 8.6 : 10;
+        var x0 = 3, x1 = w - 3, span = x1 - x0;
+        var L = eukLevel(S.tf);
+        var i;
+
+        var barTop = h - 50;
+        var dnaH = 14;
+        var dnaY = barTop - 46 - dnaH;
+        var medCY = 62, medH = 26;
+
+        function X(f) { return x0 + span * f; }
+        var promX = X(SITES[4].f);
+
+        // ---- factors in the nucleus, as a row of chips ----
+        ctx.font = '600 ' + (fs - 0.6) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('in the nucleus of this cell:', x0, 10);
+        var cx = x0, cy = 24, any = false;
+        ['hnf4', 'cebp', 'sp1', 'rest', 'myod'].forEach(function (k) {
+          if (!S.tf[k]) return;
+          any = true;
+          var t = TF_SHORT[k] + (k === 'myod' ? ' (no site)' : '');
+          ctx.font = '600 ' + (fs - 0.6) + FONT;
+          var tw = ctx.measureText(t).width + 16;
+          if (cx + tw > x1 && cx > x0) { cx = x0; cy += 16; }
+          ctx.save(); ctx.globalAlpha = 0.2; ctx.fillStyle = tfColor(k, c);
+          rr(ctx, cx, cy - 9, tw, 14, 6); ctx.fill(); ctx.restore();
+          ctx.fillStyle = tfColor(k, c);
+          ctx.beginPath(); ctx.arc(cx + 7, cy - 2, 3.2, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = c.text2;
+          ctx.fillText(t, cx + 13, cy + 1.5);
+          cx += tw + 6;
+        });
+        if (!any) {
+          ctx.font = (fs - 0.6) + FONT; ctx.fillStyle = c.muted;
+          ctx.fillText('no transcription factors at all', x0, 26);
+        }
+
+        // ---- mediator + Pol II at the promoter ----
+        var nAct = (S.tf.hnf4 ? 1 : 0) + (S.tf.cebp ? 1 : 0) + (S.tf.sp1 ? 1 : 0);
+        var medW = Math.min(112, span * 0.34);
+        ctx.save();
+        ctx.globalAlpha = nAct ? 0.9 : 0.35;
+        ctx.fillStyle = c.surface2;
+        rr(ctx, promX - medW / 2, medCY - medH / 2, medW, medH, 12); ctx.fill();
+        ctx.strokeStyle = nAct ? c.accent : c.line; ctx.lineWidth = 1.4;
+        rr(ctx, promX - medW / 2, medCY - medH / 2, medW, medH, 12); ctx.stroke();
+        ctx.restore();
+        var mf = fitFont(ctx, 'Mediator + Pol II', medW - 10, fs - 0.6, '600');
+        ctx.fillStyle = nAct ? c.text : c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('Mediator + Pol II', promX, medCY);
+
+        // ---- loops from bound activators to the mediator ----
+        SITES.forEach(function (st) {
+          if (!st.tf || !S.tf[st.tf]) return;
+          var isRep = st.tf === 'rest';
+          var sx = X(st.f), sy = dnaY - 20;
+          var ey = medCY + medH / 2;
+          ctx.save();
+          ctx.strokeStyle = isRep ? c.bad : tfColor(st.tf, c);
+          ctx.lineWidth = isRep ? 1.6 : 1.8;
+          if (isRep) ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo((sx + promX) / 2, sy - 46, promX + (sx < promX ? -medW / 3 : medW / 3), ey + 2);
+          ctx.stroke();
+          ctx.restore();
+        });
+
+        // ---- the DNA ----
+        ctx.fillStyle = c.lineSoft;
+        rr(ctx, x0, dnaY + 4, span, dnaH - 8, 3); ctx.fill();
+
+        // gene body
+        var gStart = X(0.77), gEnd = x1;
+        ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = c.series[0];
+        rr(ctx, gStart, dnaY, gEnd - gStart, dnaH, 4); ctx.fill(); ctx.restore();
+        fitFont(ctx, 'gene body', gEnd - gStart - 4, fs - 1, '600');
+        ctx.fillStyle = c.surface;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('gene body', (gStart + gEnd) / 2, dnaY + dnaH / 2 + 0.5);
+
+        // sites
+        SITES.forEach(function (st) {
+          var sx = X(st.f);
+          var sw2 = Math.min(30, span * 0.085);
+          var col = st.tf ? tfColor(st.tf, c) : c.accent;
+          ctx.save();
+          ctx.globalAlpha = 0.9; ctx.fillStyle = col;
+          rr(ctx, sx - sw2 / 2, dnaY, sw2, dnaH, 4); ctx.fill();
+          ctx.restore();
+
+          // bound factor, sitting on its site
+          if (st.tf && S.tf[st.tf]) {
+            protein(ctx, c, sx, dnaY - 4, Math.min(40, span * 0.115), 17, col, TF_SHORT[st.tf]);
+            if (st.tf === 'rest') {
+              ctx.save();
+              ctx.strokeStyle = c.bad; ctx.lineWidth = 2; ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.moveTo(sx - 7, dnaY - 2); ctx.lineTo(sx + 7, dnaY - 2);
+              ctx.stroke(); ctx.restore();
+            }
+          }
+
+          ctx.font = '600 ' + (fs - 0.5) + FONT;
+          ctx.fillStyle = c.text2;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(st.short, sx, dnaY + dnaH + 3);
+          ctx.font = (fs - 1.6) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(st.pos, sx, dnaY + dnaH + 3 + fs + 1);
+        });
+
+        // TSS arrow
+        ctx.save();
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(promX, dnaY - 1); ctx.lineTo(promX, dnaY - 12); ctx.lineTo(promX + 16, dnaY - 12);
+        ctx.stroke();
+        ctx.fillStyle = c.accentStrong;
+        ctx.beginPath();
+        ctx.moveTo(promX + 22, dnaY - 12); ctx.lineTo(promX + 15, dnaY - 15.5); ctx.lineTo(promX + 15, dnaY - 8.5);
+        ctx.closePath(); ctx.fill();
+        ctx.restore();
+
+        // floating MyoD — present, but no site anywhere on this gene
+        if (S.tf.myod) {
+          var mx = X(0.16);
+          protein(ctx, c, mx, dnaY - 30, Math.min(42, span * 0.12), 17, c.series[3], 'MyoD');
+          ctx.save();
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(mx, dnaY - 30); ctx.lineTo(mx, dnaY - 4); ctx.stroke();
+          ctx.restore();
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(mx - 4, dnaY - 12); ctx.lineTo(mx + 4, dnaY - 4);
+          ctx.moveTo(mx + 4, dnaY - 12); ctx.lineTo(mx - 4, dnaY - 4);
+          ctx.stroke();
+        }
+
+        // ---- output bar ----
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('transcription, % of maximum — log scale, each tick × 10', x0, barTop + 10);
+        var by = barTop + 15, bh = 14, barW = span;
+        zoneBar(ctx, c, x0, x1, by, bh, L, fs, false);
+
+        ctx.font = (fs - 0.5) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var labs2 = ['0.001', '0.01', '0.1', '1', '10', '100'];
+        for (i = 0; i <= 5; i++) {
+          var px2 = x0 + barW * i / 5;
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px2, by + bh); ctx.lineTo(px2, by + bh + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(labs2[i], Demo.clamp(px2, x0 + 10, x1 - 10), by + bh + 5);
+        }
+      }, { aspect: 0.66, minHeight: 275, maxHeight: 320 });
+
+      // ==================================================================
+      // TAB 2 CANVAS — three cells
+      // ==================================================================
+
+      var cellsCv = Demo.canvas('#cells3', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 8.6 : 10;
+        var padL = narrow ? 30 : 36, padR = 8, padT = 16, padB = 32;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var keys = ['liver', 'muscle', 'neuron'];
+        var names = { liver: 'Hepatocyte', muscle: 'Muscle', neuron: 'Neuron' };
+        var i;
+
+        function Y(fr) { return y0 - (y0 - y1) * fr; }
+
+        ctx.font = (fs - 0.5) + FONT;
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+        var labs = ['0.001', '0.01', '0.1', '1', '10', '100'];
+        for (i = 0; i <= 5; i++) {
+          var gy = Y(i / 5);
+          ctx.strokeStyle = i === 0 ? c.line : c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(labs[i], x0 - 4, gy);
+        }
+        [{ v: LOW_T, col: c.warn }, { v: HIGH_T, col: c.ok }].forEach(function (t) {
+          ctx.save();
+          ctx.strokeStyle = t.col; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(x0, Y(logFrac(t.v))); ctx.lineTo(x1, Y(logFrac(t.v))); ctx.stroke();
+          ctx.restore();
+        });
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('% of max (log)', 1, 1);
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        var gw = (x1 - x0) / 3;
+        for (i = 0; i < 3; i++) {
+          var gx = x0 + gw * i;
+          var L = eukLevel(CELLS[keys[i]].tf);
+          var bw = Math.min(46, gw * 0.5);
+          var bx = gx + gw / 2 - bw / 2;
+
+          if (keys[i] === S.cell) {
+            ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = c.accent;
+            ctx.fillRect(gx + 1, y1, gw - 2, y0 - y1); ctx.restore();
+          }
+          var byT = Y(logFrac(L));
+          ctx.fillStyle = catColor(cat(L), c);
+          ctx.fillRect(bx, byT, bw, y0 - byT);
+
+          ctx.font = '600 ' + (fs - 0.5) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          if (byT - 3 < y1 + 9) {
+            ctx.fillStyle = c.surface;
+            ctx.fillText(fmtLevel(L) + '%', gx + gw / 2, byT + 12);
+          } else {
+            ctx.fillStyle = catColor(cat(L), c);
+            ctx.fillText(fmtLevel(L) + '%', gx + gw / 2, byT - 3);
+          }
+
+          ctx.font = (fs - 0.5) + FONT;
+          ctx.fillStyle = c.text2;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(names[keys[i]], gx + gw / 2, y0 + 4);
+          ctx.font = (fs - 1.4) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(keys[i] === 'liver' ? 'activators present'
+            : keys[i] === 'muscle' ? 'off by absence' : 'off by repression',
+            gx + gw / 2, y0 + 4 + fs + 1);
+        }
+      }, { aspect: 0.46, minHeight: 175, maxHeight: 225 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        tabSeg: document.getElementById('tabSeg'),
+        stageLac: document.getElementById('stageLac'),
+        stageEuk: document.getElementById('stageEuk'),
+        ctrlLac: document.getElementById('ctrlLac'),
+        ctrlEuk: document.getElementById('ctrlEuk'),
+
+        btnLac: document.getElementById('btnLac'),
+        btnGlu: document.getElementById('btnGlu'),
+        condPresets: document.getElementById('condPresets'),
+        genotype: document.getElementById('genotype'),
+        genoHint: document.getElementById('genoHint'),
+        lacLabel: document.getElementById('lacLabel'),
+        grid4Sub: document.getElementById('grid4Sub'),
+        operonCap: document.getElementById('operonCap'),
+        grid4Cap: document.getElementById('grid4Cap'),
+        rLevel: document.getElementById('rLevel'),
+        rVerdict: document.getElementById('rVerdict'),
+        rRep: document.getElementById('rRep'),
+        rRepSub: document.getElementById('rRepSub'),
+        rCap: document.getElementById('rCap'),
+        rCapSub: document.getElementById('rCapSub'),
+        lacNote: document.getElementById('lacNote'),
+
+        btnQuizStart: document.getElementById('btnQuizStart'),
+        btnReveal: document.getElementById('btnReveal'),
+        quizRows: document.getElementById('quizRows'),
+        quizHint: document.getElementById('quizHint'),
+        scoreWrap: document.getElementById('scoreWrap'),
+        scoreBox: document.getElementById('scoreBox'),
+        quizScore: document.getElementById('quizScore'),
+
+        cellType: document.getElementById('cellType'),
+        btnCellReset: document.getElementById('btnCellReset'),
+        eukLabel: document.getElementById('eukLabel'),
+        eukCap: document.getElementById('eukCap'),
+        cells3Cap: document.getElementById('cells3Cap'),
+        rEukLevel: document.getElementById('rEukLevel'),
+        rEukVerdict: document.getElementById('rEukVerdict'),
+        rEukAct: document.getElementById('rEukAct'),
+        rEukSil: document.getElementById('rEukSil'),
+        eukNote: document.getElementById('eukNote')
+      };
+
+      var TFBOX = {
+        hnf4: document.getElementById('tfHNF4'),
+        cebp: document.getElementById('tfCEBP'),
+        sp1: document.getElementById('tfSP1'),
+        rest: document.getElementById('tfREST'),
+        myod: document.getElementById('tfMYOD')
+      };
+      var TFTAG = {
+        hnf4: document.getElementById('tagHNF4'),
+        cebp: document.getElementById('tagCEBP'),
+        sp1: document.getElementById('tagSP1'),
+        rest: document.getElementById('tagREST'),
+        myod: document.getElementById('tagMYOD')
+      };
+
+      // ---------------- build the prediction rows ----------------
+      var qBtns = [];
+      (function buildQuiz() {
+        for (var i = 0; i < 4; i++) {
+          (function (idx) {
+            var row = document.createElement('div');
+            row.className = 'qrow';
+
+            var lab = document.createElement('span');
+            lab.className = 'qlab';
+            lab.textContent = (idx + 1) + '. ' + CONDS[idx].label;
+            row.appendChild(lab);
+
+            var seg = document.createElement('div');
+            seg.className = 'seg';
+            seg.setAttribute('role', 'group');
+            seg.setAttribute('aria-label', 'Prediction for ' + CONDS[idx].label);
+            var set = [];
+            ['off', 'low', 'high'].forEach(function (k) {
+              var b = document.createElement('button');
+              b.type = 'button';
+              b.textContent = CAT_WORD[k];
+              b.setAttribute('aria-selected', 'false');
+              b.addEventListener('click', function () {
+                Q.pred[idx] = k;
+                set.forEach(function (o) { o.b.setAttribute('aria-selected', o.k === k ? 'true' : 'false'); });
+                render();
+              });
+              set.push({ b: b, k: k });
+              seg.appendChild(b);
+            });
+            row.appendChild(seg);
+
+            var res = document.createElement('span');
+            res.className = 'qres';
+            res.innerHTML = '&nbsp;';
+            row.appendChild(res);
+
+            el.quizRows.appendChild(row);
+            qBtns.push({ set: set, res: res });
+          })(i);
+        }
+      })();
+
+      function clearPredictions() {
+        Q.pred = [null, null, null, null];
+        Q.revealed = false;
+        qBtns.forEach(function (r) {
+          r.set.forEach(function (o) { o.b.setAttribute('aria-selected', 'false'); });
+          r.res.className = 'qres';
+          r.res.innerHTML = '&nbsp;';
+        });
+        el.scoreWrap.hidden = true;
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+
+      function whyRow(i) {
+        var g = S.geno, lac = CONDS[i].lac, glu = CONDS[i].glu;
+        var free = openFrac(g, lac) === 1;
+        var a = free ? 'operator free' : 'repressor on the operator';
+        var b;
+        if (!capExists(g)) b = 'no CAP protein exists, so the promoter never gets help';
+        else if (glu) b = 'glucose present, cAMP low, CAP not bound';
+        else b = 'glucose absent, cAMP high, CAP–cAMP bound';
+        return a + '; ' + b;
+      }
+
+      function renderLac() {
+        var L = lacLevel(S.geno, S.lac, S.glu);
+        var k = cat(L);
+        var repOn = repressorOnOperator(S.geno, S.lac);
+        var capOn = capBound(S.geno, S.glu);
+        var hide = Q.active && !Q.revealed;
+
+        el.btnLac.textContent = 'Lactose: ' + (S.lac ? 'present' : 'absent');
+        el.btnGlu.textContent = 'Glucose: ' + (S.glu ? 'present' : 'absent');
+        el.btnLac.classList.toggle('tog-off', !S.lac);
+        el.btnGlu.classList.toggle('tog-off', !S.glu);
+
+        Array.prototype.forEach.call(el.condPresets.children, function (b) {
+          b.classList.toggle('is-on',
+            (b.dataset.l === '1') === S.lac && (b.dataset.g === '1') === S.glu);
+        });
+
+        el.genoHint.textContent = GENO[S.geno].hint;
+        el.lacLabel.innerHTML = 'The operon right now <span>&mdash; ' + GENO[S.geno].name + ', '
+          + (S.lac ? 'lactose present' : 'no lactose') + ', '
+          + (S.glu ? 'glucose present' : 'no glucose') + '</span>';
+        el.grid4Sub.innerHTML = '&mdash; ' + GENO[S.geno].name
+          + (S.geno === 'wt' ? '' : ', wild type outlined behind');
+
+        if (hide) {
+          el.rLevel.innerHTML = '?<span class="r-unit">% of max</span>';
+          el.rVerdict.textContent = 'hidden — predict all four, then reveal';
+        } else {
+          el.rLevel.innerHTML = fmtLevel(L) + '<span class="r-unit">% of max</span>';
+          el.rVerdict.textContent = k === 'high' ? 'operon strongly ON'
+            : k === 'low' ? 'operon LOW — transcribing, but nowhere near maximal'
+              : 'operon OFF (basal leak only)';
+        }
+
+        el.rRep.textContent = repOn ? 'YES' : 'NO';
+        el.rRep.style.color = repOn ? 'var(--bad)' : 'var(--ok)';
+        el.rRepSub.textContent = !repressorExists(S.geno) ? 'no repressor protein is made'
+          : !operatorWorks(S.geno) ? 'operator mutated — nowhere to bind'
+            : repOn ? (S.geno === 'lacIs' ? 'super-repressor: allolactose cannot remove it' : 'RNA polymerase blocked')
+              : 'allolactose lifted it off';
+
+        el.rCap.textContent = capOn ? 'YES' : 'NO';
+        el.rCap.style.color = capOn ? 'var(--ok)' : 'var(--warn)';
+        el.rCapSub.textContent = !capExists(S.geno) ? 'no CAP protein is made'
+          : capOn ? 'cAMP high (glucose absent)'
+            : 'cAMP low (glucose present)';
+
+        // the sentence that carries the AND-gate point
+        var note = '', cls = 'note';
+        if (S.geno === 'cap') {
+          note = '<strong>CAP⁻.</strong> The repressor is untouched, so lactose still induces — but the '
+            + 'ceiling is only ' + fmtLevel(lacLevel('cap', true, false)) + '%. And notice the glucose switch has '
+            + 'stopped doing anything at all. That is the proof that glucose was working <em>through</em> CAP the '
+            + 'whole time, not through the repressor.';
+          cls = 'note warn';
+        } else if (S.lac && S.glu) {
+          note = '<strong>This is the box everyone gets wrong.</strong> Lactose <em>is</em> present, and the '
+            + 'repressor <em>is</em> off the operator. Transcription is still only ' + fmtLevel(L) + '% of maximum, '
+            + 'because glucose keeps cAMP low, so CAP–cAMP never binds and the weak lac promoter gets no help. '
+            + 'Lactose alone is not enough.';
+          cls = 'note bad';
+        } else if (S.lac && !S.glu) {
+          note = '<strong>Both conditions met.</strong> Operator free AND CAP–cAMP bound, so the operon runs at '
+            + fmtLevel(L) + '% — this is the only combination that does. Now turn glucose on and watch it fall '
+            + 'to ' + fmtLevel(lacLevel(S.geno, true, true)) + '%.';
+          cls = 'note';
+        } else if (!S.lac && !S.glu) {
+          note = repOn
+            ? '<strong>No lactose.</strong> CAP–cAMP is sitting on its site and ready to help, but the '
+              + 'repressor is in the way, so almost nothing is transcribed. A positive regulator cannot rescue a '
+              + 'blocked promoter.'
+            : '<strong>No lactose, and the operon is running anyway.</strong> That is the signature of a broken '
+              + 'repressor system — constitutive expression.';
+        } else {
+          note = repOn
+            ? '<strong>Neither signal.</strong> Repressor on, CAP off: transcription is at its lowest of the four '
+              + 'boxes, ' + fmtLevel(L) + '%. Two independent things are holding it down.'
+            : '<strong>No lactose needed here.</strong> The operator is permanently free, so the only thing still '
+              + 'regulating this operon is glucose, through CAP.';
+          cls = 'note warn';
+        }
+        el.lacNote.className = cls;
+        el.lacNote.innerHTML = note;
+
+        el.operonCap.innerHTML = hide
+          ? 'Numbers are hidden while a prediction round is open. Everything mechanical is still shown: read the '
+            + 'operator, read the CAP site, and decide.'
+          : 'Repressor blocks. CAP–cAMP helps. They are two independent controls on the same promoter, which '
+            + 'is why the operon needs <strong>lactose present AND glucose absent</strong> to run hard. '
+            + 'The mRNA squiggle is drawn on a compressed scale so the basal leak stays visible.';
+
+        el.grid4Cap.innerHTML = grid4Caption();
+
+        // quiz chrome
+        el.btnQuizStart.textContent = Q.active ? 'Show everything' : 'Start prediction round';
+        var complete = Q.pred.every(function (p) { return p !== null; });
+        el.btnReveal.disabled = !Q.active || Q.revealed || !complete;
+        el.quizHint.textContent = !Q.active
+          ? 'Starting a round hides the transcription numbers. The molecular picture keeps working, so you reason from the diagram, not from the answer.'
+          : Q.revealed
+            ? 'Revealed. Change the genotype for a fresh round.'
+            : complete
+              ? 'All four predicted. Press Reveal.'
+              : 'Pick OFF, LOW or HIGH for each of the four conditions. Reveal unlocks when all four are set.';
+
+        if (Q.revealed) {
+          var score = 0;
+          for (var i = 0; i < 4; i++) {
+            var truth = cat(lacLevel(S.geno, CONDS[i].lac, CONDS[i].glu));
+            var lv = lacLevel(S.geno, CONDS[i].lac, CONDS[i].glu);
+            var ok = Q.pred[i] === truth;
+            if (ok) score++;
+            qBtns[i].res.className = 'qres ' + (ok ? 'ok' : 'bad');
+            qBtns[i].res.textContent = (ok ? 'Correct — ' : 'Actually ' + CAT_WORD[truth] + ' — ')
+              + fmtLevel(lv) + '% of max. ' + whyRow(i) + '.';
+          }
+          el.scoreWrap.hidden = false;
+          el.quizScore.textContent = score + ' / 4';
+          el.scoreBox.className = 'readout span2 ' + (score === 4 ? 'is-ok' : score >= 2 ? '' : 'is-bad');
+        }
+
+        operonCv.redraw();
+        gridCv.redraw();
+      }
+
+      function grid4Caption() {
+        var g = S.geno;
+        if (g === 'wt') {
+          return 'One combination out of four gives strong expression. <strong>lactose + / glucose −</strong> '
+            + 'reads 100%; <strong>lactose + / glucose +</strong> reads only 4.94%, because CAP–cAMP is missing. '
+            + 'The two boxes with no lactose sit at 0.500% and 0.025% — not zero, and deliberately so.';
+        }
+        if (g === 'lacI' || g === 'oc') {
+          return 'Constitutive with respect to lactose: the two lactose− boxes now match the lactose+ boxes '
+            + 'exactly. But the operon is <strong>still glucose-sensitive</strong>, dropping 100% → 4.94% '
+            + 'whenever glucose appears. Losing the repressor does not give you CAP. '
+            + (g === 'oc'
+              ? 'Oᶜ gives numbers identical to lacI⁻ here; a partial diploid with a good lacI gene tells '
+                + 'them apart, because Oᶜ is cis-acting and cannot be rescued in trans.'
+              : 'lacI⁻ is rescued in a partial diploid carrying a good lacI gene, because the repressor '
+                + 'protein diffuses through the cell. Oᶜ is not.');
+        }
+        if (g === 'lacIs') {
+          return 'Off in all four boxes, and lactose changes nothing. The super-repressor still grips the operator '
+            + 'but can no longer bind allolactose, so there is no way to lift it off. Note the glucose column still '
+            + 'moves the number (0.500% → 0.025%) — CAP is untouched; it just has a blocked promoter to '
+            + 'work with.';
+        }
+        return 'Inducible but capped. Lactose still frees the operator, so the level rises from 0.010% to 2.00% '
+          + '— but 2.00% is the ceiling, because the positive regulator is gone. The glucose switch now does '
+          + 'nothing whatsoever, which is exactly what you would expect if glucose acted only through CAP.';
+      }
+
+      function renderEuk() {
+        var L = eukLevel(S.tf);
+        var k = cat(L);
+        var nAct = (S.tf.hnf4 ? 1 : 0) + (S.tf.cebp ? 1 : 0) + (S.tf.sp1 ? 1 : 0);
+        var real = CELLS[S.cell].tf;
+        var engineered = ['hnf4', 'cebp', 'sp1', 'rest', 'myod'].some(function (key) {
+          return !!S.tf[key] !== !!real[key];
+        });
+
+        ['hnf4', 'cebp', 'sp1', 'rest', 'myod'].forEach(function (key) {
+          TFBOX[key].checked = !!S.tf[key];
+          var t = TFTAG[key];
+          if (key === 'myod') {
+            t.className = 'tf-tag';
+            t.textContent = S.tf.myod ? 'present, no site' : 'no site';
+          } else {
+            t.className = 'tf-tag ' + (S.tf[key] ? 'on' : 'off');
+            t.textContent = S.tf[key] ? 'bound' : 'absent';
+          }
+        });
+
+        el.rEukLevel.innerHTML = fmtLevel(L) + '<span class="r-unit">% of max</span>';
+        el.rEukVerdict.textContent = k === 'high' ? 'gene strongly ON'
+          : k === 'low' ? 'gene LOW' : 'gene OFF';
+        el.rEukAct.textContent = nAct + ' of 3';
+        el.rEukSil.textContent = S.tf.rest ? 'YES' : 'NO';
+        el.rEukSil.style.color = S.tf.rest ? 'var(--bad)' : 'var(--ok)';
+
+        el.eukLabel.innerHTML = 'One gene, one genome <span>&mdash; '
+          + (engineered ? 'engineered cell, based on ' : '') + CELLS[S.cell].name + '</span>';
+
+        var note, cls = 'note';
+        if (engineered) {
+          note = '<strong>You have built a cell that does not exist.</strong> The DNA is unchanged — you '
+            + 'changed only which proteins are in the nucleus — and the gene now reads ' + fmtLevel(L)
+            + '%. That is the experiment: identity is carried by the transcription factors, not by the gene.';
+          cls = 'note warn';
+        } else if (S.cell === 'liver') {
+          note = '<strong>Hepatocyte.</strong> HNF-4α and C/EBPα are made in liver, they find their '
+            + 'enhancers twelve and six and a half kilobases upstream, the DNA loops, and Mediator hands the '
+            + 'promoter to RNA polymerase II. 100% of maximum.';
+        } else if (S.cell === 'neuron') {
+          note = '<strong>Neuron — off by repression.</strong> The liver activators are simply not made here, '
+            + 'and on top of that REST occupies the silencer. ' + fmtLevel(L) + '% of maximum, which is '
+            + '<em>below</em> the muscle cell. Same DNA sequence as the hepatocyte, letter for letter.';
+          cls = 'note bad';
+        } else {
+          note = '<strong>Skeletal muscle — off by absence.</strong> Nothing is repressing this gene; there is '
+            + 'simply nobody present to switch it on, so it idles at ' + fmtLevel(L) + '%. MyoD is abundant in this '
+            + 'cell and is a powerful activator elsewhere — but this gene has no site for it, so it does '
+            + 'nothing. Having the protein is not enough.';
+        }
+        el.eukNote.className = cls;
+        el.eukNote.innerHTML = note;
+
+        el.eukCap.innerHTML = 'Bound activators are carried to Mediator by looping the DNA, which is how a site '
+          + '12,000 base pairs away can touch a promoter. REST on the silencer works in the opposite direction '
+          + '(dashed line). <strong>The horizontal axis is not to scale.</strong>';
+
+        el.cells3Cap.innerHTML = 'Three cells from one person: 100.0%, 3.33% and 0.278%, with '
+          + '<strong>identical DNA</strong> in all three. Nothing here is a mutation. The only difference is which '
+          + 'transcription factor proteins each nucleus contains — and note that muscle is off because nobody '
+          + 'switched it on, while the neuron is pushed lower still because REST is actively holding it shut.';
+
+        eukCv.redraw();
+        cellsCv.redraw();
+      }
+
+      function render() {
+        if (S.tab === 'lac') renderLac(); else renderEuk();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+
+      Array.prototype.forEach.call(el.tabSeg.querySelectorAll('button'), function (b) {
+        b.addEventListener('click', function () {
+          Array.prototype.forEach.call(el.tabSeg.querySelectorAll('button'), function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          S.tab = b.dataset.tab;
+          var isLac = S.tab === 'lac';
+          el.stageLac.hidden = !isLac;
+          el.ctrlLac.hidden = !isLac;
+          el.stageEuk.hidden = isLac;
+          el.ctrlEuk.hidden = isLac;
+          // a canvas measured while hidden has zero width; re-measure on show
+          if (isLac) { operonCv.resize(); gridCv.resize(); }
+          else { eukCv.resize(); cellsCv.resize(); }
+          render();
+        });
+      });
+
+      el.btnLac.addEventListener('click', function () { S.lac = !S.lac; render(); });
+      el.btnGlu.addEventListener('click', function () { S.glu = !S.glu; render(); });
+
+      Array.prototype.forEach.call(el.condPresets.children, function (b) {
+        b.addEventListener('click', function () {
+          S.lac = b.dataset.l === '1';
+          S.glu = b.dataset.g === '1';
+          render();
+        });
+      });
+
+      el.genotype.addEventListener('change', function () {
+        S.geno = this.value;
+        clearPredictions();
+        render();
+      });
+
+      el.btnQuizStart.addEventListener('click', function () {
+        Q.active = !Q.active;
+        if (Q.active) clearPredictions();
+        else Q.revealed = false;
+        render();
+      });
+
+      el.btnReveal.addEventListener('click', function () {
+        Q.revealed = true;
+        render();
+      });
+
+      el.cellType.addEventListener('change', function () {
+        S.cell = this.value;
+        var t = CELLS[S.cell].tf;
+        S.tf = { hnf4: t.hnf4, cebp: t.cebp, sp1: t.sp1, rest: t.rest, myod: t.myod };
+        render();
+      });
+
+      el.btnCellReset.addEventListener('click', function () {
+        var t = CELLS[S.cell].tf;
+        S.tf = { hnf4: t.hnf4, cebp: t.cebp, sp1: t.sp1, rest: t.rest, myod: t.myod };
+        render();
+      });
+
+      Object.keys(TFBOX).forEach(function (key) {
+        TFBOX[key].addEventListener('change', function () {
+          S.tf[key] = this.checked;
+          render();
+        });
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      el.genotype.value = 'wt';
+      el.cellType.value = 'liver';
+      render();
+      // the hidden tab's canvases are 1 px wide until they are first shown;
+      // renderEuk() below primes their state, resize() happens on tab switch.
+      renderEuk();
+      renderLac();
+    })();
+  </script>
+</body>
+
+</html>
