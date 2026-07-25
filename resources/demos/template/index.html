@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!--
+  STARTER TEMPLATE for a demo under resources/demos/<slug>/index.html
+  Copy this whole folder, rename it, and replace the marked sections.
+
+  What the shell gives you (assets/js/demo-shell.js):
+    Demo.canvas(el, draw, opts)  DPR-aware canvas; auto-redraws on resize AND theme change.
+                                 draw receives (ctx, w, h, colors) in CSS pixels.
+    Demo.colors()                the live palette, so canvas code never hard-codes hex.
+    Demo.range(sel, fn)          wires a slider; fires once immediately.
+    Demo.loop(step)              rAF loop with .start() / .stop(); dt is clamped.
+    Demo.rng(seed) / Demo.gauss  seeded randomness, so stochastic demos are reproducible.
+    Demo.fmt.sig / .sci / .dec   science-grade number formatting (1.0 × 10⁻⁷).
+
+  Rules of the house:
+    - The <script> in <head> must stay un-deferred: it sets the theme before first paint.
+    - Never hard-code colors in canvas code — pull them from the colors argument.
+    - Every demo ends with a .why block naming the misconception it defuses.
+-->
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <!-- REPLACE -->
+  <title>Demo Title | Dr. Andres Barboza</title>
+  <meta name="description" content="One sentence on what this demonstration shows.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <!-- REPLACE -->
+        <h1 class="demo-title">Demo Title</h1>
+        <p class="demo-sub">One line telling the student what to try first.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Topic</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="plot" role="img" aria-label="Plot of the modelled relationship"></canvas>
+        <p class="stage-caption" id="caption">Drag the sliders and watch the curve respond.</p>
+      </div>
+
+      <!-- ---------------- controls ----------------
+           The stage pins to the viewport on desktop (see demo.css); this
+           column is the one that scrolls. Nothing to add here for that. -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="amp">Amplitude</label>
+                <span class="ctrl-value" id="ampOut">1.00</span>
+              </div>
+              <input type="range" id="amp" min="0.1" max="2" step="0.05" value="1">
+              <p class="ctrl-hint">Replace with a real variable from the model.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="freq">Frequency</label>
+                <span class="ctrl-value" id="freqOut">2.0</span>
+              </div>
+              <input type="range" id="freq" min="0.5" max="6" step="0.1" value="2">
+            </div>
+
+            <div class="seg" role="tablist" aria-label="View">
+              <button role="tab" aria-selected="true" data-view="a">View A</button>
+              <button role="tab" aria-selected="false" data-view="b">View B</button>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="run">Run</button>
+              <button class="btn" id="reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Readouts</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Peak</div>
+              <div class="r-value" id="peak">1.00</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Period</div>
+              <div class="r-value" id="period">0.50<span class="r-unit">s</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note">
+            Use a <strong>note</strong> for the one sentence that has to be read. Variants:
+            <code>.note.warn</code> and <code>.note.bad</code>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> state the specific wrong idea students arrive with — not the
+        topic label. "Students think X" beats "this demonstrates Y".
+      </p>
+      <p>
+        <strong>What to notice:</strong> the one observation that makes the wrong idea untenable, and any
+        honest caveat about where the model stops being true.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var state = { amp: 1, freq: 2, view: 'a', t: 0 };
+
+      // ---- canvas: draw receives live theme colors, never hard-code hex ----
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var padL = 34, padB = 26, padT = 10, padR = 10;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var midY = (y0 + y1) / 2;
+
+        // axes
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.stroke();
+
+        // zero line
+        ctx.strokeStyle = c.lineSoft;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, midY); ctx.lineTo(x1, midY); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // curve
+        ctx.strokeStyle = state.view === 'a' ? c.series[0] : c.series[1];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (var px = x0; px <= x1; px++) {
+          var u = (px - x0) / (x1 - x0);
+          var v = state.amp * Math.sin(2 * Math.PI * state.freq * u + state.t);
+          if (state.view === 'b') v = Math.sign(v) * Math.pow(Math.abs(v), 0.5);
+          var py = midY - v * ((y0 - y1) / 2) * 0.9;
+          px === x0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // axis labels
+        ctx.fillStyle = c.muted;
+        ctx.font = '11px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText('0', x0 - 6, midY);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('time', (x0 + x1) / 2, y0 + 7);
+      }, { aspect: 0.58, minHeight: 220 });
+
+      // ---- readouts ----
+      function refresh() {
+        document.getElementById('peak').textContent = Demo.fmt.dec(state.amp, 2);
+        document.getElementById('period').innerHTML =
+          Demo.fmt.dec(1 / state.freq, 2) + '<span class="r-unit">s</span>';
+        plot.redraw();
+      }
+
+      // ---- controls ----
+      Demo.range('#amp', function (v) {
+        state.amp = v;
+        document.getElementById('ampOut').textContent = Demo.fmt.dec(v, 2);
+        refresh();
+      });
+
+      Demo.range('#freq', function (v) {
+        state.freq = v;
+        document.getElementById('freqOut').textContent = Demo.fmt.dec(v, 1);
+        refresh();
+      });
+
+      document.querySelectorAll('.seg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('.seg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.view = b.dataset.view;
+          refresh();
+        });
+      });
+
+      // ---- animation ----
+      var anim = Demo.loop(function (dt) { state.t += dt * 2; plot.paint(); });
+
+      document.getElementById('run').addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Run';
+      });
+
+      document.getElementById('reset').addEventListener('click', function () {
+        anim.stop();
+        document.getElementById('run').textContent = 'Run';
+        state.t = 0;
+        document.getElementById('amp').value = 1;
+        document.getElementById('freq').value = 2;
+        state.amp = 1; state.freq = 2;
+        document.getElementById('ampOut').textContent = '1.00';
+        document.getElementById('freqOut').textContent = '2.0';
+        refresh();
+      });
+
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

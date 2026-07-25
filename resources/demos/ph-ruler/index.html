@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>The pH Ruler | Dr. Andres Barboza</title>
+  <meta name="description" content="One logarithmic slider drives [H3O+], [OH-], pH and pOH. Type any one of the four and the other three recompute — and see what three pH units really costs.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the four-way entry grid, the Kw strip, the preset pad. */
+    .quad { display: grid; gap: 9px; }
+    .qrow {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr) 15px;
+      align-items: center;
+      gap: 8px;
+    }
+    .qrow label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .qrow input { font-variant-numeric: tabular-nums; text-align: right; }
+    .q-unit { font-size: 12px; color: var(--muted); }
+
+    .kw {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      padding: 8px 11px;
+    }
+    .kw + .kw { margin-top: 7px; }
+    .kw-eq { font-size: 12.5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .kw-eq strong { color: var(--text); font-weight: 600; }
+    .kw-temp {
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--warn);
+      background: var(--warn-soft);
+      border-radius: 20px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 7px; }
+    .presets .btn { padding: 7px 8px; font-size: 12px; }
+    .presets .btn.is-on {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 4px 0 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">The pH Ruler</h1>
+        <p class="demo-sub">Drag the slider, or type into any one of the four boxes — the other three follow.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label">The scale</p>
+        <canvas id="ruler" role="img"
+                aria-label="A pH scale from 0 to 14, coloured from acidic to basic, with the current solution marked"></canvas>
+        <p class="stage-caption" id="capRuler">
+          The solid marker is this solution. The dashed line is the comparison pH.
+        </p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">What the gap actually costs</p>
+        <canvas id="ratio" role="img"
+                aria-label="Two bars comparing hydronium ion concentration at the current pH and the comparison pH, drawn on a linear scale"></canvas>
+        <p class="stage-caption" id="capRatio">
+          Both bars are drawn on a straight scale &mdash; length is proportional to concentration. The one exception:
+          a bar shorter than one pixel is held at one pixel, or it would vanish completely.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Set the solution</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="phs">pH</label>
+                <span class="ctrl-value" id="phsOut">3.00</span>
+              </div>
+              <input type="range" id="phs" min="0" max="14" step="0.01" value="3">
+              <p class="ctrl-hint">
+                Sliding one whole pH unit to the right divides [H<sub>3</sub>O<sup>+</sup>] by 10 &mdash; every time,
+                anywhere on the ruler.
+              </p>
+            </div>
+
+            <hr class="sep">
+
+            <div class="quad">
+              <div class="qrow">
+                <label for="f-h">[H<sub>3</sub>O<sup>+</sup>]</label>
+                <input type="text" id="f-h" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <span class="q-unit">M</span>
+              </div>
+              <div class="qrow">
+                <label for="f-oh">[OH<sup>&minus;</sup>]</label>
+                <input type="text" id="f-oh" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <span class="q-unit">M</span>
+              </div>
+              <div class="qrow">
+                <label for="f-ph">pH</label>
+                <input type="text" id="f-ph" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <span class="q-unit"></span>
+              </div>
+              <div class="qrow">
+                <label for="f-poh">pOH</label>
+                <input type="text" id="f-poh" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <span class="q-unit"></span>
+              </div>
+            </div>
+
+            <p class="ctrl-hint" id="msg" aria-live="polite">
+              Any of the four is editable. Type <span class="num">1.0e-3</span>, <span class="num">0.001</span>,
+              or <span class="num">1.00 &times; 10⁻³</span> — all three are read the same way.
+            </p>
+
+            <div>
+              <div class="kw">
+                <span class="kw-eq">[H<sub>3</sub>O<sup>+</sup>][OH<sup>&minus;</sup>] = <strong id="kwVal">1.00 &times; 10⁻¹⁴</strong></span>
+                <span class="kw-temp">at 25 &deg;C</span>
+              </div>
+              <div class="kw">
+                <span class="kw-eq">pH + pOH = <strong id="sumVal">14.00</strong></span>
+                <span class="kw-temp">at 25 &deg;C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Real solutions</div>
+          <div class="presets" id="presets">
+            <button class="btn" data-ph="2.40" data-info="Lemon juice runs about pH 2.0&ndash;2.6. The acid is citric acid, roughly 5% by mass.">Lemon juice</button>
+            <button class="btn" data-ph="5.00" data-info="Brewed black coffee is pH 4.85&ndash;5.10. The acidity comes from chlorogenic and quinic acids, not from caffeine.">Black coffee</button>
+            <button class="btn" data-ph="7.00" data-info="Pure water is pH 7.00 &mdash; but only at 25 &deg;C. Neutral means [H&#8323;O&#8314;] = [OH&#8315;], not &ldquo;pH 7&rdquo;.">Pure water</button>
+            <button class="btn" data-ph="7.40" data-info="Arterial blood is held between pH 7.35 and 7.45. Outside about 6.8&ndash;7.8 is not survivable for long.">Blood</button>
+            <button class="btn" data-ph="8.10" data-info="Surface seawater is near pH 8.1 today, down from about 8.2 before industrial CO&#8322;. That 0.1 drop is a 26% rise in [H&#8323;O&#8314;].">Seawater</button>
+            <button class="btn" data-ph="12.50" data-info="Household bleach (about 5% sodium hypochlorite) sits at pH 11&ndash;13.">Bleach</button>
+          </div>
+          <p class="ctrl-hint" id="presetInfo" style="margin-top:9px">
+            Six real solutions, all near 25 &deg;C. These are typical values; real samples vary.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Compare two points</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="refs">Comparison pH</label>
+                <span class="ctrl-value" id="refsOut">6.00</span>
+              </div>
+              <input type="range" id="refs" min="0" max="14" step="0.01" value="6">
+            </div>
+
+            <div class="readouts">
+              <div class="readout is-accent">
+                <div class="r-label">H&#8323;O&#8314; ratio</div>
+                <div class="r-value" id="rRatio">1000&times;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">pH gap</div>
+                <div class="r-value" id="rGap">3.00</div>
+              </div>
+            </div>
+
+            <p class="note small" id="ratioSentence">
+              pH 3.00 has 1000 times as much hydronium as pH 6.00.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Read the fine print</div>
+          <p class="note warn">
+            <strong>Everything here assumes 25 &deg;C.</strong> K<sub>w</sub> is only 1.0 &times; 10⁻¹⁴ at that
+            temperature. Heat the water and K<sub>w</sub> gets bigger: at 50 &deg;C it is 5.5 &times; 10⁻¹⁴, so pure
+            water there has pH 6.63 &mdash; and it is still perfectly <em>neutral</em>, because
+            [H<sub>3</sub>O<sup>+</sup>] still equals [OH<sup>&minus;</sup>]. Neutral means the two are equal, not
+            &ldquo;pH&nbsp;7&rdquo;.
+          </p>
+          <p class="ctrl-hint" style="margin-top:10px">
+            This ruler covers pH 0 to 14 only. Concentrated strong acids and bases really do go below 0 and above 14;
+            they are just off this scale. And this tool converts between four numbers &mdash; it does no equilibrium
+            chemistry, so it will not give you the pH of a weak acid from its concentration.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> pH looks like a rating out of 14, so students read pH 3 and pH 6 the way
+        they would read a 3 and a 6 on a quiz &mdash; both lowish, three apart, not a big deal. That reading is wrong
+        by a factor of a thousand.
+      </p>
+      <p>
+        <strong>What to notice:</strong> leave this solution at pH 3.00 and the comparison at pH 6.00. On the ruler
+        that is three small steps. Now look at the bars underneath: they are drawn on a straight scale, and the pH 6
+        bar is one thousandth the length of the pH 3 bar &mdash; less than a single pixel, so the demo holds it at
+        one pixel just to keep it visible. Every one pH <em>unit</em> along the ruler multiplies or divides
+        [H<sub>3</sub>O<sup>+</sup>] by exactly 10. That is why seawater dropping from
+        pH 8.2 to 8.1 is reported as a 26% jump in acidity, not a 1% one.
+      </p>
+      <p>
+        <strong>Where this model stops:</strong> the whole page is fixed at 25 &deg;C. The rule
+        [H<sub>3</sub>O<sup>+</sup>][OH<sup>&minus;</sup>] = 1.0 &times; 10⁻¹⁴ holds no matter how concentrated or
+        dilute the solution is &mdash; but it does <em>not</em> hold at other temperatures. Water at 50 &deg;C is still
+        perfectly neutral at pH 6.63; heating it just moved the neutral point. So if you ever see &ldquo;pH 7 is
+        neutral&rdquo; with no temperature attached, remember it is only true at 25 &deg;C.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ======================================================================
+      // MODEL  (25 °C throughout)
+      //   Kw   = [H3O+][OH-] = 1.00e-14        pKw = 14.00
+      //   pH   = -log10[H3O+]                  [H3O+] = 10^(-pH)
+      //   pOH  = -log10[OH-]                   [OH-]  = 10^(-pOH)
+      //   pH + pOH = pKw = 14.00
+      // Canonical state is pH; the other three are derived, so the four can
+      // never drift out of agreement.
+      // ======================================================================
+      var PKW = 14;
+      var FONT = 'Poppins, system-ui, -apple-system, sans-serif';
+
+      var state = { pH: 3, ref: 6 };
+
+      function H() { return Math.pow(10, -state.pH); }
+      function pOH() { return PKW - state.pH; }
+      function OH() { return Math.pow(10, -pOH()); }
+
+      // ---------- helpers ----------
+      function roundRect(ctx, x, y, w, h, r) {
+        r = Math.max(0, Math.min(r, w / 2, h / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function wrapCentred(ctx, text, cx, y, maxW, lh, maxLines) {
+        var words = String(text).split(' '), line = '', lines = [];
+        for (var i = 0; i < words.length; i++) {
+          var trial = line ? line + ' ' + words[i] : words[i];
+          if (line && ctx.measureText(trial).width > maxW) { lines.push(line); line = words[i]; }
+          else line = trial;
+        }
+        if (line) lines.push(line);
+        for (var j = 0; j < lines.length && j < (maxLines || 3); j++) ctx.fillText(lines[j], cx, y + j * lh);
+      }
+
+      // "1.00e-3" — the plain form a student would type
+      function rawSci(x) {
+        if (!isFinite(x) || x <= 0) return '0';
+        var exp = Math.floor(Math.log10(x));
+        var mant = x / Math.pow(10, exp);
+        if (Number(mant.toFixed(2)) >= 10) { mant /= 10; exp += 1; }
+        return exp === 0 ? mant.toFixed(2) : mant.toFixed(2) + 'e' + exp;
+      }
+
+      // Accepts 0.001 | 1e-3 | 1.0E-3 | 1.00 × 10⁻³ | 1.00x10^-3 | 10^-3
+      var SUP = { '⁻': '-', '⁺': '+', '⁰': '0', '¹': '1', '²': '2', '³': '3',
+                  '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
+      function parseNum(str) {
+        if (str == null) return NaN;
+        var s = String(str).trim();
+        if (!s) return NaN;
+        var direct = Number(s.replace(/,/g, ''));
+        if (isFinite(direct)) return direct;                 // plain "3.00", "1e-3", "0.001"
+
+        s = s.replace(/\s+/g, '').replace(/,/g, '');
+        s = s.replace(/[⁻⁺⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, function (run) {
+          return '^' + run.split('').map(function (ch) { return SUP[ch]; }).join('');
+        });
+        s = s.replace(/[×·xX*]/g, '*');
+        s = s.replace(/\*?10\^?([-+]?\d+)/, function (m, e, off) { return (off === 0 ? '1e' : 'e') + e; });
+        s = s.replace(/\*/g, '');
+        var v = Number(s);
+        return isFinite(v) ? v : NaN;
+      }
+
+      function factor() { return Math.pow(10, Math.abs(state.ref - state.pH)); }
+      function fmtFactor(f) { return Demo.fmt.sig(f, 3); }
+      // "1000×" reads well; "1.00 × 10⁸×" does not — sci notation already
+      // carries a × sign, so don't hang a second one off the end of it.
+      function fmtTimes(f) {
+        var s = fmtFactor(f);
+        return s.indexOf('×') === -1 ? s + '×' : s;
+      }
+
+      // ======================================================================
+      // CANVAS 1 — the ruler
+      // ======================================================================
+      var ruler = Demo.canvas('#ruler', function (ctx, w, h, c) {
+        var x0 = 16, x1 = w - 16, W = x1 - x0;
+        var stripH = 24;
+        // laid out from a fixed content height so the block stays centred at
+        // every canvas height (132 px on a phone, 152 px on a desktop)
+        var CONTENT = 100;
+        var top = Math.max(4, (h - CONTENT) / 2);
+        var chipY = top;
+        var stripY = top + 36;
+        var labY = stripY + stripH + 9;
+        var rowY = labY + 19;
+        function X(p) { return x0 + (p / 14) * W; }
+
+        // gradient strip: acidic -> neutral -> basic, all from the token palette
+        var g = ctx.createLinearGradient(x0, 0, x1, 0);
+        g.addColorStop(0, c.bad);
+        g.addColorStop(3 / 14, c.series[1]);
+        g.addColorStop(7 / 14, c.ok);
+        g.addColorStop(10.5 / 14, c.series[0]);
+        g.addColorStop(1, c.series[3]);
+        roundRect(ctx, x0, stripY, W, stripH, 7);
+        ctx.fillStyle = g;
+        ctx.fill();
+
+        // ticks + numbers
+        var every = (W / 14) >= 30 ? 1 : 2;
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted;
+        ctx.font = '10.5px ' + FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (var p = 0; p <= 14; p++) {
+          var xp = Math.round(X(p)) + 0.5;
+          var major = (p % every === 0);
+          ctx.beginPath();
+          ctx.moveTo(xp, stripY + stripH + 2);
+          ctx.lineTo(xp, stripY + stripH + (major ? 7 : 4));
+          ctx.stroke();
+          if (major) ctx.fillText(String(p), X(p), labY);
+        }
+
+        // neutral at pH 7
+        var x7 = X(7);
+        ctx.save();
+        ctx.strokeStyle = c.surface;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x7, stripY + 1);
+        ctx.lineTo(x7, stripY + stripH - 1);
+        ctx.stroke();
+        ctx.restore();
+
+        // bottom annotation row
+        ctx.font = '10px ' + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'center';
+        ctx.fillText('neutral at 25 °C', x7, rowY);
+        ctx.textAlign = 'left';
+        ctx.fillText('more acidic', x0, rowY);
+        ctx.textAlign = 'right';
+        ctx.fillText('more basic', x1, rowY);
+
+        // comparison pH, dashed
+        var xr = X(state.ref);
+        ctx.save();
+        ctx.strokeStyle = c.text2;
+        ctx.globalAlpha = 0.6;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(xr, stripY - 7);
+        ctx.lineTo(xr, stripY + stripH + 1);
+        ctx.stroke();
+        ctx.restore();
+
+        // current pH needle
+        var xc = X(state.pH);
+        roundRect(ctx, xc - 2.5, stripY - 5, 5, stripH + 10, 2.5);
+        ctx.fillStyle = c.surface;
+        ctx.fill();
+        ctx.strokeStyle = c.text;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // chip
+        var label = 'pH ' + Demo.fmt.dec(state.pH, 2);
+        ctx.font = '600 13px ' + FONT;
+        var cw = ctx.measureText(label).width + 20;
+        var ch = 24;
+        var cx = Demo.clamp(xc - cw / 2, x0 - 10, Math.max(x0 - 10, x1 + 10 - cw));
+        var cy = chipY;
+
+        ctx.save();
+        ctx.strokeStyle = c.muted;
+        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(xc, cy + ch);
+        ctx.lineTo(xc, stripY - 7);
+        ctx.stroke();
+        ctx.restore();
+
+        roundRect(ctx, cx, cy, cw, ch, 8);
+        ctx.fillStyle = c.surface2;
+        ctx.fill();
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = c.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, cx + cw / 2, cy + ch / 2 + 0.5);
+      }, { aspect: 0.32, minHeight: 132, maxHeight: 152 });
+
+      // ======================================================================
+      // CANVAS 2 — the same two points, drawn on a linear concentration scale
+      // ======================================================================
+      var ratioC = Demo.canvas('#ratio', function (ctx, w, h, c) {
+        var x0 = 16, x1 = w - 16, W = x1 - x0;
+        var Hc = Math.pow(10, -state.pH);
+        var Hr = Math.pow(10, -state.ref);
+        var big = Math.max(Hc, Hr);
+        var small = Math.min(Hc, Hr);
+        var barH = 15;
+        var wide = W >= 250;
+
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.font = '10.5px ' + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('Hydronium concentration, on a straight scale', x0, 2);
+
+        var rows = [
+          { p: state.pH, v: Hc, col: c.accent, tag: 'this solution' },
+          { p: state.ref, v: Hr, col: c.series[1], tag: 'comparison' }
+        ];
+
+        var y = 26;
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+
+          ctx.textAlign = 'left';
+          ctx.font = '600 11.5px ' + FONT;
+          ctx.fillStyle = c.text;
+          ctx.fillText('pH ' + Demo.fmt.dec(r.p, 2) + (wide ? '  ·  ' + r.tag : ''), x0, y);
+
+          ctx.textAlign = 'right';
+          ctx.font = '11px ' + FONT;
+          ctx.fillStyle = c.text2;
+          ctx.fillText(Demo.fmt.sci(r.v, 2) + ' M', x1, y);
+
+          var by = y + 17;
+          roundRect(ctx, x0, by, W, barH, 4);
+          ctx.fillStyle = c.track;
+          ctx.fill();
+
+          var bw = W * (r.v / big);
+          var shown = Math.max(bw, 1);
+          roundRect(ctx, x0, by, shown, barH, Math.min(4, shown / 2));
+          ctx.fillStyle = r.col;
+          ctx.fill();
+
+          y += 50;
+        }
+
+        // the punchline
+        var f = factor();
+        var dpH = Math.abs(state.ref - state.pH);
+        var smallPx = W * (small / big);
+        var sumY = y + 20;
+
+        ctx.textAlign = 'center';
+        ctx.font = '600 19px ' + FONT;
+        ctx.fillStyle = c.accentStrong;
+        ctx.fillText(fmtTimes(f), w / 2, sumY);
+
+        var msg;
+        if (dpH < 0.005) {
+          msg = 'Same pH, so the bars match. Move either pH to open a gap.';
+        } else if (smallPx < 1) {
+          // the short bar is clamped to 1 px above, so say so rather than
+          // letting the picture imply a length it does not have.
+          // Keep this under ~110 characters — the box holds 4 lines at 320 px.
+          // big gaps drive smallPx below 0.005, where dec(…,2) would print a
+          // flat "0.00 px" — which is not true either
+          var px = smallPx >= 0.01 ? Demo.fmt.dec(smallPx, 2) + ' px' : 'under 0.01 px';
+          msg = 'At true scale the short bar is ' + px + ' — it is drawn at 1 px so it stays visible. '
+              + 'Gap: ' + Demo.fmt.dec(dpH, 2) + ' pH units.';
+        } else {
+          msg = 'A gap of ' + Demo.fmt.dec(dpH, 2) + ' pH units makes one bar ' + fmtFactor(f)
+              + ' times the other.';
+        }
+        ctx.font = '10.5px ' + FONT;
+        ctx.fillStyle = c.muted;
+        // 4 lines of headroom: at 320 px the longest message needs 3, and the
+        // budget below (sumY 146 + 24 + 3 × 13.5 + 10.5 ≈ 221) still fits 228.
+        wrapCentred(ctx, msg, w / 2, sumY + 24, W - 8, 13.5, 4);
+      }, { height: 228 });
+
+      // ======================================================================
+      // The four-way binding
+      // ======================================================================
+      var FIELDS = [
+        { id: 'f-h',   kind: 'conc', get: H,   set: function (v) { setPH(-Math.log10(v)); } },
+        { id: 'f-oh',  kind: 'conc', get: OH,  set: function (v) { setPH(PKW + Math.log10(v)); } },
+        { id: 'f-ph',  kind: 'p',    get: function () { return state.pH; }, set: function (v) { setPH(v); } },
+        { id: 'f-poh', kind: 'p',    get: pOH, set: function (v) { setPH(PKW - v); } }
+      ];
+      FIELDS.forEach(function (f) { f.el = document.getElementById(f.id); });
+
+      function pretty(f) {
+        return f.kind === 'conc' ? Demo.fmt.sci(f.get(), 2) : Demo.fmt.dec(f.get(), 2);
+      }
+      function rawOf(f) {
+        return f.kind === 'conc' ? rawSci(f.get()) : Demo.fmt.dec(f.get(), 2);
+      }
+
+      var msgEl = document.getElementById('msg');
+      var DEFAULT_MSG = msgEl.innerHTML;
+
+      function say(html) { msgEl.innerHTML = html || DEFAULT_MSG; }
+      function flag(el, on) { el.classList.toggle('is-bad', !!on); }
+
+      function setPH(p) {
+        if (!isFinite(p)) return;
+        state.pH = Demo.clamp(Math.round(p * 1e6) / 1e6, 0, 14);
+        render();
+      }
+
+      // silent pass while the student is mid-keystroke: apply if it parses cleanly
+      function tryLive(f) {
+        var v = parseNum(f.el.value);
+        if (!isFinite(v)) return;
+        if (f.kind === 'conc') { if (v <= 0 || v > 1 || v < 1e-14) return; }
+        else { if (v < 0 || v > 14) return; }
+        flag(f.el, false);
+        // a good keystroke retires the previous complaint. finish() can skip
+        // commit() when the typed text already equals the canonical form, so
+        // without this an old error message would survive a valid entry.
+        say('');
+        clearPreset();
+        f.set(v);
+      }
+
+      // full pass on blur / Enter: clamp, explain, reformat
+      function commit(f) {
+        var v = parseNum(f.el.value);
+
+        if (!isFinite(v)) {
+          say('I cannot read that as a number. Try <span class="num">1.0e-3</span>, '
+            + '<span class="num">0.001</span>, or <span class="num">1.00 &times; 10⁻³</span>.');
+          f.el.value = pretty(f);
+          return;
+        }
+
+        if (f.kind === 'conc') {
+          if (v <= 0) {
+            say('A concentration has to be greater than zero. The log of zero does not exist, so a solution '
+              + 'with no H<sub>3</sub>O<sup>+</sup> at all would have no pH &mdash; and water always has some.');
+            f.el.value = pretty(f);
+            return;
+          }
+          if (v > 1 || v < 1e-14) {
+            say('That is off this ruler, which runs from 1 M down to 1.00 &times; 10⁻¹⁴ M (pH 0 to 14). '
+              + 'Moved to the nearest edge.');
+            v = Demo.clamp(v, 1e-14, 1);
+          } else say('');
+        } else {
+          if (v < 0 || v > 14) {
+            say('That is off this ruler, which covers pH 0 to 14. Real concentrated acids and bases do sit '
+              + 'outside it. Moved to the nearest edge.');
+            v = Demo.clamp(v, 0, 14);
+          } else say('');
+        }
+
+        flag(f.el, false);
+        clearPreset();
+        f.set(v);
+        f.el.value = pretty(f);
+      }
+
+      // 'change' and 'blur' both fire when leaving a field. Only validate once,
+      // or the second pass would silently clear the message the first one set.
+      function finish(f) {
+        if (f.el.value === pretty(f) || f.el.value === rawOf(f)) { f.el.value = pretty(f); return; }
+        commit(f);
+      }
+
+      FIELDS.forEach(function (f) {
+        f.el.addEventListener('focus', function () { f.el.value = rawOf(f); f.el.select(); });
+        f.el.addEventListener('input', function () { tryLive(f); });
+        f.el.addEventListener('change', function () { finish(f); });
+        f.el.addEventListener('blur', function () { finish(f); });
+        f.el.addEventListener('keydown', function (e) { if (e.key === 'Enter') f.el.blur(); });
+      });
+
+      // ======================================================================
+      // Presets
+      // ======================================================================
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#presets .btn'));
+      var presetInfo = document.getElementById('presetInfo');
+      var DEFAULT_INFO = presetInfo.innerHTML;
+
+      // Deselecting also drops the substance blurb — otherwise the paragraph
+      // keeps describing lemon juice while the solution has moved to pH 9.
+      function clearPreset() {
+        presetBtns.forEach(function (b) { b.classList.remove('is-on'); });
+        presetInfo.innerHTML = DEFAULT_INFO;
+      }
+
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          clearPreset();
+          b.classList.add('is-on');
+          presetInfo.innerHTML = b.dataset.info;
+          say('');
+          setPH(parseFloat(b.dataset.ph));
+        });
+      });
+
+      // ======================================================================
+      // Sliders + render
+      // ======================================================================
+      var phsEl = document.getElementById('phs');
+      var refsEl = document.getElementById('refs');
+      var phsOut = document.getElementById('phsOut');
+      var refsOut = document.getElementById('refsOut');
+      var kwVal = document.getElementById('kwVal');
+      var sumVal = document.getElementById('sumVal');
+      var rRatio = document.getElementById('rRatio');
+      var rGap = document.getElementById('rGap');
+      var ratioSentence = document.getElementById('ratioSentence');
+
+      function render() {
+        // the four boxes — never overwrite the one being typed into
+        FIELDS.forEach(function (f) {
+          if (document.activeElement !== f.el) f.el.value = pretty(f);
+        });
+
+        phsEl.value = state.pH.toFixed(2);
+        phsOut.textContent = Demo.fmt.dec(state.pH, 2);
+        refsOut.textContent = Demo.fmt.dec(state.ref, 2);
+
+        // computed live, not hard-coded, so the constancy is demonstrated
+        kwVal.innerHTML = Demo.fmt.sci(H() * OH(), 2);
+        sumVal.textContent = Demo.fmt.dec(state.pH + pOH(), 2);
+
+        var f = factor();
+        var dpH = Math.abs(state.ref - state.pH);
+        rRatio.textContent = fmtTimes(f);
+        rGap.textContent = Demo.fmt.dec(dpH, 2);
+
+        if (dpH < 0.005) {
+          ratioSentence.innerHTML = 'Same pH on both sides, so the hydronium concentrations are identical. '
+            + 'Move the comparison slider.';
+        } else {
+          // Always name the more acidic side first. "1000 times less" is sloppy
+          // English and "1 / 1.00 × 10⁸ as much" is unreadable; stating it in the
+          // direction where the factor is a plain number ≥ 1 avoids both.
+          var lo = Math.min(state.pH, state.ref);
+          var hi = Math.max(state.pH, state.ref);
+          ratioSentence.innerHTML = 'pH <span class="num">' + Demo.fmt.dec(lo, 2) + '</span> has '
+            + '<strong>' + fmtFactor(f) + ' times as much</strong> H<sub>3</sub>O<sup>+</sup> '
+            + 'as pH <span class="num">' + Demo.fmt.dec(hi, 2) + '</span> &mdash; from a gap of just '
+            + Demo.fmt.dec(dpH, 2) + ' on the ruler.';
+        }
+
+        ruler.redraw();
+        ratioC.redraw();
+      }
+
+      Demo.range('#phs', function (v) {
+        state.pH = Demo.clamp(Math.round(v * 1e6) / 1e6, 0, 14);
+        clearPreset();
+        FIELDS.forEach(function (f) { flag(f.el, false); });
+        say('');
+        render();
+      });
+
+      Demo.range('#refs', function (v) {
+        state.ref = Demo.clamp(v, 0, 14);
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>

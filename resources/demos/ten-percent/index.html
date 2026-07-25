@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Ten Percent | Dr. Andres Barboza</title>
+  <meta name="description" content="Energy transfer between trophic levels is exponential, the 10% rule is only an average, and only standing-biomass pyramids can invert.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: the exponential comparison strip */
+    .exp-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: baseline;
+      font-size: 13px;
+      color: var(--text-2);
+    }
+    .exp-row + .exp-row { margin-top: 6px; }
+    .exp-row .num { color: var(--text); font-weight: 600; }
+    .exp-big {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--accent-strong);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.2;
+    }
+    .eq {
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Ten Percent</h1>
+        <p class="demo-sub">Move the efficiency slider from 5% to 20% and watch the top of the pyramid, not the bottom.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Energy flow</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="pyramid" role="img" aria-label="Trophic pyramid with bar widths proportional to the energy available at each level"></canvas>
+        <p class="stage-caption" id="caption">
+          Bar width is proportional to the energy available at that level. Bars thinner than about 2 px are
+          drawn at a minimum width so they stay visible &mdash; read the numbers, not the sliver.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">What the pyramid shows</div>
+          <div class="seg" role="tablist" aria-label="Pyramid type">
+            <button role="tab" aria-selected="true" data-view="flow" id="tabFlow">Energy per year</button>
+            <button role="tab" aria-selected="false" data-view="ocean" id="tabOcean">Ocean plankton</button>
+          </div>
+          <p class="ctrl-hint" id="viewHint" style="margin-top:8px">
+            An energy (or production) pyramid. It can never be top-heavy &mdash; energy is lost as heat at
+            every step, so each level must be smaller than the one below it.
+          </p>
+        </div>
+
+        <div class="panel" id="flowControls">
+          <div class="panel-title">Controls</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="eff">Transfer efficiency</label>
+                <span class="ctrl-value" id="effOut">10.0%</span>
+              </div>
+              <input type="range" id="eff" min="2" max="25" step="0.5" value="10">
+              <p class="ctrl-hint">
+                Fraction of one level's energy that ends up available to the next level.
+              </p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="npp">Producer energy (NPP)</label>
+                <span class="ctrl-value" id="nppOut">10,000</span>
+              </div>
+              <input type="range" id="npp" min="500" max="40000" step="250" value="10000">
+              <p class="ctrl-hint" id="nppHint">
+                kJ m&#8315;&#178; yr&#8315;&#185; of net primary production.
+              </p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <span class="ctrl-label">Length of the food chain</span>
+                <span class="ctrl-value" id="lenOut">5 levels</span>
+              </div>
+              <div class="seg" role="tablist" aria-label="Number of trophic levels">
+                <button role="tab" aria-selected="false" data-n="3">3</button>
+                <button role="tab" aria-selected="false" data-n="4">4</button>
+                <button role="tab" aria-selected="true" data-n="5">5</button>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="reset">Reset to 10%</button>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+          <p class="note warn">
+            <strong>10% is an average, not a law.</strong> Measured ecological efficiencies run from about
+            <strong>2%</strong> (many terrestrial systems, where most of the plant tissue is woody, hard to
+            digest, or simply never eaten and goes to the decomposers instead) to about <strong>25%</strong>
+            (open-water plankton, where the food is small, soft and eaten whole). Nothing in physics or
+            biology fixes the number at ten.
+          </p>
+        </div>
+
+        <div class="panel" id="flowReadouts">
+          <div class="panel-title">Readouts</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Top level</div>
+              <div class="r-value" id="topE">1.00<span class="r-unit">kJ m&#8315;&#178; yr&#8315;&#185;</span></div>
+            </div>
+            <div class="readout" id="predBox">
+              <div class="r-label">Predators</div>
+              <div class="r-value" id="predN">40</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Base : top</div>
+              <div class="r-value" id="ratioTop">10,000<span class="r-unit">to 1</span></div>
+            </div>
+          </div>
+
+          <p class="ctrl-hint" id="predNote" style="margin-top:10px">
+            Head count is for a 100 km&#178; reserve and a 20 kg carnivore.
+          </p>
+
+          <hr class="sep" style="margin:12px 0">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Level</th>
+                  <th>Energy (kJ m&#8315;&#178; yr&#8315;&#185;)</th>
+                  <th>Share of producers</th>
+                </tr>
+              </thead>
+              <tbody id="levelBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel" id="expPanel">
+          <div class="panel-title">Why the exponential is the whole lesson</div>
+          <p class="ctrl-hint" style="margin:0 0 8px">
+            Energy reaching the top level, kJ m&#8315;&#178; yr&#8315;&#185;, at the same producer energy:
+          </p>
+          <div class="exp-row">
+            <span>if efficiency were <strong>5%</strong></span>
+            <span class="num" id="e5">&mdash;</span>
+          </div>
+          <div class="exp-row">
+            <span>if efficiency were <strong>20%</strong></span>
+            <span class="num" id="e20">&mdash;</span>
+          </div>
+          <hr class="sep" style="margin:11px 0">
+          <div class="row-between">
+            <span class="small muted" id="expLabel">Four times the efficiency, over 4 transfers</span>
+            <span class="exp-big" id="expRatio">256&times;</span>
+          </div>
+          <p class="ctrl-hint" style="margin-top:8px">
+            <span class="eq" id="expEq">4&#8308; = 256</span>. Quadrupling the efficiency does not quadruple the
+            top of the pyramid &mdash; it multiplies it by 4 raised to the number of transfers.
+          </p>
+          <hr class="sep" style="margin:11px 0">
+          <p class="ctrl-hint" id="humanLine">
+            Eating one trophic level lower on the same land gives people about 10&times; more food energy.
+          </p>
+        </div>
+
+        <div class="panel" id="oceanPanel" hidden>
+          <div class="panel-title">English Channel plankton</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Phytoplankton</th>
+                  <th>Zooplankton</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Standing biomass<br><span class="muted small">g dry mass m&#8315;&#178;</span></td>
+                  <td>4</td>
+                  <td>21</td>
+                </tr>
+                <tr>
+                  <td>Replaced about every<br><span class="muted small">turnover time</span></td>
+                  <td>3 days</td>
+                  <td>70 days</td>
+                </tr>
+                <tr>
+                  <td>Production<br><span class="muted small">g dry mass m&#8315;&#178; yr&#8315;&#185;</span></td>
+                  <td id="oPhytoP">487</td>
+                  <td id="oZooP">110</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="readouts" style="margin-top:12px">
+            <div class="readout is-bad">
+              <div class="r-label">Zoo &divide; phyto mass</div>
+              <div class="r-value" id="oBioRatio">5.3&times;</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Phyto &rarr; zoo</div>
+              <div class="r-value" id="oEff">22.5%</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:8px">
+            Left: how many times more zooplankton mass than phytoplankton mass is standing in the water at
+            any instant. Right: even so, only about a fifth of what the phytoplankton <em>build</em> each
+            year ends up as new zooplankton &mdash; near the top of the 2&ndash;25% range, which is exactly
+            what you expect for plankton.
+          </p>
+
+          <hr class="sep" style="margin:12px 0">
+          <p class="note">
+            <strong>The biomass pyramid is upside down; the production pyramid is not.</strong> At any one
+            instant there is more zooplankton than phytoplankton in the water. But the phytoplankton are
+            eaten and replaced every few days, so over a year they produce far more new tissue than the
+            zooplankton do. A pyramid of <strong>standing biomass</strong> is a snapshot and can invert.
+            A pyramid of <strong>energy or production</strong> is a rate over time and cannot.
+          </p>
+          <p class="ctrl-hint" style="margin-top:10px">
+            Standing-crop values are the classic English Channel figures (Harvey and colleagues, mid-20th
+            century). Turnover times are rounded approximations and shift a lot with season and species,
+            so treat the production row as an order-of-magnitude estimate, not a measurement.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception, part one:</strong> students learn "10% of the energy moves up" and store
+        it as a law of nature, like the speed of light. It is not. It is a rough average of measurements
+        that scatter from about 2% to about 25% depending on what the food is made of and how much of it
+        actually gets eaten. Slide the efficiency and notice that the bottom of the pyramid never changes at
+        all while the top moves by orders of magnitude &mdash; a "small" disagreement about the rule is an
+        enormous disagreement about the predators.
+      </p>
+      <p>
+        <strong>The misconception, part two:</strong> students also learn "pyramids are always upright" and
+        then meet the open ocean, where a snapshot of the water holds more zooplankton than phytoplankton.
+        Switch to the ocean view. The <strong>biomass</strong> pyramid really is upside down, because
+        phytoplankton get eaten and regrown every few days &mdash; there is never much standing at once, but
+        an enormous amount passes through. The <strong>production</strong> pyramid beside it &mdash; how much
+        new tissue each group builds over a whole year, which is what energy flow actually measures &mdash;
+        is still upright, and always will be: every transfer loses energy as heat, so no level can ever
+        receive more energy than the level feeding it. Upright pyramids are guaranteed for energy and
+        production, not for standing biomass.
+      </p>
+      <p>
+        <strong>What to notice:</strong> multiplying by an efficiency four or five times in a row is
+        exponential, not gradual. That is why food chains almost never run past four or five links &mdash;
+        push the chain to 5 levels at 2% efficiency and the reserve cannot support even one top predator,
+        no matter how productive you make the plants.
+        It is also why eating lower on the chain feeds more people from the same field: skipping one
+        transfer multiplies the food energy available to us by roughly 1 divided by the efficiency.
+      </p>
+      <p>
+        <strong>Where this model stops being true:</strong> it assumes one clean chain with a single
+        efficiency at every step. Real ecosystems are webs, efficiencies differ at each link, omnivores sit
+        between levels, and detritivores route a large share of the energy around the chain entirely. The
+        head-count number also assumes every predator is a 20 kg mammal with an average field metabolic
+        rate, no seasons, and no wasted kills. Use these numbers to see the shape of the relationship, not
+        to make a prediction about a real reserve.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var FONT = 'Poppins, system-ui, -apple-system, sans-serif';
+
+      // ---------------------------------------------------------------
+      // MODEL
+      //
+      //   E(1) = NPP                              kJ m^-2 yr^-1
+      //   E(i) = NPP * eff^(i-1)                  i = 1..n
+      //
+      // "Energy available at a level" = the energy its members take in and
+      // use over a year (respiration + growth + reproduction). Efficiency
+      // is the fraction of one level's energy that ends up available to the
+      // next. Because eff < 1 always, E(i) strictly decreases: an energy
+      // pyramid can never invert.
+      //
+      //   predators = E(n) * AREA / FMR_year
+      //   FMR (kJ/day) = 4.82 * M(g)^0.734        Nagy 2005, eutherian mammals
+      //
+      // Dry-mass <-> energy uses 18 kJ per gram of dry plant tissue.
+      // ---------------------------------------------------------------
+      var AREA_M2 = 1e8;          // 100 km^2 reserve
+      var PRED_MASS_G = 20000;    // 20 kg carnivore
+      var FMR_DAY = 4.82 * Math.pow(PRED_MASS_G, 0.734);   // kJ per day
+      var FMR_YEAR = FMR_DAY * 365;                        // kJ per year
+      var KJ_PER_G = 18;          // kJ per gram dry mass
+
+      var NAMES = ['Producers', 'Herbivores', 'Carnivores', 'Top carnivores', 'Apex predators'];
+
+      var state = { eff: 0.10, npp: 10000, n: 5, view: 'flow' };
+
+      function energies(eff, npp, n) {
+        var out = [], e = npp;
+        for (var i = 0; i < n; i++) { out.push(e); e *= eff; }
+        return out;
+      }
+      function topEnergy(eff) { return state.npp * Math.pow(eff, state.n - 1); }
+      function predators(eff) { return topEnergy(eff) * AREA_M2 / FMR_YEAR; }
+
+      // ---------------------------------------------------------------
+      // Ocean case: English Channel standing crop, dry mass.
+      // Production = standing biomass / turnover time.
+      // ---------------------------------------------------------------
+      var OCEAN = {
+        phytoB: 4,    phytoTurn: 3,    // g m^-2 ; days
+        zooB: 21,     zooTurn: 70
+      };
+      OCEAN.phytoP = OCEAN.phytoB / OCEAN.phytoTurn * 365;   // ~487 g m^-2 yr^-1
+      OCEAN.zooP = OCEAN.zooB / OCEAN.zooTurn * 365;         // ~110 g m^-2 yr^-1
+      OCEAN.eff = OCEAN.zooP / OCEAN.phytoP;                 // ~0.225
+
+      // ---------------------------------------------------------------
+      // formatting helpers
+      // ---------------------------------------------------------------
+      function eLabel(x) {
+        // >= 1000: show the exact value rounded to a whole kJ, so the producer
+        // row always matches the NPP slider readout (3 sig figs turned
+        // 12,250 into 12,300 and made the two disagree).
+        if (x >= 1000) return Demo.fmt.comma(x);
+        return Demo.fmt.sig(x, 3);
+      }
+      function count(x) {
+        if (x >= 10) return Demo.fmt.comma(x);
+        if (x >= 1) return Demo.fmt.dec(x, 1);
+        return Demo.fmt.sig(x, 2);
+      }
+      function shareLabel(f) { return Demo.fmt.sig(f * 100, 2) + '%'; }
+
+      // ---------------------------------------------------------------
+      // canvas
+      // ---------------------------------------------------------------
+      function rrect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function levelColors(c) {
+        return [c.series[2], c.series[0], c.series[3], c.series[1], c.accentStrong];
+      }
+
+      function drawFlow(ctx, w, h, c) {
+        var fs = w < 420 ? 10.5 : 12;
+        var pal = levelColors(c);
+        var E = energies(state.eff, state.npp, state.n);
+        var top = 4, bot = h - 4;
+        var rowH = (bot - top) / state.n;
+        var cx = w / 2;
+        var maxW = w - 4;
+
+        for (var row = 0; row < state.n; row++) {
+          var lvl = state.n - 1 - row;              // 0 = producers, drawn last (bottom)
+          var rt = top + row * rowH;
+
+          // level name (left) and energy (right)
+          ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + 'px ' + FONT;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = c.text;
+          ctx.fillText(NAMES[lvl], 2, rt);
+
+          ctx.font = fs + 'px ' + FONT;
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.text2;
+          ctx.fillText(eLabel(E[lvl]) + ' kJ m⁻² yr⁻¹', w - 2, rt);
+
+          // bar, width proportional to energy
+          var frac = E[lvl] / E[0];
+          var bw = Math.max(2.5, maxW * frac);
+          var by = rt + fs + 5;
+          var bh = Math.max(9, rowH - fs - 20);
+
+          ctx.fillStyle = pal[lvl];
+          rrect(ctx, cx - bw / 2, by, bw, bh, 3);
+          ctx.fill();
+
+          // the multiplier that produced this level, parked in the empty left margin
+          if (lvl > 0) {
+            ctx.font = (fs - 1) + 'px ' + FONT;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = c.muted;
+            ctx.fillText('× ' + Demo.fmt.dec(state.eff * 100, 1) + '%', 2, by + bh / 2);
+          }
+        }
+
+        // baseline under the producers
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, h - 1.5); ctx.lineTo(w, h - 1.5);
+        ctx.stroke();
+      }
+
+      function drawGroup(ctx, x, y, gw, gh, title, sub, rows, c, fs) {
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.font = '600 ' + (fs + 1) + 'px ' + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(title, x, y);
+        ctx.font = (fs - 1) + 'px ' + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(sub, x, y + fs + 6);
+
+        var head = 2 * fs + 14;
+        var rowH = (gh - head) / rows.length;
+        var cx = x + gw / 2;
+        var maxV = 0, i;
+        for (i = 0; i < rows.length; i++) maxV = Math.max(maxV, rows[i].value);
+
+        for (i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var rt = y + head + i * rowH;
+          ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + 'px ' + FONT;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = c.text;
+          ctx.fillText(r.name, x, rt);
+
+          ctx.font = fs + 'px ' + FONT;
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.text2;
+          ctx.fillText(r.label, x + gw, rt);
+
+          var bw = Math.max(3, gw * r.value / maxV);
+          var by = rt + fs + 5;
+          var bh = Math.max(10, rowH - fs - 18);
+          ctx.fillStyle = r.color;
+          rrect(ctx, cx - bw / 2, by, bw, bh, 3);
+          ctx.fill();
+        }
+      }
+
+      function drawOcean(ctx, w, h, c) {
+        var fs = w < 420 ? 10.5 : 12;
+        var pal = levelColors(c);
+        var bioRows = [
+          { name: 'Zooplankton', value: OCEAN.zooB, label: OCEAN.zooB + ' g m⁻²', color: pal[1] },
+          { name: 'Phytoplankton', value: OCEAN.phytoB, label: OCEAN.phytoB + ' g m⁻²', color: pal[0] }
+        ];
+        var prodRows = [
+          { name: 'Zooplankton', value: OCEAN.zooP, label: Math.round(OCEAN.zooP) + ' g m⁻² yr⁻¹', color: pal[1] },
+          { name: 'Phytoplankton', value: OCEAN.phytoP, label: Math.round(OCEAN.phytoP) + ' g m⁻² yr⁻¹', color: pal[0] }
+        ];
+
+        var bioSub = 'mass present right now — inverted';
+        var prodSub = 'mass built per year — always upright';
+
+        if (w < 470) {
+          var gh = (h - 12) / 2;
+          drawGroup(ctx, 2, 2, w - 4, gh - 6, 'Standing biomass', bioSub, bioRows, c, fs);
+          drawGroup(ctx, 2, 2 + gh + 6, w - 4, gh - 6, 'Annual production', prodSub, prodRows, c, fs);
+        } else {
+          var gap = 26;
+          var gw = (w - 4 - gap) / 2;
+          drawGroup(ctx, 2, 4, gw, h - 12, 'Standing biomass', bioSub, bioRows, c, fs);
+          drawGroup(ctx, 2 + gw + gap, 4, gw, h - 12, 'Annual production', prodSub, prodRows, c, fs);
+          ctx.strokeStyle = c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(2 + gw + gap / 2, 6); ctx.lineTo(2 + gw + gap / 2, h - 6);
+          ctx.stroke();
+        }
+      }
+
+      var stage = Demo.canvas('#pyramid', function (ctx, w, h, c) {
+        if (state.view === 'ocean') drawOcean(ctx, w, h, c);
+        else drawFlow(ctx, w, h, c);
+      }, { aspect: 0.68, minHeight: 310, maxHeight: 470 });
+
+      // ---------------------------------------------------------------
+      // readouts
+      // ---------------------------------------------------------------
+      var $ = function (id) { return document.getElementById(id); };
+
+      function nppDescriptor(kj) {
+        if (kj < 4000) return 'about open ocean or desert';
+        if (kj < 15000) return 'about temperate grassland';
+        if (kj < 30000) return 'about temperate deciduous forest';
+        return 'about tropical rainforest';
+      }
+
+      function refresh() {
+        var E = energies(state.eff, state.npp, state.n);
+        var n = state.n;
+        var transfers = n - 1;
+        var top = E[n - 1];
+        var N = predators(state.eff);
+
+        // headline readouts
+        $('topE').innerHTML = eLabel(top) +
+          '<span class="r-unit">kJ m⁻² yr⁻¹</span>';
+        $('predN').textContent = count(N);
+        var ratioBT = E[0] / top;
+        $('ratioTop').innerHTML =
+          (ratioBT >= 1e5 ? Demo.fmt.sci(ratioBT, 1) : Demo.fmt.comma(ratioBT)) +
+          '<span class="r-unit">to 1</span>';
+
+        var box = $('predBox');
+        box.classList.remove('is-accent', 'is-ok', 'is-bad');
+        if (N < 1) {
+          box.classList.add('is-bad');
+          $('predNote').innerHTML = '<strong>Fewer than one animal.</strong> A 100 km&#178; reserve cannot ' +
+            'support a trophic level this high at this efficiency &mdash; the chain has to be shorter. ' +
+            'Head count uses a 20 kg carnivore.';
+        } else {
+          var dens = N / 100;   // per km²
+          $('predNote').innerHTML = 'Head count is for a 100 km&#178; reserve (10&#8312; m&#178;) and a 20 kg ' +
+            'carnivore needing ' + Demo.fmt.comma(FMR_YEAR) + ' kJ per year (field metabolic rate, ' +
+            'Nagy 2005). That works out to <strong>' + Demo.fmt.sig(dens, 2) + ' per km&#178;</strong>' +
+            (dens > 1
+              ? ' &mdash; far denser than any real 20 kg carnivore (about 0.01&ndash;0.5 per km&#178;), which is your ' +
+                'sign the sliders have been pushed past where this one-chain model applies.'
+              : '. Real carnivores this size live at roughly 0.01&ndash;0.5 per km&#178;.');
+        }
+
+        // level table
+        var html = '';
+        for (var i = n - 1; i >= 0; i--) {
+          html += '<tr><td>' + (i + 1) + '. ' + NAMES[i] + '</td><td>' + eLabel(E[i]) + '</td><td>' +
+            shareLabel(E[i] / E[0]) + '</td></tr>';
+        }
+        $('levelBody').innerHTML = html;
+
+        // the exponential panel
+        var lo = state.npp * Math.pow(0.05, transfers);
+        var hi = state.npp * Math.pow(0.20, transfers);
+        $('e5').textContent = eLabel(lo);
+        $('e20').textContent = eLabel(hi);
+        var ratio = Math.pow(4, transfers);
+        $('expRatio').textContent = Demo.fmt.comma(ratio) + '×';
+        $('expLabel').textContent = 'Four times the efficiency, over ' + transfers +
+          (transfers === 1 ? ' transfer' : ' transfers');
+        $('expEq').innerHTML = '4' + Demo.fmt.sup(transfers) + ' = ' + Demo.fmt.comma(ratio);
+        $('humanLine').innerHTML = 'Eating one trophic level lower on the same land gives people about ' +
+          '<strong>' + Demo.fmt.dec(1 / state.eff, 1) + '&times;</strong> more food energy (1 &divide; ' +
+          Demo.fmt.dec(state.eff * 100, 1) + '%).';
+
+        stage.redraw();
+      }
+
+      // ---------------------------------------------------------------
+      // controls
+      // ---------------------------------------------------------------
+      Demo.range('#eff', function (v) {
+        state.eff = v / 100;
+        $('effOut').textContent = Demo.fmt.dec(v, 1) + '%';
+        refresh();
+      });
+
+      Demo.range('#npp', function (v) {
+        state.npp = v;
+        $('nppOut').textContent = Demo.fmt.comma(v);
+        $('nppHint').innerHTML = 'kJ m&#8315;&#178; yr&#8315;&#185; &mdash; ' + nppDescriptor(v) +
+          '. That is roughly ' + Demo.fmt.comma(v / KJ_PER_G) +
+          ' g of dry plant matter per m&#178; per year at 18 kJ g&#8315;&#185;.';
+        refresh();
+      });
+
+      document.querySelectorAll('[data-n]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-n]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.n = parseInt(b.dataset.n, 10);
+          $('lenOut').textContent = state.n + ' levels';
+          refresh();
+        });
+      });
+
+      $('reset').addEventListener('click', function () {
+        document.querySelector('#eff').value = 10;
+        document.querySelector('#npp').value = 10000;
+        state.eff = 0.10; state.npp = 10000; state.n = 5;
+        $('effOut').textContent = '10.0%';
+        $('nppOut').textContent = '10,000';
+        $('nppHint').innerHTML = 'kJ m&#8315;&#178; yr&#8315;&#185; &mdash; ' + nppDescriptor(10000) +
+          '. That is roughly ' + Demo.fmt.comma(10000 / KJ_PER_G) +
+          ' g of dry plant matter per m&#178; per year at 18 kJ g&#8315;&#185;.';
+        document.querySelectorAll('[data-n]').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.n === '5' ? 'true' : 'false');
+        });
+        $('lenOut').textContent = '5 levels';
+        refresh();
+      });
+
+      // view switch
+      document.querySelectorAll('[data-view]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-view]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.view = b.dataset.view;
+          var ocean = state.view === 'ocean';
+
+          $('oceanPanel').hidden = !ocean;
+          $('flowControls').hidden = ocean;
+          $('flowReadouts').hidden = ocean;
+          $('expPanel').hidden = ocean;
+
+          $('viewHint').innerHTML = ocean
+            ? 'Two pyramids for the same water. One counts how much plankton is <em>standing there ' +
+              'right now</em>; the other counts how much is <em>built over a year</em>. Only the ' +
+              'standing-biomass one can be upside down.'
+            : 'An energy (or production) pyramid. It can never be top-heavy &mdash; energy is lost as heat ' +
+              'at every step, so each level must be smaller than the one below it.';
+
+          $('caption').innerHTML = ocean
+            ? 'Bar width is proportional to the value in each pyramid, scaled separately. The two pyramids ' +
+              'measure different quantities (grams present vs. grams made per year) and are not on a ' +
+              'shared scale.'
+            : 'Bar width is proportional to the energy available at that level. Bars thinner than about ' +
+              '2 px are drawn at a minimum width so they stay visible &mdash; read the numbers, not the sliver.';
+
+          stage.el.setAttribute('aria-label', ocean
+            ? 'Two plankton pyramids for the same water: standing biomass, which is top-heavy and inverted, ' +
+              'beside annual production, which is upright.'
+            : 'Trophic pyramid with bar widths proportional to the energy available at each level.');
+
+          stage.redraw();
+        });
+      });
+
+      // ocean panel numbers, computed rather than typed
+      $('oPhytoP').textContent = Demo.fmt.comma(OCEAN.phytoP);
+      $('oZooP').textContent = Demo.fmt.comma(OCEAN.zooP);
+      $('oBioRatio').textContent = Demo.fmt.dec(OCEAN.zooB / OCEAN.phytoB, 1) + '×';
+      $('oEff').textContent = Demo.fmt.dec(OCEAN.eff * 100, 1) + '%';
+
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Heavy, Light, Hybrid | Dr. Andres Barboza</title>
+  <meta name="description" content="Run the Meselson-Stahl experiment against all three competing models of DNA replication and see which generation actually decides between them.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: labels above each canvas, the strand legend, table dots */
+    .viz-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .viz-label span { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-2); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+    .legend i {
+      width: 15px;
+      height: 8px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+      border: 1px solid var(--line);
+    }
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: -1px;
+      border: 1px solid var(--line);
+    }
+    .tbl td.band-cell { white-space: nowrap; }
+    .tbl tr.is-sel td { background: var(--accent-soft); }
+    sup { font-size: 0.7em; line-height: 0; vertical-align: super; }
+    .seg.gens button { padding: 7px 4px; }
+    /* full model names have to survive a 375px phone without clipping */
+    .seg.models button { padding: 6px 4px; font-size: 11.5px; white-space: normal; line-height: 1.2; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Heavy, Light, Hybrid</h1>
+        <p class="demo-sub">Step to generation 1. Then ask yourself which two models you still cannot tell apart.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Meselson &amp; Stahl</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="viz-label" id="molLabel">Molecules</div>
+        <canvas id="mols" role="img" aria-label="Diagram of DNA molecules and their strand composition"></canvas>
+        <div class="legend">
+          <span><i style="background:var(--series-2)"></i>old strand material, <sup>15</sup>N (heavy)</span>
+          <span><i style="background:var(--series-1)"></i>new strand material, <sup>14</sup>N (light)</span>
+        </div>
+        <p class="stage-caption" id="molCap">Two bars stacked together = one double-stranded DNA molecule.</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <div class="viz-label">Density-gradient tubes <span>&mdash; all three predictions, same generation</span></div>
+        <canvas id="tubes" role="img" aria-label="Three caesium chloride density gradient tubes showing predicted DNA bands"></canvas>
+        <p class="stage-caption">
+          Denser DNA sits lower. Dashed lines mark the three reference densities in g/cm&sup3;:
+          all-<sup>15</sup>N 1.7240, hybrid 1.7170, all-<sup>14</sup>N 1.7100.
+          A band&rsquo;s darkness is proportional to how much of the total DNA is in it, so a 6%
+          band really is nearly invisible &mdash; the printed percentage is the number to read.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Set up the experiment</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <span class="ctrl-label">Generations in <sup>14</sup>N medium</span>
+                <span class="ctrl-value" id="genOut">0</span>
+              </div>
+              <div class="seg gens" role="tablist" aria-label="Generation">
+                <button role="tab" aria-selected="true" data-gen="0">0</button>
+                <button role="tab" aria-selected="false" data-gen="1">1</button>
+                <button role="tab" aria-selected="false" data-gen="2">2</button>
+                <button role="tab" aria-selected="false" data-gen="3">3</button>
+                <button role="tab" aria-selected="false" data-gen="4">4</button>
+              </div>
+              <p class="ctrl-hint">Generation 0 is the starting culture, grown for many generations in
+                <sup>15</sup>N so that every strand is heavy.</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="prev">Back</button>
+              <button class="btn primary" id="next">Next generation</button>
+            </div>
+
+            <hr class="sep">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <span class="ctrl-label">Molecules drawn above</span>
+              </div>
+              <div class="seg models" role="tablist" aria-label="Model">
+                <button role="tab" aria-selected="false" data-model="conservative">Conserv&shy;ative</button>
+                <button role="tab" aria-selected="true" data-model="semi">Semi-<br>conservative</button>
+                <button role="tab" aria-selected="false" data-model="dispersive">Dispersive</button>
+              </div>
+              <p class="ctrl-hint" id="modelHint">All three tubes are always shown; this picks whose
+                molecules get drawn.</p>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="showObs">
+              <span>Reveal what Meselson &amp; Stahl actually saw</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What this generation tests</div>
+          <p class="note" id="genNote"></p>
+          <p class="note" id="obsNote" style="margin-top:10px; display:none"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Predicted bands</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Band</th>
+                  <th>Density</th>
+                  <th>Share</th>
+                </tr>
+              </thead>
+              <tbody id="bandBody"></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint">Density in g/cm&sup3;. Share = fraction of all the DNA in the tube.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Readouts</div>
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Molecules</div>
+              <div class="r-value" id="rMol">1</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label"><sup>15</sup>N share</div>
+              <div class="r-value" id="rN15">100<span class="r-unit">%</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Bands</div>
+              <div class="r-value" id="rBands">1</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="small muted">Every model keeps all the original <sup>15</sup>N &mdash; at generation
+            <span class="num" id="rGenA">0</span> it is 2<sup>&minus;<span class="num" id="rGenB">0</span></sup>
+            of the total DNA no matter which model is true. The models disagree only about how that
+            <sup>15</sup>N is <em>packaged</em>, and that is what a density gradient can see.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the model simplifies</div>
+          <p class="note warn">
+            Densities use the measured values for <em>E. coli</em> DNA in caesium chloride:
+            <strong>1.710 g/cm&sup3;</strong> for all-<sup>14</sup>N and <strong>1.724 g/cm&sup3;</strong>
+            for all-<sup>15</sup>N. Everything between is straight-line interpolation on the fraction of
+            <sup>15</sup>N. Band <em>widths</em> here are schematic; real bands are broadened by diffusion,
+            and by generation 3 or 4 the faint bands are hard to read on real film. The counts assume every
+            molecule replicates exactly once per generation and that no strand is lost.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> almost every student can say &ldquo;replication is
+        semiconservative,&rdquo; and almost none can say what the other two models
+        <em>predicted</em>. That is a memorized conclusion, not an experiment. If you cannot state
+        what conservative and dispersive replication would have put in the tube, you have no idea why
+        Meselson and Stahl mattered &mdash; you are just trusting the textbook.
+      </p>
+      <p>
+        <strong>What to notice:</strong> step to generation 1 and compare the three tubes. At generation 0
+        all three models say the same thing &mdash; one fully heavy band &mdash; so nothing has been tested
+        yet. Conservative dies as soon as growth in <sup>14</sup>N starts: it is the only model that still
+        puts DNA at the fully heavy line afterwards, and at generation 1 that band should hold half the
+        DNA. But semiconservative and dispersive give you the
+        <em>identical</em> picture &mdash; one band, exactly halfway, at 1.7170 g/cm&sup3;. One
+        generation of data cannot choose between them, and a student who says &ldquo;generation 1 proved
+        replication is semiconservative&rdquo; is wrong.
+      </p>
+      <p>
+        <strong>Generation 2 is the whole experiment.</strong> Semiconservative predicts the DNA splits
+        into <em>two</em> bands: half of it still hybrid at 1.7170 (the two original heavy strands are
+        still intact, one per molecule), half of it fully light at 1.7100. Dispersive predicts
+        <em>one</em> band at 1.7135 &mdash; every molecule is a uniform quarter-heavy patchwork, so they
+        all sit at the same density and there is nothing to split. Two bands versus one band: that is
+        the observation, and Meselson and Stahl saw two.
+      </p>
+      <p>
+        <strong>The honest caveat:</strong> the dispersive band never stays put. It slides toward the
+        light line generation after generation, and by generation 4 it is only 6% <sup>15</sup>N, sitting
+        at 1.7109 &mdash; close enough to plain light DNA that real film would struggle to separate them.
+        That is exactly why the argument rests on generation 2, when the dispersive band is still clearly
+        off the light line but the semiconservative prediction has already broken in two.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // MODEL
+      //
+      // Buoyant density of E. coli DNA in CsCl (Meselson & Stahl 1958):
+      //   all-14N  rho = 1.710 g/cm^3      all-15N  rho = 1.724 g/cm^3
+      // Density is taken linear in f, the fraction of the molecule's nitrogen
+      // that is 15N:      rho(f) = 1.710 + 0.014 * f
+      //
+      // Start: one duplex, both strands 15N (f = 1). Grow in 14N. After n
+      // generations there are 2^n molecules and, in EVERY model, the original
+      // 15N is 2^-n of all the DNA (it is conserved; only its packaging differs).
+      //
+      //   CONSERVATIVE   the parental duplex is never taken apart, so at every
+      //                  generation exactly 1 molecule is f = 1 and the other
+      //                  2^n - 1 are f = 0.
+      //                  bands: f=1 share 2^-n ; f=0 share 1 - 2^-n
+      //
+      //   SEMICONSERVATIVE  the 2 parental strands survive, each in its own
+      //                  duplex, so exactly 2 molecules are hybrid (f = 0.5)
+      //                  and 2^n - 2 are f = 0.
+      //                  bands: f=0.5 share 2^(1-n) ; f=0 share 1 - 2^(1-n)
+      //
+      //   DISPERSIVE     old material is broken up and spread evenly, so ALL
+      //                  2^n molecules are identical with f = 2^-n.
+      //                  band: one, f = 2^-n, share 1.
+      // =====================================================================
+
+      var RHO_L = 1.710, RHO_H = 1.724;          // g/cm^3
+      var RHO_TOP = 1.7055, RHO_BOT = 1.7285;    // displayed span of the tube
+      var SIGMA = 0.0010;                        // schematic band half-width, g/cm^3
+      var SEGS = 16;                             // segments drawn per strand
+
+      function rhoOf(f) { return RHO_L + (RHO_H - RHO_L) * f; }
+
+      var MODELS = [
+        { id: 'conservative', name: 'Conservative', html: 'Conser&shy;vative' },
+        { id: 'semi', name: 'Semiconservative', html: 'Semi&shy;conser&shy;vative' },
+        { id: 'dispersive', name: 'Dispersive', html: 'Disper&shy;sive' }
+      ];
+
+      function bandsFor(id, n) {
+        var out = [], p2 = Math.pow(2, -n);
+        if (id === 'conservative') {
+          out.push({ f: 1, p: p2, name: '15N only' });
+          out.push({ f: 0, p: 1 - p2, name: '14N only' });
+        } else if (id === 'semi') {
+          var ph = Math.min(1, Math.pow(2, 1 - n));
+          out.push({ f: 0.5, p: ph, name: 'hybrid' });
+          out.push({ f: 0, p: 1 - ph, name: '14N only' });
+          if (n === 0) { out = [{ f: 1, p: 1, name: '15N only' }]; }
+        } else {
+          out.push({ f: p2, p: 1, name: n === 0 ? '15N only' : pct(p2) + ' 15N' });
+        }
+        return out.filter(function (b) { return b.p > 1e-9; });
+      }
+
+      // strand composition of molecule i, for the molecule drawing
+      function strandsFor(id, n, i) {
+        if (n === 0) return [{ t: 'H' }, { t: 'H' }];
+        if (id === 'conservative') return i === 0 ? [{ t: 'H' }, { t: 'H' }] : [{ t: 'L' }, { t: 'L' }];
+        if (id === 'semi') return i < 2 ? [{ t: 'H' }, { t: 'L' }] : [{ t: 'L' }, { t: 'L' }];
+        var k = Math.round(SEGS * Math.pow(2, -n));       // n=1..4 -> 8, 4, 2, 1
+        return [{ t: 'M', k: k, off: 0 }, { t: 'M', k: k, off: Math.floor(SEGS / (2 * k)) }];
+      }
+
+      var state = { gen: 0, model: 'semi', obs: false };
+
+      // =====================================================================
+      // formatting helpers
+      // =====================================================================
+      function pct(p) {
+        var v = p * 100;
+        if (Math.abs(v - Math.round(v)) < 0.005) return String(Math.round(v)) + '%';
+        return Demo.fmt.dec(v, 1) + '%';
+      }
+      function rhoTxt(f) { return Demo.fmt.dec(rhoOf(f), 4); }
+
+      // =====================================================================
+      // colour helpers — every colour comes from the live palette
+      // =====================================================================
+      function toRGB(s) {
+        s = (s || '').trim();
+        if (s.charAt(0) === '#') {
+          if (s.length === 4) return [parseInt(s[1] + s[1], 16), parseInt(s[2] + s[2], 16), parseInt(s[3] + s[3], 16)];
+          return [parseInt(s.substr(1, 2), 16), parseInt(s.substr(3, 2), 16), parseInt(s.substr(5, 2), 16)];
+        }
+        var m = s.match(/[\d.]+/g);
+        // the grey is only a parser guard — tokens.css always supplies hex or rgb()
+        return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : [128, 128, 128];
+      }
+      function mix(a, b, t) {
+        var A = toRGB(a), B = toRGB(b);
+        return [Math.round(A[0] + (B[0] - A[0]) * t),
+                Math.round(A[1] + (B[1] - A[1]) * t),
+                Math.round(A[2] + (B[2] - A[2]) * t)];
+      }
+      function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a.toFixed(3) + ')'; }
+      function bandColor(c, f) { return mix(c.series[0], c.series[1], f); }   // light -> heavy
+
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+      function font(ctx, size, weight) {
+        ctx.font = (weight || 500) + ' ' + size + 'px Poppins, system-ui, sans-serif';
+      }
+      function fitFont(ctx, text, maxW, start, min, weight) {
+        var s = start;
+        while (s > min) { font(ctx, s, weight); if (ctx.measureText(text).width <= maxW) return s; s -= 0.5; }
+        font(ctx, min, weight);
+        return min;
+      }
+
+      // =====================================================================
+      // CANVAS 1 — the molecules
+      // =====================================================================
+      var molCv = Demo.canvas('#mols', function (ctx, w, h, c) {
+        var n = state.gen, count = Math.pow(2, n);
+        var cols = count <= 2 ? count : 4;
+        var rows = Math.ceil(count / cols);
+        var padX = 6, padY = 8;
+        var cellW = (w - padX * 2) / cols;
+        var cellH = (h - padY * 2) / rows;
+        var mw = Math.min(cellW * 0.86, 200);
+        var mh = Math.min(cellH * 0.62, 48, mw * 0.40);
+        var oy = padY + ((h - padY * 2) - rows * cellH) / 2;
+
+        var HEAVY = c.series[1], LIGHT = c.series[0];
+
+        for (var i = 0; i < count; i++) {
+          var r = Math.floor(i / cols), q = i % cols;
+          var cx = padX + cellW * (q + 0.5), cy = oy + cellH * (r + 0.5);
+          var st = strandsFor(state.model, n, i);
+          var x = cx - mw / 2, y = cy - mh / 2;
+          var sh = mh * 0.42, gap = mh - sh * 2;
+
+          for (var s = 0; s < 2; s++) {
+            var sy = y + s * (sh + gap);
+            var d = st[s];
+            if (d.t === 'M') {
+              rr(ctx, x, sy, mw, sh, sh / 2); ctx.fillStyle = LIGHT; ctx.fill();
+              ctx.save();
+              rr(ctx, x, sy, mw, sh, sh / 2); ctx.clip();
+              ctx.fillStyle = HEAVY;
+              var segw = mw / SEGS;
+              for (var j = 0; j < SEGS; j++) {
+                var idx = (j + SEGS - d.off) % SEGS;
+                if ((idx * d.k) % SEGS < d.k) ctx.fillRect(x + j * segw, sy, segw + 0.5, sh);
+              }
+              ctx.restore();
+            } else {
+              rr(ctx, x, sy, mw, sh, sh / 2);
+              ctx.fillStyle = d.t === 'H' ? HEAVY : LIGHT;
+              ctx.fill();
+            }
+            rr(ctx, x, sy, mw, sh, sh / 2);
+            ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+          }
+        }
+      }, { height: 196 });
+
+      // =====================================================================
+      // CANVAS 2 — the three centrifuge tubes
+      // =====================================================================
+      var tubeCv = Demo.canvas('#tubes', function (ctx, w, h, c) {
+        var gutter = Math.max(40, Math.min(58, w * 0.13));
+        var top = 30, bot = h - (state.obs ? 34 : 22);
+        var span = bot - top;
+        var sigPx = SIGMA / (RHO_BOT - RHO_TOP) * span;
+
+        function yOf(rho) { return top + (rho - RHO_TOP) / (RHO_BOT - RHO_TOP) * span; }
+
+        var slotW = (w - gutter) / 3;
+        var tubeW = Math.min(slotW * 0.60, 78);
+        var refs = [1, 0.5, 0];
+
+        // ---- density gutter ----
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = c.muted;
+        for (var k = 0; k < refs.length; k++) {
+          font(ctx, 10, 500);
+          ctx.fillText(Demo.fmt.dec(rhoOf(refs[k]), 4), gutter - 9, yOf(rhoOf(refs[k])));
+        }
+        font(ctx, 9.5, 600);
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('g/cm³', gutter - 9, top - 12);
+
+        // ---- three tubes ----
+        for (var m = 0; m < 3; m++) {
+          var id = MODELS[m].id;
+          var cx = gutter + slotW * (m + 0.5);
+          var x0 = cx - tubeW / 2;
+          var sel = id === state.model;
+
+          // label
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          fitFont(ctx, MODELS[m].name, slotW - 6, 12, 8, sel ? 600 : 500);
+          ctx.fillStyle = sel ? c.accentStrong : c.text2;
+          ctx.fillText(MODELS[m].name, cx, top - 11);
+
+          // tube body
+          var g = ctx.createLinearGradient(0, top, 0, bot);
+          g.addColorStop(0, c.surface2);
+          g.addColorStop(1, c.track);
+          rr(ctx, x0, top, tubeW, span, tubeW * 0.30);
+          ctx.fillStyle = g; ctx.fill();
+
+          ctx.save();
+          rr(ctx, x0, top, tubeW, span, tubeW * 0.30);
+          ctx.clip();
+
+          // reference lines inside the tube
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]);
+          for (var q2 = 0; q2 < refs.length; q2++) {
+            var yr = Math.round(yOf(rhoOf(refs[q2]))) + 0.5;
+            ctx.beginPath(); ctx.moveTo(x0, yr); ctx.lineTo(x0 + tubeW, yr); ctx.stroke();
+          }
+          ctx.setLineDash([]);
+
+          // bands: darkness proportional to the share of total DNA
+          var bs = bandsFor(id, state.gen);
+          for (var b = 0; b < bs.length; b++) {
+            var yc = yOf(rhoOf(bs[b].f));
+            var col = bandColor(c, bs[b].f);
+            var peak = 0.92 * bs[b].p;
+            var yA = Math.max(top, yc - 3.4 * sigPx), yB = Math.min(bot, yc + 3.4 * sigPx);
+            for (var yy = Math.floor(yA); yy <= yB; yy++) {
+              var z = (yy - yc) / sigPx;
+              ctx.fillStyle = rgba(col, peak * Math.exp(-0.5 * z * z));
+              ctx.fillRect(x0, yy, tubeW, 1.1);
+            }
+          }
+          ctx.restore();
+
+          // outline
+          rr(ctx, x0, top, tubeW, span, tubeW * 0.30);
+          ctx.strokeStyle = sel ? c.accentLine : c.line;
+          ctx.lineWidth = sel ? 1.8 : 1.2;
+          ctx.stroke();
+
+          // per-band marker + percentage
+          for (var b2 = 0; b2 < bs.length; b2++) {
+            var yc2 = yOf(rhoOf(bs[b2].f));
+            var col2 = bandColor(c, bs[b2].f);
+            ctx.fillStyle = rgba(col2, 1);
+            ctx.beginPath();
+            ctx.moveTo(x0 - 8, yc2 - 4); ctx.lineTo(x0 - 1.5, yc2); ctx.lineTo(x0 - 8, yc2 + 4);
+            ctx.closePath(); ctx.fill();
+
+            var txt = pct(bs[b2].p);
+            font(ctx, 10.5, 600);
+            var tw = ctx.measureText(txt).width;
+            rr(ctx, cx - tw / 2 - 5, yc2 - 8, tw + 10, 16, 5);
+            ctx.fillStyle = rgba(toRGB(c.surface), 0.82); ctx.fill();
+            ctx.fillStyle = c.text;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(txt, cx, yc2 + 0.5);
+          }
+
+          // verdict badge
+          if (state.obs) {
+            var v = verdict(id, state.gen);
+            fitFont(ctx, v.t, slotW - 6, 10, 8, 600);
+            ctx.fillStyle = v.c === 'ok' ? c.ok : v.c === 'bad' ? c.bad : v.c === 'warn' ? c.warn : c.muted;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText(v.t, cx, bot + 8);
+          }
+        }
+      }, { aspect: 0.62, minHeight: 252, maxHeight: 336 });
+
+      function verdict(id, n) {
+        if (n === 0) return { t: 'not tested yet', c: 'muted' };
+        if (id === 'conservative') return { t: 'ruled out', c: 'bad' };
+        if (n === 1) return { t: 'still possible', c: 'warn' };
+        return id === 'semi' ? { t: 'matches the data', c: 'ok' } : { t: 'ruled out', c: 'bad' };
+      }
+
+      // =====================================================================
+      // TEXT
+      // =====================================================================
+      function molDescription() {
+        var n = state.gen, count = Math.pow(2, n), id = state.model;
+        if (n === 0) return 'One molecule, both strands built from <sup>15</sup>N. Every model starts here.';
+        if (id === 'conservative') {
+          return count + ' molecules: <strong>1</strong> is the original duplex, never taken apart, still ' +
+            'entirely <sup>15</sup>N; the other <strong>' + (count - 1) + '</strong> ' +
+            (count - 1 === 1 ? 'is brand new and entirely' : 'are brand new and entirely') +
+            ' <sup>14</sup>N. Under this model no molecule is ever a mixture.';
+        }
+        if (id === 'semi') {
+          var hyb = Math.min(count, 2);
+          return count + ' molecules: <strong>' + hyb + '</strong> hybrid (one original <sup>15</sup>N strand ' +
+            'paired with a new <sup>14</sup>N strand)' +
+            (count > hyb ? ' and <strong>' + (count - hyb) + '</strong> entirely <sup>14</sup>N' : ', and nothing else yet') +
+            '. There are only ever 2 original strands, so there are only ever 2 hybrid molecules.';
+        }
+        var k = Math.round(SEGS * Math.pow(2, -n));
+        return 'All ' + count + ' molecules are identical: every strand is a patchwork that is ' +
+          pct(Math.pow(2, -n)) + ' <sup>15</sup>N (' + k + ' of the ' + SEGS + ' blocks drawn). ' +
+          'Under this model nothing stays pure old or pure new.';
+      }
+
+      function genNoteHTML(n) {
+        if (n === 0) {
+          return { cls: 'note', html: '<strong>Nothing has been tested yet.</strong> Before any growth in ' +
+            '<sup>14</sup>N all three models say exactly the same thing: one band, all the DNA, at ' +
+            '1.7240 g/cm&sup3;. An experiment that every hypothesis passes is not evidence.' };
+        }
+        if (n === 1) {
+          return { cls: 'note warn', html: '<strong>Generation 1 kills conservative &mdash; and nothing else.</strong> ' +
+            'Conservative is the only model that puts DNA at the heavy line (50% of it, still at 1.7240). ' +
+            'Semiconservative and dispersive make <em>identical</em> predictions here: one band, 100% of the DNA, ' +
+            'exactly halfway at 1.7170 g/cm&sup3;. Generation 1 cannot tell those two apart.' };
+        }
+        if (n === 2) {
+          return { cls: 'note', html: '<strong>Generation 2 is the actual experiment.</strong> Semiconservative ' +
+            'predicts the DNA splits into <em>two</em> bands &mdash; 50% hybrid at 1.7170 and 50% light at 1.7100. ' +
+            'Dispersive predicts <em>one</em> band at 1.7135, a uniform quarter-heavy, and it never splits. ' +
+            'Two bands or one band: now the tube can decide.' };
+        }
+        var hyb = Math.pow(2, 1 - n);
+        return { cls: 'note', html: '<strong>The predictions keep pulling apart.</strong> Semiconservative still ' +
+          'shows two bands: the hybrid one stays pinned at 1.7170 and just fades to ' + pct(hyb) +
+          ' (still exactly 2 hybrid molecules out of ' + Math.pow(2, n) + '). Dispersive still shows one band, now at ' +
+          rhoTxt(Math.pow(2, -n)) + ', creeping toward the light line but never splitting in two.' };
+      }
+
+      function obsHTML(n) {
+        if (n === 0) return 'Meselson &amp; Stahl started exactly here: one heavy band, before the shift to <sup>14</sup>N. Every model agrees on this picture, so it decides nothing. The real test starts at generation 1.';
+        if (n === 1) return '<strong>Observed at generation 1:</strong> a single band, halfway. That erased conservative replication. It said nothing about semiconservative versus dispersive.';
+        if (n === 2) return '<strong>Observed at generation 2:</strong> <em>two</em> bands, roughly equal, at the hybrid and light positions. Only semiconservative predicts that. Dispersive never gives two bands at any generation.';
+        return '<strong>Observed at generation ' + n + ':</strong> still <em>two</em> bands, in the same two places. The hybrid band stays pinned at 1.7170 and simply gets fainter; the light band takes over. Meselson &amp; Stahl followed the culture out to about four generations and never saw the single sliding band dispersive requires.';
+      }
+
+      // =====================================================================
+      // RENDER
+      // =====================================================================
+      function renderTable() {
+        var c = Demo.colors();
+        var rows = '';
+        for (var m = 0; m < 3; m++) {
+          var id = MODELS[m].id;
+          var bs = bandsFor(id, state.gen);
+          for (var b = 0; b < bs.length; b++) {
+            var col = bandColor(c, bs[b].f);
+            rows += '<tr class="' + (id === state.model ? 'is-sel' : '') + '">' +
+              '<td>' + (b === 0 ? MODELS[m].html : '') + '</td>' +
+              '<td class="band-cell"><span class="swatch" style="background:' + rgba(col, 1) + '"></span>' +
+              bs[b].name.replace(/1(4|5)N/g, '<sup>1$1</sup>N') + '</td>' +
+              '<td>' + rhoTxt(bs[b].f) + '</td>' +
+              '<td>' + pct(bs[b].p) + '</td>' +
+              '</tr>';
+          }
+        }
+        document.getElementById('bandBody').innerHTML = rows;
+      }
+
+      function render() {
+        var n = state.gen, count = Math.pow(2, n);
+        var mName = MODELS.filter(function (m) { return m.id === state.model; })[0].name;
+
+        document.getElementById('genOut').textContent = n;
+        document.getElementById('molLabel').innerHTML =
+          'Generation ' + n + ' <span>&mdash; ' + mName.toLowerCase() + ' replication</span>';
+        document.getElementById('molCap').innerHTML = molDescription();
+        document.getElementById('mols').setAttribute('aria-label',
+          mName + ' replication at generation ' + n + ': ' + count + ' DNA molecules drawn as strand pairs.');
+
+        var gn = genNoteHTML(n);
+        var noteEl = document.getElementById('genNote');
+        noteEl.className = gn.cls;
+        noteEl.innerHTML = gn.html;
+
+        var obsEl = document.getElementById('obsNote');
+        obsEl.style.display = state.obs ? 'block' : 'none';
+        obsEl.className = 'note ' + (n === 0 ? '' : n === 1 ? 'warn' : '');
+        obsEl.innerHTML = obsHTML(n);
+
+        document.getElementById('rMol').textContent = Demo.fmt.comma(count);
+        document.getElementById('rN15').innerHTML =
+          pct(Math.pow(2, -n)).replace('%', '') + '<span class="r-unit">%</span>';
+        document.getElementById('rBands').textContent = bandsFor(state.model, n).length;
+        document.getElementById('rGenA').textContent = n;
+        document.getElementById('rGenB').textContent = n;
+
+        document.getElementById('prev').disabled = (n === 0);
+        document.getElementById('next').disabled = (n === 4);
+
+        renderTable();
+        molCv.redraw();
+        tubeCv.redraw();
+      }
+
+      // =====================================================================
+      // CONTROLS
+      // =====================================================================
+      function setGen(n) {
+        state.gen = Demo.clamp(n, 0, 4);
+        document.querySelectorAll('.seg.gens button').forEach(function (b) {
+          b.setAttribute('aria-selected', +b.dataset.gen === state.gen ? 'true' : 'false');
+        });
+        render();
+      }
+
+      document.querySelectorAll('.seg.gens button').forEach(function (b) {
+        b.addEventListener('click', function () { setGen(+b.dataset.gen); });
+      });
+
+      document.querySelectorAll('[data-model]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-model]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.model = b.dataset.model;
+          render();
+        });
+      });
+
+      document.getElementById('prev').addEventListener('click', function () { setGen(state.gen - 1); });
+      document.getElementById('next').addEventListener('click', function () { setGen(state.gen + 1); });
+
+      document.getElementById('showObs').addEventListener('change', function () {
+        state.obs = this.checked;
+        render();
+      });
+
+      // table swatches are inline colours, so they have to be rebuilt on a theme flip
+      Demo.onTheme(function () { renderTable(); });
+
+      Demo.ready(render);
+    })();
+  </script>
+</body>
+
+</html>

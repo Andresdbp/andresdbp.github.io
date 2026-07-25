@@ -1,0 +1,73 @@
+/* =========================================================
+   THEME TOKENS — single source of truth
+   Loaded by the portfolio (site.css) and every demo (demo.css).
+   Change a color here and it changes everywhere.
+   ========================================================= */
+
+:root,
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --surface: #1e1e1f;
+  --surface-2: #242426;
+  --line: #2d2d2f;
+  --line-soft: #262628;
+
+  --text: #ffffff;
+  --text-2: #d1d5de;
+  --muted: #8b8f98;
+
+  --accent: #507dbc;
+  --accent-strong: #6a97d6;
+  --accent-soft: rgba(80, 125, 188, 0.16);
+  --accent-line: rgba(80, 125, 188, 0.40);
+
+  --gold: #c8a24a;
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.30);
+
+  /* --- demo-only tokens: data series + semantic states --- */
+  --track: #2c2c2e;
+  --series-1: #6a97d6;
+  --series-2: #d98d4a;
+  --series-3: #5aa77f;
+  --series-4: #b07ad0;
+  --ok: #5aa77f;
+  --ok-soft: rgba(90, 167, 127, 0.16);
+  --warn: #d9a441;
+  --warn-soft: rgba(217, 164, 65, 0.16);
+  --bad: #d16a6a;
+  --bad-soft: rgba(209, 106, 106, 0.16);
+}
+
+:root[data-theme="light"] {
+  --bg: #ededed;
+  --surface: #ffffff;
+  --surface-2: #f5f6f8;
+  --line: #e6e6e8;
+  --line-soft: #eeeeef;
+
+  --text: #161618;
+  --text-2: #4a4d54;
+  --muted: #8a8d94;
+
+  --accent: #507dbc;
+  --accent-strong: #3f6aa6;
+  --accent-soft: rgba(80, 125, 188, 0.10);
+  --accent-line: rgba(80, 125, 188, 0.28);
+
+  --gold: #9c7a35;
+  --shadow: 0 14px 34px rgba(0, 0, 0, 0.07);
+  --shadow-sm: 0 5px 16px rgba(0, 0, 0, 0.05);
+
+  --track: #e8eaee;
+  --series-1: #507dbc;
+  --series-2: #c2762f;
+  --series-3: #2f7d5b;
+  --series-4: #9c5ab8;
+  --ok: #2f7d5b;
+  --ok-soft: rgba(47, 125, 91, 0.13);
+  --warn: #a97b1e;
+  --warn-soft: rgba(169, 123, 30, 0.14);
+  --bad: #b34a4a;
+  --bad-soft: rgba(179, 74, 74, 0.13);
+}

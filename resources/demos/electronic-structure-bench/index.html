@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Electronic Structure Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Orbital probability clouds, successive ionization energies on a log axis, and the periodic sawtooth — three views of the same evidence that electrons occupy shells.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: the tab strip, the paired canvases, the two pickers */
+    .hide { display: none !important; }
+
+    .seg.tabs { margin-bottom: 12px; }
+    .seg.tabs button,
+    .seg.wrap button { white-space: normal; line-height: 1.25; padding: 8px 6px; }
+
+    .tab-head { margin-bottom: 14px; }
+    .tab-head h2 { font-size: 16px; margin-bottom: 3px; }
+    .tab-head p { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* tab 1: cloud + radial plot side by side, stacked on a phone */
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+    @media (max-width: 700px) { .duo { grid-template-columns: 1fr; } }
+    .duo-cell { min-width: 0; }
+    .duo-label {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+    }
+
+    /* orbital picker + element picker: compact button grids */
+    .pick { display: grid; gap: 6px; }
+    .pick.orb { grid-template-columns: repeat(4, 1fr); }
+    .pick.elem { grid-template-columns: repeat(6, 1fr); }
+    .pick .btn {
+      padding: 7px 2px; font-size: 12px; font-variant-numeric: tabular-nums;
+      border-radius: 9px; text-align: center;
+    }
+    .pick.orb .btn { font-size: 11.5px; }
+    .pick .btn[aria-pressed="true"] {
+      border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong);
+      font-weight: 600;
+    }
+
+    /* four readouts whose labels are sentences, not words */
+    .readouts.two { grid-template-columns: repeat(2, 1fr); }
+
+    .lg { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; }
+    .lg-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+    .sw { width: 11px; height: 11px; border-radius: 3px; flex: none; }
+    .sw.ring { border-radius: 50%; background: transparent; border: 2px dashed currentColor; }
+
+    .cfg { font-size: 15px; color: var(--text); letter-spacing: 0.01em; line-height: 1.5; }
+    .cfg .core { color: var(--muted); }
+    .cfg .val { color: var(--accent-strong); font-weight: 600; }
+
+    .ie-table-wrap { max-height: 268px; overflow-y: auto; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tbl.compact th, .tbl.compact td { padding: 5px 7px; font-size: 12px; }
+    .tbl.compact tr.shell-break td { border-top: 2px solid var(--accent-line); }
+
+    .verdict { font-size: 13px; line-height: 1.55; }
+    .verdict.good { color: var(--ok); }
+    .verdict.miss { color: var(--warn); }
+
+    #cloud { cursor: default; touch-action: manipulation; }
+    #saw, #iechart { touch-action: manipulation; }
+    #saw { cursor: pointer; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Electronic Structure Bench</h1>
+        <p class="demo-sub">
+          Three tabs, one question: is &ldquo;electrons live in shells&rdquo; something a teacher asserts,
+          or something the measurements force on you?
+        </p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 2: Atomic Structure &amp; Periodic Table</span>
+          <span class="tag is-accent">Orbitals &amp; ionization energy</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="seg tabs" id="tabs" role="tablist" aria-label="Which view">
+      <button role="tab" aria-selected="true" data-tab="orb">1 &middot; Where is the electron?</button>
+      <button role="tab" aria-selected="false" data-tab="ie">2 &middot; Why ionization energy jumps</button>
+      <button role="tab" aria-selected="false" data-tab="saw">3 &middot; The sawtooth</button>
+    </div>
+
+    <div class="tab-head" id="tabHead">
+      <h2 id="tabTitle">Where is the electron?</h2>
+      <p id="tabLead"></p>
+    </div>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ================= TAB 1 STAGE ================= -->
+      <div class="stage" id="stageOrb">
+        <div class="duo">
+          <div class="duo-cell">
+            <div class="duo-label">Slice through the nucleus &mdash; each dot is one &ldquo;where was it?&rdquo;</div>
+            <canvas id="cloud" role="img" aria-label="Dot cloud showing the probability distribution of the electron in a plane through the nucleus"></canvas>
+          </div>
+          <div class="duo-cell">
+            <div class="duo-label">Radial distribution &mdash; chance of finding it at that distance</div>
+            <canvas id="radial" role="img" aria-label="Radial distribution function versus distance from the nucleus"></canvas>
+          </div>
+        </div>
+        <div class="lg" id="cloudLegend"></div>
+        <p class="stage-caption" id="capOrb">Loading.</p>
+      </div>
+
+      <!-- ================= TAB 1 CONTROLS ================= -->
+      <div class="controls sticky hide" id="ctrlOrb">
+        <div class="panel">
+          <div class="panel-title">Pick an orbital (hydrogen atom)</div>
+          <div class="stack">
+            <div class="pick orb" id="orbPick"></div>
+            <label class="check"><input type="checkbox" id="showBohr"> Overlay the Bohr orbit</label>
+            <label class="check"><input type="checkbox" id="showNodes"> Mark the radial nodes</label>
+            <label class="check"><input type="checkbox" id="lockScale"> Same zoom for every orbital</label>
+            <div class="btn-row">
+              <button class="btn primary" id="resample">Draw the cloud again</button>
+            </div>
+            <p class="ctrl-hint">
+              Same orbital, new random sample. The picture changes in the details and not at all in its
+              shape &mdash; which is exactly what &ldquo;probability distribution&rdquo; means.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Numbers for this orbital</div>
+          <div class="readouts two">
+            <div class="readout is-accent">
+              <div class="r-label">Most likely</div>
+              <div class="r-value" id="oMost">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">90% within</div>
+              <div class="r-value" id="o90">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Bohr's answer</div>
+              <div class="r-value" id="oBohr">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Nodes (r / ang)</div>
+              <div class="r-value" id="oNodes">&mdash;</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note" id="orbNote"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="small muted">
+            These are the exact wavefunctions of a <strong>one-electron</strong> atom (hydrogen). Real
+            multi-electron atoms have orbitals of the same shapes, but pulled in closer and closer as
+            nuclear charge grows. The picture is a flat slice through the middle of a
+            three-dimensional cloud, not a photograph &mdash; nobody has ever photographed an electron
+            in an atom.
+          </p>
+        </div>
+      </div>
+
+      <!-- ================= TAB 2 STAGE ================= -->
+      <div class="stage hide" id="stageIE">
+        <canvas id="iechart" role="img" aria-label="Successive ionization energies plotted on a logarithmic axis"></canvas>
+        <div class="lg" id="ieLegend"></div>
+        <p class="stage-caption" id="capIE">Loading.</p>
+      </div>
+
+      <!-- ================= TAB 2 CONTROLS ================= -->
+      <div class="controls sticky hide" id="ctrlIE">
+        <div class="panel">
+          <div class="panel-title">Choose an element</div>
+          <div class="pick elem" id="elemPick"></div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Element</div>
+              <div class="r-value" id="ieName">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Group / period</div>
+              <div class="r-value" id="ieGP">&mdash;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="predictPanel">
+          <div class="panel-title">Predict before you look</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="guess">First big jump comes after removing</label>
+                <span class="ctrl-value" id="guessOut">1</span>
+              </div>
+              <input type="range" id="guess" min="1" max="10" step="1" value="1">
+              <p class="ctrl-hint" id="guessHint">electrons.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="reveal">Reveal the measurements</button>
+              <button class="btn" id="rehide">Hide again</button>
+            </div>
+            <p class="verdict" id="verdict"></p>
+          </div>
+        </div>
+
+        <div class="panel hide" id="afterPanel">
+          <div class="panel-title">What the data says</div>
+          <p class="cfg" id="cfgLine"></p>
+          <div class="readouts" style="margin-top:11px">
+            <div class="readout is-accent">
+              <div class="r-label">First cliff at</div>
+              <div class="r-value" id="ieCliff">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Cost multiplier</div>
+              <div class="r-value" id="ieRatio">&mdash;</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="ie-table-wrap">
+            <table class="tbl compact" id="ieTable">
+              <thead>
+                <tr><th>#</th><th>From</th><th>kJ/mol</th><th>&times; prev</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="small muted" style="margin-top:9px">
+            Bold rules in the table mark a change of shell (n). Faint rules mark a change of
+            sub-shell within the same shell &mdash; notice how much smaller those steps are.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Read the fine print</div>
+          <p class="note warn" id="ieCaveat"></p>
+        </div>
+      </div>
+
+      <!-- ================= TAB 3 STAGE ================= -->
+      <div class="stage hide" id="stageSaw">
+        <canvas id="saw" tabindex="0" role="img" aria-label="First ionization energy of elements 1 through 36"></canvas>
+        <div class="lg" id="sawLegend"></div>
+        <p class="stage-caption" id="capSaw">Loading.</p>
+      </div>
+
+      <!-- ================= TAB 3 CONTROLS ================= -->
+      <div class="controls sticky hide" id="ctrlSaw">
+        <div class="panel">
+          <div class="panel-title">View</div>
+          <div class="stack">
+            <div class="seg wrap" role="tablist" aria-label="Sawtooth view">
+              <button role="tab" aria-selected="true" data-saw="z">Straight through, H to Kr</button>
+              <button role="tab" aria-selected="false" data-saw="g">Rows stacked on each other</button>
+            </div>
+            <label class="check"><input type="checkbox" id="markDown" checked> Colour every step that goes <em>down</em></label>
+            <label class="check"><input type="checkbox" id="markDips"> Shade groups 13 and 16</label>
+            <div class="btn-row">
+              <button class="btn" id="prevEl">&larr; Previous</button>
+              <button class="btn" id="nextEl">Next &rarr;</button>
+            </div>
+            <p class="ctrl-hint">Tap a point on the chart, or use the arrow keys once the chart is focused.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Selected element</div>
+          <p class="cfg" style="margin-bottom:11px">
+            <strong id="sName">&mdash;</strong>
+            <span class="muted small" id="sZ"></span>
+          </p>
+          <div class="readouts two">
+            <div class="readout is-accent">
+              <div class="r-label">First IE</div>
+              <div class="r-value" id="sIE">&mdash;</div>
+            </div>
+            <div class="readout" id="sDeltaBox">
+              <div class="r-label">Step from prev</div>
+              <div class="r-value" id="sDelta">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Group</div>
+              <div class="r-value" id="sGroup">&mdash;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Period</div>
+              <div class="r-value" id="sPeriod">&mdash;</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="cfg" id="sCfg"></p>
+          <p class="note" id="sNote" style="margin-top:11px"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the simple story stops</div>
+          <p class="small muted">
+            The clean two-dip pattern is a <strong>main-group</strong> story. Across the d-block
+            (Sc&ndash;Zn) first ionization energy is nearly flat and wobbles for its own reasons, and by
+            period 4 the group-16 dip has shrunk to 3&nbsp;kJ/mol &mdash; about 0.3%. A real trend can be
+            real and still be small.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> most students take &ldquo;electrons are arranged in shells,
+        2 then 8 then 8&rdquo; on the teacher&rsquo;s word, and picture those shells as solid tracks the
+        electron runs along, like planets. Two wrong things are bundled together there: that the
+        shells are a rule someone made up, and that an electron has a definite location we simply
+        draw as a circle.
+      </p>
+      <p>
+        <strong>What to notice in tab 1:</strong> the cloud is <em>densest at the nucleus</em> for a 1s
+        electron, yet the graph beside it peaks at 52.9&nbsp;pm. Both are true, and they are not the
+        same quantity: the dots show probability per unit <em>volume</em>, the graph shows probability
+        per unit <em>distance</em>, which multiplies by the surface area 4&pi;r&sup2; of the shell at
+        that radius. Press <em>Draw the cloud again</em>: the individual dots move, the shape does not.
+        That is what a probability distribution is. The Bohr overlay is a single thin circle &mdash; a
+        claim that the electron is exactly there. The cloud says the electron is found well inside and
+        well outside it, and 3s has two spherical surfaces where it is found <em>never</em>. A planet
+        does not do that.
+      </p>
+      <p>
+        <strong>What to notice in tab 2:</strong> nobody put the shells into this graph. These are
+        measured energies. Sodium&rsquo;s second electron costs 9.2&times; its first; magnesium&rsquo;s
+        third costs 5.3&times; its second; aluminium&rsquo;s fourth costs 4.2&times; its third. The cliff
+        moves one place to the right each time you move one place to the right in the periodic table,
+        and it lands exactly at the count of valence electrons every single time. The shells are the
+        <em>conclusion</em>, not the assumption.
+      </p>
+      <p>
+        <strong>One trap in tab 2, on purpose:</strong> the <em>first</em> cliff marks the valence/core
+        boundary, but it is not always the <em>tallest</em> one. For aluminium through argon and for
+        calcium, the deeper break into the 1s shell is a bigger multiplier than the first cliff. That
+        is not a flaw in the idea &mdash; it is more of the same idea. Every big multiplier in the chart
+        is a shell boundary; small multipliers are sub-shell boundaries or just the next electron in the
+        same sub-shell. Count the big ones: an element with three occupied shells has two of them.
+      </p>
+      <p>
+        <strong>What to notice in tab 3:</strong> first ionization energy does <em>not</em> climb smoothly
+        across a period. It falls at group 13 and it falls again at group 16, in period 2 and again in
+        period 3, in the same two places. Drawing the trend as a straight rising line would teach a
+        false pattern. Group 13 dips because the electron being removed is the first one in a new p
+        sub-shell, which sits higher in energy than the filled s sub-shell just below it. Group 16 dips
+        because it is the first p electron forced to double up in an orbital that already holds one, and
+        two electrons crammed into the same orbital repel. (Chemists writing at a higher level describe
+        that second dip in terms of exchange energy rather than simple repulsion; the pairing account is
+        the standard one at this level and gets the direction right.)
+      </p>
+      <p>
+        <strong>Sources and caveats.</strong> Ionization energies are experimental values in kJ/mol from
+        the <em>CRC Handbook of Chemistry and Physics</em> (&ldquo;Ionization Energies of Atoms and Atomic
+        Ions&rdquo;), the same table Wikipedia&rsquo;s molar ionization energy list reproduces; no number
+        in tabs 2 or 3 was invented or fitted. Orbital shapes are the exact analytic hydrogen
+        wavefunctions, so the radii shown apply to hydrogen only &mdash; a real sodium 3s orbital is far
+        more compact. Ionization order for elements 3&ndash;20 is the experimental one: 4s leaves before
+        3p, which leaves before 3s. Nothing here is animated to look good; every curve and every bar is
+        computed on load.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+         CONSTANTS AND DATA
+         ===================================================================== */
+
+      var A0 = 52.9177;               // Bohr radius, picometres
+      var FONT = 'px Poppins, system-ui, sans-serif';
+
+      // kJ/mol values are published to one decimal; never round that away.
+      function kj(v) { return v.toLocaleString('en-US', { maximumFractionDigits: 1 }); }
+
+      // ---- Elements 1-36: symbol, name, group, period, first IE (kJ/mol) ----
+      // CRC Handbook of Chemistry and Physics, ionization energies of atoms.
+      var EL = [
+        ['H', 'Hydrogen', 1, 1, 1312.0], ['He', 'Helium', 18, 1, 2372.3],
+        ['Li', 'Lithium', 1, 2, 520.2], ['Be', 'Beryllium', 2, 2, 899.5],
+        ['B', 'Boron', 13, 2, 800.6], ['C', 'Carbon', 14, 2, 1086.5],
+        ['N', 'Nitrogen', 15, 2, 1402.3], ['O', 'Oxygen', 16, 2, 1313.9],
+        ['F', 'Fluorine', 17, 2, 1681.0], ['Ne', 'Neon', 18, 2, 2080.7],
+        ['Na', 'Sodium', 1, 3, 495.8], ['Mg', 'Magnesium', 2, 3, 737.7],
+        ['Al', 'Aluminium', 13, 3, 577.5], ['Si', 'Silicon', 14, 3, 786.5],
+        ['P', 'Phosphorus', 15, 3, 1011.8], ['S', 'Sulfur', 16, 3, 999.6],
+        ['Cl', 'Chlorine', 17, 3, 1251.2], ['Ar', 'Argon', 18, 3, 1520.6],
+        ['K', 'Potassium', 1, 4, 418.8], ['Ca', 'Calcium', 2, 4, 589.8],
+        ['Sc', 'Scandium', 3, 4, 633.1], ['Ti', 'Titanium', 4, 4, 658.8],
+        ['V', 'Vanadium', 5, 4, 650.9], ['Cr', 'Chromium', 6, 4, 652.9],
+        ['Mn', 'Manganese', 7, 4, 717.3], ['Fe', 'Iron', 8, 4, 762.5],
+        ['Co', 'Cobalt', 9, 4, 760.4], ['Ni', 'Nickel', 10, 4, 737.1],
+        ['Cu', 'Copper', 11, 4, 745.5], ['Zn', 'Zinc', 12, 4, 906.4],
+        ['Ga', 'Gallium', 13, 4, 578.8], ['Ge', 'Germanium', 14, 4, 762.0],
+        ['As', 'Arsenic', 15, 4, 944.0], ['Se', 'Selenium', 16, 4, 941.0],
+        ['Br', 'Bromine', 17, 4, 1139.9], ['Kr', 'Krypton', 18, 4, 1350.8]
+      ].map(function (r, i) {
+        return { z: i + 1, sym: r[0], name: r[1], group: r[2], period: r[3], ie1: r[4] };
+      });
+
+      // ---- Successive ionization energies, kJ/mol, elements 3-20 ----
+      // Every list has exactly Z entries: the atom stripped bare.
+      var SUCC = {
+        3: [520.2, 7298.1, 11815.0],
+        4: [899.5, 1757.1, 14848.7, 21006.6],
+        5: [800.6, 2427.1, 3659.7, 25025.8, 32826.7],
+        6: [1086.5, 2352.6, 4620.5, 6222.7, 37831, 47277],
+        7: [1402.3, 2856, 4578.1, 7475.0, 9444.9, 53266.6, 64360],
+        8: [1313.9, 3388.3, 5300.5, 7469.2, 10989.5, 13326.5, 71330, 84078],
+        9: [1681.0, 3374.2, 6050.4, 8407.7, 11022.7, 15164.1, 17868, 92038.1, 106434.3],
+        10: [2080.7, 3952.3, 6122, 9371, 12177, 15238, 19999.0, 23069.5, 115379.5, 131432],
+        11: [495.8, 4562, 6910.3, 9543, 13354, 16613, 20117, 25496, 28932, 141362, 159076],
+        12: [737.7, 1450.7, 7732.7, 10542.5, 13630, 18020, 21711, 25661, 31653, 35458, 169988, 189368],
+        13: [577.5, 1816.7, 2744.8, 11577, 14842, 18379, 23326, 27465, 31853, 38473, 42647, 201266, 222316],
+        14: [786.5, 1577.1, 3231.6, 4355.5, 16091, 19805, 23780, 29287, 33878, 38726, 45962, 50502, 235196, 257923],
+        15: [1011.8, 1907, 2914.1, 4963.6, 6273.9, 21267, 25431, 29872, 35905, 40950, 46261, 54110, 59024, 271790, 296194],
+        16: [999.6, 2252, 3357, 4556, 7004.3, 8495.8, 27107, 31719, 36621, 43177, 48710, 54460, 62930, 68216, 311048, 337138],
+        17: [1251.2, 2298, 3822, 5158.6, 6542, 9362, 11018, 33604, 38600, 43961, 51068, 57119, 63363, 72341, 78095, 352994, 380760],
+        18: [1520.6, 2665.8, 3931, 5771, 7238, 8781, 11995, 13842, 40760, 46186, 52002, 59653, 66199, 72918, 82473, 88576, 397605, 427066],
+        19: [418.8, 3052, 4420, 5877, 7975, 9590, 11343, 14944, 16963.7, 48610, 54490, 60730, 68950, 75900, 83080, 93400, 99710, 444880, 476063],
+        20: [589.8, 1145.4, 4912.4, 6491, 8153, 10496, 12270, 14206, 18191, 20385, 57110, 63410, 70110, 78890, 86310, 94000, 104900, 111711, 494850, 527762]
+      };
+
+      // ---- Electron configuration bookkeeping (valid for Z <= 20) ----
+      var FILL = [['1s', 2], ['2s', 2], ['2p', 6], ['3s', 2], ['3p', 6], ['4s', 2]];
+
+      function config(z) {
+        var left = z, out = [];
+        for (var i = 0; i < FILL.length && left > 0; i++) {
+          var k = Math.min(left, FILL[i][1]);
+          out.push([FILL[i][0], k]);
+          left -= k;
+        }
+        return out;
+      }
+
+      // Order electrons actually leave: reverse of the filling order.
+      function removalSeq(z) {
+        var c = config(z), s = [];
+        for (var i = c.length - 1; i >= 0; i--) {
+          for (var j = 0; j < c[i][1]; j++) s.push(c[i][0]);
+        }
+        return s;
+      }
+
+      function shellOf(sub) { return parseInt(sub.charAt(0), 10); }
+
+      function valenceCount(z) {
+        var seq = removalSeq(z), maxN = 0, i;
+        for (i = 0; i < seq.length; i++) maxN = Math.max(maxN, shellOf(seq[i]));
+        var n = 0;
+        for (i = 0; i < seq.length; i++) if (shellOf(seq[i]) === maxN) n++;
+        return n;
+      }
+
+      function configHTML(z) {
+        var c = config(z), maxN = shellOf(c[c.length - 1][0]), out = [];
+        for (var i = 0; i < c.length; i++) {
+          var cls = shellOf(c[i][0]) === maxN ? 'val' : 'core';
+          out.push('<span class="' + cls + '">' + c[i][0] + Demo.fmt.sup(c[i][1]) + '</span>');
+        }
+        return out.join(' ');
+      }
+
+      /* =====================================================================
+         TAB 1 — ORBITALS
+         Hydrogen radial functions, written without their normalisation
+         constants: every quantity displayed is either a ratio, a node
+         position, or comes from a numerically normalised distribution, so
+         the prefactors cancel out.  rho = r / a0.
+         ===================================================================== */
+
+      var ORBS = [
+        { key: '1s', label: '1s', n: 1, l: 0, ang: 's', R: function (p) { return Math.exp(-p); } },
+        { key: '2s', label: '2s', n: 2, l: 0, ang: 's', R: function (p) { return (2 - p) * Math.exp(-p / 2); } },
+        { key: '2p', label: '2p', n: 2, l: 1, ang: 'pz', R: function (p) { return p * Math.exp(-p / 2); } },
+        { key: '3s', label: '3s', n: 3, l: 0, ang: 's', R: function (p) { return (27 - 18 * p + 2 * p * p) * Math.exp(-p / 3); } },
+        { key: '3p', label: '3p', n: 3, l: 1, ang: 'pz', R: function (p) { return p * (6 - p) * Math.exp(-p / 3); } },
+        { key: '3dxz', label: '3d xz', n: 3, l: 2, ang: 'dxz', R: function (p) { return p * p * Math.exp(-p / 3); } },
+        { key: '3dz2', label: '3d z' + Demo.fmt.sup(2), n: 3, l: 2, ang: 'dz2', R: function (p) { return p * p * Math.exp(-p / 3); } }
+      ];
+
+      // Angular part in the xz plane; theta measured from +z, phi = 0.
+      function angFn(kind) {
+        if (kind === 'pz') return function (ct) { return ct; };
+        if (kind === 'dxz') return function (ct, st) { return 2 * st * ct; };
+        if (kind === 'dz2') return function (ct) { return 3 * ct * ct - 1; };
+        return function () { return 1; };
+      }
+
+      // Radial distribution P(rho) = rho^2 R^2, normalised numerically.
+      function radialStats(o) {
+        var hi = 18 * o.n * o.n, N = 20000, d = hi / N, i;
+        var P = new Float64Array(N + 1), cum = new Float64Array(N + 1);
+        for (i = 0; i <= N; i++) { var p = i * d, r = o.R(p); P[i] = p * p * r * r; }
+        var s = 0;
+        for (i = 1; i <= N; i++) { s += (P[i] + P[i - 1]) * 0.5 * d; cum[i] = s; }
+        var tot = s;
+        var am = 1;
+        for (i = 1; i <= N; i++) if (P[i] > P[am]) am = i;
+        // ternary search on the continuous function, so the most-probable
+        // radius is exact rather than snapped to the sampling grid
+        var mp = am * d;
+        if (am > 0 && am < N) {
+          var f = function (p) { var r = o.R(p); return p * p * r * r; };
+          var a = (am - 1) * d, b = (am + 1) * d;
+          for (var t = 0; t < 200; t++) {
+            var m1 = a + (b - a) / 3, m2 = b - (b - a) / 3;
+            if (f(m1) < f(m2)) a = m1; else b = m2;
+          }
+          mp = (a + b) / 2;
+        }
+        function quant(f) {
+          var t = f * tot;
+          for (var j = 1; j <= N; j++) {
+            if (cum[j] >= t) return ((j - 1) + (t - cum[j - 1]) / (cum[j] - cum[j - 1])) * d;
+          }
+          return hi;
+        }
+        return {
+          P: P, dP: d, nP: N, peak: P[am],
+          mostProb: mp, r90: quant(0.9), r999: quant(0.999), nodes: findNodes(o, hi)
+        };
+      }
+
+      function findNodes(o, hi) {
+        var out = [], N = 4000, d = hi / N, prev = o.R(1e-7), i;
+        for (i = 1; i <= N; i++) {
+          var p = i * d, cur = o.R(p);
+          if ((prev < 0 && cur > 0) || (prev > 0 && cur < 0)) {
+            var a = (i - 1) * d, b = p;
+            for (var k = 0; k < 60; k++) {
+              var m = (a + b) / 2;
+              if ((o.R(a) < 0) === (o.R(m) < 0)) a = m; else b = m;
+            }
+            out.push((a + b) / 2);
+          }
+          prev = cur;
+        }
+        return out;
+      }
+
+      // Sample points in the xz plane with density proportional to |psi|^2.
+      // In polar coordinates the weight factorises: radial weight rho*R^2
+      // (the extra rho is the area element), angular weight Y^2.  Exact
+      // inverse-CDF sampling, so no rejection loop is needed.
+      function sampleCloud(o, count, seed, rmax) {
+        var rand = Demo.rng(seed), i;
+        var N = 1500, d = rmax / N;
+        var cg = new Float64Array(N + 1), g0 = 0;
+        for (i = 1; i <= N; i++) {
+          var pa = (i - 1) * d, pb = i * d;
+          var ra = o.R(pa), rb = o.R(pb);
+          var wa = pa * ra * ra, wb = pb * rb * rb;
+          g0 += (wa + wb) * 0.5 * d;
+          cg[i] = g0;
+        }
+        var gt = cg[N];
+
+        var M = 1440, dt = 2 * Math.PI / M, af = angFn(o.ang);
+        var ca = new Float64Array(M + 1), a0v = 0;
+        for (i = 1; i <= M; i++) {
+          var t0 = (i - 1) * dt, t1 = i * dt;
+          var v0 = af(Math.cos(t0), Math.sin(t0)), v1 = af(Math.cos(t1), Math.sin(t1));
+          a0v += (v0 * v0 + v1 * v1) * 0.5 * dt;
+          ca[i] = a0v;
+        }
+        var at = ca[M];
+
+        function invert(arr, n, u, step) {
+          var lo = 0, hi = n;
+          while (lo < hi) { var mid = (lo + hi) >> 1; if (arr[mid] < u) lo = mid + 1; else hi = mid; }
+          if (lo === 0) return 0;
+          var a = arr[lo - 1], b = arr[lo];
+          var f = b > a ? (u - a) / (b - a) : 0;
+          return (lo - 1 + f) * step;
+        }
+
+        var pts = new Float32Array(count * 3);
+        for (var k = 0; k < count; k++) {
+          var r = invert(cg, N, rand() * gt, d);
+          var th = invert(ca, M, rand() * at, dt);
+          var ct = Math.cos(th), st = Math.sin(th);
+          pts[k * 3] = r * st;                                   // x, in a0
+          pts[k * 3 + 1] = r * ct;                                 // z, in a0
+          pts[k * 3 + 2] = (o.R(r) * af(ct, st)) >= 0 ? 1 : -1;    // sign of psi
+        }
+        return pts;
+      }
+
+      var orbState = {
+        key: '1s', seed: 7, bohr: false, nodes: false, lock: false,
+        o: null, st: null, pts: null
+      };
+      var statCache = {};
+
+      function orbData(key) {
+        if (!statCache[key]) {
+          var o = ORBS.filter(function (x) { return x.key === key; })[0];
+          statCache[key] = { o: o, st: radialStats(o) };
+        }
+        return statCache[key];
+      }
+
+      function rebuildCloud() {
+        var d = orbData(orbState.key);
+        orbState.o = d.o; orbState.st = d.st;
+        var view = orbState.lock ? 32 : d.st.r999 * 1.04;
+        orbState.view = view;
+        orbState.pts = sampleCloud(d.o, 4200, orbState.seed, Math.max(view, d.st.r999 * 1.04));
+      }
+
+      /* ---------------------------- tab 1 canvases ---------------------- */
+
+      var cloudCv = Demo.canvas('#cloud', function (ctx, w, h, c) {
+        var R = Math.min(w, h) / 2 - 12;
+        var cx = w / 2, cy = h / 2;
+        var view = orbState.lock ? 32 : orbState.st.r999 * 1.04;
+        var s = R / view;                                  // px per a0
+
+        // faint axes
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy);
+        ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R);
+        ctx.stroke();
+
+        // the dots, in two passes so fillStyle is set twice, not 4200 times
+        var pts = orbState.pts, i, n = pts.length / 3;
+        ctx.globalAlpha = 0.30;
+        for (var pass = 0; pass < 2; pass++) {
+          ctx.fillStyle = pass === 0 ? c.series[0] : c.series[1];
+          var want = pass === 0 ? 1 : -1;
+          for (i = 0; i < n; i++) {
+            if (pts[i * 3 + 2] !== want) continue;
+            var px = cx + pts[i * 3] * s, py = cy - pts[i * 3 + 1] * s;
+            if (px < 0 || px > w || py < 0 || py > h) continue;
+            ctx.fillRect(px - 0.9, py - 0.9, 1.8, 1.8);
+          }
+        }
+        ctx.globalAlpha = 1;
+
+        // radial nodes as dashed circles — surfaces the electron is never on
+        if (orbState.nodes) {
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+          for (i = 0; i < orbState.st.nodes.length; i++) {
+            var rr = orbState.st.nodes[i] * s;
+            if (rr > R) continue;
+            ctx.beginPath(); ctx.arc(cx, cy, rr, 0, 2 * Math.PI); ctx.stroke();
+          }
+          ctx.setLineDash([]);
+        }
+
+        // Bohr's answer: one circle, radius n^2 a0
+        if (orbState.bohr) {
+          var br = orbState.o.n * orbState.o.n * s;
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1.6; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.arc(cx, cy, br, 0, 2 * Math.PI); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // nucleus
+        ctx.fillStyle = c.text;
+        ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, 2 * Math.PI); ctx.fill();
+
+        // scale bar: pick a round number of pm
+        var targetPm = view * A0 / 3;
+        var mag = Math.pow(10, Math.floor(Math.log10(targetPm)));
+        var barPm = [1, 2, 5, 10].map(function (k) { return k * mag; })
+          .filter(function (v) { return v <= view * A0 * 0.6; }).pop() || mag;
+        var barPx = (barPm / A0) * s;
+        var bx = 10, by = h - 12;
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(bx, by); ctx.lineTo(bx + barPx, by);
+        ctx.moveTo(bx, by - 3); ctx.lineTo(bx, by + 3);
+        ctx.moveTo(bx + barPx, by - 3); ctx.lineTo(bx + barPx, by + 3);
+        ctx.stroke();
+        ctx.fillStyle = c.muted; ctx.font = '10.5' + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText(Demo.fmt.comma(barPm) + ' pm', bx, by - 5);
+
+        ctx.fillStyle = c.text2; ctx.font = '600 12' + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(orbState.o.label, 10, 8);
+      }, { aspect: 1, minHeight: 230, maxHeight: 360 });
+
+      var radCv = Demo.canvas('#radial', function (ctx, w, h, c) {
+        var padL = 34, padR = 12, padT = 14, padB = 32;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var st = orbState.st, o = orbState.o;
+        var rmaxA = orbState.lock ? 32 : st.r999 * 1.04;
+        var rmaxPm = rmaxA * A0;
+
+        function X(rA) { return x0 + (rA / rmaxA) * (x1 - x0); }
+        function Y(v) { return y0 - (v / st.peak) * (y0 - y1); }
+
+        // axes
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.stroke();
+
+        // x ticks in pm
+        var step = Math.pow(10, Math.floor(Math.log10(rmaxPm / 3)));
+        [1, 2, 5, 10].some(function (k) { if (rmaxPm / (k * step) <= 6) { step = k * step; return true; } return false; });
+        ctx.fillStyle = c.muted; ctx.font = '10' + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var t = 0; t <= rmaxPm; t += step) {
+          var px = X(t / A0);
+          if (px > x1) break;
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 3); ctx.stroke();
+          ctx.fillText(Demo.fmt.comma(t), px, y0 + 5);
+        }
+        ctx.fillText('distance from nucleus (pm)', (x0 + x1) / 2, y0 + 18);
+
+        ctx.save();
+        ctx.translate(11, (y0 + y1) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('chance per pm', 0, 0);
+        ctx.restore();
+
+        // filled curve
+        ctx.beginPath();
+        ctx.moveTo(X(0), Y(0));
+        var N = st.nP, d = st.dP;
+        for (var i = 0; i <= N; i++) {
+          var rA = i * d;
+          if (rA > rmaxA) break;
+          ctx.lineTo(X(rA), Y(st.P[i]));
+        }
+        ctx.lineTo(X(Math.min(rmaxA, N * d)), Y(0));
+        ctx.closePath();
+        ctx.globalAlpha = 0.22; ctx.fillStyle = c.accent; ctx.fill(); ctx.globalAlpha = 1;
+        ctx.strokeStyle = c.accent; ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (i = 0; i <= N; i++) {
+          var ra = i * d;
+          if (ra > rmaxA) break;
+          if (i === 0) ctx.moveTo(X(ra), Y(st.P[i])); else ctx.lineTo(X(ra), Y(st.P[i]));
+        }
+        ctx.stroke();
+
+        // most probable radius
+        ctx.strokeStyle = c.series[2]; ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.moveTo(X(st.mostProb), y0); ctx.lineTo(X(st.mostProb), Y(st.peak)); ctx.stroke();
+        ctx.fillStyle = c.series[2]; ctx.font = '600 10' + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        var lx = X(st.mostProb) + 4;
+        if (lx > x1 - 60) { ctx.textAlign = 'right'; lx = X(st.mostProb) - 4; }
+        ctx.fillText(Demo.fmt.dec(st.mostProb * A0, 0) + ' pm', lx, Y(st.peak) - 3);
+
+        // radial nodes: the curve touches zero here
+        if (orbState.nodes && st.nodes.length) {
+          ctx.strokeStyle = c.muted; ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+          ctx.font = '10' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          for (i = 0; i < st.nodes.length; i++) {
+            var nx = X(st.nodes[i]);
+            ctx.beginPath(); ctx.moveTo(nx, y0); ctx.lineTo(nx, y1); ctx.stroke();
+            ctx.fillStyle = c.muted;
+            ctx.fillText('node', nx, y1);
+          }
+          ctx.setLineDash([]);
+        }
+
+        // Bohr: a single allowed radius, drawn as the spike it is
+        if (orbState.bohr) {
+          var bx = X(o.n * o.n);
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(bx, y0); ctx.lineTo(bx, y1); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = c.bad; ctx.font = '600 10' + FONT;
+          ctx.textAlign = bx > (x0 + x1) / 2 ? 'right' : 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText('Bohr', bx + (bx > (x0 + x1) / 2 ? -4 : 4), y1 + 12);
+        }
+      }, { aspect: 0.9, minHeight: 230, maxHeight: 360 });
+
+      /* ---------------------------- tab 1 wiring ------------------------ */
+
+      function buildOrbPicker() {
+        var host = document.getElementById('orbPick');
+        host.innerHTML = '';
+        ORBS.forEach(function (o) {
+          var b = document.createElement('button');
+          b.className = 'btn';
+          b.type = 'button';
+          b.innerHTML = o.label;
+          b.setAttribute('aria-pressed', o.key === orbState.key ? 'true' : 'false');
+          b.addEventListener('click', function () {
+            orbState.key = o.key;
+            rebuildCloud();
+            syncOrb();
+          });
+          host.appendChild(b);
+        });
+      }
+
+      var ORB_NOTES = {
+        '1s': 'The dots are thickest right at the nucleus &mdash; yet the graph peaks at 52.9&nbsp;pm. Both are correct. A thin shell far out has far more volume than a thin shell close in, so most of the electron’s time is spent out there even though any one point out there is less likely than a point at the centre.',
+        '2s': 'One radial node at 105.8&nbsp;pm: a whole sphere where the electron is <strong>never</strong> found, with probability on both sides of it. Nothing that travels along a path can do that.',
+        '2p': 'Two lobes with the nucleus itself in the nodal plane between them. Most probable distance 211.7&nbsp;pm, which is exactly Bohr’s n&sup2;a₀ &mdash; but as the peak of a broad spread, not a fixed track.',
+        '3s': 'Two radial nodes, at 100.6&nbsp;pm and 375.6&nbsp;pm. Three separate shells of probability, one inside the next. This is where &ldquo;shell&rdquo; stops being a metaphor.',
+        '3p': 'One radial node at 317.5&nbsp;pm, plus the nodal plane through the nucleus. Radial nodes always number n &minus; ℓ &minus; 1.',
+        '3dxz': 'Four lobes, two nodal planes, no radial node. The radial part depends only on n and ℓ, so 3d&nbsp;xz and 3d&nbsp;z&sup2; give the identical graph on the right &mdash; only the shape in space differs.',
+        '3dz2': 'A doughnut plus two lobes. Same radial graph as 3d&nbsp;xz, because the radial part depends only on n and ℓ. Most probable distance 476.3&nbsp;pm = 9a₀, again Bohr’s value for n = 3.'
+      };
+
+      function syncOrb() {
+        var o = orbState.o, st = orbState.st;
+        Array.prototype.forEach.call(document.querySelectorAll('#orbPick .btn'), function (b, i) {
+          b.setAttribute('aria-pressed', ORBS[i].key === orbState.key ? 'true' : 'false');
+        });
+        document.getElementById('oMost').innerHTML =
+          Demo.fmt.dec(st.mostProb * A0, 1) + '<span class="r-unit">pm</span>';
+        document.getElementById('o90').innerHTML =
+          Demo.fmt.dec(st.r90 * A0, 0) + '<span class="r-unit">pm</span>';
+        document.getElementById('oBohr').innerHTML =
+          Demo.fmt.dec(o.n * o.n * A0, 1) + '<span class="r-unit">pm</span>';
+        document.getElementById('oNodes').textContent = st.nodes.length + ' / ' + o.l;
+        document.getElementById('orbNote').innerHTML = ORB_NOTES[o.key];
+
+        var nodeTxt = st.nodes.length
+          ? ' Radial node' + (st.nodes.length > 1 ? 's' : '') + ' at ' +
+          st.nodes.map(function (n) { return Demo.fmt.dec(n * A0, 1) + ' pm'; }).join(' and ') + '.'
+          : ' No radial nodes.';
+        document.getElementById('capOrb').innerHTML =
+          '4,200 sampled positions for a single ' + o.label + ' electron in a hydrogen atom.' + nodeTxt +
+          ' Blue and orange are the two signs of the wavefunction ψ — the electron is equally at home in both.';
+        cloudCv.redraw();
+        radCv.redraw();
+      }
+
+      function buildCloudLegend() {
+        document.getElementById('cloudLegend').innerHTML =
+          '<span class="lg-item"><span class="sw" style="background:var(--series-1)"></span>ψ positive</span>' +
+          '<span class="lg-item"><span class="sw" style="background:var(--series-2)"></span>ψ negative</span>' +
+          '<span class="lg-item"><span class="sw" style="background:var(--text)"></span>nucleus</span>' +
+          '<span class="lg-item" style="color:var(--bad)"><span class="sw ring"></span>Bohr orbit (optional)</span>';
+      }
+
+      document.getElementById('showBohr').addEventListener('change', function () {
+        orbState.bohr = this.checked; cloudCv.redraw(); radCv.redraw();
+      });
+      document.getElementById('showNodes').addEventListener('change', function () {
+        orbState.nodes = this.checked; cloudCv.redraw(); radCv.redraw();
+      });
+      document.getElementById('lockScale').addEventListener('change', function () {
+        orbState.lock = this.checked; rebuildCloud(); cloudCv.redraw(); radCv.redraw();
+      });
+      document.getElementById('resample').addEventListener('click', function () {
+        orbState.seed = (orbState.seed * 1103515245 + 12345) >>> 0 || 1;
+        rebuildCloud(); cloudCv.redraw();
+      });
+
+      /* =====================================================================
+         TAB 2 — SUCCESSIVE IONIZATION ENERGIES
+         ===================================================================== */
+
+      var ieState = { z: 12, revealed: false, guess: 1 };
+
+      function ieInfo(z) {
+        var v = SUCC[z], seq = removalSeq(z), i;
+        var ratios = [NaN];
+        for (i = 1; i < v.length; i++) ratios.push(v[i] / v[i - 1]);
+        var bounds = [];
+        for (i = 1; i < seq.length; i++) {
+          if (shellOf(seq[i]) !== shellOf(seq[i - 1])) bounds.push({ i: i, kind: 'shell', from: seq[i - 1], to: seq[i] });
+          else if (seq[i] !== seq[i - 1]) bounds.push({ i: i, kind: 'sub', from: seq[i - 1], to: seq[i] });
+        }
+        return { z: z, v: v, seq: seq, ratios: ratios, bounds: bounds, valence: valenceCount(z) };
+      }
+
+      function shellColor(c, n) { return c.series[Demo.clamp(4 - n, 0, 3)]; }
+
+      var ieCv = Demo.canvas('#iechart', function (ctx, w, h, c) {
+        var info = ieInfo(ieState.z);
+        var v = info.v, n = v.length;
+        var padL = 58, padR = 10, padT = 40, padB = 40;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var lo = Math.pow(10, Math.floor(Math.log10(Math.min.apply(null, v) * 0.6)));
+        var hi = Math.pow(10, Math.ceil(Math.log10(Math.max.apply(null, v) * 1.4)));
+        var lgLo = Math.log10(lo), lgHi = Math.log10(hi);
+
+        function Y(val) { return y0 - ((Math.log10(val) - lgLo) / (lgHi - lgLo)) * (y0 - y1); }
+        var step = (x1 - x0) / n;
+        function Xc(i) { return x0 + (i + 0.5) * step; }
+        function Xg(g) { return x0 + g * step; }
+
+        // axis title on its own line, so nothing can collide with the tick labels
+        ctx.fillStyle = c.muted; ctx.font = '10' + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('kJ/mol — logarithmic axis, each gridline is ×10', 2, 2);
+
+        // decade gridlines
+        ctx.font = '10' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var e = Math.ceil(lgLo); e <= Math.floor(lgHi); e++) {
+          var yy = Y(Math.pow(10, e));
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(Demo.fmt.comma(Math.pow(10, e)), x0 - 6, yy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        var bw = Math.max(4, step * 0.6);
+
+        if (!ieState.revealed) {
+          ctx.fillStyle = c.lineSoft;
+          for (var i = 0; i < n; i++) {
+            var bh = (y0 - y1) * 0.22;
+            ctx.fillRect(Xc(i) - bw / 2, y0 - bh, bw, bh);
+          }
+          ctx.fillStyle = c.muted; ctx.font = '600 14' + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Set your prediction, then reveal', (x0 + x1) / 2, (y0 + y1) / 2 - 10);
+          ctx.font = '11' + FONT;
+          ctx.fillText('Where does the price of the next electron suddenly explode?',
+            (x0 + x1) / 2, (y0 + y1) / 2 + 10);
+        } else {
+          for (var k = 0; k < n; k++) {
+            var nn = shellOf(info.seq[k]);
+            ctx.fillStyle = shellColor(c, nn);
+            var top = Y(v[k]);
+            ctx.fillRect(Xc(k) - bw / 2, top, bw, y0 - top);
+          }
+          // shell and sub-shell boundaries
+          for (var b = 0; b < info.bounds.length; b++) {
+            var bd = info.bounds[b], gx = Xg(bd.i);
+            if (bd.kind === 'shell') {
+              ctx.strokeStyle = c.text2; ctx.lineWidth = 1.6; ctx.setLineDash([]);
+            } else {
+              ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+            }
+            ctx.beginPath(); ctx.moveTo(gx, y0); ctx.lineTo(gx, y1); ctx.stroke();
+            ctx.setLineDash([]);
+            if (bd.kind === 'shell') {
+              ctx.fillStyle = c.text2; ctx.font = '600 10' + FONT;
+              ctx.textAlign = gx > (x0 + x1) * 0.6 ? 'right' : 'left';
+              ctx.textBaseline = 'top';
+              var ox = gx > (x0 + x1) * 0.6 ? -4 : 4;
+              ctx.fillText('n=' + shellOf(bd.from) + '→' + shellOf(bd.to), gx + ox, y1);
+              ctx.fillText('×' + Demo.fmt.dec(info.ratios[bd.i], 1), gx + ox, y1 + 12);
+            }
+          }
+          // the first cliff — the valence/core boundary
+          var vx = Xg(info.valence);
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.moveTo(vx, y0 + 4); ctx.lineTo(vx, y1); ctx.stroke();
+        }
+
+        // the student's prediction — label sits in its own lane above the plot
+        var px = Xg(ieState.guess);
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]);
+        ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y1 - 12); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.warn; ctx.font = '600 10' + FONT;
+        ctx.textAlign = px > (x0 + x1) / 2 ? 'right' : 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('your prediction', px + (px > (x0 + x1) / 2 ? -4 : 4), y1 - 24);
+
+        // x labels
+        var every = step < 17 ? (step < 11 ? 3 : 2) : 1;
+        ctx.fillStyle = c.muted; ctx.font = '10' + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var q = 0; q < n; q++) {
+          if (q % every !== 0 && q !== n - 1) continue;
+          ctx.fillText(String(q + 1), Xc(q), y0 + 5);
+        }
+        ctx.fillText('which electron is being removed', (x0 + x1) / 2, y0 + 20);
+      }, { aspect: 0.58, minHeight: 260, maxHeight: 400 });
+
+      function buildElemPicker() {
+        var host = document.getElementById('elemPick');
+        host.innerHTML = '';
+        for (var z = 3; z <= 20; z++) {
+          (function (zz) {
+            var b = document.createElement('button');
+            b.className = 'btn';
+            b.type = 'button';
+            b.textContent = EL[zz - 1].sym;
+            b.setAttribute('aria-pressed', zz === ieState.z ? 'true' : 'false');
+            b.addEventListener('click', function () {
+              ieState.z = zz;
+              ieState.revealed = false;
+              syncIE(true);
+            });
+            host.appendChild(b);
+          })(z);
+        }
+      }
+
+      // only list shells this element actually has — a swatch for an empty
+      // shell would be a colour with nothing behind it
+      function buildIELegend(info) {
+        var seen = {}, out = [];
+        info.seq.forEach(function (s) { seen[shellOf(s)] = true; });
+        Object.keys(seen).map(Number).sort(function (a, b) { return b - a; }).forEach(function (n) {
+          out.push('<span class="lg-item"><span class="sw" style="background:var(--series-' +
+            (5 - n) + ')"></span>shell n = ' + n + '</span>');
+        });
+        out.push('<span class="lg-item" style="color:var(--accent-strong)">| first cliff (valence → core)</span>');
+        document.getElementById('ieLegend').innerHTML = out.join('');
+      }
+
+      function syncIE(resetGuess) {
+        var el = EL[ieState.z - 1];
+        var info = ieInfo(ieState.z);
+        Array.prototype.forEach.call(document.querySelectorAll('#elemPick .btn'), function (b, i) {
+          b.setAttribute('aria-pressed', (i + 3) === ieState.z ? 'true' : 'false');
+        });
+
+        document.getElementById('ieName').textContent = el.sym + ' (Z = ' + el.z + ')';
+        document.getElementById('ieGP').textContent = el.group + ' / ' + el.period;
+
+        var slider = document.getElementById('guess');
+        slider.max = String(info.v.length - 1);
+        if (resetGuess || ieState.guess > info.v.length - 1) {
+          ieState.guess = Demo.clamp(ieState.guess, 1, info.v.length - 1);
+          slider.value = String(ieState.guess);
+        }
+        document.getElementById('guessOut').textContent = ieState.guess;
+        document.getElementById('guessHint').textContent =
+          'electron' + (ieState.guess === 1 ? '' : 's') + ' from a neutral ' + el.name +
+          ' atom. There are ' + info.v.length + ' electrons in all, so ' + (info.v.length - 1) +
+          ' gaps to choose between.';
+
+        var vd = document.getElementById('verdict');
+        var after = document.getElementById('afterPanel');
+
+        if (!ieState.revealed) {
+          vd.className = 'verdict muted';
+          vd.innerHTML = 'The electron configuration is hidden on purpose. Use the group number: how many ' +
+            'electrons is ' + el.sym + ' likely to hand over before it starts fighting?';
+          after.classList.add('hide');
+          document.getElementById('capIE').textContent =
+            'Successive ionization energies of ' + el.name + ', measured values, hidden until you commit. ' +
+            'The vertical axis is logarithmic, so a gap that looks like one gridline is a factor of ten.';
+        } else {
+          var hit = ieState.guess === info.valence;
+          vd.className = 'verdict ' + (hit ? 'good' : 'miss');
+          vd.innerHTML = (hit ? '<strong>Yes.</strong> ' : '<strong>Not quite.</strong> ') +
+            'The first cliff falls after ' + info.valence + ' electron' + (info.valence === 1 ? '' : 's') +
+            ' — IE' + (info.valence + 1) + ' costs ' + Demo.fmt.dec(info.ratios[info.valence], 1) +
+            '× what IE' + info.valence + ' cost. ' +
+            (hit ? '' : 'You said ' + ieState.guess + '. ') +
+            'That is exactly the number of electrons in ' + el.sym + '’s outermost shell.';
+          after.classList.remove('hide');
+          document.getElementById('cfgLine').innerHTML = configHTML(ieState.z) +
+            ' &nbsp;<span class="core small">(blue = outermost shell)</span>';
+          document.getElementById('ieCliff').innerHTML = info.valence +
+            '<span class="r-unit">&nbsp;e&#8315;</span>';
+          document.getElementById('ieRatio').innerHTML = '×' +
+            Demo.fmt.dec(info.ratios[info.valence], 2);
+          buildIETable(info);
+          var shellBreaks = info.bounds.filter(function (b) { return b.kind === 'shell'; });
+          document.getElementById('capIE').innerHTML =
+            'Successive ionization energies of ' + el.name + ' (kJ/mol, logarithmic axis). ' +
+            shellBreaks.length + ' shell boundar' + (shellBreaks.length === 1 ? 'y' : 'ies') +
+            ' in this element, ' + shellBreaks.length + ' cliff' + (shellBreaks.length === 1 ? '' : 's') +
+            ' in the data. Bars are coloured by which shell the electron came out of — a colour ' +
+            'assignment made from the configuration, not from the graph.';
+        }
+
+        document.getElementById('ieCaveat').innerHTML = ieCaveatFor(info, el);
+        buildIELegend(info);
+        ieCv.redraw();
+      }
+
+      function ieCaveatFor(info, el) {
+        var shellBreaks = info.bounds.filter(function (b) { return b.kind === 'shell'; });
+        var maxR = 1, maxI = 1;
+        for (var i = 1; i < info.ratios.length; i++) if (info.ratios[i] > maxR) { maxR = info.ratios[i]; maxI = i; }
+        if (maxI !== info.valence) {
+          var which = info.bounds.filter(function (b) { return b.i === maxI; })[0];
+          var descr = which
+            ? 'the break from the ' + which.from + ' sub-shell into ' + which.to + ', i.e. from shell n = ' +
+            shellOf(which.from) + ' into shell n = ' + shellOf(which.to)
+            : 'a deeper shell boundary';
+          return '<strong>The first cliff is not the tallest one.</strong> For ' + el.name +
+            ', the biggest single multiplier in the whole chart is ×' + Demo.fmt.dec(maxR, 1) +
+            ' at electron ' + (maxI + 1) + ' — that is ' + descr + '. ' +
+            'The cliff that tells you the valence count is the <em>first</em> one, at ' + info.valence +
+            '. Both are shell boundaries; there are ' + shellBreaks.length + ' of them here because ' +
+            el.sym + ' has ' + (shellBreaks.length + 1) + ' occupied shells.';
+        }
+        return '<strong>Count the cliffs, not just the biggest one.</strong> ' + el.sym + ' has ' +
+          (shellBreaks.length + 1) + ' occupied shell' + (shellBreaks.length ? 's' : '') + ', so the chart has ' +
+          shellBreaks.length + ' big multiplier' + (shellBreaks.length === 1 ? '' : 's') +
+          '. Every one of them is a shell boundary; the small steps in between are sub-shell changes ' +
+          'or just the next electron out of the same sub-shell.';
+      }
+
+      function buildIETable(info) {
+        var tb = document.getElementById('ieTable').querySelector('tbody');
+        var rows = [];
+        for (var i = 0; i < info.v.length; i++) {
+          var breakHere = i > 0 && shellOf(info.seq[i]) !== shellOf(info.seq[i - 1]);
+          rows.push('<tr' + (breakHere ? ' class="shell-break"' : '') + '>' +
+            '<td>' + (i + 1) + '</td>' +
+            '<td>' + info.seq[i] + '</td>' +
+            '<td>' + kj(info.v[i]) + '</td>' +
+            '<td>' + (i === 0 ? '&mdash;' : '×' + Demo.fmt.dec(info.ratios[i], 2)) + '</td>' +
+            '</tr>');
+        }
+        tb.innerHTML = rows.join('');
+      }
+
+      Demo.range('#guess', function (v) {
+        ieState.guess = Math.round(v);
+        document.getElementById('guessOut').textContent = ieState.guess;
+        if (ieState.revealed) { ieState.revealed = false; }
+        syncIE(false);
+      });
+
+      document.getElementById('reveal').addEventListener('click', function () {
+        ieState.revealed = true; syncIE(false);
+      });
+      document.getElementById('rehide').addEventListener('click', function () {
+        ieState.revealed = false; syncIE(false);
+      });
+
+      /* =====================================================================
+         TAB 3 — THE SAWTOOTH
+         ===================================================================== */
+
+      var sawState = { sel: 12, view: 'z', markDown: true, markDips: false };
+      var SAW_PAD = { L: 44, R: 12, T: 32, B: 44, yMax: 2500 };
+
+      var sawCv = Demo.canvas('#saw', function (ctx, w, h, c) {
+        var padL = SAW_PAD.L, padR = SAW_PAD.R, padT = SAW_PAD.T, padB = SAW_PAD.B;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var yMax = SAW_PAD.yMax;
+
+        function Y(v) { return y0 - (v / yMax) * (y0 - y1); }
+
+        ctx.fillStyle = c.muted; ctx.font = '10' + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('first ionization energy (kJ/mol)', 2, 2);
+
+        // y gridlines every 500 kJ/mol
+        ctx.font = '10' + FONT; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var g = 0; g <= yMax; g += 500) {
+          var yy = Y(g);
+          ctx.strokeStyle = g === 0 ? c.line : c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(Demo.fmt.comma(g), x0 - 6, yy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.stroke();
+
+        if (sawState.view === 'z') {
+          var n = EL.length, step = (x1 - x0) / (n - 1);
+          var X = function (i) { return x0 + i * step; };
+
+          if (sawState.markDips) shadeDips(ctx, c, function (e) { return X(e.z - 1); }, step, y0, y1);
+
+          // segments, coloured by direction if asked
+          for (var i = 1; i < n; i++) {
+            var down = EL[i].ie1 < EL[i - 1].ie1;
+            ctx.strokeStyle = (sawState.markDown && down) ? c.bad : c.accent;
+            ctx.lineWidth = (sawState.markDown && down) ? 2.6 : 1.6;
+            ctx.beginPath();
+            ctx.moveTo(X(i - 1), Y(EL[i - 1].ie1));
+            ctx.lineTo(X(i), Y(EL[i].ie1));
+            ctx.stroke();
+          }
+          // markers
+          for (i = 0; i < n; i++) {
+            var isSel = EL[i].z === sawState.sel;
+            var down2 = i > 0 && EL[i].ie1 < EL[i - 1].ie1;
+            ctx.fillStyle = isSel ? c.accentStrong : ((sawState.markDown && down2) ? c.bad : c.accent);
+            ctx.beginPath();
+            ctx.arc(X(i), Y(EL[i].ie1), isSel ? 5 : 2.6, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+          // selected guide
+          var si = sawState.sel - 1;
+          ctx.strokeStyle = c.accentLine || c.accent; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+          ctx.beginPath(); ctx.moveTo(X(si), y0); ctx.lineTo(X(si), Y(EL[si].ie1)); ctx.stroke();
+          ctx.setLineDash([]);
+
+          // x labels
+          var every = step < 13 ? 3 : (step < 19 ? 2 : 1);
+          ctx.font = '9.5' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          for (i = 0; i < n; i++) {
+            var show = (i % every === 0) || EL[i].z === sawState.sel;
+            if (!show) continue;
+            ctx.fillStyle = EL[i].z === sawState.sel ? c.accentStrong : c.muted;
+            ctx.font = (EL[i].z === sawState.sel ? '600 10' : '9.5') + FONT;
+            ctx.fillText(EL[i].sym, X(i), y0 + 5);
+          }
+          ctx.fillStyle = c.muted; ctx.font = '10' + FONT;
+          ctx.fillText('atomic number 1 → 36', (x0 + x1) / 2, y0 + 24);
+        } else {
+          var stepG = (x1 - x0) / 17;
+          var XG = function (grp) { return x0 + (grp - 1) * stepG; };
+
+          if (sawState.markDips) shadeDips(ctx, c, function (e) { return XG(e.group); }, stepG, y0, y1);
+
+          for (var p = 1; p <= 4; p++) {
+            var row = EL.filter(function (e) { return e.period === p; });
+            ctx.strokeStyle = c.series[p - 1]; ctx.lineWidth = 1.8;
+            // dashed where the period simply has no elements (groups 3-12 in periods 1-3)
+            row.forEach(function (e, k) {
+              if (k === 0) return;
+              var prev = row[k - 1];
+              ctx.setLineDash(e.group - prev.group > 1 ? [4, 4] : []);
+              ctx.beginPath();
+              ctx.moveTo(XG(prev.group), Y(prev.ie1));
+              ctx.lineTo(XG(e.group), Y(e.ie1));
+              ctx.stroke();
+            });
+            ctx.setLineDash([]);
+            ctx.fillStyle = c.series[p - 1];
+            row.forEach(function (e) {
+              var sel = e.z === sawState.sel;
+              ctx.beginPath();
+              ctx.arc(XG(e.group), Y(e.ie1), sel ? 5 : 2.4, 0, 2 * Math.PI);
+              ctx.fill();
+            });
+          }
+          ctx.fillStyle = c.muted; ctx.font = '9.5' + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          for (var gg = 1; gg <= 18; gg++) {
+            if (gg % 2 === 0 && stepG < 22) continue;
+            ctx.fillText(String(gg), XG(gg), y0 + 5);
+          }
+          ctx.font = '10' + FONT;
+          ctx.fillText('group number', (x0 + x1) / 2, y0 + 24);
+        }
+      }, { aspect: 0.56, minHeight: 250, maxHeight: 380 });
+
+      function shadeDips(ctx, c, xOf, step, y0, y1) {
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = c.bad;
+        [13, 16].forEach(function (grp) {
+          EL.filter(function (e) { return e.group === grp; }).forEach(function (e) {
+            var px = xOf(e);
+            ctx.fillRect(px - step * 0.5, y1, step, y0 - y1);
+          });
+        });
+        ctx.globalAlpha = 1;
+      }
+
+      function buildSawLegend() {
+        var html;
+        if (sawState.view === 'z') {
+          html = '<span class="lg-item"><span class="sw" style="background:var(--accent)"></span>step up</span>' +
+            '<span class="lg-item"><span class="sw" style="background:var(--bad)"></span>step down</span>';
+        } else {
+          html = [1, 2, 3, 4].map(function (p) {
+            return '<span class="lg-item"><span class="sw" style="background:var(--series-' + p +
+              ')"></span>period ' + p + '</span>';
+          }).join('') +
+            '<span class="lg-item">dashed = no elements in those groups</span>';
+        }
+        document.getElementById('sawLegend').innerHTML =
+          html + '<span class="lg-item">tap a point to inspect it</span>';
+      }
+
+      var DIP13 = 'This is a <strong>group 13</strong> dip. The electron leaving is the first one in a brand-new ' +
+        'p sub-shell, and a p sub-shell sits higher in energy than the s sub-shell just below it. ' +
+        'The nucleus got one proton stronger, and it still costs less.';
+      var DIP16 = 'This is a <strong>group 16</strong> dip. This is the first p electron that has to double up ' +
+        'in an orbital already holding one. Two electrons in the same small region repel each other, ' +
+        'so one of them is easier to remove than the extra proton would suggest.';
+
+      function syncSaw() {
+        var e = EL[sawState.sel - 1];
+        var prev = sawState.sel > 1 ? EL[sawState.sel - 2] : null;
+        document.getElementById('sName').textContent = e.name + ' (' + e.sym + ')';
+        document.getElementById('sZ').textContent = 'Z = ' + e.z;
+        document.getElementById('sIE').innerHTML = kj(e.ie1) +
+          '<span class="r-unit">kJ/mol</span>';
+        document.getElementById('sGroup').textContent = e.group;
+        document.getElementById('sPeriod').textContent = e.period;
+
+        var box = document.getElementById('sDeltaBox');
+        var dEl = document.getElementById('sDelta');
+        box.className = 'readout';
+        if (!prev) {
+          dEl.innerHTML = '&mdash;';
+        } else {
+          var d = e.ie1 - prev.ie1;
+          dEl.innerHTML = (d >= 0 ? '+' : '−') + kj(Math.round(Math.abs(d) * 10) / 10) +
+            '<span class="r-unit">kJ/mol</span>';
+          box.className = 'readout ' + (d >= 0 ? 'is-ok' : 'is-bad');
+        }
+
+        var cfgEl = document.getElementById('sCfg');
+        if (e.z <= 20) {
+          cfgEl.innerHTML = configHTML(e.z) + ' &nbsp;<span class="core small">(blue = outermost shell)</span>';
+        } else {
+          cfgEl.innerHTML = '<span class="core">[Ar] plus 4s and 3d electrons — the d-block, ' +
+            'where the filling order is not simply outward.</span>';
+        }
+
+        var note = document.getElementById('sNote');
+        note.className = 'note';
+        if (prev && e.ie1 < prev.ie1 && e.group === 13) {
+          note.className = 'note bad'; note.innerHTML = DIP13;
+        } else if (prev && e.ie1 < prev.ie1 && e.group === 16) {
+          note.className = 'note bad'; note.innerHTML = DIP16;
+        } else if (prev && e.ie1 < prev.ie1 && e.period === 4 && e.group >= 3 && e.group <= 12) {
+          note.className = 'note warn';
+          note.innerHTML = 'A d-block wobble. Across Sc–Zn the outermost electrons stay in 4s while ' +
+            '3d fills underneath, so first ionization energy barely moves and the small ups and downs ' +
+            'follow d-electron repulsion rather than the tidy main-group rule.';
+        } else if (prev && e.ie1 < prev.ie1 && e.group === 1) {
+          note.innerHTML = 'The biggest drop of all: a new period. The outermost electron has moved to a ' +
+            'shell one step further out, where it is both further from the nucleus and screened by ' +
+            'everything beneath it.';
+        } else if (prev) {
+          note.innerHTML = 'A step <strong>up</strong>. Same shell as the element before it, one more ' +
+            'proton pulling on it, so it is held tighter. This is the ordinary behaviour — which is ' +
+            'what makes the two dips per row worth explaining.';
+        } else {
+          note.innerHTML = 'Hydrogen: one proton, one electron, 1,312 kJ/mol. Everything else on this ' +
+            'chart is compared against how tightly that single electron is held.';
+        }
+
+        var nDown = 0;
+        for (var i = 1; i < EL.length; i++) if (EL[i].ie1 < EL[i - 1].ie1) nDown++;
+        document.getElementById('capSaw').textContent = sawState.view === 'z'
+          ? 'Measured first ionization energies, hydrogen through krypton. ' + nDown +
+          ' of the 35 steps go down. The pattern is not noise: in period 2 and again in period 3 the ' +
+          'two within-period drops land on group 13 and group 16, both times.'
+          : 'The same measurements with the four periods laid on top of each other against group number. ' +
+          'Periods 2 and 3 trace nearly the same shape, dips included. Periods 2 and 3 have no groups ' +
+          '3–12, so their lines jump straight from group 2 to group 13.';
+        sawCv.redraw();
+      }
+
+      document.getElementById('saw').addEventListener('click', function (ev) {
+        var rect = this.getBoundingClientRect();
+        var x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+        var w = rect.width, hh = rect.height;
+        var xa = SAW_PAD.L, xb = w - SAW_PAD.R;
+        var ya = hh - SAW_PAD.B, yb = SAW_PAD.T;
+        var Y = function (v) { return ya - (v / SAW_PAD.yMax) * (ya - yb); };
+        var best = sawState.sel, bd = Infinity, i, dx, dy, d2;
+        if (sawState.view === 'z') {
+          var step = (xb - xa) / (EL.length - 1);
+          for (i = 0; i < EL.length; i++) {
+            dx = xa + i * step - x;
+            if (dx * dx < bd) { bd = dx * dx; best = EL[i].z; }
+          }
+        } else {
+          // four lines overlap here, so the nearest point must use both axes
+          var stepG = (xb - xa) / 17;
+          for (i = 0; i < EL.length; i++) {
+            dx = xa + (EL[i].group - 1) * stepG - x;
+            dy = Y(EL[i].ie1) - y;
+            d2 = dx * dx + dy * dy;
+            if (d2 < bd) { bd = d2; best = EL[i].z; }
+          }
+        }
+        sawState.sel = best;
+        syncSaw();
+      });
+
+      document.getElementById('saw').addEventListener('keydown', function (ev) {
+        if (ev.key === 'ArrowRight') { sawState.sel = Demo.clamp(sawState.sel + 1, 1, 36); syncSaw(); ev.preventDefault(); }
+        if (ev.key === 'ArrowLeft') { sawState.sel = Demo.clamp(sawState.sel - 1, 1, 36); syncSaw(); ev.preventDefault(); }
+      });
+
+      document.getElementById('prevEl').addEventListener('click', function () {
+        sawState.sel = Demo.clamp(sawState.sel - 1, 1, 36); syncSaw();
+      });
+      document.getElementById('nextEl').addEventListener('click', function () {
+        sawState.sel = Demo.clamp(sawState.sel + 1, 1, 36); syncSaw();
+      });
+      document.getElementById('markDown').addEventListener('change', function () {
+        sawState.markDown = this.checked; sawCv.redraw();
+      });
+      document.getElementById('markDips').addEventListener('change', function () {
+        sawState.markDips = this.checked; sawCv.redraw();
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-saw]'), function (b) {
+        b.addEventListener('click', function () {
+          Array.prototype.forEach.call(document.querySelectorAll('[data-saw]'), function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          sawState.view = b.dataset.saw;
+          buildSawLegend();
+          syncSaw();
+        });
+      });
+
+      /* =====================================================================
+         TABS
+         ===================================================================== */
+
+      var TABS = {
+        orb: {
+          title: 'Where is the electron?',
+          lead: 'Shells and sub-shells start here as shapes: regions where an electron is likely to turn up. ' +
+            'Nothing on this tab is measured — it is the mathematics. Tabs 2 and 3 are the measurements ' +
+            'that make the mathematics necessary.',
+          stage: 'stageOrb', ctrl: 'ctrlOrb', cvs: null
+        },
+        ie: {
+          title: 'Why ionization energy jumps',
+          lead: 'The same shells, now as a cliff in real laboratory numbers. Nobody assumed shells to make ' +
+            'this graph — the graph is what forces you to believe in them.',
+          stage: 'stageIE', ctrl: 'ctrlIE', cvs: null
+        },
+        saw: {
+          title: 'The sawtooth',
+          lead: 'Zoom out to the first electron only, across the whole table. The shells give you the big ' +
+            'crashes between periods; the sub-shells from tab 1 give you the two small dips inside every row.',
+          stage: 'stageSaw', ctrl: 'ctrlSaw', cvs: null
+        }
+      };
+      TABS.orb.cvs = [cloudCv, radCv];
+      TABS.ie.cvs = [ieCv];
+      TABS.saw.cvs = [sawCv];
+
+      function showTab(key) {
+        Object.keys(TABS).forEach(function (k) {
+          document.getElementById(TABS[k].stage).classList.toggle('hide', k !== key);
+          document.getElementById(TABS[k].ctrl).classList.toggle('hide', k !== key);
+        });
+        Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+          b.setAttribute('aria-selected', b.dataset.tab === key ? 'true' : 'false');
+        });
+        document.getElementById('tabTitle').textContent = TABS[key].title;
+        document.getElementById('tabLead').textContent = TABS[key].lead;
+        // hidden canvases measured 0 wide; re-measure now that they are visible
+        TABS[key].cvs.forEach(function (cv) { cv.resize(); });
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function (b) {
+        b.addEventListener('click', function () { showTab(b.dataset.tab); });
+      });
+
+      /* =====================================================================
+         BOOT
+         ===================================================================== */
+
+      buildOrbPicker();
+      buildCloudLegend();
+      rebuildCloud();
+      syncOrb();
+
+      buildElemPicker();
+      syncIE(true);
+
+      buildSawLegend();
+      syncSaw();
+
+      showTab('orb');
+      Demo.ready(function () {
+        showTab('orb');
+      });
+    })();
+  </script>
+</body>
+
+</html>

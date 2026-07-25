@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Build a Polymer | Dr. Andres Barboza</title>
+  <meta name="description" content="Build and break macromolecules one bond at a time, and count the water molecules that leave or enter.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: the family tab strip sits inside the stage, and the
+       two-reaction equation card under the canvas. Everything else is demo.css. */
+    [hidden] { display: none !important; }
+
+    .stage .seg { margin-bottom: 12px; flex-wrap: wrap; }
+    .stage .seg button { flex: 1 1 calc(50% - 3px); }
+    @media (min-width: 560px) { .stage .seg button { flex: 1 1 0; } }
+
+    .rxn { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+    .rxn-row {
+      display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px;
+      font-size: 12px; line-height: 1.5;
+      padding: 7px 10px; border-radius: 10px;
+      border: 1px solid transparent;
+      background: var(--surface-2);
+      color: var(--muted);
+      transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+    .rxn-row.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--text-2); }
+    .rxn-tag {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.04em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .rxn-row.is-on .rxn-tag { color: var(--accent-strong); }
+    .rxn-dir { margin-left: auto; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .rxn-row.is-on .rxn-dir { color: var(--text); }
+
+    /* the right-hand value in a .row-between fact line */
+    .row-between > span:last-child { color: var(--text); font-weight: 500; text-align: right; }
+
+    /* the mass readout reaches four digits plus a decimal (3776.5 Da for a
+       12-mer of dAMP); on a phone the readout column is ~100px, so drop this
+       one value a notch rather than let it spill past its box */
+    @media (max-width: 560px) { #rMass { font-size: 17px; } }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Build a Polymer</h1>
+        <p class="demo-sub">Add one monomer at a time and watch where the water goes. Then drag the slider to 12 and read the answer off the counter.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Macromolecules</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <div class="seg" role="tablist" aria-label="Macromolecule family">
+          <button role="tab" aria-selected="true"  data-fam="carb">Carbohydrate</button>
+          <button role="tab" aria-selected="false" data-fam="protein">Protein</button>
+          <button role="tab" aria-selected="false" data-fam="nucleic">Nucleic acid</button>
+          <button role="tab" aria-selected="false" data-fam="lipid">Lipid</button>
+        </div>
+
+        <canvas id="plot" role="img" aria-label="Diagram of the molecule being built"></canvas>
+        <p class="stage-caption" id="caption">Chain of 4 glucose monomers.</p>
+
+        <div class="rxn">
+          <div class="rxn-row is-on" id="rxnDehy">
+            <span class="rxn-tag">Dehydration synthesis</span>
+            <span id="eqDehy">A&ndash;OH + HO&ndash;B &rarr; A&ndash;O&ndash;B + H<sub>2</sub>O</span>
+            <span class="rxn-dir">water leaves</span>
+          </div>
+          <div class="rxn-row" id="rxnHydro">
+            <span class="rxn-tag">Hydrolysis</span>
+            <span id="eqHydro">A&ndash;O&ndash;B + H<sub>2</sub>O &rarr; A&ndash;OH + HO&ndash;B</span>
+            <span class="rxn-dir">water is used up</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Build</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="nlen" id="lenLabel">Chain length</label>
+                <span class="ctrl-value" id="lenOut">4 monomers</span>
+              </div>
+              <input type="range" id="nlen" min="1" max="12" step="1" value="4">
+              <p class="ctrl-hint" id="lenHint">
+                Drag straight to 12, then read the water counter. That is the answer to
+                &ldquo;how many waters to make a 12-monomer chain?&rdquo;
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="addBtn">Add monomer</button>
+              <button class="btn" id="hydBtn">Hydrolyze</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="resetBtn">Reset</button>
+            </div>
+
+            <hr class="sep">
+            <p class="small muted" id="famNote"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Counters</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label" id="lMono">Monomers</div>
+              <div class="r-value" id="rMono">4</div>
+            </div>
+            <div class="readout">
+              <div class="r-label" id="lBonds">Bonds</div>
+              <div class="r-value" id="rBonds">3</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Waters out</div>
+              <div class="r-value" id="rWater">3</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Molar mass</div>
+              <div class="r-value" id="rMass">666.6<span class="r-unit">Da</span></div>
+            </div>
+            <div class="readout is-bad" id="ruleBox" hidden>
+              <div class="r-label">n &minus; 1 says</div>
+              <div class="r-value" id="rRule">1</div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:12px 0">
+          <div class="stack-s">
+            <div class="row-between small">
+              <span class="muted">Bond formed</span>
+              <span id="rBondName">glycosidic bond</span>
+            </div>
+            <div class="row-between small">
+              <span class="muted">Formula</span>
+              <span class="num" id="rFormula">C<sub>24</sub>H<sub>42</sub>O<sub>21</sub></span>
+            </div>
+            <div class="row-between small">
+              <span class="muted">Water lost per bond</span>
+              <span class="num" id="rWaterMass">18.02 Da</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="ruleTitle">The counting rule</div>
+
+          <div id="rulePoly">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead>
+                  <tr><th>Monomers</th><th>Bonds</th><th>Waters out</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>2</td><td>1</td><td>1</td></tr>
+                  <tr><td>12</td><td>11</td><td>11</td></tr>
+                  <tr><td>100</td><td>99</td><td>99</td></tr>
+                  <tr><td><em>n</em></td><td><em>n</em> &minus; 1</td><td><em>n</em> &minus; 1</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <hr class="sep" style="margin:12px 0">
+            <p class="note">
+              One fewer bond than monomers, because the <strong>first</strong> monomer starts the chain
+              for free. Every monomer after it costs exactly one bond &mdash; and gives back one water.
+            </p>
+          </div>
+
+          <div id="ruleLipid" hidden>
+            <p class="note bad">
+              <strong>Lipids are not polymers.</strong> A triglyceride is one glycerol plus up to three
+              fatty acids &mdash; a fixed assembly of 4 molecules, not a chain that can keep growing.
+              Nothing here repeats, so there is no <em>n</em> to count.
+            </p>
+            <hr class="sep" style="margin:12px 0">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead>
+                  <tr><th>Fatty acids</th><th>Ester bonds</th><th>Waters out</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>1</td><td>1</td><td>1</td></tr>
+                  <tr><td>2</td><td>2</td><td>2</td></tr>
+                  <tr><td>3</td><td>3</td><td>3</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="small muted" style="margin-top:10px">
+              Waters = fatty acids, not fatty acids &minus; 1. If you call the fatty acids
+              &ldquo;monomers&rdquo; and apply <em>n</em> &minus; 1, you get 2 for a triglyceride.
+              The real answer is 3. The glycerol backbone is the piece the rule forgets.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students see an H<sub>2</sub>O drawn next to a new bond and
+        conclude that water is <em>added</em> to glue the monomers together. It is the opposite. One
+        monomer gives up an &ndash;OH, the other gives up an &ndash;H, those two leftovers walk away
+        <em>as</em> a water molecule, and the atoms that are left behind form the bond. Making a bond
+        <em>gives back</em> a water; breaking that bond <em>uses up</em> a water. Watch the pill in the animation: on
+        &ldquo;add&rdquo; it flies away from the chain, on &ldquo;hydrolyze&rdquo; it flies in.
+      </p>
+      <p>
+        <strong>What to notice:</strong> set the slider to 12. You get 11 bonds and 11 waters, not 12.
+        The first monomer starts the chain for free; every monomer after it brings exactly one bond and
+        releases exactly one water. Then switch tabs. Carbohydrate, protein, and nucleic acid all run
+        the same single reaction &mdash; one unit gives up an &ndash;OH, the other gives up an &ndash;H.
+        What changes is which group hands over the hydrogen (a hydroxyl in sugars and nucleotides, the
+        amino group in a protein) and what the finished bond is called: glycosidic, peptide,
+        phosphodiester. Watch the equation card under the picture change when you pick Protein.
+      </p>
+      <p>
+        <strong>Where the rule breaks &mdash; lipids.</strong> A fat is not a polymer. A triglyceride is
+        one glycerol plus three fatty acids: 4 molecules, 3 ester bonds, 3 waters. If you treat the fatty
+        acids as &ldquo;monomers&rdquo; and use <em>n</em> &minus; 1, you predict 2 waters and you are
+        wrong. The Add button on the lipid tab stops at three on purpose &mdash; a triglyceride is full,
+        it cannot grow into a chain the way starch or a protein can.
+      </p>
+      <p>
+        <strong>Honest caveats.</strong> Each tab uses one specific monomer so the masses are real
+        numbers you can check: &alpha;-D-glucose, glycine, dAMP, palmitic acid. Actual proteins mix 20
+        different amino acids and actual DNA mixes four nucleotides, so a real chain's mass is a sum of
+        different residues. Also, inside a living cell a DNA or RNA chain is not built by simple
+        dehydration: the polymerase uses nucleoside <em>tri</em>phosphates and releases pyrophosphate
+        rather than water. The bond you end up with is the same phosphodiester bond, and the overall
+        atom bookkeeping shown here still balances, but the cell pays for it a different way.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ---------------------------------------------------------------
+         Model. Everything is atom bookkeeping: take the monomers, join
+         them, subtract one H2O per bond. Molar mass is then computed
+         from the resulting atom counts, so the formula and the mass on
+         screen can never disagree.
+         --------------------------------------------------------------- */
+      var ATOM = { C: 12.011, H: 1.008, N: 14.007, O: 15.999, P: 30.974 };  // g/mol
+      var HILL = ['C', 'H', 'N', 'O', 'P'];
+
+      function mass(cnt) {
+        var m = 0;
+        for (var i = 0; i < HILL.length; i++) {
+          var k = HILL[i];
+          if (cnt[k]) m += cnt[k] * ATOM[k];
+        }
+        return m;
+      }
+      function formulaHTML(cnt) {
+        var s = '';
+        for (var i = 0; i < HILL.length; i++) {
+          var k = HILL[i], v = cnt[k] || 0;
+          if (v > 0) s += k + (v > 1 ? '<sub>' + v + '</sub>' : '');
+        }
+        return s || '&mdash;';
+      }
+      var WATER_MASS = mass({ H: 2, O: 1 });   // 18.015 g/mol
+
+      // the generic condensation, true for glycosidic, ester and phosphodiester
+      // bonds (both partners hand over an -OH / -H). Peptide bonds are the one
+      // exception: the amino group, not a hydroxyl, gives up the hydrogen.
+      var EQ_OH = {
+        dehy:  'A&ndash;OH + HO&ndash;B &rarr; A&ndash;O&ndash;B + H<sub>2</sub>O',
+        hydro: 'A&ndash;O&ndash;B + H<sub>2</sub>O &rarr; A&ndash;OH + HO&ndash;B'
+      };
+      var EQ_PEPTIDE = {
+        dehy:  'A&ndash;COOH + H<sub>2</sub>N&ndash;B &rarr; A&ndash;CO&ndash;NH&ndash;B + H<sub>2</sub>O',
+        hydro: 'A&ndash;CO&ndash;NH&ndash;B + H<sub>2</sub>O &rarr; A&ndash;COOH + H<sub>2</sub>N&ndash;B'
+      };
+
+      var FAM = {
+        carb: {
+          key: 'carb', label: 'Carbohydrate', shape: 'hex', series: 2,
+          atoms: { C: 6, H: 12, O: 6 },
+          monomer: 'glucose', abbr: 'Glc', unit: 'monomers',
+          bond: 'glycosidic bond', bondsLabel: 'Bonds', monoLabel: 'Monomers',
+          minN: 1, maxN: 12, def: 4,
+          ends: ['HO–', '–OH'], eq: EQ_OH,
+          note: 'Monomer: &alpha;-D-glucose, C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>, ' +
+                '180.16&nbsp;Da. Link &alpha;-glucose like this and you get starch or glycogen. ' +
+                'Cellulose has the same formula and the same mass per unit, but it is built from ' +
+                '&beta;-glucose &mdash; a different orientation of one &ndash;OH on the monomer itself.'
+        },
+        protein: {
+          key: 'protein', label: 'Protein', shape: 'square', series: 0,
+          atoms: { C: 2, H: 5, N: 1, O: 2 },
+          monomer: 'glycine', abbr: 'Gly', unit: 'amino acids',
+          bond: 'peptide bond', bondsLabel: 'Bonds', monoLabel: 'Amino acids',
+          minN: 1, maxN: 12, def: 4,
+          ends: ['H₂N–', '–COOH'], eq: EQ_PEPTIDE,
+          note: 'Monomer: glycine, C<sub>2</sub>H<sub>5</sub>NO<sub>2</sub>, 75.07&nbsp;Da &mdash; the ' +
+                'simplest amino acid, used here so the mass is a number you can check. A real protein ' +
+                'mixes 20 different amino acids, so its mass is a sum of different residues. Here the ' +
+                '&ndash;OH comes off the carboxyl group and the &ndash;H off the amino group.'
+        },
+        nucleic: {
+          key: 'nucleic', label: 'Nucleic acid', shape: 'pent', series: 3,
+          atoms: { C: 10, H: 14, N: 5, O: 6, P: 1 },
+          monomer: 'dAMP', abbr: 'dA', unit: 'nucleotides',
+          bond: 'phosphodiester bond', bondsLabel: 'Bonds', monoLabel: 'Nucleotides',
+          minN: 1, maxN: 12, def: 4,
+          ends: ["5'P–", "–OH 3'"], eq: EQ_OH,
+          note: 'Monomer: dAMP (deoxyadenosine monophosphate), ' +
+                'C<sub>10</sub>H<sub>14</sub>N<sub>5</sub>O<sub>6</sub>P, 331.22&nbsp;Da. Masses assume ' +
+                'the chain keeps a free 5&prime;-phosphate. Real DNA mixes dA, dC, dG and dT.'
+        },
+        lipid: {
+          key: 'lipid', label: 'Lipid', shape: 'lipid', series: 1,
+          monomer: 'palmitic acid', abbr: 'FA', unit: 'fatty acids',
+          bond: 'ester bond', bondsLabel: 'Bonds', monoLabel: 'Fatty acids',
+          minN: 0, maxN: 3, def: 2,
+          ends: ['HO–', '–OH'], eq: EQ_OH,
+          note: 'Glycerol, C<sub>3</sub>H<sub>8</sub>O<sub>3</sub>, 92.09&nbsp;Da, plus up to three ' +
+                'palmitic acid molecules, C<sub>16</sub>H<sub>32</sub>O<sub>2</sub>, 256.43&nbsp;Da each. ' +
+                'Same dehydration reaction, same water per bond &mdash; but this is not a polymer.'
+        }
+      };
+
+      // atom counts of the assembled molecule
+      function comp(f, n) {
+        var out = {}, k;
+        if (f.key === 'lipid') {
+          out = { C: 3 + 16 * n, H: 8 + 32 * n, O: 3 + 2 * n };
+          out.H -= 2 * n; out.O -= n;                 // one water out per ester bond
+          return out;
+        }
+        for (k in f.atoms) out[k] = f.atoms[k] * n;
+        var b = Math.max(0, n - 1);                   // bonds in a linear chain of n
+        out.H -= 2 * b; out.O -= b;                   // one water out per bond
+        return out;
+      }
+      function bondCount(f, n) { return f.key === 'lipid' ? n : Math.max(0, n - 1); }
+
+      /* --------------------------- state --------------------------- */
+      var state = { fam: 'carb', n: FAM.carb.def, target: FAM.carb.def, flash: 0 };
+      var waters = [];
+      var jitter = Demo.rng(20260724);
+      var STEP = 0.16;                                 // seconds per monomer when the slider jumps
+
+      /* --------------------------- layout -------------------------- */
+      function chainLayout(w, h, f) {
+        var pad = 14;
+        var d = w >= 520 ? 38 : 32;
+        var gap = w >= 520 ? 16 : 12;
+        var per = Math.floor((w - 2 * pad + gap) / (d + gap));
+        per = Math.max(3, Math.min(per, f.maxN));
+        var rows = Math.ceil(f.maxN / per);
+        var rowGap = 30;
+        var totalH = rows * d + (rows - 1) * rowGap;
+        var topY = Math.max(d / 2 + 20, (h - totalH) / 2 + d / 2);
+        return { pad: pad, d: d, r: d / 2, gap: gap, per: per, rows: rows, rowGap: rowGap, topY: topY };
+      }
+      function chainPos(i, L) {
+        var row = Math.floor(i / L.per);
+        var col = i % L.per;
+        if (row % 2 === 1) col = L.per - 1 - col;      // serpentine, so wraps are a straight drop
+        return {
+          x: L.pad + L.r + col * (L.d + L.gap),
+          y: L.topY + row * (L.d + L.rowGap),
+          row: row
+        };
+      }
+      function lipidLayout(w, h) {
+        var gx = Math.min(58, w * 0.17);
+        var slot = Math.min(52, Math.max(34, (h - 76) / 3));
+        return { gx: gx, slot: slot, ys: [h / 2 - slot, h / 2, h / 2 + slot] };
+      }
+      // where the bond joining unit (n-1) and n sits, in canvas coords
+      function bondPoint(n) {
+        var f = FAM[state.fam], w = plot.width, h = plot.height;
+        if (f.key === 'lipid') {
+          if (n < 1) return null;
+          var LL = lipidLayout(w, h);
+          return { x: LL.gx + 20, y: LL.ys[n - 1] };
+        }
+        if (n < 2) return null;
+        var L = chainLayout(w, h, f);
+        var a = chainPos(n - 2, L), b = chainPos(n - 1, L);
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
+
+      /* --------------------------- drawing ------------------------- */
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+      function polyPath(ctx, x, y, r, sides, rot) {
+        ctx.beginPath();
+        for (var i = 0; i < sides; i++) {
+          var a = rot + i * 2 * Math.PI / sides;
+          var px = x + r * Math.cos(a), py = y + r * Math.sin(a);
+          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+      }
+      function unitPath(ctx, x, y, r, shape) {
+        if (shape === 'hex') polyPath(ctx, x, y, r, 6, -Math.PI / 2);
+        else if (shape === 'pent') polyPath(ctx, x, y, r, 5, -Math.PI / 2);
+        else roundRect(ctx, x - r, y - r, 2 * r, 2 * r, r * 0.34);
+      }
+
+      function drawChain(ctx, w, h, c, f) {
+        var col = c.series[f.series];
+        var L = chainLayout(w, h, f), i, p, q;
+        ctx.lineJoin = 'round';
+
+        // ghost slots the chain could still grow into
+        ctx.setLineDash([3, 4]);
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        for (i = state.n; i < f.maxN; i++) {
+          p = chainPos(i, L);
+          unitPath(ctx, p.x, p.y, L.r, f.shape);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // bonds
+        ctx.strokeStyle = c.text2;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (i = 1; i < state.n; i++) {
+          p = chainPos(i - 1, L); q = chainPos(i, L);
+          ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
+        }
+        ctx.stroke();
+
+        // monomers
+        ctx.font = '600 ' + (L.d >= 36 ? 12 : 11) + 'px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (i = 0; i < state.n; i++) {
+          p = chainPos(i, L);
+          var fresh = (i === state.n - 1 && state.flash > 0);
+          unitPath(ctx, p.x, p.y, L.r, f.shape);
+          ctx.fillStyle = c.surface2; ctx.fill();
+          ctx.strokeStyle = fresh ? c.accentStrong : col;
+          ctx.lineWidth = fresh ? 3 : 2;
+          ctx.stroke();
+          ctx.fillStyle = c.text;
+          ctx.fillText(f.abbr, p.x, p.y + 0.5);
+        }
+
+        // the free groups at the two ends of the chain (family-specific:
+        // a polypeptide ends in an amino group and a carboxyl group, not two -OH)
+        ctx.font = '10px Poppins, system-ui, sans-serif';
+        ctx.fillStyle = c.muted;
+        ctx.textBaseline = 'bottom';
+        p = chainPos(0, L);
+        ctx.fillText(f.ends[0], p.x, p.y - L.r - 5);
+        if (state.n > 1) {
+          var last = state.n - 1;
+          q = chainPos(last, L);
+          // if the bond into the last unit comes straight down from the row above,
+          // put the free end group underneath so label and bond do not collide
+          if (last % L.per === 0) {
+            ctx.textBaseline = 'top';
+            ctx.fillText(f.ends[1], q.x, q.y + L.r + 4);
+            ctx.textBaseline = 'bottom';
+          } else {
+            ctx.fillText(f.ends[1], q.x, q.y - L.r - 5);
+          }
+        }
+
+        // name the bond once
+        if (state.n > 1) {
+          p = chainPos(0, L); q = chainPos(1, L);
+          ctx.textBaseline = 'top';
+          ctx.fillStyle = c.muted;
+          ctx.fillText(f.bond, (p.x + q.x) / 2, Math.max(p.y, q.y) + L.r + 6);
+        }
+      }
+
+      function drawLipid(ctx, w, h, c, f) {
+        var col = c.series[f.series];
+        var L = lipidLayout(w, h);
+        var k, y;
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.warn;
+        ctx.fillText('Not a polymer — a fixed assembly', 12, 8);
+
+        // glycerol backbone
+        roundRect(ctx, L.gx - 11, L.ys[0] - 20, 22, (L.ys[2] - L.ys[0]) + 40, 10);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+
+        ctx.font = '600 10px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.text;
+        ctx.fillText('glycerol', L.gx, L.ys[2] + 26);
+
+        var tailX0 = L.gx + 40, tailX1 = w - 14;
+        for (k = 0; k < 3; k++) {
+          y = L.ys[k];
+          if (k < state.n) {
+            var fresh = (k === state.n - 1 && state.flash > 0);
+            // ester linkage
+            ctx.strokeStyle = fresh ? c.accentStrong : c.text2;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(L.gx + 11, y); ctx.lineTo(tailX0 - 8, y); ctx.stroke();
+            // carboxyl carbon + hydrocarbon tail (palmitic acid, 16 C)
+            ctx.beginPath(); ctx.arc(tailX0 - 4, y, 5, 0, 2 * Math.PI);
+            ctx.fillStyle = c.surface2; ctx.fill();
+            ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+            ctx.strokeStyle = col; ctx.lineWidth = 2;
+            ctx.beginPath();
+            var segs = 15, amp = Math.min(6, L.slot / 7);
+            for (var j = 0; j <= segs; j++) {
+              var xx = tailX0 + 4 + (tailX1 - tailX0 - 4) * j / segs;
+              var yy = y + (j % 2 === 0 ? amp : -amp);
+              j === 0 ? ctx.moveTo(xx, yy) : ctx.lineTo(xx, yy);
+            }
+            ctx.stroke();
+          } else {
+            ctx.setLineDash([3, 4]);
+            ctx.strokeStyle = c.line; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(L.gx + 11, y); ctx.lineTo(tailX0 - 12, y); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.font = '10px Poppins, system-ui, sans-serif';
+            ctx.fillStyle = c.muted;
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText('OH  (free)', tailX0 - 8, y);
+          }
+        }
+
+        ctx.font = '10px Poppins, system-ui, sans-serif';
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        if (state.n > 0) ctx.fillText('ester bond', L.gx + 18, L.ys[0] - 8);
+        if (state.n > 0) {
+          ctx.textAlign = 'right';
+          ctx.fillText('palmitic acid, 16 C', tailX1, L.ys[0] - 8);
+        }
+      }
+
+      function drawWaters(ctx, c) {
+        for (var i = 0; i < waters.length; i++) {
+          var p = waters[i], u = p.t / p.dur, x, y, a;
+          if (p.dir > 0) {
+            x = p.x + p.vx * p.t; y = p.y + p.vy * p.t;
+            a = u < 0.12 ? u / 0.12 : 1 - (u - 0.12) / 0.88;
+          } else {
+            var s = u * (2 - u);                       // ease-out toward the bond
+            x = Demo.lerp(p.sx, p.x, s); y = Demo.lerp(p.sy, p.y, s);
+            a = u < 0.78 ? 1 : (1 - u) / 0.22;
+          }
+          drawPill(ctx, c, x, y, a, p.dir > 0 ? 'released' : 'used up');
+        }
+      }
+      function drawPill(ctx, c, x, y, alpha, sub) {
+        ctx.save();
+        ctx.globalAlpha = Demo.clamp(alpha, 0, 1);
+        ctx.font = '600 11px Poppins, system-ui, sans-serif';
+        var tw = ctx.measureText('H₂O').width;
+        var pw = tw + 16, ph = 19;
+        roundRect(ctx, x - pw / 2, y - ph / 2, pw, ph, 9);
+        ctx.fillStyle = c.surface; ctx.fill();
+        ctx.strokeStyle = c.accentLine; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = c.accentStrong;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('H₂O', x, y + 0.5);
+        ctx.font = '9px Poppins, system-ui, sans-serif';
+        ctx.fillStyle = c.muted;
+        ctx.textBaseline = 'top';
+        ctx.fillText(sub, x, y + ph / 2 + 2);
+        ctx.restore();
+      }
+
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var f = FAM[state.fam];
+        if (f.key === 'lipid') drawLipid(ctx, w, h, c, f);
+        else drawChain(ctx, w, h, c, f);
+        drawWaters(ctx, c);
+      }, { aspect: 0.42, minHeight: 215, maxHeight: 250 });
+
+      /* --------------------------- animation ----------------------- */
+      function spawnWater(pt, dir) {
+        if (!pt) return;
+        var ang = -Math.PI / 2 + (jitter() - 0.5) * 1.4;
+        if (dir > 0) {
+          waters.push({ x: pt.x, y: pt.y - 12, vx: Math.cos(ang) * 46, vy: Math.sin(ang) * 46, t: 0, dur: 1.5, dir: 1 });
+        } else {
+          waters.push({
+            sx: pt.x + (jitter() - 0.5) * 80, sy: pt.y - 78,
+            x: pt.x, y: pt.y - 14, t: 0, dur: 1.0, dir: -1
+          });
+        }
+      }
+
+      function stepOne() {
+        if (state.target > state.n) {
+          state.n++;
+          spawnWater(bondPoint(state.n), +1);
+          setDirection('dehy');
+        } else {
+          spawnWater(bondPoint(state.n), -1);
+          state.n--;
+          setDirection('hydro');
+        }
+        state.flash = 0.5;
+        refresh();
+      }
+
+      var acc = 0;
+      var anim = Demo.loop(function (dt) {
+        acc += dt;
+        if (state.n !== state.target && acc >= STEP) { acc = 0; stepOne(); }
+        var keep = [];
+        for (var i = 0; i < waters.length; i++) {
+          waters[i].t += dt;
+          if (waters[i].t < waters[i].dur) keep.push(waters[i]);
+        }
+        waters = keep;
+        if (state.flash > 0) state.flash = Math.max(0, state.flash - dt);
+        plot.paint();
+        if (state.n === state.target && waters.length === 0 && state.flash === 0) anim.stop();
+      });
+      function startAnim() { if (!anim.running) { acc = STEP; anim.start(); } }
+
+      /* --------------------------- readouts ------------------------ */
+      var el = function (id) { return document.getElementById(id); };
+
+      function setDirection(which) {
+        el('rxnDehy').classList.toggle('is-on', which === 'dehy');
+        el('rxnHydro').classList.toggle('is-on', which === 'hydro');
+      }
+
+      function refresh() {
+        var f = FAM[state.fam], n = state.n;
+        var bonds = bondCount(f, n);
+        var cnt = comp(f, n);
+        var m = mass(cnt);
+        var isLip = f.key === 'lipid';
+
+        el('rMono').textContent = n;
+        el('rBonds').textContent = bonds;
+        el('rWater').textContent = bonds;
+        el('rMass').innerHTML = Demo.fmt.dec(m, 1) + '<span class="r-unit">Da</span>';
+        el('rFormula').innerHTML = formulaHTML(cnt);
+        el('lMono').textContent = f.monoLabel;
+        el('lBonds').textContent = f.bondsLabel;
+        el('rBondName').textContent = f.bond;
+        el('rWaterMass').textContent = Demo.fmt.dec(WATER_MASS, 2) + ' Da';
+
+        el('ruleBox').hidden = !isLip || n < 1;
+        if (isLip) el('rRule').textContent = Math.max(0, n - 1);
+
+        el('lenOut').textContent = n + ' ' + (n === 1 ? f.unit.replace(/s$/, '') : f.unit);
+
+        el('addBtn').disabled = state.target >= f.maxN;
+        el('hydBtn').disabled = state.target <= f.minN;
+
+        // caption
+        var cap;
+        if (isLip) {
+          if (n === 0) cap = 'Glycerol on its own: three free –OH groups, no ester bonds yet.';
+          else cap = 'Glycerol with ' + n + ' of 3 fatty acids attached by ' + n +
+                     ' ester bond' + (n === 1 ? '' : 's') + ', releasing ' + n +
+                     ' water molecule' + (n === 1 ? '' : 's') + ' — that is ' + n + ', not ' + (n - 1) + '.';
+        } else if (n === 1) {
+          cap = 'A single ' + f.monomer + ' unit. No bonds yet, so no water has left.';
+        } else {
+          cap = n + ' ' + f.unit + ' joined by ' + (n - 1) + ' ' + f.bond +
+                ((n - 1) === 1 ? '' : 's') + '. Building this released ' + (n - 1) + ' water molecule' +
+                ((n - 1) === 1 ? '' : 's') + '.';
+        }
+        el('caption').textContent = cap;
+        plot.el.setAttribute('aria-label', cap);
+
+        if (!anim.running) plot.redraw();
+      }
+
+      /* --------------------------- controls ------------------------ */
+      var slider = el('nlen');
+
+      function setTarget(v, instant) {
+        var f = FAM[state.fam];
+        v = Demo.clamp(Math.round(v), f.minN, f.maxN);
+        state.target = v;
+        if (slider.value !== String(v)) slider.value = v;
+        if (instant) { state.n = v; waters = []; state.flash = 0; }
+        refresh();
+        if (!instant && state.n !== state.target) startAnim();
+      }
+
+      Demo.range('#nlen', function (v) { setTarget(v, false); });
+
+      el('addBtn').addEventListener('click', function () { setTarget(state.target + 1, false); });
+      el('hydBtn').addEventListener('click', function () { setTarget(state.target - 1, false); });
+      el('resetBtn').addEventListener('click', function () {
+        anim.stop();
+        setTarget(FAM[state.fam].def, true);
+        setDirection('dehy');
+      });
+
+      function setFamily(key) {
+        var f = FAM[key];
+        state.fam = key;
+        anim.stop();
+        waters = []; state.flash = 0;
+        slider.min = f.minN; slider.max = f.maxN;
+        el('lenLabel').textContent = f.key === 'lipid' ? 'Fatty acids attached' : 'Chain length';
+        el('lenHint').innerHTML = f.key === 'lipid'
+          ? 'The slider stops at 3. A triglyceride is finished at three fatty acids &mdash; it is not a chain, so there is no longer version of it.'
+          : 'Drag straight to 12, then read the water counter. That is the answer to &ldquo;how many waters to make a 12-monomer chain?&rdquo;';
+        el('addBtn').textContent = f.key === 'lipid' ? 'Add fatty acid' : 'Add monomer';
+        el('eqDehy').innerHTML = f.eq.dehy;
+        el('eqHydro').innerHTML = f.eq.hydro;
+        el('famNote').innerHTML = f.note;
+        el('rulePoly').hidden = f.key === 'lipid';
+        el('ruleLipid').hidden = f.key !== 'lipid';
+        el('ruleTitle').textContent = f.key === 'lipid' ? 'Why the rule fails here' : 'The counting rule';
+        setDirection('dehy');
+        setTarget(f.def, true);
+      }
+
+      Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) {
+        b.addEventListener('click', function () {
+          Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          setFamily(b.dataset.fam);
+        });
+      });
+
+      setFamily('carb');
+    })();
+  </script>
+</body>
+
+</html>

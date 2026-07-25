@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Titration Curve Lab | Dr. Andres Barboza</title>
+  <meta name="description" content="Titrate an acid or base drop by drop and build the pH curve yourself. Strong-strong equivalence lands on pH 7; weak-strong equivalence does not.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* ---------------------------------------------------------------
+       Indicator dye colours.
+
+       These are the only literal colours in the file, and they are DATA,
+       not theme chrome: methyl orange really is red below pH 3.1 and
+       yellow above 4.4. They live here as tokens (with a dark-theme
+       variant so they stay legible on a dark surface) and the canvas
+       reads them through getComputedStyle, so no colour is hard-coded
+       inside the drawing code.
+       --------------------------------------------------------------- */
+    :root,
+    :root[data-theme="dark"] {
+      --pig-red: #e05a52;
+      --pig-orange: #e8944a;
+      --pig-yellow: #e3c452;
+      --pig-green: #63ab6a;
+      --pig-blue: #5b8fe0;
+      --pig-pink: #e069ab;
+    }
+
+    :root[data-theme="light"] {
+      --pig-red: #cf4239;
+      --pig-orange: #d97b28;
+      --pig-yellow: #d9ad2a;
+      --pig-green: #3f9250;
+      --pig-blue: #3a6fc4;
+      --pig-pink: #d4479a;
+    }
+
+    /* the flask canvas lives in a panel, not the stage */
+    .panel canvas { width: 100%; display: block; border-radius: 10px; }
+
+    /* three-way segmented control has to survive a 375 px phone */
+    @media (max-width: 420px) {
+      .seg button { font-size: 11.5px; padding: 7px 5px; }
+    }
+
+    .is-hidden { display: none; }
+
+    .assump { font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+    .assump strong { color: var(--text-2); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Titration Curve Lab</h1>
+        <p class="demo-sub">
+          Add titrant one increment at a time and let the curve build itself. Do it once with a strong
+          acid, then once with a weak acid, and compare where the equivalence point lands.
+        </p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="plot" role="img" aria-label="Titration curve: pH against volume of titrant added"></canvas>
+        <p class="stage-caption" id="caption">Press an increment button to add titrant.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">In the flask (analyte)</div>
+          <div class="stack">
+
+            <div class="seg" role="tablist" aria-label="Analyte">
+              <button role="tab" aria-selected="false" data-analyte="sa">Strong acid</button>
+              <button role="tab" aria-selected="true" data-analyte="wa">Weak acid</button>
+              <button role="tab" aria-selected="false" data-analyte="sb">Strong base</button>
+            </div>
+            <p class="ctrl-hint" id="analyteHint">0.100 M acetic acid, CH<sub>3</sub>COOH.</p>
+
+            <div class="ctrl" id="kaCtrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pka">Acid strength, pK<sub>a</sub></label>
+                <span class="ctrl-value" id="pkaOut">4.75</span>
+              </div>
+              <input type="range" id="pka" min="2" max="10" step="0.01" value="4.75">
+              <p class="ctrl-hint" id="kaHint">K<sub>a</sub> = 1.8 × 10⁻⁵ — acetic acid.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="ca">Analyte concentration</label>
+                <span class="ctrl-value" id="caOut">0.100 M</span>
+              </div>
+              <input type="range" id="ca" min="0.02" max="0.25" step="0.005" value="0.1">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="va">Analyte volume</label>
+                <span class="ctrl-value" id="vaOut">25.0 mL</span>
+              </div>
+              <input type="range" id="va" min="10" max="50" step="1" value="25">
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">In the burette (titrant)</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Titrant">
+              <button role="tab" aria-selected="true" data-titrant="sb">NaOH (strong base)</button>
+              <button role="tab" aria-selected="false" data-titrant="sa">HCl (strong acid)</button>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="cb">Titrant concentration</label>
+                <span class="ctrl-value" id="cbOut">0.100 M</span>
+              </div>
+              <input type="range" id="cb" min="0.02" max="0.25" step="0.005" value="0.1">
+            </div>
+
+            <p class="note warn is-hidden" id="pairNote"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Deliver titrant</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="addFine">+0.10 mL</button>
+              <button class="btn" id="addMed">+1.00 mL</button>
+              <button class="btn" id="addCoarse">+5.00 mL</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="auto">Run slowly</button>
+              <button class="btn" id="undo">Undo</button>
+              <button class="btn" id="reset">Empty flask</button>
+            </div>
+            <label class="check">
+              <input type="checkbox" id="ghost"> Reveal the full calculated curve
+            </label>
+            <p class="ctrl-hint">
+              Near the jump, one drop (about 0.05 mL) can move the pH by several units. Use the
+              smallest increment there or you will step straight over the equivalence point.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Readouts</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">pH now</div>
+              <div class="r-value" id="pHnow">2.88</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Titrant added</div>
+              <div class="r-value" id="vAdded">0.00<span class="r-unit">mL</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Equivalence vol.</div>
+              <div class="r-value" id="veOut">25.00<span class="r-unit">mL</span></div>
+            </div>
+            <div class="readout" id="pHeqCard">
+              <div class="r-label">pH at equivalence</div>
+              <div class="r-value" id="pHeq">8.72</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note" id="eqNote"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Indicator</div>
+          <div class="stack">
+            <label class="sr-only" for="ind">Choose an indicator</label>
+            <select id="ind">
+              <option value="mo">Methyl orange (3.1 – 4.4)</option>
+              <option value="mr">Methyl red (4.4 – 6.2)</option>
+              <option value="btb">Bromothymol blue (6.0 – 7.6)</option>
+              <option value="pp" selected>Phenolphthalein (8.3 – 10.0)</option>
+              <option value="none">No indicator</option>
+            </select>
+            <canvas id="flask" role="img" aria-label="Flask showing the indicator colour at the current pH"></canvas>
+            <div class="readouts">
+              <div class="readout">
+                <div class="r-label">Colour changes at</div>
+                <div class="r-value" id="endV">25.01<span class="r-unit">mL</span></div>
+              </div>
+              <div class="readout" id="errCard">
+                <div class="r-label">Titration error</div>
+                <div class="r-value" id="errOut">+0.02<span class="r-unit">%</span></div>
+              </div>
+            </div>
+            <p class="note" id="indNote"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Key points on this curve</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Point</th><th>Volume</th><th>pH</th></tr>
+              </thead>
+              <tbody id="keyBody"></tbody>
+            </table>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="assump" id="assump"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn that the equivalence point is where the acid
+        and base have exactly cancelled, and conclude that the equivalence point is therefore always at
+        pH 7. It is not. pH 7 is only where <em>equal</em> amounts of H⁺ and OH⁻ remain — which happens
+        at equivalence only when nothing left in the flask reacts with water.
+      </p>
+      <p>
+        <strong>What to notice:</strong> titrate 0.100 M HCl with 0.100 M NaOH and the equivalence point
+        computes to pH 7.00, because the leftovers are Na⁺ and Cl⁻ and neither one touches water. Now
+        switch to the weak acid at the same concentration and volume. You add exactly the same 25.00 mL
+        of NaOH — the stoichiometry has not changed — but the pH there comes out near 8.7. The acid is
+        completely gone; what is left is its conjugate base, acetate, and acetate is a base. It pulls H⁺
+        off water and leaves OH⁻ behind. Slide pK<sub>a</sub> higher and watch the equivalence pH climb
+        with it: the weaker the acid, the stronger the conjugate base it leaves, and the more basic the
+        equivalence point.
+      </p>
+      <p>
+        <strong>The second half of the point:</strong> the half-equivalence pH is the acid's pK<sub>a</sub>,
+        which is how pK<sub>a</sub> values are actually measured in a lab. And the indicator has to be
+        chosen to match the curve, not out of habit. Put methyl orange on the weak-acid titration and it
+        finishes changing colour around 2 mL — a 90 % error — because its range sits in the buffer region
+        instead of on the vertical jump.
+      </p>
+      <p>
+        <strong>Where the model stops:</strong> every pH here is the exact solution of the charge-balance
+        equation, but that equation assumes 25 °C, ideal behaviour (concentrations used in place of
+        activities), one acidic proton, a 1:1 reaction and no dissolved CO₂. Real burette readings are
+        also limited by drop size, roughly 0.05 mL. The on-screen indicator colours are a fair
+        illustration, not a colorimetric match.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // MODEL
+      //
+      // One equation covers the whole titration — the starting point, the
+      // buffer region, the equivalence point and the excess tail — so the
+      // curve has no seams and no piecewise approximations.
+      //
+      // Charge balance in the flask:
+      //     [Na+] + [H+]  =  [Cl-] + [A-] + [OH-]
+      //
+      // with the mass-balance expression for the weak acid's conjugate base
+      //     [A-] = C_HA(total) * Ka / (Ka + [H+])
+      // and the water equilibrium
+      //     [OH-] = Kw / [H+],   Kw = 1.00e-14 at 25 C.
+      //
+      // Everything is diluted by the titrant, so each formal concentration is
+      // moles / (Va + Vb). f(pH) is strictly decreasing in pH, so a plain
+      // bisection on pH is unconditionally safe.
+      // =====================================================================
+      var KW = 1e-14;
+
+      function balance(pH, Csa, Csb, Cwa, Ka) {
+        var h = Math.pow(10, -pH);
+        var A = Cwa > 0 ? Cwa * Ka / (Ka + h) : 0;
+        return Csb + h - Csa - A - KW / h;
+      }
+
+      function solvePH(Csa, Csb, Cwa, Ka) {
+        var lo = -2, hi = 16, m;
+        for (var i = 0; i < 90; i++) {
+          m = (lo + hi) / 2;
+          if (balance(m, Csa, Csb, Cwa, Ka) > 0) lo = m; else hi = m;
+        }
+        return (lo + hi) / 2;
+      }
+
+      // pH of the flask after Vb mL of titrant
+      function pHat(Vb) {
+        var V = state.Va + Vb;
+        var Csa = 0, Csb = 0, Cwa = 0;
+        if (state.analyte === 'sa') Csa += state.Ca * state.Va / V;
+        else if (state.analyte === 'sb') Csb += state.Ca * state.Va / V;
+        else Cwa += state.Ca * state.Va / V;
+        if (state.titrant === 'sb') Csb += state.Cb * Vb / V;
+        else Csa += state.Cb * Vb / V;
+        return solvePH(Csa, Csb, Cwa, state.Ka);
+      }
+
+      // volume at which the curve first reaches a target pH (bisection on V)
+      function volumeAtPH(target, Vhi) {
+        var flo = pHat(0) - target, fhi = pHat(Vhi) - target;
+        if (flo === 0) return 0;
+        if (flo * fhi > 0) return null;
+        var lo = 0, hi = Vhi, m, fm;
+        for (var i = 0; i < 60; i++) {
+          m = (lo + hi) / 2;
+          fm = pHat(m) - target;
+          if (flo * fm <= 0) { hi = m; } else { lo = m; flo = fm; }
+        }
+        return (lo + hi) / 2;
+      }
+
+      // =====================================================================
+      // DATA
+      // =====================================================================
+      var INDICATORS = {
+        mo:  { name: 'Methyl orange',    lo: 3.1, hi: 4.4,
+               a: { p: 'red',  a: 1 }, m: { p: 'orange', a: 1 }, b: { p: 'yellow', a: 1 },
+               an: 'red', mn: 'orange', bn: 'yellow' },
+        mr:  { name: 'Methyl red',       lo: 4.4, hi: 6.2,
+               a: { p: 'red',  a: 1 }, m: { p: 'orange', a: 1 }, b: { p: 'yellow', a: 1 },
+               an: 'red', mn: 'orange', bn: 'yellow' },
+        btb: { name: 'Bromothymol blue', lo: 6.0, hi: 7.6,
+               a: { p: 'yellow', a: 1 }, m: { p: 'green', a: 1 }, b: { p: 'blue', a: 1 },
+               an: 'yellow', mn: 'green', bn: 'blue' },
+        pp:  { name: 'Phenolphthalein',  lo: 8.3, hi: 10.0,
+               a: { p: 'pink', a: 0 }, m: { p: 'pink', a: 0.42 }, b: { p: 'pink', a: 1 },
+               an: 'colourless', mn: 'faint pink', bn: 'pink' },
+        none:{ name: 'No indicator',     lo: null, hi: null,
+               a: { p: 'blue', a: 0 }, m: { p: 'blue', a: 0 }, b: { p: 'blue', a: 0 },
+               an: 'colourless', mn: 'colourless', bn: 'colourless' }
+      };
+
+      // pKa values at 25 C, from standard tables
+      var NAMED = [
+        [3.17, 'hydrofluoric acid, HF'],
+        [3.75, 'formic acid, HCOOH'],
+        [4.20, 'benzoic acid, C₆H₅COOH'],
+        [4.75, 'acetic acid, CH₃COOH'],
+        [6.35, 'carbonic acid, first proton'],
+        [7.20, 'dihydrogen phosphate, H₂PO₄⁻'],
+        [7.53, 'hypochlorous acid, HOCl'],
+        [9.25, 'ammonium ion, NH₄⁺'],
+        [9.90, 'phenol, C₆H₅OH']
+      ];
+
+      // =====================================================================
+      // STATE
+      // =====================================================================
+      var state = {
+        analyte: 'wa', titrant: 'sb',
+        pKa: 4.75, Ka: Math.pow(10, -4.75),
+        Ca: 0.100, Va: 25, Cb: 0.100,
+        V: 0, pts: [], ind: 'pp', ghost: false
+      };
+
+      var d = {};   // derived quantities, refilled by derive()
+
+      function niceStep(x) {
+        var e = Math.pow(10, Math.floor(Math.log10(x)));
+        var m = x / e;
+        var n = m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10;
+        return n * e;
+      }
+
+      function derive() {
+        var analyteIsAcid = state.analyte === 'sa' || state.analyte === 'wa';
+        var titrantIsBase = state.titrant === 'sb';
+        d.matched = analyteIsAcid === titrantIsBase;   // acid + base, either way round
+        d.Ve = d.matched ? state.Ca * state.Va / state.Cb : null;
+
+        d.fine = d.Ve ? Demo.clamp(niceStep(d.Ve / 250), 0.01, 10) : 0.1;
+        d.med = d.fine * 10;
+        d.coarse = d.fine * 50;
+        d.dp = Math.max(0, -Math.floor(Math.log10(d.fine) + 1e-9));
+        d.vdp = Math.max(2, d.dp);
+
+        // stop at twice the equivalence volume: the equivalence point then sits
+        // dead centre on the axis and the axis never rescales mid-titration
+        d.Vcap = d.Ve ? d.Ve * 2 : d.fine * 120;
+        d.xMax = Math.max(d.Vcap, state.V);
+
+        d.pH = pHat(state.V);
+        d.pHeq = d.Ve != null ? pHat(d.Ve) : null;
+        d.pHhalf = (d.Ve != null && state.analyte === 'wa') ? pHat(d.Ve / 2) : null;
+
+        // indicator endpoint
+        var ind = INDICATORS[state.ind];
+        d.ind = ind;
+        d.endV = null; d.err = null;
+        if (ind.lo != null) {
+          d.endV = volumeAtPH((ind.lo + ind.hi) / 2, Math.max(d.Vcap, d.xMax));
+          if (d.endV != null && d.Ve) d.err = (d.endV - d.Ve) / d.Ve * 100;
+        }
+      }
+
+      // =====================================================================
+      // COLOUR HELPERS — pigments come from CSS tokens, never from literals
+      // =====================================================================
+      function parseColor(s) {
+        s = (s || '').trim();
+        if (s.charAt(0) === '#') {
+          if (s.length === 4) {
+            return [parseInt(s[1] + s[1], 16), parseInt(s[2] + s[2], 16), parseInt(s[3] + s[3], 16)];
+          }
+          return [parseInt(s.substr(1, 2), 16), parseInt(s.substr(3, 2), 16), parseInt(s.substr(5, 2), 16)];
+        }
+        var m = s.match(/rgba?\(([^)]+)\)/);
+        if (m) {
+          var p = m[1].split(/[,\s\/]+/).map(parseFloat);
+          return [p[0] || 0, p[1] || 0, p[2] || 0];
+        }
+        return [128, 128, 128];
+      }
+
+      var pigCache = null, pigTheme = null;
+      function pigments() {
+        var th = document.documentElement.getAttribute('data-theme');
+        if (pigCache && pigTheme === th) return pigCache;
+        var cs = getComputedStyle(document.documentElement);
+        var out = {};
+        ['red', 'orange', 'yellow', 'green', 'blue', 'pink'].forEach(function (k) {
+          out[k] = parseColor(cs.getPropertyValue('--pig-' + k));
+        });
+        pigCache = out; pigTheme = th;
+        return out;
+      }
+      Demo.onTheme(function () { pigCache = null; });
+
+      function mixForm(f1, f2, t, P) {
+        var c1 = P[f1.p], c2 = P[f2.p];
+        return {
+          rgb: [c1[0] + (c2[0] - c1[0]) * t, c1[1] + (c2[1] - c1[1]) * t, c1[2] + (c2[2] - c1[2]) * t],
+          a: f1.a + (f2.a - f1.a) * t
+        };
+      }
+
+      // colour of the solution at a given pH, as {rgb, a}
+      function indColor(ind, pH) {
+        var P = pigments();
+        if (ind.lo == null) return mixForm(ind.a, ind.a, 0, P);
+        if (pH <= ind.lo) return mixForm(ind.a, ind.a, 0, P);
+        if (pH >= ind.hi) return mixForm(ind.b, ind.b, 0, P);
+        var t = (pH - ind.lo) / (ind.hi - ind.lo);
+        return t < 0.5 ? mixForm(ind.a, ind.m, t * 2, P) : mixForm(ind.m, ind.b, (t - 0.5) * 2, P);
+      }
+
+      function rgba(c, scale) {
+        var a = c.a * (scale == null ? 1 : scale);
+        return 'rgba(' + Math.round(c.rgb[0]) + ',' + Math.round(c.rgb[1]) + ',' +
+          Math.round(c.rgb[2]) + ',' + a.toFixed(3) + ')';
+      }
+
+      function colourWord(ind, pH) {
+        if (ind.lo == null) return 'colourless';
+        if (pH <= ind.lo) return ind.an;
+        if (pH >= ind.hi) return ind.bn;
+        return ind.mn + ' (mid-change)';
+      }
+
+      // =====================================================================
+      // MAIN PLOT
+      // =====================================================================
+      var FONT = 'Poppins, system-ui, sans-serif';
+
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 24 : 28, padR = 12, padT = 14, padB = 30;
+        var x0 = padL, x1 = w - padR, yB = h - padB, yT = padT;
+        var X = function (v) { return x0 + Demo.clamp(v / d.xMax, 0, 1) * (x1 - x0); };
+        var Y = function (p) { return yB - Demo.clamp(p / 14, 0, 1) * (yB - yT); };
+
+        ctx.font = (narrow ? 10 : 11) + 'px ' + FONT;
+
+        // --- indicator transition band -------------------------------------
+        var ind = d.ind;
+        if (ind.lo != null) {
+          var yLo = Y(ind.lo), yHi = Y(ind.hi);
+          var g = ctx.createLinearGradient(0, yLo, 0, yHi);
+          var P = pigments();
+          g.addColorStop(0, rgba(mixForm(ind.a, ind.a, 0, P), 0.42));
+          g.addColorStop(0.5, rgba(mixForm(ind.m, ind.m, 0, P), 0.42));
+          g.addColorStop(1, rgba(mixForm(ind.b, ind.b, 0, P), 0.42));
+          ctx.fillStyle = g;
+          ctx.fillRect(x0, yHi, x1 - x0, yLo - yHi);
+          ctx.strokeStyle = c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x0, yHi + 0.5); ctx.lineTo(x1, yHi + 0.5);
+          ctx.moveTo(x0, yLo - 0.5); ctx.lineTo(x1, yLo - 0.5);
+          ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+          ctx.fillText(narrow ? 'indicator' : ind.name + ' range', x1 - 3, yLo - 2);
+        }
+
+        // --- gridlines + pH labels ------------------------------------------
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var p = 0; p <= 14; p += 2) {
+          var yy = Math.round(Y(p)) + 0.5;
+          if (p !== 0) {
+            ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke();
+          }
+          ctx.fillText(String(p), x0 - 4, Y(p));
+        }
+
+        // --- pH 7 reference --------------------------------------------------
+        ctx.strokeStyle = c.line;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Y(7)); ctx.lineTo(x1, Y(7)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.fillText('pH 7 — neutral', x0 + 4, Y(7) - 2);
+
+        // --- equivalence volume line -----------------------------------------
+        if (d.Ve != null && d.Ve <= d.xMax) {
+          ctx.strokeStyle = c.series[1];
+          ctx.setLineDash([4, 4]);
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(X(d.Ve), yT); ctx.lineTo(X(d.Ve), yB); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // --- axes ------------------------------------------------------------
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 0.5, yT); ctx.lineTo(x0 + 0.5, yB + 0.5); ctx.lineTo(x1, yB + 0.5);
+        ctx.stroke();
+
+        // x ticks
+        var step = (function (range, n) {
+          var raw = range / n, e = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / e;
+          return (m < 1.5 ? 1 : m < 3 ? 2 : m < 7 ? 5 : 10) * e;
+        })(d.xMax, narrow ? 4 : 6);
+        var tdp = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var v = 0; v <= d.xMax + 1e-9; v += step) {
+          ctx.strokeStyle = c.line;
+          ctx.beginPath(); ctx.moveTo(X(v), yB); ctx.lineTo(X(v), yB + 3); ctx.stroke();
+          ctx.fillText(Demo.fmt.dec(v, tdp), X(v), yB + 6);
+        }
+        ctx.fillText('titrant added (mL)', (x0 + x1) / 2, yB + 18);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.text2;
+        ctx.fillText('pH', x0 + 4, yT);
+
+        // --- full calculated curve (optional ghost) ---------------------------
+        if (state.ghost) {
+          ctx.strokeStyle = c.muted;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          var N = Math.max(160, Math.round(x1 - x0));
+          for (var i = 0; i <= N; i++) {
+            var vv = d.xMax * i / N;
+            var px = X(vv), py = Y(pHat(vv));
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // --- the student's own data ------------------------------------------
+        if (state.pts.length > 1) {
+          ctx.strokeStyle = c.series[0];
+          ctx.lineWidth = 2.2;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (var k = 0; k < state.pts.length; k++) {
+            var q = state.pts[k];
+            k === 0 ? ctx.moveTo(X(q.v), Y(q.pH)) : ctx.lineTo(X(q.v), Y(q.pH));
+          }
+          ctx.stroke();
+        }
+        if (state.pts.length <= 80) {
+          ctx.fillStyle = c.series[0];
+          for (var k2 = 0; k2 < state.pts.length; k2++) {
+            ctx.beginPath();
+            ctx.arc(X(state.pts[k2].v), Y(state.pts[k2].pH), 2.2, 0, 6.2832);
+            ctx.fill();
+          }
+        }
+
+        // --- markers ----------------------------------------------------------
+        ctx.textBaseline = 'middle';
+
+        if (d.pHhalf != null && d.Ve / 2 <= d.xMax) {
+          var hx = X(d.Ve / 2), hy = Y(d.pHhalf);
+          ctx.strokeStyle = c.series[3];
+          ctx.fillStyle = c.surface;
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(hx, hy, 4.2, 0, 6.2832); ctx.fill(); ctx.stroke();
+          // up and to the left of the marker: the curve is always lower there,
+          // so the label never lands on top of the data
+          ctx.fillStyle = c.series[3];
+          ctx.textAlign = 'right';
+          ctx.fillText(narrow ? 'pH = pKa' : 'half-equivalence: pH = pKa', hx - 8, hy - 11);
+        }
+
+        if (d.pHeq != null && d.Ve <= d.xMax) {
+          var ex = X(d.Ve), ey = Y(d.pHeq);
+          var right = ex < (x0 + x1) * 0.55;
+          ctx.fillStyle = c.series[1];
+          ctx.beginPath(); ctx.arc(ex, ey, 5, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+          ctx.fillStyle = c.series[1];
+          ctx.textAlign = right ? 'left' : 'right';
+          var lx = ex + (right ? 9 : -9);
+          ctx.fillText('equivalence', lx, ey - 9);
+          ctx.fillText('pH ' + Demo.fmt.dec(d.pHeq, 2), lx, ey + 5);
+        }
+
+        // current point
+        if (state.pts.length) {
+          var cur = state.pts[state.pts.length - 1];
+          var cx = X(cur.v), cy = Y(cur.pH);
+          ctx.fillStyle = c.accentStrong;
+          ctx.beginPath(); ctx.arc(cx, cy, 4.5, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+        }
+      }, { aspect: 0.66, minHeight: 240, maxHeight: 520 });
+
+      // =====================================================================
+      // FLASK
+      // =====================================================================
+      var flask = Demo.canvas('#flask', function (ctx, w, h, c) {
+        var col = indColor(d.ind, d.pH);
+        var bw = 44, bh = 62;
+        var bx = 8, by = (h - bh) / 2;
+        var lipY = by + bh * 0.30;
+
+        // glass + solution
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx, by + bh - 8);
+        ctx.quadraticCurveTo(bx, by + bh, bx + 8, by + bh);
+        ctx.lineTo(bx + bw - 8, by + bh);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw, by + bh - 8);
+        ctx.lineTo(bx + bw, by);
+        ctx.closePath();
+        ctx.clip();
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(bx, lipY, bw, by + bh - lipY);
+        ctx.fillStyle = rgba(col);
+        ctx.fillRect(bx, lipY, bw, by + bh - lipY);
+        ctx.restore();
+
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(bx, by);
+        ctx.lineTo(bx, by + bh - 8);
+        ctx.quadraticCurveTo(bx, by + bh, bx + 8, by + bh);
+        ctx.lineTo(bx + bw - 8, by + bh);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw, by + bh - 8);
+        ctx.lineTo(bx + bw, by);
+        ctx.stroke();
+        ctx.strokeStyle = c.lineSoft;
+        ctx.beginPath(); ctx.moveTo(bx, lipY); ctx.lineTo(bx + bw, lipY); ctx.stroke();
+
+        // caption
+        var tx = bx + bw + 12;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = c.text;
+        ctx.font = '600 12.5px ' + FONT;
+        ctx.fillText(d.ind.name, tx, by + 16);
+        ctx.fillStyle = c.text2;
+        ctx.font = '12px ' + FONT;
+        ctx.fillText(colourWord(d.ind, d.pH), tx, by + 34);
+        ctx.fillStyle = c.muted;
+        ctx.font = '11.5px ' + FONT;
+        ctx.fillText('at pH ' + Demo.fmt.dec(d.pH, 2), tx, by + 51);
+      }, { height: 88 });
+
+      // =====================================================================
+      // DOM
+      // =====================================================================
+      function $(id) { return document.getElementById(id); }
+
+      var ANALYTE_TEXT = {
+        sa: 'Hydrochloric acid, HCl — dissociates completely, so the starting pH is just −log of the concentration.',
+        wa: 'A monoprotic weak acid HA. Only a small fraction ionises, so the starting pH is much higher than for a strong acid at the same concentration.',
+        sb: 'Sodium hydroxide, NaOH — dissociates completely.'
+      };
+
+      function namedAcid(pKa) {
+        for (var i = 0; i < NAMED.length; i++) {
+          if (Math.abs(NAMED[i][0] - pKa) < 0.006) return NAMED[i][1];
+        }
+        return null;
+      }
+
+      function captionText() {
+        if (state.V === 0) {
+          return 'The flask holds ' + Demo.fmt.dec(state.Ca, 3) + ' M analyte, ' +
+            Demo.fmt.dec(state.Va, 1) + ' mL, at pH ' + Demo.fmt.dec(d.pH, 2) +
+            '. Add titrant to build the curve.';
+        }
+        if (d.Ve != null && Math.abs(state.V - d.Ve) < d.fine * 1.5) {
+          return 'You are at the equivalence point: pH ' + Demo.fmt.dec(d.pH, 2) + ' after ' +
+            Demo.fmt.dec(state.V, d.vdp) + ' mL.';
+        }
+        if (d.Ve != null && state.V < d.Ve) {
+          return Demo.fmt.dec(d.Ve - state.V, d.vdp) + ' mL short of equivalence — pH ' +
+            Demo.fmt.dec(d.pH, 2) + '.';
+        }
+        return Demo.fmt.dec(state.V, d.vdp) + ' mL added — pH ' + Demo.fmt.dec(d.pH, 2) + '.';
+      }
+
+      function refresh() {
+        derive();
+
+        // --- setup panel text
+        $('analyteHint').textContent = ANALYTE_TEXT[state.analyte];
+        $('kaCtrl').classList.toggle('is-hidden', state.analyte !== 'wa');
+        var nm = namedAcid(state.pKa);
+        $('kaHint').innerHTML = 'K<sub>a</sub> = ' + Demo.fmt.sci(state.Ka, 1) +
+          (nm ? ' — ' + nm + '.' : '. Slide to a labelled value to match a real acid.');
+
+        // --- increment buttons
+        $('addFine').textContent = '+' + Demo.fmt.dec(d.fine, d.dp) + ' mL';
+        $('addMed').textContent = '+' + Demo.fmt.dec(d.med, d.dp) + ' mL';
+        $('addCoarse').textContent = '+' + Demo.fmt.dec(d.coarse, d.dp) + ' mL';
+
+        // --- pair note
+        var pn = $('pairNote');
+        if (!d.matched) {
+          pn.classList.remove('is-hidden');
+          pn.innerHTML = '<strong>No equivalence point.</strong> You are adding ' +
+            (state.titrant === 'sb' ? 'a base to a base' : 'an acid to an acid') +
+            ', so nothing is being neutralised — the pH only drifts as the solution is diluted. ' +
+            'Switch the burette to the other reagent.';
+        } else {
+          pn.classList.add('is-hidden');
+        }
+
+        // --- readouts
+        $('pHnow').textContent = Demo.fmt.dec(d.pH, 2);
+        $('vAdded').innerHTML = Demo.fmt.dec(state.V, d.vdp) + '<span class="r-unit">mL</span>';
+        $('veOut').innerHTML = d.Ve == null ? '—'
+          : Demo.fmt.dec(d.Ve, 2) + '<span class="r-unit">mL</span>';
+        $('pHeq').textContent = d.pHeq == null ? '—' : Demo.fmt.dec(d.pHeq, 2);
+
+        var card = $('pHeqCard');
+        card.classList.remove('is-ok', 'is-bad', 'is-accent');
+        if (d.pHeq != null) card.classList.add(d.pHeq > 7.05 ? 'is-ok' : d.pHeq < 6.95 ? 'is-bad' : 'is-accent');
+
+        // --- the teaching note
+        var note = $('eqNote');
+        note.className = 'note';
+        if (d.pHeq == null) {
+          note.innerHTML = 'Pick a titrant that reacts with what is in the flask and an equivalence point appears.';
+        } else if (state.analyte === 'wa' && state.titrant === 'sb') {
+          note.innerHTML = '<strong>Equivalence is at pH ' + Demo.fmt.dec(d.pHeq, 2) + ', not 7.</strong> ' +
+            'Every molecule of HA has been converted to A⁻. A⁻ is the conjugate base of a weak acid, ' +
+            'so it takes H⁺ from water and leaves OH⁻ behind. The solution is <em>basic</em> even though ' +
+            'you added exactly the stoichiometric amount of NaOH.';
+        } else if (state.analyte === 'sa' || state.analyte === 'sb') {
+          note.innerHTML = '<strong>Equivalence is at pH ' + Demo.fmt.dec(d.pHeq, 2) + '.</strong> ' +
+            'The leftovers are Na⁺ and Cl⁻. Neither is a strong enough acid or base to react with water, ' +
+            'so only water\'s own equilibrium sets the pH — and that gives exactly 7.00 at 25 °C.';
+        } else {
+          note.className = 'note warn';
+          note.innerHTML = '<strong>Equivalence is at pH ' + Demo.fmt.dec(d.pHeq, 2) + '.</strong> ' +
+            'Adding strong acid to a weak acid does not reach a stoichiometric point in the usual sense; ' +
+            'read this curve with care.';
+        }
+
+        // --- indicator
+        var ind = d.ind;
+        $('endV').innerHTML = d.endV == null ? '—'
+          : Demo.fmt.dec(d.endV, 2) + '<span class="r-unit">mL</span>';
+        var ec = $('errCard');
+        ec.classList.remove('is-ok', 'is-bad', 'is-accent');
+        if (d.err == null) {
+          $('errOut').innerHTML = '—';
+        } else {
+          $('errOut').innerHTML = (d.err >= 0 ? '+' : '−') + Demo.fmt.dec(Math.abs(d.err), 2) +
+            '<span class="r-unit">%</span>';
+          ec.classList.add(Math.abs(d.err) < 0.5 ? 'is-ok' : Math.abs(d.err) < 2 ? 'is-accent' : 'is-bad');
+        }
+
+        var inote = $('indNote');
+        inote.className = 'note';
+        if (ind.lo == null) {
+          inote.innerHTML = 'Without an indicator you can only find the equivalence point from the pH meter — ' +
+            'which is what the curve on the left is.';
+        } else if (d.endV == null) {
+          inote.className = 'note bad';
+          inote.innerHTML = '<strong>' + ind.name + ' never changes colour here.</strong> Its range, pH ' +
+            ind.lo.toFixed(1) + '–' + ind.hi.toFixed(1) + ', lies outside every pH this titration passes through.';
+        } else if (d.err == null) {
+          inote.className = 'note warn';
+          inote.innerHTML = '<strong>' + ind.name + ' does change colour</strong>, at ' +
+            Demo.fmt.dec(d.endV, 2) + ' mL. But this pairing has no equivalence point, so that colour ' +
+            'change marks nothing in particular.';
+        } else if (Math.abs(d.err) < 0.5) {
+          inote.className = 'note';
+          inote.innerHTML = '<strong>Good match.</strong> The range pH ' + ind.lo.toFixed(1) + '–' +
+            ind.hi.toFixed(1) + ' sits on the vertical part of the curve, so the colour flips within ' +
+            Demo.fmt.dec(Math.abs(d.endV - d.Ve), 2) + ' mL of the true equivalence volume.';
+        } else {
+          inote.className = 'note bad';
+          inote.innerHTML = '<strong>Wrong indicator.</strong> pH ' + ind.lo.toFixed(1) + '–' +
+            ind.hi.toFixed(1) + ' is off the vertical jump, so the colour finishes changing at ' +
+            Demo.fmt.dec(d.endV, 2) + ' mL instead of ' + Demo.fmt.dec(d.Ve, 2) +
+            ' mL — you would report the concentration ' + Demo.fmt.dec(Math.abs(d.err), 0) + ' % ' +
+            (d.err < 0 ? 'too low' : 'too high') + '.';
+        }
+
+        // --- key-points table
+        var rows = [];
+        rows.push(['Start', 0, pHat(0)]);
+        if (d.Ve != null && state.analyte === 'wa') rows.push(['Half-equivalence', d.Ve / 2, d.pHhalf]);
+        if (d.Ve != null) rows.push(['Equivalence', d.Ve, d.pHeq]);
+        if (d.Ve != null) rows.push(['Twice equivalence', d.Ve * 2, pHat(d.Ve * 2)]);
+        $('keyBody').innerHTML = rows.map(function (r) {
+          return '<tr><td>' + r[0] + '</td><td>' + Demo.fmt.dec(r[1], 2) +
+            '</td><td>' + Demo.fmt.dec(r[2], 2) + '</td></tr>';
+        }).join('');
+
+        $('assump').innerHTML =
+          '<strong>Assumptions:</strong> 25 °C, so K<sub>w</sub> = 1.00 × 10⁻¹⁴ and neutral is exactly ' +
+          'pH 7.00. Every pH above is the exact solution of the charge-balance equation ' +
+          '[Na⁺] + [H⁺] = [Cl⁻] + [A⁻] + [OH⁻] — no region-by-region shortcuts — assuming ideal ' +
+          'behaviour, one acidic proton, and no dissolved CO₂.';
+
+        // --- caption + accessible label
+        $('caption').textContent = captionText();
+        plot.el.setAttribute('aria-label',
+          'Titration curve. ' + state.pts.length + ' points recorded up to ' +
+          Demo.fmt.dec(state.V, d.vdp) + ' mL of titrant. Current pH ' + Demo.fmt.dec(d.pH, 2) +
+          (d.Ve != null ? '. Equivalence at ' + Demo.fmt.dec(d.Ve, 2) + ' mL, pH ' +
+            Demo.fmt.dec(d.pHeq, 2) : '') + '.');
+
+        plot.redraw();
+        flask.redraw();
+      }
+
+      // fast path for the animation loop: assumes derive() has just run, and
+      // skips rebuilding the tables and notes (setup cannot change mid-run)
+      function refreshLight() {
+        $('pHnow').textContent = Demo.fmt.dec(d.pH, 2);
+        $('vAdded').innerHTML = Demo.fmt.dec(state.V, d.vdp) + '<span class="r-unit">mL</span>';
+        $('caption').textContent = captionText();
+        plot.paint();
+        flask.paint();
+      }
+
+      function record() {
+        state.pts.push({ v: state.V, pH: pHat(state.V) });
+      }
+
+      function resetRun() {
+        if (anim) anim.stop();
+        $('auto').textContent = 'Run slowly';
+        state.V = 0;
+        state.pts = [];
+        derive();
+        record();
+        refresh();
+      }
+
+      function add(dv) {
+        derive();
+        state.V = Math.min(state.V + dv, d.Vcap);
+        record();
+        refresh();
+      }
+
+      // --- controls -------------------------------------------------------
+      document.querySelectorAll('[data-analyte]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-analyte]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.analyte = b.dataset.analyte;
+          // pair the burette sensibly with what is now in the flask
+          state.titrant = state.analyte === 'sb' ? 'sa' : 'sb';
+          document.querySelectorAll('[data-titrant]').forEach(function (o) {
+            o.setAttribute('aria-selected', o.dataset.titrant === state.titrant ? 'true' : 'false');
+          });
+          resetRun();
+        });
+      });
+
+      document.querySelectorAll('[data-titrant]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-titrant]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.titrant = b.dataset.titrant;
+          resetRun();
+        });
+      });
+
+      Demo.range('#pka', function (v) {
+        state.pKa = v;
+        state.Ka = Math.pow(10, -v);
+        $('pkaOut').textContent = Demo.fmt.dec(v, 2);
+        if (ready) resetRun();
+      });
+
+      Demo.range('#ca', function (v) {
+        state.Ca = v;
+        $('caOut').textContent = Demo.fmt.dec(v, 3) + ' M';
+        if (ready) resetRun();
+      });
+
+      Demo.range('#va', function (v) {
+        state.Va = v;
+        $('vaOut').textContent = Demo.fmt.dec(v, 1) + ' mL';
+        if (ready) resetRun();
+      });
+
+      Demo.range('#cb', function (v) {
+        state.Cb = v;
+        $('cbOut').textContent = Demo.fmt.dec(v, 3) + ' M';
+        if (ready) resetRun();
+      });
+
+      $('ind').addEventListener('change', function () { state.ind = this.value; refresh(); });
+      $('ghost').addEventListener('change', function () { state.ghost = this.checked; refresh(); });
+
+      $('addFine').addEventListener('click', function () { add(d.fine); });
+      $('addMed').addEventListener('click', function () { add(d.med); });
+      $('addCoarse').addEventListener('click', function () { add(d.coarse); });
+
+      $('undo').addEventListener('click', function () {
+        if (state.pts.length > 1) {
+          state.pts.pop();
+          state.V = state.pts[state.pts.length - 1].v;
+          refresh();
+        }
+      });
+
+      $('reset').addEventListener('click', resetRun);
+
+      // --- slow automatic titration ----------------------------------------
+      var lastRec = 0;
+      var anim = Demo.loop(function (dt) {
+        var rate = d.Vcap / 16;                 // whole run takes about 16 s
+        state.V = Math.min(state.V + rate * dt, d.Vcap);
+        if (state.V - lastRec >= d.fine / 2 || state.V >= d.Vcap) {
+          record();
+          lastRec = state.V;
+        }
+        if (state.V >= d.Vcap) {
+          anim.stop();
+          $('auto').textContent = 'Run slowly';
+          refresh();
+          return;
+        }
+        derive();
+        refreshLight();
+      });
+
+      $('auto').addEventListener('click', function () {
+        derive();
+        if (state.V >= d.Vcap) resetRun();
+        lastRec = state.V;
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Run slowly';
+        if (!anim.running) refresh();
+      });
+
+      // --- boot -------------------------------------------------------------
+      var ready = false;
+      derive();
+      record();
+      refresh();
+      ready = true;
+    })();
+  </script>
+</body>
+
+</html>

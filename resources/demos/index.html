@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+  <title>Science Demonstrations | Dr. Andres Barboza</title>
+  <meta name="description"
+    content="Interactive simulations for AP Biology and Advanced Chemistry, organized by unit, built from scratch by Dr. Andres Barboza.">
+
+  <link rel="icon" href="../../assets/img/favicon-16x16.png" sizes="16x16" type="image/png">
+  <link rel="icon" href="../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* ---- hub-specific ---- */
+    .filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+    .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    /* an author `display:flex` beats the UA rule for [hidden] — restore it */
+    .filter-row[hidden] { display: none; }
+    .filter-row > .fr-label {
+      font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+      color: var(--muted); width: 62px; flex: none;
+    }
+    .chip {
+      font: inherit; font-size: 12.5px; font-weight: 500;
+      padding: 5px 12px; border-radius: 20px; cursor: pointer;
+      background: var(--surface); border: 1px solid var(--line); color: var(--text-2);
+      transition: border-color .2s ease, color .2s ease, background .2s ease;
+    }
+    .chip:hover { border-color: var(--accent-line); color: var(--accent-strong); }
+    .chip[aria-pressed="true"] {
+      background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong);
+    }
+
+    .count-line { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .count-line b { color: var(--text); font-weight: 600; }
+
+    .unit-group { margin-bottom: 26px; }
+    .unit-head {
+      display: flex; align-items: baseline; gap: 10px;
+      padding-bottom: 7px; margin-bottom: 12px; border-bottom: 1px solid var(--line);
+    }
+    .unit-head h2 { font-size: 15px; }
+    .unit-head .uh-topics { font-size: 12.5px; color: var(--muted); }
+
+    .demo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .demo-card {
+      display: flex; flex-direction: column; gap: 7px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+      padding: 13px 15px; box-shadow: var(--shadow-sm);
+      transition: border-color .2s ease, transform .2s ease;
+    }
+    a.demo-card:hover { border-color: var(--accent-line); transform: translateY(-2px); }
+    /* not written yet: still listed, but visibly not something you can open */
+    .demo-card.is-planned { box-shadow: none; background: transparent; border-style: dashed; }
+    .demo-card.is-planned .dc-title { color: var(--text-2); }
+    .dc-top { display: flex; align-items: flex-start; gap: 9px; }
+    .dc-title { font-size: 14.5px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; line-height: 1.35; }
+    .dc-desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+    .dc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 1px; }
+
+    .dc-src { font-size: 11.5px; color: var(--muted); }
+    .dc-src i { font-size: 11px; }
+
+    .empty { padding: 30px 4px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../../index.html#resources">Resources</a>
+        <h1 class="demo-title">Science Demonstrations</h1>
+        <p class="demo-sub">
+          Interactive simulations for AP Biology and Advanced Chemistry, unit by unit. Everything
+          interactive here is built from scratch, so it runs on a phone, works offline of any third party,
+          and is matched to how these courses are actually taught. The only outside links are two
+          animations worth watching rather than rebuilding.
+        </p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="panel" style="margin-bottom:18px">
+      <div class="filters">
+        <div class="filter-row">
+          <span class="fr-label">Course</span>
+          <button class="chip" data-f="course" data-v="all" aria-pressed="true">All</button>
+          <button class="chip" data-f="course" data-v="bio" aria-pressed="false">AP Biology</button>
+          <button class="chip" data-f="course" data-v="chem" aria-pressed="false">AC Chemistry</button>
+        </div>
+        <!-- units only become relevant once a specific course is chosen -->
+        <div class="filter-row" id="unitRow" hidden>
+          <span class="fr-label">Unit</span>
+          <button class="chip" data-f="unit" data-v="all" aria-pressed="true">All</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="count-line" id="countLine"></p>
+    <main id="list"></main>
+  </div>
+
+  <script>
+    /* =========================================================
+       The full planned inventory.
+         c  course: bio | chem          u  unit number
+         k  kind:   built | linked      e  build size: S | M | L
+         s  source (external only)      url (external only, or local path once built)
+         top  in the first-ten build queue
+         live true once the demo actually ships
+       ========================================================= */
+    var UNITS = {
+      bio: {
+        1: 'Chemistry of Life', 2: 'Cell Structure & Function', 3: 'Cellular Energetics',
+        4: 'Cell Communication & Cell Cycle', 5: 'Heredity', 6: 'Gene Expression & Regulation',
+        7: 'Natural Selection', 8: 'Ecology'
+      },
+      chem: {
+        1: 'Measurement & Density', 2: 'Atomic Structure & Periodic Table',
+        3: 'Nomenclature, Bonding & Molecular Geometry', 4: 'Chemical Reactions', 5: 'Gases',
+        6: 'Thermochemistry', 7: 'Solutions & Acids/Bases', 8: 'Equilibrium'
+      }
+    };
+
+    var DEMOS = [
+      { c: 'chem', u: 1, k: 'built', slug: 'accurate-precise', e: 'S', t: 'Accurate, Precise, Both, Neither',
+        d: 'Independent bias and scatter dials on a target. Averaging shrinks random scatter as 1/√n and leaves systematic bias completely untouched.' },
+      { c: 'chem', u: 1, k: 'built', slug: 'unit-railroad', e: 'M', t: 'Unit Railroad', top: true,
+        d: 'Chain conversion factors and watch the units cancel live. The surviving units prove the setup was right before a calculator is involved.' },
+      { c: 'chem', u: 1, k: 'built', slug: 'read-the-instrument', e: 'M', t: 'Read the Instrument',
+        d: 'Read a rendered graduated cylinder at variable zoom and estimate the uncertain last digit — the one sig-fig skill a worksheet structurally cannot teach.' },
+      { c: 'chem', u: 2, k: 'built', slug: 'electronic-structure-bench', e: 'L', t: 'Electronic Structure Bench',
+        d: 'Three tabs on one engine: orbital probability clouds, successive ionization-energy jumps, and the periodic sawtooth. Shells become a conclusion forced by data.' },
+      { c: 'chem', u: 3, k: 'built', slug: 'electron-budget', e: 'L', t: 'Electron Budget',
+        d: 'Lewis structures as a fixed valence-electron budget you spend, rather than octets you hand out and count afterward.' },
+      { c: 'chem', u: 3, k: 'built', slug: 'why-water-boils', e: 'M', t: 'Why Water Should Boil at Minus 80',
+        d: 'Real boiling-point data by group. Within one intermolecular-force class the trend tracks molar mass — then water breaks it by about 200 degrees.' },
+      { c: 'chem', u: 4, k: 'built', slug: 'stoichiometry-road-map', e: 'L', t: 'Stoichiometry Road Map', top: true,
+        d: 'Four levels on one engine — molar mass, mole–gram, mole ratio, mixed problems — with the mole ratio shown as the only bridge between two substances.' },
+      { c: 'chem', u: 4, k: 'built', slug: 'which-one-runs-out', e: 'M', t: 'Which One Runs Out? (grams lie)',
+        d: 'A case where comparing grams and comparing moles-with-ratio give different answers, shown side by side.' },
+      { c: 'chem', u: 5, k: 'built', slug: 'gas-law-bench', e: 'M', t: 'Gas Law Bench',
+        d: 'Plot P, V and T yourself. One relation rather than three unrelated laws, and Celsius visibly produces negative volumes.' },
+      { c: 'chem', u: 5, k: 'built', slug: 'airbag-designer', e: 'M', t: 'Airbag Designer',
+        d: 'Weigh out the solid, pick temperature and pressure, inflate the bag. Kills the idea that 22.4 L/mol is a universal constant. Pre-lab for the Airbag Lab.' },
+      { c: 'chem', u: 6, k: 'built', slug: 'heating-curve', e: 'M', t: 'Heating Curve — where the energy hides',
+        d: 'Drag along the curve with a synced particle panel: during a plateau the spacing changes while average particle speed does not.' },
+      { c: 'chem', u: 6, k: 'built', slug: 'where-did-the-heat-go', e: 'S', t: 'Where Did the Heat Go?', top: true,
+        d: 'Separates the system from the surroundings so that "endothermic" stops meaning "it gets cold".' },
+      { c: 'chem', u: 7, k: 'built', slug: 'dissolving-bench', e: 'M', t: 'Dissolving Bench',
+        d: 'NaCl dissociates into hydrated ions, sucrose disperses intact, nonpolar refuses — with a conductivity bulb as the evidence. Replaces a PhET sim that is now dead Java.' },
+      { c: 'chem', u: 7, k: 'built', slug: 'ph-ruler', e: 'S', t: 'The pH Ruler', top: true,
+        d: 'One logarithmic slider drives [H₃O⁺], [OH⁻], pH and pOH. Type any one of the four and the other three recompute.' },
+      { c: 'chem', u: 7, k: 'built', slug: 'solubility-curves', e: 'M', t: 'Solubility Curves',
+        d: 'Read it, cool it, crystallize it — and distinguish a supersaturated solution from a saturated one sitting on excess solid by the path taken, not the position.' },
+      { c: 'chem', u: 7, k: 'built', slug: 'mix-it', e: 'L', t: 'Mix It',
+        d: 'Pour two solutions together, watch four ion species, and write the molecular, complete ionic and net ionic equations — with a solubility-rules drill in front of it.' },
+      { c: 'chem', u: 7, k: 'built', slug: 'titration-curve', e: 'M', t: 'Titration Curve Lab',
+        d: 'A single charge-balance solve covers the initial point, the buffer region, equivalence and the excess tail with no piecewise seams.' },
+      { c: 'chem', u: 8, k: 'built', slug: 'dynamic-equilibrium', e: 'M', t: 'Dynamic Equilibrium + Two Rates, One Line', top: true,
+        d: 'Thousands of random conversion events. Forward and reverse rates converge to one line while the amounts plateau at clearly unequal values.' },
+      { c: 'chem', u: 8, k: 'built', slug: 'ice-workbench', e: 'L', t: 'ICE Workbench',
+        d: 'The sign of x taken from Q against K, coefficients applied in the change row, and the "x is small" shortcut visibly breaking.' },
+      { c: 'chem', u: 8, k: 'built', slug: 'ka-percent-ionization', e: 'M', t: 'Ka and Percent Ionization',
+        d: 'Hold Ka fixed and dilute a weak acid: percent ionization climbs toward 100% while the pH still rises. The result feels wrong to every student.' },
+      { c: 'bio', u: 1, k: 'built', slug: 'build-a-polymer', e: 'S', t: 'Build a Polymer', top: true,
+        d: 'n monomers give n−1 bonds and n−1 waters — with a lipid tab that deliberately breaks the rule, because a triglyceride is not a polymer.' },
+      { c: 'bio', u: 1, k: 'built', slug: 'hydrogen-bond-bench', e: 'M', t: 'Hydrogen Bond Bench',
+        d: 'Capillary rise separating cohesion from adhesion, and where injected energy goes with hydrogen bonding switched on and off.' },
+      { c: 'bio', u: 1, k: 'built', slug: 'fold-it-yourself', e: 'L', t: 'Fold It Yourself: a lattice protein',
+        d: 'Fold a 2D chain and watch hydrophobic residues bury themselves. One substitution changes the whole structure — primary really does determine tertiary.' },
+      { c: 'bio', u: 2, k: 'built', slug: 'why-cells-are-small', e: 'M', t: 'Why Cells Are Small',
+        d: 'The real size limit is the critical radius where supply fails at the center, with separate constants for a sphere, a cylinder and a flattened disc.' },
+      { c: 'bio', u: 2, k: 'built', slug: 'water-potential-bench', e: 'M', t: 'Water Potential Bench',
+        d: 'A U-tube where the rising column’s own hydrostatic pressure is Ψp — so osmosis stops well before the concentrations equalize.' },
+      { c: 'bio', u: 3, k: 'built', slug: 'enzyme-bench', e: 'M', t: 'Enzyme Bench',
+        d: 'Adding substrate completely rescues competitive inhibition and does absolutely nothing for noncompetitive. The free sims cover temperature and pH but not this.' },
+      { c: 'bio', u: 3, k: 'built', slug: 'proton-gradient-bench', e: 'M', t: 'Proton Gradient Bench',
+        d: 'Add an uncoupler: electron flow speeds up, oxygen consumption rises, ATP falls to zero. The chain makes a gradient, not ATP.' },
+      { c: 'bio', u: 4, k: 'built', slug: 'amplifier', e: 'M', t: 'Amplifier',
+        d: 'Why a cascade has four steps instead of one. Each tier multiplies, so about ten hormone molecules become millions of product.' },
+      { c: 'bio', u: 4, k: 'built', slug: 'gamete-machine', e: 'M', t: 'Gamete Machine',
+        d: 'Crossing over, independent assortment, and the allele-level difference between meiosis I and meiosis II nondisjunction.' },
+      { c: 'bio', u: 5, k: 'built', slug: 'same-squares', e: 'S', t: 'Same Squares, Different Ratios', top: true,
+        d: 'Recolor the boxes yourself: the 9:3:3:1 genotype ratio never changes, only which genotypes share a phenotype. Includes sex linkage and a swap-parents button.' },
+      { c: 'bio', u: 5, k: 'built', slug: 'does-3-1-look-like-3-1', e: 'M', t: 'Does 3:1 Ever Look Like 3:1?',
+        d: 'Sample ears of corn, watch deviation shrink as n grows, and find out what chi-square is actually measuring.' },
+      { c: 'bio', u: 5, k: 'built', slug: 'bins-to-bell-curve', e: 'S', t: 'From Bins to Bell Curve',
+        d: 'Drag the locus count from 1 to 8 and watch discrete categories become a continuum, with an environment slider that can swamp the genetics.' },
+      { c: 'bio', u: 6, k: 'built', slug: 'meselson-stahl', e: 'S', t: 'Heavy, Light, Hybrid', top: true,
+        d: 'Run Meselson–Stahl against all three models. Generation 1 is ambiguous; generation 2 is what settles it.' },
+      { c: 'bio', u: 6, k: 'built', slug: 'break-a-gene', e: 'M', t: 'Break a Gene',
+        d: 'Random substitutions across a real coding sequence: silent about a quarter of the time, nonsense only a few percent, and the third position is privileged.' },
+      { c: 'bio', u: 6, k: 'built', slug: 'operon-logic', e: 'M', t: 'Operon Logic: predict the mutant',
+        d: 'lac as an AND gate rather than a switch, plus lacI⁻ and Oᶜ mutants — and a eukaryotic tab where enhancer combinations flip a gene between cell types.' },
+      { c: 'bio', u: 7, k: 'built', slug: 'allele-machine', e: 'L', t: 'Allele Machine', top: true,
+        d: 'Hardy–Weinberg and drift on one engine: a hundred replicate populations at once, each trajectory unpredictable, the ensemble sharply predictable.' },
+      { c: 'bio', u: 7, k: 'built', slug: 'selection-shaper', e: 'L', t: 'Selection Shaper',
+        d: 'Directional, stabilizing and disruptive selection acting on a whole trait distribution. Stabilizing cuts the variance while the mean stays put — evolution is still happening.' },
+      { c: 'bio', u: 7, k: 'built', slug: 'mutation-first', e: 'M', t: 'Did the mutation come first?',
+        d: 'Replica plating. Resistant colonies land at identical grid positions on independent plates, so the mutation cannot have been caused by the antibiotic.' },
+      { c: 'bio', u: 7, k: 'built', slug: 'speciation-sandbox', e: 'M', t: 'Speciation Sandbox',
+        d: 'Raise a barrier, wait, then lower it: get re-fusion or hybrid inviability depending on how long you waited. Speciation as a continuum.' },
+      { c: 'bio', u: 8, k: 'built', slug: 'logistic-growth', e: 'M', t: 'Logistic Growth',
+        d: 'Populations overshoot carrying capacity and oscillate; growth is fastest at half of K; and a reproductive lag can drive them straight through it.' },
+      { c: 'bio', u: 8, k: 'built', slug: 'survivorship', e: 'M', t: 'Survivorship: read the axis',
+        d: 'Toggle the y-axis between logarithmic and linear and watch Type II stop being a straight line. Same data, opposite reading.' },
+      { c: 'bio', u: 8, k: 'built', slug: 'population-momentum', e: 'M', t: 'Population Momentum',
+        d: 'Drop fertility to replacement level and watch the population keep growing for another forty to sixty years. Age structure is stored future growth.' },
+      { c: 'bio', u: 8, k: 'built', slug: 'ten-percent', e: 'S', t: 'Ten Percent', top: true,
+        d: 'Drag transfer efficiency from 5% to 20% and watch top-predator biomass move roughly 250-fold across four levels. Also: pyramids are not always upright.' },
+      { c: 'bio', u: 8, k: 'built', slug: 'carbon-bathtub', e: 'M', t: 'The Carbon Bathtub',
+        d: 'Emissions against uptake as a stock and flow, plus a runoff mode for eutrophication and the lag before dissolved oxygen recovers.' },
+      { c: 'bio', u: 6, k: 'linked', t: '3D Mechanism of Replication', s: 'DNA Learning Center, CSHL',
+        url: 'https://dnalc.cshl.edu/resources/3d/04-mechanism-of-replication-advanced.html',
+        d: 'The leading and lagging strand problem shown in three dimensions, which is where it finally makes sense.' },
+      { c: 'bio', u: 6, k: 'linked', t: 'CRISPR-Cas9 Mechanism & Applications', s: 'HHMI BioInteractive',
+        url: 'https://www.biointeractive.org/classroom-resources/crispr-cas9-mechanism-applications',
+        d: 'Guide RNA targeting and the cut, at a level of animation quality nothing custom would match.' },
+
+      /* ---------------- replacing discarded external sims ---------------- */
+      { c: 'chem', u: 2, k: 'built', slug: 'build-an-atom', e: 'L', t: 'Build an Atom',
+        d: 'Add protons, neutrons and electrons and watch element, charge, mass number and isotope follow. Replaces the PhET sim of the same name.' },
+      { c: 'chem', u: 3, k: 'built', slug: 'vsepr-bench', e: 'L', t: 'VSEPR Bench',
+        d: 'Bonding pairs and lone pairs push apart; the shape falls out. Lone pairs shown and hidden, so students see why bent is not linear.' },
+      { c: 'chem', u: 3, k: 'built', slug: 'polarity-bench', e: 'M', t: 'Polarity Bench',
+        d: 'Drag electronegativity and watch bond dipoles add as vectors — including the case where polar bonds cancel into a nonpolar molecule.' },
+      { c: 'chem', u: 4, k: 'built', slug: 'balance-it', e: 'M', t: 'Balance It',
+        d: 'Balance by inspection with a live atom count on each side, and a check that rejects fractional or reduced-wrong coefficients.' },
+      { c: 'chem', u: 7, k: 'built', slug: 'molarity-dilution', e: 'M', t: 'Molarity and Dilution',
+        d: 'Moles over litres, with saturation appearing on its own, plus M1V1 = M2V2 as a physical pour rather than a formula.' },
+      { c: 'bio', u: 2, k: 'built', slug: 'membrane-transport', e: 'L', t: 'Membrane Transport Bench',
+        d: 'Simple diffusion, facilitated diffusion and active transport side by side — including transport running against the gradient only while ATP lasts.' },
+      { c: 'bio', u: 3, k: 'built', slug: 'photosynthesis-bench', e: 'L', t: 'Photosynthesis Bench',
+        d: 'Light reactions feeding the Calvin cycle: ATP and NADPH produced and spent, with limiting factors combining as a minimum, never a product.' },
+      { c: 'bio', u: 4, k: 'built', slug: 'cell-cycle', e: 'M', t: 'Cell Cycle and Checkpoints',
+        d: 'Cyclin levels driving the cycle, with each checkpoint able to fail independently so students see which failure produces which outcome.' },
+      { c: 'bio', u: 6, k: 'built', slug: 'transcribe-translate', e: 'M', t: 'Transcribe and Translate',
+        d: 'Step a real gene through transcription and translation with the codon table in hand, then mutate it and re-run.' },
+      { c: 'bio', u: 7, k: 'built', slug: 'tree-builder', e: 'L', t: 'Tree Builder',
+        d: 'Build a phylogeny from sequence data using shared derived characters and parsimony, and watch the tree change when a character is re-scored.' },
+    ];
+
+    /* ---------------- rendering ---------------- */
+    var state = { course: 'all', unit: 'all' };
+    var listEl = document.getElementById('list');
+    var countEl = document.getElementById('countLine');
+
+    // unit chips 1..8
+    (function () {
+      var row = document.getElementById('unitRow');
+      for (var i = 1; i <= 8; i++) {
+        var b = document.createElement('button');
+        b.className = 'chip';
+        b.setAttribute('data-f', 'unit');
+        b.setAttribute('data-v', String(i));
+        b.setAttribute('aria-pressed', 'false');
+        b.textContent = i;
+        row.appendChild(b);
+      }
+    })();
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, function (ch) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch];
+      });
+    }
+
+    function matches(d) {
+      return (state.course === 'all' || d.c === state.course)
+        && (state.unit === 'all' || String(d.u) === state.unit);
+    }
+
+    // Slugs confirmed to exist on the server. Filled in by probe() after load,
+    // so a demo becomes clickable the moment its folder ships — no edit needed here.
+    var LIVE = {};
+
+    function cardHtml(d) {
+      var isLive = d.k === 'built' && d.slug && LIVE[d.slug];
+
+      // Both card kinds carry one meta line at the bottom: external names its
+      // source, a finished build says it opens. Nothing else distinguishes them.
+      var meta = '';
+      if (d.k === 'linked') {
+        meta = '<div class="dc-meta"><span class="dc-src">' +
+          '<i class="bi bi-box-arrow-up-right"></i> ' + esc(d.s) + '</span></div>';
+      } else if (isLive) {
+        meta = '<div class="dc-meta"><span class="dc-src">' +
+          '<i class="bi bi-arrow-right"></i> Open</span></div>';
+      }
+
+      var inner =
+        '<div class="dc-top"><span class="dc-title">' + esc(d.t) + '</span></div>' +
+        '<p class="dc-desc">' + esc(d.d) + '</p>' + meta;
+
+      if (d.k === 'linked') {
+        return '<a class="demo-card" href="' + esc(d.url) + '" target="_blank" rel="noopener">' +
+          inner + '</a>';
+      }
+      if (isLive) {
+        return '<a class="demo-card" href="' + esc(d.slug) + '/">' + inner + '</a>';
+      }
+      return '<div class="demo-card is-planned">' + inner + '</div>';
+    }
+
+    // Ask the server which built demos are actually there yet.
+    function probe() {
+      var slugs = DEMOS.filter(function (d) { return d.k === 'built' && d.slug; })
+                       .map(function (d) { return d.slug; });
+      Promise.all(slugs.map(function (slug) {
+        return fetch(slug + '/', { method: 'HEAD' })
+          .then(function (r) { if (r.ok) LIVE[slug] = true; })
+          .catch(function () { /* not shipped yet */ });
+      })).then(render);
+    }
+
+    function render() {
+      var shown = DEMOS.filter(matches);
+
+      countEl.innerHTML = 'Showing <b>' + shown.length + '</b> demonstration' +
+        (shown.length === 1 ? '' : 's') + '.';
+
+      if (!shown.length) {
+        listEl.innerHTML = '<p class="empty">Nothing matches those filters.</p>';
+        return;
+      }
+
+      // group by course, then unit
+      var html = '';
+      ['bio', 'chem'].forEach(function (course) {
+        for (var u = 1; u <= 8; u++) {
+          var group = shown.filter(function (d) { return d.c === course && d.u === u; });
+          if (!group.length) continue;
+          var label = (course === 'bio' ? 'AP Biology' : 'AC Chemistry') + ' · Unit ' + u;
+          html += '<section class="unit-group">' +
+            '<div class="unit-head">' +
+              '<h2>' + label + '</h2>' +
+              '<span class="uh-topics">' + esc(UNITS[course][u]) + '</span>' +
+            '</div>' +
+            '<div class="demo-list">' + group.map(cardHtml).join('') + '</div>' +
+          '</section>';
+        }
+      });
+      listEl.innerHTML = html;
+    }
+
+    // Units are meaningless across two different courses, so the row stays
+    // hidden until one course is picked, and resets whenever the course changes.
+    function syncUnitRow() {
+      var row = document.getElementById('unitRow');
+      var show = state.course !== 'all';
+      row.hidden = !show;
+      if (!show) {
+        state.unit = 'all';
+        Array.prototype.forEach.call(row.querySelectorAll('.chip'), function (c) {
+          c.setAttribute('aria-pressed', c.getAttribute('data-v') === 'all' ? 'true' : 'false');
+        });
+      }
+    }
+
+    function press(f, chip) {
+      Array.prototype.forEach.call(document.querySelectorAll('.chip[data-f="' + f + '"]'), function (c) {
+        c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
+      });
+    }
+
+    document.addEventListener('click', function (ev) {
+      var chip = ev.target.closest('.chip');
+      if (!chip) return;
+      var f = chip.getAttribute('data-f');
+      state[f] = chip.getAttribute('data-v');
+      press(f, chip);
+
+      if (f === 'course') {
+        // switching course clears any unit held over from the previous one
+        state.unit = 'all';
+        press('unit', document.querySelector('.chip[data-f="unit"][data-v="all"]'));
+        syncUnitRow();
+      }
+      render();
+    });
+
+    syncUnitRow();
+    render();
+    probe();
+  </script>
+</body>
+
+</html>

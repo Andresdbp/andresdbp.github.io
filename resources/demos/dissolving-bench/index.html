@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Dissolving Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Drop salt, sugar, or hexane into water and watch what each one does at the particle level. A conductivity bulb shows which solution actually contains free ions.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the legend chips, the equation strip, the tester canvas box. */
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; }
+    .lg { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+    .sw { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+    .sw.water { background: var(--accent); }
+    .sw.na    { background: var(--series-4); }
+    .sw.cl    { background: var(--series-3); }
+    .sw.org   { background: var(--series-2); }
+
+    .eq {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 9px 10px;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+    .eq sub { font-size: 0.75em; }
+    .eq sup { font-size: 0.75em; }
+
+    .kind {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    #circuit { width: 100%; display: block; border-radius: 10px; margin-bottom: 12px; }
+
+    /* scientific-notation values need to fit a narrow readout tile */
+    #rKappa .r-value, #rRes .r-value, #rIons .r-value { font-size: 15.5px; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+
+    /* the numbers panel sits under the stage on desktop, above the controls on a phone */
+    .demo-grid > .below { margin-top: 14px; }
+    @media (max-width: 880px) {
+      .demo-grid > .below { order: 0; margin-top: 0; }
+      .demo-grid > .controls { order: 1; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Dissolving Bench</h1>
+        <p class="demo-sub">Pick a solute, add some, and watch the bulb. Then switch to the close-up.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label" id="stageLabel">The beaker</p>
+        <canvas id="beaker" role="img"
+                aria-label="A beaker of water with the chosen solute drawn at the particle level"></canvas>
+        <p class="stage-caption" id="cap">
+          Sodium chloride comes apart. Every particle you see in the water is a single ion.
+        </p>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Solute</div>
+          <div class="stack">
+            <div class="seg" id="segSolute" role="tablist" aria-label="Choose a solute">
+              <button role="tab" aria-selected="true"  data-s="nacl">NaCl</button>
+              <button role="tab" aria-selected="false" data-s="suc">Sucrose</button>
+              <button role="tab" aria-selected="false" data-s="hex">Hexane</button>
+            </div>
+            <div class="stack-s">
+              <div class="kind" id="sKind">Ionic solid</div>
+              <div class="eq" id="sEq"></div>
+              <p class="small muted" id="sBlurb"></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Bench</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="grams">Amount added</label>
+                <span class="ctrl-value" id="gramsOut">12.0 g</span>
+              </div>
+              <input type="range" id="grams" min="0" max="40" step="0.5" value="12">
+              <p class="ctrl-hint">Into 100.0 g of water at 25 &deg;C, stirred.</p>
+            </div>
+
+            <div class="seg" id="segView" role="tablist" aria-label="Choose a view">
+              <button role="tab" aria-selected="true"  data-v="beaker">Beaker</button>
+              <button role="tab" aria-selected="false" data-v="zoom">Close-up</button>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="shells" checked>
+              Show the water shells (beaker view)
+            </label>
+
+            <div class="btn-row">
+              <button class="btn primary" id="run">Pause</button>
+              <button class="btn" id="reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Conductivity tester</div>
+          <canvas id="circuit" role="img"
+                  aria-label="A battery, a bulb, and two electrodes dipped in the solution"></canvas>
+          <div class="readouts">
+            <div class="readout" id="rBulb">
+              <div class="r-label">Bulb</div>
+              <div class="r-value">Dark</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Lamp power</div>
+              <div class="r-value" id="vPow">0%</div>
+            </div>
+            <div class="readout" id="rKappa">
+              <div class="r-label">Conductivity</div>
+              <div class="r-value" id="vKappa">0<span class="r-unit">mS/cm</span></div>
+            </div>
+            <div class="readout" id="rRes">
+              <div class="r-label">Resistance</div>
+              <div class="r-value" id="vRes">0<span class="r-unit">&#937;</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="small muted">
+            Modelled cell: electrodes 1.00 cm apart, 1.00 cm&sup2; each (cell constant 1.00 cm&#8315;&sup1;),
+            in series with a 100 &#937; lamp. Lamp power is <em>I</em>&sup2;<em>R</em> as a fraction of the
+            most it could ever draw.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- ---------------- numbers, under the stage ---------------- -->
+      <div class="panel below">
+          <div class="panel-title">In the beaker</div>
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Dissolved</div>
+              <div class="r-value" id="vDiss">0<span class="r-unit">g</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Moles dissolved</div>
+              <div class="r-value" id="vMol">0<span class="r-unit">mol</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Solution volume</div>
+              <div class="r-value" id="vVol">100<span class="r-unit">mL</span></div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">Concentration</div>
+              <div class="r-value" id="vConc">0<span class="r-unit">M</span></div>
+            </div>
+            <div class="readout" id="rIons">
+              <div class="r-label">Free ions</div>
+              <div class="r-value" id="vIons">none</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Dissolved particles</div>
+              <div class="r-value" id="vPart">0<span class="r-unit">M</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note warn" id="leftover">
+            Add more than the solubility limit and the extra just sits there.
+          </p>
+          <hr class="sep" style="margin:12px 0">
+          <p class="small muted">
+            <strong class="muted">Where the model simplifies.</strong>
+            Concentrations use measured solution densities at 25 &deg;C, so the volume really does change as
+            solute dissolves &mdash; watch the level. Conductivity is interpolated from measured NaCl data at
+            25 &deg;C. &ldquo;Dissolved particles&rdquo; assumes every formula unit separates completely, which
+            is exactly true only in dilute solution. The number of particles drawn on screen grows with the
+            amount added but is <strong>schematic</strong> &mdash; read the numbers, not the dots. Real sugar
+            water in a lab often gives a faint glow, because tap water and dissolved CO<sub>2</sub> bring their
+            own ions; the sucrose itself contributes none.
+          </p>
+      </div>
+
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students say the salt &ldquo;disappeared&rdquo; or
+        &ldquo;melted&rdquo;, and they picture NaCl(aq) as billions of tiny, still-intact NaCl units drifting
+        around in the water. That picture feels harmless now. It is the thing that breaks every complete-ionic
+        and net-ionic equation later in the year, because those equations only work if you know that the salt
+        is already in pieces before any reaction starts.
+      </p>
+      <p>
+        <strong>What to notice:</strong> the bulb. Salt water and sugar water look identical &mdash; both are
+        clear and colourless, both taste of something, both went in as a white solid. But only one of them
+        lights the lamp. A bulb needs charge to move through the liquid, and charge can only move if separate
+        charged particles are free to travel. Sugar water is dark because a sucrose molecule went in whole and
+        stayed whole: C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>(aq) is one neutral particle, so there is
+        nothing to carry current. Salt water glows because Na<sup>+</sup> and Cl<sup>&minus;</sup> left the
+        crystal separately and never got back together.
+      </p>
+      <p>
+        <strong>Also worth noticing:</strong> dissolving is not melting. Nothing here was heated, and the water
+        stayed liquid the whole time. And in the close-up, look at which end of the water molecule faces which
+        ion &mdash; the oxygen end turns toward Na<sup>+</sup>, the hydrogen ends turn toward
+        Cl<sup>&minus;</sup>. Opposites attract, and water has both ends available. That single picture is
+        also the answer to most later intermolecular-force questions.
+      </p>
+      <p>
+        <strong>Hexane is not a story about weak attraction.</strong> Hexane molecules attract each other
+        perfectly well, and water attracts water very strongly. The problem is that they attract in
+        incompatible ways. Water molecules hold onto each other by hydrogen bonds, and hexane cannot make a
+        hydrogen bond at all. To fit hexane in, the surrounding water has to freeze into a more ordered cage so
+        it can keep bonding to itself around the intruder, and hexane offers nothing back to repay that cost.
+        So the mixture settles into two layers. &ldquo;Like dissolves like&rdquo; is a statement about matching
+        polarity, not about which substance is stronger.
+      </p>
+      <p>
+        <strong>Where the model stops being true:</strong> the drawing is flat, and a real hydration shell is
+        three-dimensional &mdash; about six water molecules around Na<sup>+</sup>, swapping partners billions
+        of times a second rather than sitting still. Sizes on screen use real ionic and molecular radii
+        (Na<sup>+</sup> 102 pm, Cl<sup>&minus;</sup> 181 pm, water about 152 pm), but the counts do not.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // Chemistry
+      //
+      //   n       = m_dissolved / M
+      //   w       = m_dissolved / (m_dissolved + 100.0 g water)
+      //   rho(w)  = 0.99705 + A*w + B*w^2      (g/mL, fits measured 25 C data)
+      //   V       = (100.0 + m_dissolved) / rho
+      //   c       = n / V
+      //   kappa   = interpolated from measured NaCl conductivity at 25 C
+      //   R_sol   = K_cell / kappa,  K_cell = 1.00 cm^-1
+      //   P/P_max = ( R_lamp / (R_lamp + R_sol) )^2,  R_lamp = 100 ohm
+      // =====================================================================
+
+      var M_WATER = 100.0;        // g of water on the bench
+      var RHO_W = 0.99705;        // g/mL, pure water at 25 C
+      var MM_WATER = 18.015;      // g/mol
+      var KAPPA_PURE = 5.5e-5;    // mS/cm — ultrapure water at 25 C (0.055 uS/cm)
+      var R_LAMP = 100;           // ohm
+      var K_CELL = 1.00;          // cm^-1
+
+      var SOL = {
+        nacl: {
+          key: 'nacl', name: 'Sodium chloride', formula: 'NaCl',
+          kind: 'Ionic solid', ionic: true,
+          M: 58.44, sat: 36.0, i: 2, rhoA: 0.750, rhoB: 0.0, dSolid: 2.165, cap: 135,
+          eq: 'NaCl(s) &rarr; Na<sup>+</sup>(aq) &nbsp;+&nbsp; Cl<sup>&minus;</sup>(aq)',
+          blurb: 'Every formula unit comes apart. Na<sup>+</sup> and Cl<sup>&minus;</sup> leave the crystal ' +
+                 'separately, and each one gets its own shell of water. There is no NaCl molecule anywhere ' +
+                 'in the beaker. Solubility 36.0 g per 100 g water at 25 &deg;C.'
+        },
+        suc: {
+          key: 'suc', name: 'Sucrose', formula: 'C₁₂H₂₂O₁₁',
+          kind: 'Molecular, polar', ionic: false,
+          M: 342.30, sat: 211.0, i: 1, rhoA: 0.376, rhoB: 0.145, dSolid: 1.587, cap: 138,
+          eq: 'C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>(s) &rarr; ' +
+              'C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>(aq)',
+          blurb: 'The crystal breaks up, but the molecule does not. Its eight O&ndash;H groups hydrogen-bond ' +
+                 'to water, which is why it dissolves so well &mdash; and nothing ionises, so nothing can ' +
+                 'carry a current. Solubility about 211 g per 100 g water at 25 &deg;C.'
+        },
+        hex: {
+          key: 'hex', name: 'Hexane', formula: 'C₆H₁₄',
+          kind: 'Molecular, nonpolar', ionic: false,
+          M: 86.18, sat: 0.00095, i: 1, rhoA: 0.0, rhoB: 0.0, dSolid: 0.6548, cap: 178,
+          eq: 'C<sub>6</sub>H<sub>14</sub>(l) &nbsp;stays&nbsp; C<sub>6</sub>H<sub>14</sub>(l)',
+          blurb: 'Only 9.5 mg dissolves per litre of water. Hexane cannot hydrogen-bond, so the water around ' +
+                 'it would have to cage itself into a more ordered arrangement for nothing in return. It ' +
+                 'floats instead &mdash; density 0.655 g/mL.'
+        }
+      };
+
+      // Measured conductivity of aqueous NaCl at 25 C: [c (mol/L), kappa (mS/cm)]
+      var KTAB = [
+        [0.001, 0.1237], [0.005, 0.6033], [0.01, 1.185], [0.02, 2.330], [0.05, 5.553],
+        [0.1, 10.67], [0.2, 20.65], [0.5, 46.8], [1.0, 85.0], [1.5, 116.0],
+        [2.0, 145.6], [3.0, 187.0], [4.0, 211.0], [5.0, 223.0], [5.6, 225.5]
+      ];
+      var LAMBDA0 = 126.4;   // S cm^2 /mol, NaCl at infinite dilution, 25 C
+
+      function kappaNaCl(c) {
+        if (c <= 0) return KAPPA_PURE;
+        if (c < KTAB[0][0]) return LAMBDA0 * c + KAPPA_PURE;
+        for (var i = 1; i < KTAB.length; i++) {
+          if (c <= KTAB[i][0]) {
+            var a = KTAB[i - 1], b = KTAB[i];
+            var t = (Math.log(c) - Math.log(a[0])) / (Math.log(b[0]) - Math.log(a[0]));
+            return Math.exp(Math.log(a[1]) + t * (Math.log(b[1]) - Math.log(a[1]))) + KAPPA_PURE;
+          }
+        }
+        return KTAB[KTAB.length - 1][1] + KAPPA_PURE;
+      }
+
+      var state = { solute: 'nacl', grams: 12, view: 'beaker', shells: true };
+
+      function model() {
+        var s = SOL[state.solute];
+        var diss = Math.min(state.grams, s.sat);
+        var left = state.grams - diss;
+        var n = diss / s.M;
+        var mass = M_WATER + diss;
+        var w = diss / mass;
+        var rho = RHO_W + s.rhoA * w + s.rhoB * w * w;
+        var V = mass / rho;                     // mL of solution
+        var c = n / (V / 1000);                 // mol/L
+        var kappa = s.ionic ? kappaNaCl(c) : KAPPA_PURE;
+        var R = K_CELL / (kappa / 1000);        // ohm
+        var P = Math.pow(R_LAMP / (R_LAMP + R), 2);
+        return {
+          s: s, diss: diss, left: left, n: n, V: V, c: c, rho: rho,
+          ion: s.ionic ? c : 0, part: c * s.i,
+          kappa: kappa, R: R, P: P,
+          leftV: left / s.dSolid,
+          perWater: n > 0 ? (M_WATER / MM_WATER) / n : Infinity
+        };
+      }
+
+      // =====================================================================
+      // Drawing helpers
+      // =====================================================================
+      function F(px, weight) {
+        return (weight ? weight + ' ' : '') + px + 'px Poppins, system-ui, sans-serif';
+      }
+
+      function wrap(ctx, text, x, y, maxW, lh) {
+        var words = String(text).split(' '), line = '', yy = y;
+        for (var i = 0; i < words.length; i++) {
+          var t = line ? line + ' ' + words[i] : words[i];
+          if (ctx.measureText(t).width > maxW && line) {
+            ctx.fillText(line, x, yy); yy += lh; line = words[i];
+          } else { line = t; }
+        }
+        if (line) { ctx.fillText(line, x, yy); yy += lh; }
+        return yy;
+      }
+
+      var HALF_HOH = 0.9119;   // half of the 104.5 degree H-O-H angle, in radians
+
+      // ox, oy = the oxygen. ang = the direction the two hydrogens point toward.
+      function water(ctx, ox, oy, ang, s, c, alpha, marks) {
+        var bond = 1.30 * s, hr = 0.55 * s;
+        var h1x = ox + bond * Math.cos(ang - HALF_HOH), h1y = oy + bond * Math.sin(ang - HALF_HOH);
+        var h2x = ox + bond * Math.cos(ang + HALF_HOH), h2y = oy + bond * Math.sin(ang + HALF_HOH);
+        ctx.globalAlpha = alpha == null ? 1 : alpha;
+        ctx.strokeStyle = c.accent;
+        ctx.lineWidth = Math.max(1.2, s * 0.42);
+        ctx.beginPath();
+        ctx.moveTo(h1x, h1y); ctx.lineTo(ox, oy); ctx.lineTo(h2x, h2y);
+        ctx.stroke();
+        ctx.fillStyle = c.surface2; ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(h1x, h1y, hr, 0, 6.28319); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(h2x, h2y, hr, 0, 6.28319); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = c.accent;
+        ctx.beginPath(); ctx.arc(ox, oy, s, 0, 6.28319); ctx.fill();
+        if (marks && s > 11) {
+          ctx.globalAlpha = 1;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = F(Math.round(s * 0.60), '600');
+          ctx.fillStyle = c.surface;
+          ctx.fillText('δ−', ox, oy);
+          ctx.font = F(Math.round(s * 0.46), '600');
+          ctx.fillStyle = c.text;
+          ctx.fillText('δ+', h1x, h1y);
+          ctx.fillText('δ+', h2x, h2y);
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // A cation: every water turns its oxygen inward, hydrogens out.
+      function cationShell(ctx, cx, cy, rIon, s, c, count, spin, marks) {
+        var d = rIon + s * 1.75;
+        for (var j = 0; j < count; j++) {
+          var th = spin + j * 2 * Math.PI / count;
+          water(ctx, cx + d * Math.cos(th), cy + d * Math.sin(th), th, s, c, 1,
+                marks && j === Math.round(count * 0.75) % count);
+        }
+      }
+
+      // An anion: every water turns its hydrogens inward, oxygen out.
+      function anionShell(ctx, cx, cy, rIon, s, c, count, spin, marks) {
+        var d = rIon + s * 1.30 + s * 0.55 + s * 0.15;
+        for (var j = 0; j < count; j++) {
+          var th = spin + j * 2 * Math.PI / count;
+          water(ctx, cx + d * Math.cos(th), cy + d * Math.sin(th), th + Math.PI, s, c, 1,
+                marks && j === Math.round(count * 0.75) % count);
+        }
+      }
+
+      function ion(ctx, x, y, r, c, positive, big) {
+        ctx.fillStyle = positive ? c.series[3] : c.series[2];
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.28319); ctx.fill();
+        if (!big) {
+          // a thin ring of page background so the ion reads clearly through the water
+          ctx.strokeStyle = c.bg; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(x, y, r + 0.7, 0, 6.28319); ctx.stroke();
+        }
+        if (big) {
+          ctx.fillStyle = c.surface;
+          ctx.font = F(Math.max(9, Math.round(r * 1.0)), '700');
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(positive ? '+' : '−', x, y);
+        } else {
+          ctx.fillStyle = positive ? c.series[3] : c.series[2];
+          ctx.font = F(11, '700');
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(positive ? '+' : '−', x + r + 1, y - r - 1);
+        }
+      }
+
+      // A schematic sucrose molecule: a lobed body with its O-H groups showing.
+      function sucrose(ctx, x, y, r, c, ang, showOH) {
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(ang);
+        ctx.fillStyle = c.series[1];
+        ctx.globalAlpha = 0.9;
+        ctx.beginPath();
+        ctx.arc(-r * 0.45, 0, r * 0.62, 0, 6.28319);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(r * 0.45, r * 0.08, r * 0.58, 0, 6.28319);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = c.series[1];
+        ctx.lineWidth = Math.max(1, r * 0.09);
+        ctx.beginPath(); ctx.moveTo(-r * 0.1, 0); ctx.lineTo(r * 0.05, r * 0.05); ctx.stroke();
+        if (showOH) {
+          ctx.lineWidth = Math.max(1, r * 0.07);
+          for (var j = 0; j < 8; j++) {
+            var th = j * Math.PI / 4 + 0.2;
+            var bx = Math.cos(th) * r * 0.62, by = Math.sin(th) * r * 0.62;
+            var ex = Math.cos(th) * r * 0.92, ey = Math.sin(th) * r * 0.92;
+            ctx.strokeStyle = c.series[1];
+            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.fillStyle = c.text2;
+            ctx.font = F(Math.max(8, Math.round(r * 0.17)), '600');
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('OH', Math.cos(th) * r * 1.09, Math.sin(th) * r * 1.09);
+          }
+        }
+        ctx.restore();
+      }
+
+      // A schematic hexane: six carbons, zig-zag, no charges anywhere.
+      function hexane(ctx, x, y, unit, c, ang) {
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(ang);
+        var pts = [], step = unit * 1.02, i;
+        for (i = 0; i < 6; i++) {
+          pts.push([(i - 2.5) * step * 0.87, (i % 2 ? 1 : -1) * step * 0.30]);
+        }
+        ctx.strokeStyle = c.series[1];
+        ctx.lineWidth = Math.max(1.5, unit * 0.34);
+        ctx.beginPath();
+        for (i = 0; i < 6; i++) { i ? ctx.lineTo(pts[i][0], pts[i][1]) : ctx.moveTo(pts[i][0], pts[i][1]); }
+        ctx.stroke();
+        ctx.fillStyle = c.series[1];
+        for (i = 0; i < 6; i++) {
+          ctx.beginPath(); ctx.arc(pts[i][0], pts[i][1], unit * 0.55, 0, 6.28319); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      function dashLine(ctx, x1, y1, x2, y2, c, lw) {
+        ctx.save();
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = c.muted;
+        ctx.lineWidth = lw || 1;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.restore();
+      }
+
+      // =====================================================================
+      // Particle pools — normalised coordinates so resizing never breaks them
+      // =====================================================================
+      var rnd = Demo.rng(20250724);
+      function makePool(n) {
+        var out = [];
+        for (var i = 0; i < n; i++) {
+          out.push({
+            x: 0.08 + rnd() * 0.84, y: 0.08 + rnd() * 0.84,
+            vx: (rnd() - 0.5) * 0.10, vy: (rnd() - 0.5) * 0.10,
+            a: rnd() * 6.28319, sp: (rnd() - 0.5) * 1.4
+          });
+        }
+        return out;
+      }
+      var solutePool = makePool(26);
+      var waterPool = makePool(46);
+      var layerPool = makePool(14);
+      var testPool = makePool(16);
+
+      function drift(pool, dt, speed) {
+        for (var i = 0; i < pool.length; i++) {
+          var p = pool[i];
+          p.x += p.vx * dt * speed; p.y += p.vy * dt * speed;
+          if (p.x < 0.04) { p.x = 0.04; p.vx = Math.abs(p.vx); }
+          if (p.x > 0.96) { p.x = 0.96; p.vx = -Math.abs(p.vx); }
+          if (p.y < 0.05) { p.y = 0.05; p.vy = Math.abs(p.vy); }
+          if (p.y > 0.95) { p.y = 0.95; p.vy = -Math.abs(p.vy); }
+          p.a += p.sp * dt * 0.5;
+        }
+      }
+
+      // =====================================================================
+      // The beaker
+      // =====================================================================
+      var beaker = Demo.canvas('#beaker', function (ctx, w, h, c) {
+        var m = model();
+        ctx.textBaseline = 'middle';
+        if (state.view === 'zoom') { drawZoom(ctx, w, h, c, m); }
+        else { drawBeaker(ctx, w, h, c, m); }
+      }, { aspect: 0.78, minHeight: 300, maxHeight: 600 });
+
+      function drawBeaker(ctx, w, h, c, m) {
+        var s = m.s, VB = s.cap;
+        var S = Demo.clamp(w / 560, 0.85, 1.35);
+        var bx0 = 22, bx1 = w - 22, byTop = 26, byBot = h - 34;
+        var innerH = byBot - byTop, innerW = bx1 - bx0;
+
+        var hexV = (s.key === 'hex') ? m.leftV : 0;
+        var yWater = byBot - innerH * Demo.clamp(m.V / VB, 0, 1);
+        var yHexTop = yWater - innerH * Demo.clamp(hexV / VB, 0, 1);
+
+        // --- water / solution body ---
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(bx0, yWater, innerW, byBot - yWater);
+        ctx.globalAlpha = 1;
+
+        // --- floating nonpolar layer ---
+        if (hexV > 0.05) {
+          ctx.globalAlpha = 0.20;
+          ctx.fillStyle = c.series[1];
+          ctx.fillRect(bx0, yHexTop, innerW, yWater - yHexTop);
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = c.series[1];
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(bx0, yWater); ctx.lineTo(bx1, yWater); ctx.stroke();
+        }
+
+        // --- glass ---
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx0 - 5, byTop - 6); ctx.lineTo(bx0, byTop);
+        ctx.lineTo(bx0, byBot); ctx.lineTo(bx1, byBot); ctx.lineTo(bx1, byTop);
+        ctx.lineTo(bx1 + 5, byTop - 6);
+        ctx.stroke();
+
+        // --- level tick ---
+        ctx.strokeStyle = c.lineSoft;
+        ctx.setLineDash([3, 4]); ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(bx0, yWater); ctx.lineTo(bx1, yWater); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.muted;
+        ctx.font = F(10.5, '600');
+        ctx.textAlign = 'right';
+        ctx.fillText(Demo.fmt.dec(m.V, 1) + ' mL of solution', bx1 - 4, yWater - 9);
+
+        // --- undissolved solid at the bottom ---
+        var yFloor = byBot;
+        if (s.key !== 'hex' && m.left > 0) {
+          var areaPx = Demo.clamp(m.leftV / VB, 0, 1) * innerH * innerW;
+          var cw = Math.min(innerW * 0.55, Math.max(46, Math.sqrt(areaPx * 3.2)));
+          var ch = Math.max(9, areaPx / cw);
+          var cx0 = (bx0 + bx1) / 2 - cw / 2, cy0 = byBot - ch;
+          ctx.save();
+          ctx.beginPath(); ctx.rect(cx0, cy0, cw, ch); ctx.clip();
+          ctx.globalAlpha = 0.9;
+          var cell = 7;
+          for (var gx = 0; gx * cell < cw + cell; gx++) {
+            for (var gy = 0; gy * cell < ch + cell; gy++) {
+              ctx.fillStyle = ((gx + gy) % 2) ? c.series[3] : c.series[2];
+              ctx.beginPath();
+              ctx.arc(cx0 + gx * cell + 3.5, cy0 + gy * cell + 3.5, 2.4, 0, 6.28319);
+              ctx.fill();
+            }
+          }
+          ctx.globalAlpha = 1;
+          ctx.restore();
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.strokeRect(cx0, cy0, cw, ch);
+          ctx.fillStyle = c.muted; ctx.font = F(10.5, '600');
+          ctx.textAlign = 'center';
+          ctx.fillText('undissolved solid, ' + Demo.fmt.dec(m.left, 1) + ' g', (bx0 + bx1) / 2, cy0 - 9);
+          yFloor = cy0;
+        }
+
+        // --- the solution region that particles live in ---
+        var padP = 16 * S;
+        var rx0 = bx0 + padP, rx1 = bx1 - padP;
+        var ry0 = yWater + padP, ry1 = yFloor - padP * 0.7;
+        if (ry1 - ry0 < 30) { ry1 = ry0 + 30; }
+        function MX(p) { return rx0 + p.x * (rx1 - rx0); }
+        function MY(p) { return ry0 + p.y * (ry1 - ry0); }
+
+        var rW = 6.0 * S;                       // water oxygen, stands for ~152 pm
+        var rNa = 4.0 * S;                      // 102 pm
+        var rCl = 7.1 * S;                      // 181 pm
+        var shellsOn = state.shells;
+        var freeCount = shellsOn ? 12 : 30;
+
+        // free water
+        for (var i = 0; i < freeCount; i++) {
+          var p = waterPool[i];
+          water(ctx, MX(p), MY(p), p.a, rW, c, 0.55, false);
+        }
+
+        var count = 0, k;
+        if (s.key === 'nacl') {
+          count = m.n > 0 ? Demo.clamp(Math.round(8 * Math.sqrt(m.n / 0.616)), 1, 8) : 0;
+          for (k = 0; k < count; k++) {
+            var pa = solutePool[k], pb = solutePool[k + 13];
+            var ax = MX(pa), ay = MY(pa), bxp = MX(pb), byp = MY(pb);
+            if (shellsOn) {
+              cationShell(ctx, ax, ay, rNa, rW, c, 4, pa.a, false);
+              anionShell(ctx, bxp, byp, rCl, rW, c, 4, pb.a, false);
+            }
+            ion(ctx, ax, ay, rNa, c, true, false);
+            ion(ctx, bxp, byp, rCl, c, false, false);
+          }
+        } else if (s.key === 'suc') {
+          count = m.n > 0 ? Demo.clamp(Math.round(7 * Math.sqrt(m.n / 0.1169)), 1, 7) : 0;
+          var rSuc = 15 * S;
+          for (k = 0; k < count; k++) {
+            var q = solutePool[k];
+            var qx = MX(q), qy = MY(q);
+            if (shellsOn) {
+              for (var j = 0; j < 3; j++) {
+                var th = q.a * 0.6 + j * 2.094;
+                var wx = qx + (rSuc + rW * 2.3) * Math.cos(th);
+                var wy = qy + (rSuc + rW * 2.3) * Math.sin(th);
+                dashLine(ctx, qx + rSuc * 0.85 * Math.cos(th), qy + rSuc * 0.85 * Math.sin(th), wx, wy, c, 1);
+                water(ctx, wx, wy, th + Math.PI + 0.6 * Math.sin(q.a + j), rW, c, 0.95, false);
+              }
+            }
+            sucrose(ctx, qx, qy, rSuc, c, q.a * 0.4, false);
+          }
+        } else {
+          // hexane: droplets in the floating layer, essentially nothing in the water
+          if (hexV > 0.05) {
+            var lc = Demo.clamp(Math.round(hexV / 4), 3, 10);
+            for (k = 0; k < lc; k++) {
+              var lp = layerPool[k];
+              var lx = bx0 + padP + lp.x * (innerW - 2 * padP);
+              var ly = yHexTop + 8 + lp.y * Math.max(6, (yWater - yHexTop) - 16);
+              hexane(ctx, lx, ly, 4.4 * S, c, lp.a * 0.3);
+            }
+            ctx.fillStyle = c.series[1];
+            ctx.font = F(10.5, '600');
+            ctx.textAlign = 'left';
+            ctx.fillText('hexane layer, ' + Demo.fmt.dec(hexV, 1) + ' mL (it floats)', bx0 + 6, yHexTop + 11);
+          }
+          if (m.n > 0) {
+            ctx.fillStyle = c.muted;
+            ctx.font = F(11, '500');
+            ctx.textAlign = 'center';
+            wrap(ctx, 'dissolved down here: about 1 hexane molecule for every ' +
+                 Demo.fmt.comma(Number(m.perWater.toPrecision(2))) + ' waters',
+                 (bx0 + bx1) / 2, (ry0 + ry1) / 2, innerW - 40, 15);
+          }
+        }
+
+        // --- title strip ---
+        ctx.fillStyle = c.text;
+        ctx.font = F(12, '600');
+        ctx.textAlign = 'left';
+        var head = s.key === 'nacl' ? 'Na⁺ and Cl⁻, separate and hydrated'
+          : s.key === 'suc' ? 'Whole C₁₂H₂₂O₁₁ molecules, no ions'
+            : 'Two layers — hexane will not go in';
+        ctx.fillText(head, bx0, 13);
+      }
+
+      // =====================================================================
+      // Close-up
+      // =====================================================================
+      function drawZoom(ctx, w, h, c, m) {
+        var s = m.s;
+        ctx.fillStyle = c.text;
+        ctx.font = F(12, '600');
+        ctx.textAlign = 'center';
+        var title = s.key === 'nacl' ? 'One Na⁺ and one Cl⁻, each in its shell of water'
+          : s.key === 'suc' ? 'One sucrose molecule, still in one piece'
+            : 'One hexane molecule, walled off by water';
+        ctx.fillText(title, w / 2, 14);
+
+        if (s.key === 'nacl') { zoomNaCl(ctx, w, h, c); }
+        else if (s.key === 'suc') { zoomSucrose(ctx, w, h, c); }
+        else { zoomHexane(ctx, w, h, c); }
+      }
+
+      function zoomNaCl(ctx, w, h, c) {
+        // radius budget, in units of K: outermost point of a hydration shell
+        //   cation  10.1 + 15*1.75 + 15*1.30 + 15*0.55 = 64.1
+        //   anion   17.9 + 15*2.00 + 15                = 62.9
+        var need = 65;
+        var top = 28, bot = h - 86;
+        var K = Math.min((w / 4 - 6) / need, ((bot - top) / 2) / need);
+        K = Demo.clamp(K, 0.8, 2.4);
+        var rW = 15 * K, rNa = 10.1 * K, rCl = 17.9 * K;
+        var cy = (top + bot) / 2;
+        var panelW = w / 2 - 10;
+        var lx = w * 0.25, rxp = w * 0.75;
+
+        cationShell(ctx, lx, cy, rNa, rW, c, 6, zoomSpin, true);
+        ion(ctx, lx, cy, rNa, c, true, true);
+        anionShell(ctx, rxp, cy, rCl, rW, c, 6, zoomSpin * 0.8 + 0.4, true);
+        ion(ctx, rxp, cy, rCl, c, false, true);
+
+        var ty = h - 74;
+        ctx.textAlign = 'center';
+        ctx.font = F(12, '600');
+        ctx.fillStyle = c.series[3];
+        ctx.fillText('Na⁺ — radius 102 pm', lx, ty);
+        ctx.fillStyle = c.series[2];
+        ctx.fillText('Cl⁻ — radius 181 pm', rxp, ty);
+
+        ctx.font = F(11, '400');
+        ctx.fillStyle = c.text2;
+        wrap(ctx, 'The δ− oxygen turns to face the positive ion.', lx, ty + 18, panelW, 13.5);
+        wrap(ctx, 'The δ+ hydrogens turn to face the negative ion.', rxp, ty + 18, panelW, 13.5);
+      }
+
+      function zoomSucrose(ctx, w, h, c) {
+        var K = Demo.clamp(Math.min(w * 0.44 / 78, (h - 108) * 0.5 / 78), 0.8, 2.2);
+        var rSuc = 54 * K, rW = 15 * K;
+        var cx = w / 2, cy = 30 + (h - 108) * 0.5;
+
+        var n = 7;
+        for (var j = 0; j < n; j++) {
+          var th = zoomSpin * 0.5 + j * 2 * Math.PI / n;
+          var d = rSuc + rW * 2.4;
+          var wx = cx + d * Math.cos(th), wy = cy + d * Math.sin(th);
+          dashLine(ctx, cx + rSuc * 0.95 * Math.cos(th), cy + rSuc * 0.95 * Math.sin(th), wx, wy, c, 1.2);
+          // no ordered shell: each water sits at its own angle, not radially locked
+          water(ctx, wx, wy, th + Math.PI + 0.75 * Math.sin(j * 2.1 + zoomSpin * 0.3), rW, c, 1, false);
+        }
+        sucrose(ctx, cx, cy, rSuc, c, 0.15, true);
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c.series[1];
+        ctx.font = F(12.5, '600');
+        ctx.fillText('C₁₂H₂₂O₁₁(aq) — one neutral particle', cx, h - 62);
+        ctx.font = F(11, '400');
+        ctx.fillStyle = c.text2;
+        wrap(ctx, 'Dashed lines are hydrogen bonds to the eight O–H groups. There is no charge to ' +
+                  'orient around, so the waters do not all point the same way — and nothing splits off.',
+             cx, h - 42, w - 34, 14);
+      }
+
+      function zoomHexane(ctx, w, h, c) {
+        var K = Demo.clamp(Math.min(w * 0.44 / 88, (h - 108) * 0.42 / 58), 0.8, 2.4);
+        var unit = 15.2 * K, rW = 15 * K;
+        var cx = w / 2, cy = 30 + (h - 108) * 0.5;
+
+        var n = 10, pts = [], j;
+        var ra = unit * 3.5 + rW * 2.2, rb = unit * 1.9 + rW * 2.2;
+        for (j = 0; j < n; j++) {
+          var th = zoomSpin * 0.35 + j * 2 * Math.PI / n;
+          pts.push([cx + ra * Math.cos(th), cy + rb * Math.sin(th), th]);
+        }
+        for (j = 0; j < n; j++) {
+          var q = pts[j], r2 = pts[(j + 1) % n];
+          dashLine(ctx, q[0], q[1], r2[0], r2[1], c, 1.2);
+        }
+        hexane(ctx, cx, cy, unit, c, 0);
+        for (j = 0; j < n; j++) {
+          // hydrogens point along the ring at the neighbouring water, never at the hexane
+          var a = Math.atan2(pts[(j + 1) % n][1] - pts[j][1], pts[(j + 1) % n][0] - pts[j][0]);
+          water(ctx, pts[j][0], pts[j][1], a, rW, c, 1, false);
+        }
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c.series[1];
+        ctx.font = F(12.5, '600');
+        ctx.fillText('C₆H₁₄ — no charges, no hydrogen bonds', cx, h - 62);
+        ctx.font = F(11, '400');
+        ctx.fillStyle = c.text2;
+        wrap(ctx, 'The waters keep bonding to each other (dashed lines) and cage the hexane in. That extra ' +
+                  'order costs the system, and hexane gives nothing back — so it separates instead.',
+             cx, h - 42, w - 34, 14);
+      }
+
+      // =====================================================================
+      // Conductivity tester
+      // =====================================================================
+      var circuit = Demo.canvas('#circuit', function (ctx, w, h, c) {
+        var m = model();
+        var TY = h * 0.17, xL = w * 0.13, xR = w * 0.87;
+        var midY = h * 0.55;
+        var eA = w * 0.31, eB = w * 0.69;
+        var boxL = w * 0.16, boxR = w * 0.84, boxT = h * 0.60, boxB = h * 0.93;
+        var bulbX = w / 2, bulbR = Math.min(15, h * 0.11);
+        var lit = Math.pow(Demo.clamp(m.P, 0, 1), 0.45);
+
+        ctx.textBaseline = 'middle';
+
+        // solution well
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(boxL, boxT, boxR - boxL, boxB - boxT);
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.5;
+        ctx.strokeRect(boxL, boxT, boxR - boxL, boxB - boxT);
+
+        // wires
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(bulbX - bulbR, TY); ctx.lineTo(xL, TY); ctx.lineTo(xL, midY); ctx.lineTo(eA, midY);
+        ctx.moveTo(bulbX + bulbR, TY); ctx.lineTo(xR, TY); ctx.lineTo(xR, midY); ctx.lineTo(eB, midY);
+        ctx.stroke();
+
+        // battery, sitting in the left wire
+        var by = (TY + midY) / 2;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(xL - 9, by - 3); ctx.lineTo(xL + 9, by - 3);
+        ctx.moveTo(xL - 5, by + 3); ctx.lineTo(xL + 5, by + 3);
+        ctx.stroke();
+        ctx.fillStyle = c.muted; ctx.font = F(9.5, '600');
+        ctx.textAlign = 'left';
+        ctx.fillText('9 V', xL + 13, by);
+
+        // electrodes
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(eA, midY); ctx.lineTo(eA, boxB - 6);
+        ctx.moveTo(eB, midY); ctx.lineTo(eB, boxB - 6);
+        ctx.stroke();
+        ctx.fillStyle = c.text2; ctx.font = F(11, '700');
+        ctx.textAlign = 'center';
+        ctx.fillText('+', eA, midY - 9);
+        ctx.fillText('−', eB, midY - 9);
+
+        // charge carriers between the electrodes
+        var ix0 = eA + 8, ix1 = eB - 8, iy0 = boxT + 8, iy1 = boxB - 8;
+        var k, p, px, py;
+        if (m.s.ionic && m.c > 0) {
+          var nIon = Demo.clamp(Math.round(5 * Math.sqrt(m.c / 5.4)) + 1, 2, 6);
+          for (k = 0; k < nIon; k++) {
+            p = testPool[k];
+            px = ix0 + ((p.x + driftPos) % 1) * (ix1 - ix0);      // Na+ toward the minus plate
+            py = iy0 + p.y * (iy1 - iy0);
+            ion(ctx, px, py, 4, c, true, false);
+            p = testPool[k + 8];
+            px = ix1 - ((p.x + driftPos) % 1) * (ix1 - ix0);      // Cl- toward the plus plate
+            py = iy0 + p.y * (iy1 - iy0);
+            ion(ctx, px, py, 6, c, false, false);
+          }
+          ctx.fillStyle = c.muted; ctx.font = F(9.5, '500');
+          ctx.textAlign = 'center';
+          ctx.fillText('ions carry the charge across', (eA + eB) / 2, boxB + 0);
+        } else {
+          if (m.s.key === 'suc' && m.c > 0) {
+            for (k = 0; k < 3; k++) {
+              p = testPool[k];
+              px = ix0 + p.x * (ix1 - ix0);
+              py = iy0 + p.y * (iy1 - iy0);
+              sucrose(ctx, px, py, 8, c, p.a, false);
+            }
+          }
+          ctx.fillStyle = c.muted; ctx.font = F(9.5, '500');
+          ctx.textAlign = 'center';
+          ctx.fillText('no charged particles — no current', (eA + eB) / 2, boxB + 0);
+        }
+
+        // bulb glow
+        for (k = 3; k >= 1; k--) {
+          ctx.globalAlpha = 0.16 * lit / k;
+          ctx.fillStyle = c.warn;
+          ctx.beginPath(); ctx.arc(bulbX, TY, bulbR * (1 + k * 0.62), 0, 6.28319); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // bulb
+        ctx.fillStyle = c.surface2;
+        ctx.beginPath(); ctx.arc(bulbX, TY, bulbR, 0, 6.28319); ctx.fill();
+        ctx.globalAlpha = 0.20 + 0.80 * lit;
+        ctx.fillStyle = c.warn;
+        ctx.beginPath(); ctx.arc(bulbX, TY, bulbR, 0, 6.28319); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.arc(bulbX, TY, bulbR, 0, 6.28319); ctx.stroke();
+        ctx.strokeStyle = lit > 0.15 ? c.text : c.muted;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(bulbX - bulbR * 0.45, TY + bulbR * 0.3);
+        ctx.lineTo(bulbX - bulbR * 0.15, TY - bulbR * 0.35);
+        ctx.lineTo(bulbX + bulbR * 0.15, TY + bulbR * 0.3);
+        ctx.lineTo(bulbX + bulbR * 0.45, TY - bulbR * 0.35);
+        ctx.stroke();
+      }, { aspect: 0.58, minHeight: 152, maxHeight: 200 });
+
+      // =====================================================================
+      // Readouts
+      // =====================================================================
+      function unit(v, u) { return v + '<span class="r-unit">' + u + '</span>'; }
+
+      function concText(c) {
+        if (c === 0) return '0';
+        return c < 1e-3 ? Demo.fmt.sci(c, 2) : Demo.fmt.sig(c, 3);
+      }
+
+      function verdict(P) {
+        if (P >= 0.30) return ['Bright', 'is-ok'];
+        if (P >= 0.06) return ['Lit', 'is-ok'];
+        if (P >= 0.002) return ['Faint', ''];
+        return ['Dark', 'is-bad'];
+      }
+
+      function refresh() {
+        var m = model(), s = m.s;
+
+        document.getElementById('vDiss').innerHTML = unit(Demo.fmt.dec(m.diss, m.diss < 0.1 ? 5 : 1), 'g');
+        document.getElementById('vMol').innerHTML =
+          unit(m.n === 0 ? '0' : (m.n < 1e-3 ? Demo.fmt.sci(m.n, 2) : Demo.fmt.dec(m.n, 3)), 'mol');
+        document.getElementById('vVol').innerHTML = unit(Demo.fmt.dec(m.V, 1), 'mL');
+        document.getElementById('vConc').innerHTML = unit(concText(m.c), 'M');
+        document.getElementById('vPart').innerHTML = unit(concText(m.part), 'M');
+
+        var ions = document.getElementById('vIons');
+        var rIons = document.getElementById('rIons');
+        if (s.ionic && m.c > 0) {
+          ions.innerHTML = unit(Demo.fmt.sig(m.ion, 3), 'M each');
+          rIons.className = 'readout is-ok';
+          rIons.querySelector('.r-label').textContent = '[Na⁺] and [Cl⁻]';
+        } else {
+          ions.innerHTML = 'none';
+          rIons.className = 'readout is-bad';
+          rIons.querySelector('.r-label').textContent = 'Free ions';
+        }
+
+        document.getElementById('vKappa').innerHTML =
+          unit(m.kappa < 0.01 ? Demo.fmt.sci(m.kappa, 1) : Demo.fmt.sig(m.kappa, 3), 'mS/cm');
+        document.getElementById('vRes').innerHTML =
+          unit(m.R >= 1e5 ? Demo.fmt.sci(m.R, 1) : Demo.fmt.sig(m.R, 3), 'Ω');
+        document.getElementById('vPow').textContent =
+          m.P < 0.001 ? '< 0.1%' : Demo.fmt.pct(m.P, 1);
+
+        var v = verdict(m.P);
+        var rb = document.getElementById('rBulb');
+        rb.className = 'readout ' + v[1];
+        rb.querySelector('.r-value').textContent = v[0];
+
+        // leftover note
+        var lo = document.getElementById('leftover');
+        if (s.key === 'hex') {
+          lo.className = 'note bad';
+          lo.innerHTML = m.left > 0
+            ? '<strong>' + Demo.fmt.dec(m.left, 1) + ' g floats on top</strong> as a separate liquid layer ' +
+              '(' + Demo.fmt.dec(m.leftV, 1) + ' mL). Only ' + Demo.fmt.dec(m.diss * 1000, 2) +
+              ' mg actually dissolved — about one hexane molecule per ' +
+              Demo.fmt.comma(Number(m.perWater.toPrecision(2))) + ' water molecules.'
+            : 'Add some hexane and watch where it goes.';
+        } else if (m.left > 0) {
+          lo.className = 'note warn';
+          lo.innerHTML = '<strong>Saturated.</strong> ' + Demo.fmt.dec(m.left, 1) + ' g of ' + s.formula +
+            ' is still sitting on the bottom. Past ' + Demo.fmt.dec(s.sat, 1) +
+            ' g per 100 g of water, stirring longer will not help — ions leave and rejoin the crystal ' +
+            'at the same rate.';
+        } else {
+          lo.className = 'note';
+          lo.innerHTML = 'All of it dissolved. The limit for ' + s.formula + ' is ' +
+            Demo.fmt.dec(s.sat, 1) + ' g per 100 g of water at 25 &deg;C.';
+        }
+
+        // stage caption
+        var cap = document.getElementById('cap');
+        if (state.view === 'zoom') {
+          cap.innerHTML = s.key === 'nacl'
+            ? 'Look at which end of each water molecule faces the ion. The oxygen end is slightly negative, ' +
+              'so it turns toward Na<sup>+</sup>. The hydrogen ends are slightly positive, so they turn ' +
+              'toward Cl<sup>&minus;</sup>. Same water molecule, opposite ends.'
+            : s.key === 'suc'
+              ? 'Count the atoms: nothing came off. Water hydrogen-bonds to the O&ndash;H groups and pulls ' +
+                'the molecules apart from each other, but never pulls the molecule itself apart.'
+              : 'Nothing here is charged and nothing can hydrogen-bond to water. The waters bond to each ' +
+                'other around it instead.';
+        } else {
+          cap.innerHTML = s.key === 'nacl'
+            ? 'Each face of the crystal gives up ions one at a time, and they leave separately. Every ' +
+              'particle in this water is a single Na<sup>+</sup> or a single Cl<sup>&minus;</sup> ' +
+              '&mdash; there is no NaCl unit anywhere in the beaker.'
+            : s.key === 'suc'
+              ? 'The crystal comes apart into whole molecules. Each particle in the water is still ' +
+                'C<sub>12</sub>H<sub>22</sub>O<sub>11</sub>, and it carries no charge.'
+              : 'Hexane never enters the water. It sits on top, because 0.655 g/mL is less dense than ' +
+                'water &mdash; and the bulb stays dark either way.';
+        }
+
+        document.getElementById('stageLabel').textContent =
+          state.view === 'zoom' ? 'Close-up: one particle in water' : 'The beaker';
+
+        beaker.el.setAttribute('aria-label',
+          (state.view === 'zoom' ? 'Close-up of ' : 'Beaker of water containing ') + s.name +
+          '. ' + concText(m.c) + ' molar. Bulb: ' + v[0] + '.');
+
+        beaker.redraw();
+        circuit.redraw();
+      }
+
+      // =====================================================================
+      // Controls
+      // =====================================================================
+      function setSolute(key) {
+        state.solute = key;
+        var s = SOL[key];
+        document.querySelectorAll('#segSolute button').forEach(function (b) {
+          b.setAttribute('aria-selected', b.dataset.s === key ? 'true' : 'false');
+        });
+        document.getElementById('sKind').textContent = s.kind;
+        document.getElementById('sEq').innerHTML = s.eq;
+        document.getElementById('sBlurb').innerHTML = s.blurb;
+        buildLegend(key);
+        refresh();
+      }
+
+      function buildLegend(key) {
+        var html = '<span class="lg"><span class="sw water"></span>water (oxygen shown)</span>';
+        if (key === 'nacl') {
+          html += '<span class="lg"><span class="sw na"></span>Na⁺ ion</span>' +
+                  '<span class="lg"><span class="sw cl"></span>Cl⁻ ion</span>';
+        } else if (key === 'suc') {
+          html += '<span class="lg"><span class="sw org"></span>sucrose molecule</span>';
+        } else {
+          html += '<span class="lg"><span class="sw org"></span>hexane molecule</span>';
+        }
+        html += '<span class="lg">sizes use real radii; counts are schematic</span>';
+        document.getElementById('legend').innerHTML = html;
+      }
+
+      document.querySelectorAll('#segSolute button').forEach(function (b) {
+        b.addEventListener('click', function () { setSolute(b.dataset.s); });
+      });
+
+      document.querySelectorAll('#segView button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.view = b.dataset.v;
+          document.querySelectorAll('#segView button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          refresh();
+        });
+      });
+
+      Demo.range('#grams', function (v) {
+        state.grams = v;
+        document.getElementById('gramsOut').textContent = Demo.fmt.dec(v, 1) + ' g';
+        if (typeof beaker !== 'undefined') refresh();
+      });
+
+      document.getElementById('shells').addEventListener('change', function () {
+        state.shells = this.checked;
+        refresh();
+      });
+
+      // =====================================================================
+      // Motion
+      // =====================================================================
+      var zoomSpin = 0, driftPos = 0;
+      var reduce = window.matchMedia &&
+                   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      var anim = Demo.loop(function (dt) {
+        var m = model();
+        drift(solutePool, dt, 0.9);
+        drift(waterPool, dt, 1.4);
+        drift(layerPool, dt, 0.5);
+        zoomSpin += dt * 0.16;
+        driftPos = (driftPos + dt * 0.10 * (0.25 + 0.75 * Math.pow(Demo.clamp(m.P, 0, 1), 0.4))) % 1;
+        beaker.paint();
+        circuit.paint();
+      });
+
+      var runBtn = document.getElementById('run');
+      runBtn.addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Play';
+      });
+
+      document.getElementById('reset').addEventListener('click', function () {
+        document.getElementById('grams').value = 12;
+        state.grams = 12;
+        document.getElementById('gramsOut').textContent = '12.0 g';
+        document.getElementById('shells').checked = true;
+        state.shells = true;
+        state.view = 'beaker';
+        document.querySelectorAll('#segView button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.v === 'beaker' ? 'true' : 'false');
+        });
+        setSolute('nacl');
+      });
+
+      // ---- boot ----
+      setSolute('nacl');
+      if (reduce) { runBtn.textContent = 'Play'; }
+      else { anim.start(); }
+    })();
+  </script>
+</body>
+
+</html>

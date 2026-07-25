@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Accurate, Precise, Both, Neither | Dr. Andres Barboza</title>
+  <meta name="description" content="Two independent dials — systematic bias and random scatter — on repeated weighings of a certified 10.000 g standard, and what averaging can and cannot fix.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: the four-case preset buttons, the verdict badge,
+       the plot legend and the little balance display. */
+
+    .preset-btn {
+      width: 100%;
+      display: block;
+      text-align: left;
+      line-height: 1.35;
+    }
+    .preset-btn[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+    .preset-btn .pb-name { display: block; font-weight: 600; font-size: 12.5px; }
+    .preset-btn .pb-sub {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-top: 1px;
+    }
+    .preset-btn[aria-pressed="true"] .pb-sub { color: var(--accent-strong); }
+
+    .verdict {
+      border-radius: 11px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+    .verdict .v-sub {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .verdict.is-ok  { background: var(--ok-soft);   border-color: transparent; color: var(--ok); }
+    .verdict.is-warn{ background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+    .verdict.is-bad { background: var(--bad-soft);  border-color: transparent; color: var(--bad); }
+    .verdict.is-ok .v-sub,
+    .verdict.is-warn .v-sub,
+    .verdict.is-bad .v-sub { color: var(--text-2); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 9px; }
+    .lg-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); }
+    .sw { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+    .sw.dot { width: 8px; height: 8px; border-radius: 50%; }
+    .sw.band { height: 10px; width: 14px; border-radius: 3px; opacity: 0.35; }
+
+    .bal {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 7px 11px;
+    }
+    .bal-label { font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+    .bal-val { font-size: 17px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .bal-val .r-unit { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+
+    .recent { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.5; }
+    .recent strong { color: var(--text-2); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Accurate, Precise, Both, Neither</h1>
+        <p class="demo-sub">
+          Set the bias to &plus;0.30&nbsp;g, hold the scatter tiny, then run 500 weighings and watch where the
+          average settles.
+        </p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 1: Measurement &amp; Density</span>
+          <span class="tag is-accent">Accuracy vs. precision</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <canvas id="target" role="img"
+                aria-label="Target showing every individual balance reading against the certified true mass"></canvas>
+        <p class="stage-caption" id="capTarget">Weigh the standard to place the first shot.</p>
+        <div class="legend">
+          <div class="lg-row"><span class="sw" style="background:var(--ok)"></span>true value, 10.000 g</div>
+          <div class="lg-row"><span class="sw" style="background:var(--bad)"></span>what this balance aims at</div>
+          <div class="lg-row"><span class="sw dot" style="background:var(--series-1)"></span>one weighing</div>
+          <div class="lg-row"><span class="sw" style="background:var(--series-2)"></span>mean so far</div>
+        </div>
+
+        <hr class="sep" style="margin:16px 0 14px">
+
+        <canvas id="conv" role="img"
+                aria-label="Running mean versus number of trials, with the 95 percent band narrowing as one over the square root of n"></canvas>
+        <p class="stage-caption" id="capConv">
+          The running mean and its predicted 95&nbsp;% band, &plusmn;1.96&nbsp;&sigma;/&radic;n.
+        </p>
+        <div class="legend">
+          <div class="lg-row"><span class="sw" style="background:var(--series-2)"></span>running mean of the first n weighings</div>
+          <div class="lg-row"><span class="sw band" style="background:var(--accent)"></span>95&nbsp;% band, &plusmn;1.96&nbsp;&sigma;/&radic;n</div>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">The balance</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="bias">Systematic bias</label>
+                <span class="ctrl-value" id="biasOut">+0.00 g</span>
+              </div>
+              <input type="range" id="bias" min="-0.40" max="0.40" step="0.01" value="0">
+              <p class="ctrl-hint">
+                A calibration error. Every reading is shifted by the same amount, in the same direction,
+                every single time.
+              </p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="scatter">Random scatter (&sigma;)</label>
+                <span class="ctrl-value" id="scatterOut">0.10 g</span>
+              </div>
+              <input type="range" id="scatter" min="0" max="0.20" step="0.01" value="0.10">
+              <p class="ctrl-hint">
+                Air currents, vibration, a drifting last digit. Different every time, as likely to be high
+                as low. Exaggerated here: a real top-loading balance repeats to about &plusmn;0.01&nbsp;g.
+              </p>
+            </div>
+
+            <p class="note small">
+              The two dials are <strong>independent</strong>. Moving one never moves the other &mdash; that is
+              the whole point. Both act on the same set of weighings, so dragging a slider reshapes the
+              run you already have instead of throwing it away.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The four cases</div>
+          <div class="stack-s">
+            <button class="btn preset-btn" id="p1" aria-pressed="false" data-b="0" data-s="0.02">
+              <span class="pb-name">Accurate and precise</span>
+              <span class="pb-sub">bias 0.00 g &middot; &sigma; 0.02 g</span>
+            </button>
+            <button class="btn preset-btn" id="p2" aria-pressed="false" data-b="0.30" data-s="0.02">
+              <span class="pb-name">Precise, but not accurate</span>
+              <span class="pb-sub">bias +0.30 g &middot; &sigma; 0.02 g</span>
+            </button>
+            <button class="btn preset-btn" id="p3" aria-pressed="false" data-b="0" data-s="0.15">
+              <span class="pb-name">Accurate, but not precise</span>
+              <span class="pb-sub">bias 0.00 g &middot; &sigma; 0.15 g</span>
+            </button>
+            <button class="btn preset-btn" id="p4" aria-pressed="false" data-b="0.30" data-s="0.15">
+              <span class="pb-name">Neither</span>
+              <span class="pb-sub">bias +0.30 g &middot; &sigma; 0.15 g</span>
+            </button>
+          </div>
+          <p class="ctrl-hint">
+            Called accurate when |bias| &le; 0.05&nbsp;g and precise when &sigma; &le; 0.05&nbsp;g. Those cut-offs
+            are a choice made for this demonstration, not a law of nature.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Trials</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="one">Weigh once</button>
+              <button class="btn" id="add25">Add 25</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="run">Run to 500</button>
+              <button class="btn" id="reset">New run</button>
+            </div>
+
+            <div class="bal">
+              <span class="bal-label">Balance reads</span>
+              <span class="bal-val" id="lastRead">&mdash;<span class="r-unit">g</span></span>
+            </div>
+
+            <div class="verdict" id="verdict">
+              Set the two dials
+              <span class="v-sub">Then weigh the certified 10.000 g standard as many times as you like.</span>
+            </div>
+
+            <div class="readouts">
+              <div class="readout">
+                <div class="r-label">Trials n</div>
+                <div class="r-value" id="rn">0</div>
+              </div>
+              <div class="readout is-accent">
+                <div class="r-label">Mean</div>
+                <div class="r-value" id="rmean">&mdash;</div>
+              </div>
+              <div class="readout" id="rerrBox">
+                <div class="r-label">Mean &minus; true</div>
+                <div class="r-value" id="rerr">&mdash;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Reading SD</div>
+                <div class="r-value" id="rsd">&mdash;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Std. error</div>
+                <div class="r-value" id="rse">&mdash;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Predicted SE</div>
+                <div class="r-value" id="rsep">&mdash;</div>
+              </div>
+            </div>
+
+            <p class="recent" id="recent">Last readings: <strong>&mdash;</strong></p>
+
+            <hr class="sep">
+
+            <p class="note" id="msg">
+              Standard error = SD &divide; &radic;n. It shrinks with more trials. The bias term does not appear
+              in it anywhere.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear &ldquo;precise&rdquo; and think &ldquo;correct,&rdquo; and they believe that
+        taking more trials and averaging always walks you toward the true value. Both ideas are wrong, and they
+        fail together. A balance that reads 0.30&nbsp;g high gives 10.30, 10.30, 10.30&nbsp;g &mdash; gorgeously
+        reproducible, and wrong by exactly 0.30&nbsp;g forever.
+      </p>
+      <p>
+        <strong>What to notice:</strong> set the bias to &plus;0.30&nbsp;g and the scatter to 0.02&nbsp;g, then
+        run to 500 trials. The green line is the truth. The red line is what this balance actually aims at. The
+        average dives straight onto the <em>red</em> line and stays there. The 95&nbsp;% band around it collapses
+        as 1/&radic;n &mdash; four times as many trials for half the width &mdash; but the band is centred on the
+        red line, so the gap to green never closes at all. Averaging is a machine for killing random error, and
+        it is completely blind to systematic error.
+      </p>
+      <p>
+        <strong>Where this stops being simple:</strong> the demo lets you see the bias because it tells you the
+        true value. In real lab work nobody hands you the truth. That is exactly why you weigh a certified
+        standard, run a blank, or re-titrate a known solution &mdash; those are the only ways to catch a bias,
+        and no amount of repeating your unknown will do it. The scatter slider here is also deliberately
+        exaggerated; a working top-loading balance repeats to about &plusmn;0.01&nbsp;g, and the readings are
+        rounded to the 0.01&nbsp;g the display can actually show.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------------------------------------------------------
+      // Model
+      //   true mass            mu   = 10.000 g   (certified standard)
+      //   balance resolution   d    = 0.01 g     (readings are rounded)
+      //   reading i            x_i  = round( mu + b + sigma * z_i , d ),  z_i ~ N(0,1)
+      //   running mean         xbar_n = (1/n) sum x_i          -> mu + b  as n grows
+      //   sample SD            s    = sqrt( sum (x_i - xbar)^2 / (n-1) )
+      //   standard error       SE   = s / sqrt(n)
+      //   predicted SE              = sigma_eff / sqrt(n),
+      //                        sigma_eff = sqrt(sigma^2 + d^2/12)  (rounding adds d^2/12 of variance)
+      //   95 % band            mu + b  +/-  1.96 * sigma_eff / sqrt(n)
+      //
+      //   The band is centred on mu + b, NOT on mu. That is the entire lesson:
+      //   averaging shrinks the half-width as 1/sqrt(n) and leaves b untouched.
+      // ---------------------------------------------------------------
+
+      var MU = 10.000;     // g, certified true mass
+      var RES = 0.01;      // g, balance resolution
+      var TOL = 0.05;      // g, the cut-off this demo uses for "accurate" / "precise"
+      var HALF = 0.80;     // g, half-range of both plot axes
+      var NMAX = 500;
+      var Z95 = 1.96;
+
+      var state = { bias: 0, sigma: 0.10, shots: [], seed: 7, rand: null };
+
+      function newRun() {
+        state.rand = Demo.rng(state.seed);
+        state.shots = [];
+      }
+
+      function addShot() {
+        if (state.shots.length >= NMAX) return false;
+        state.shots.push({ z: Demo.gauss(state.rand), j: state.rand() * 2 - 1 });
+        return true;
+      }
+
+      function quantize(v) { return Math.round(v / RES) * RES; }
+
+      // rounding to the display step adds variance d^2/12, but only once the
+      // underlying scatter is big enough for the rounding error to be random.
+      function sigmaEff() {
+        return state.sigma >= RES
+          ? Math.sqrt(state.sigma * state.sigma + RES * RES / 12)
+          : state.sigma;
+      }
+
+      var S = { n: 0, vals: [], means: [], mean: NaN, sd: NaN, se: NaN };
+
+      function recompute() {
+        var sh = state.shots, n = sh.length, i, v, sum = 0;
+        S.n = n; S.vals = []; S.means = [];
+        for (i = 0; i < n; i++) {
+          v = quantize(MU + state.bias + state.sigma * sh[i].z);
+          S.vals.push(v);
+          sum += v;
+          S.means.push(sum / (i + 1));
+        }
+        S.mean = n ? sum / n : NaN;
+        if (n > 1) {
+          var ss = 0;
+          for (i = 0; i < n; i++) { var d = S.vals[i] - S.mean; ss += d * d; }
+          S.sd = Math.sqrt(ss / (n - 1));
+          S.se = S.sd / Math.sqrt(n);
+        } else { S.sd = NaN; S.se = NaN; }
+      }
+
+      // ---------------------------------------------------------------
+      // shared drawing helpers
+      // ---------------------------------------------------------------
+      function rrect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+      function font(ctx, px, weight) {
+        ctx.font = (weight || 400) + ' ' + px + 'px Poppins, system-ui, sans-serif';
+      }
+
+      // ---------------------------------------------------------------
+      // Canvas 1 — the target, seen edge-on. Horizontal position is the
+      // reading in grams; vertical position carries no information, it only
+      // keeps the dots from stacking on top of each other.
+      // ---------------------------------------------------------------
+      var target = Demo.canvas('#target', function (ctx, w, h, c) {
+        var padL = 8, padR = 8, padT = 8, padB = 30;
+        var x0 = padL, x1 = w - padR, yT = padT, yB = h - padB;
+        var mid = (yT + yB) / 2, band = (yB - yT) * 0.40;
+        var lo = MU - HALF, hi = MU + HALF;
+        function X(v) { return x0 + ((v - lo) / (2 * HALF)) * (x1 - x0); }
+
+        // rings of the target, centred on the TRUE value
+        var rings = [0.80, 0.45, 0.20, 0.05];
+        var alpha = [0.05, 0.08, 0.13, 0.20];
+        for (var k = 0; k < rings.length; k++) {
+          ctx.globalAlpha = alpha[k];
+          ctx.fillStyle = c.accent;
+          rrect(ctx, X(MU - rings[k]), yT, X(MU + rings[k]) - X(MU - rings[k]), yB - yT, 10);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        rrect(ctx, x0 + 0.5, yT + 0.5, (x1 - x0) - 1, (yB - yT) - 1, 10);
+        ctx.stroke();
+
+        var aim = MU + state.bias;
+
+        // the truth
+        ctx.strokeStyle = c.ok; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(X(MU), yT + 2); ctx.lineTo(X(MU), yB - 2); ctx.stroke();
+
+        // every weighing
+        var n = S.n;
+        for (var i = 0; i < n; i++) {
+          var v = S.vals[i];
+          var last = (i === n - 1);
+          var py = mid + state.shots[i].j * band;
+          if (v < lo || v > hi) {                     // off the scale: mark the edge
+            var ex = v < lo ? x0 + 5 : x1 - 5, dir = v < lo ? -1 : 1;
+            ctx.globalAlpha = 0.7; ctx.fillStyle = c.bad;
+            ctx.beginPath();
+            ctx.moveTo(ex + dir * 4, py); ctx.lineTo(ex - dir * 3, py - 4); ctx.lineTo(ex - dir * 3, py + 4);
+            ctx.closePath(); ctx.fill();
+            ctx.globalAlpha = 1;
+            continue;
+          }
+          ctx.globalAlpha = last ? 1 : 0.45;
+          ctx.fillStyle = last ? c.accentStrong : c.series[0];
+          ctx.beginPath(); ctx.arc(X(v), py, last ? 4.5 : 2.6, 0, 6.2832); ctx.fill();
+          if (last) {
+            ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(X(v), py, 8, 0, 6.2832); ctx.stroke();
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        // the mean so far
+        if (n > 0 && S.mean >= lo && S.mean <= hi) {
+          var mx = X(S.mean);
+          ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(mx, yT + 6); ctx.lineTo(mx, yB - 6); ctx.stroke();
+          ctx.fillStyle = c.series[1];
+          ctx.beginPath();
+          ctx.moveTo(mx, yT + 12); ctx.lineTo(mx - 5, yT + 2); ctx.lineTo(mx + 5, yT + 2);
+          ctx.closePath(); ctx.fill();
+        }
+
+        // where this balance actually aims — drawn last so the dashes stay
+        // visible even once the shots and the mean have piled onto it
+        if (Math.abs(state.bias) > 0.004) {
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 2;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(X(aim), yT + 4); ctx.lineTo(X(aim), yB - 4); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // axis
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted; font(ctx, 10);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var every = w < 430 ? 2 : 1;                 // label every 0.4 g on a phone
+        for (var ti = -4; ti <= 4; ti++) {
+          var tv = MU + ti * 0.2, tx = X(tv);
+          ctx.beginPath(); ctx.moveTo(tx, yB); ctx.lineTo(tx, yB + 4); ctx.stroke();
+          if (ti % every === 0) ctx.fillText(tv.toFixed(1), tx, yB + 6);
+        }
+        ctx.fillStyle = c.muted; font(ctx, 10.5);
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('balance reading (g)', x1, h - 1);
+      }, { aspect: 0.34, minHeight: 150, maxHeight: 210 });
+
+      // ---------------------------------------------------------------
+      // Canvas 2 — the running mean against n, with the predicted 95 % band.
+      // The band is centred on MU + bias, so it closes onto the biased value.
+      // ---------------------------------------------------------------
+      var conv = Demo.canvas('#conv', function (ctx, w, h, c) {
+        var padL = 40, padR = w < 420 ? 46 : 58, padT = 10, padB = 28;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var lo = MU - HALF, hi = MU + HALF;
+        var nMax = Math.max(50, Math.ceil(S.n / 50) * 50);
+        function X(i) { return x0 + (i / nMax) * (x1 - x0); }
+        function Y(v) { return y0 - ((v - lo) / (2 * HALF)) * (y0 - y1); }
+
+        var aim = MU + state.bias;
+        var se = sigmaEff();
+
+        // y grid
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted; font(ctx, 10);
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var gi = -4; gi <= 4; gi++) {
+          var gv = MU + gi * 0.2, gy = Y(gv);
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          if (gi % 2 === 0) ctx.fillText(gv.toFixed(1), x0 - 6, gy);
+        }
+
+        // frame
+        ctx.strokeStyle = c.line;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 0.5, y1); ctx.lineTo(x0 + 0.5, y0 + 0.5); ctx.lineTo(x1, y0 + 0.5);
+        ctx.stroke();
+
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+
+        // predicted 95 % band: aim +/- 1.96 * sigma_eff / sqrt(n)
+        if (se > 0) {
+          ctx.globalAlpha = 0.16; ctx.fillStyle = c.accent;
+          ctx.beginPath();
+          var i, first = true;
+          for (i = 1; i <= nMax; i++) {
+            var up = aim + Z95 * se / Math.sqrt(i);
+            first ? (ctx.moveTo(X(i), Y(up)), first = false) : ctx.lineTo(X(i), Y(up));
+          }
+          for (i = nMax; i >= 1; i--) {
+            ctx.lineTo(X(i), Y(aim - Z95 * se / Math.sqrt(i)));
+          }
+          ctx.closePath(); ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+
+        // the two horizontal lines
+        ctx.strokeStyle = c.ok; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(x0, Y(MU)); ctx.lineTo(x1, Y(MU)); ctx.stroke();
+
+        // running mean — drawn under the dashed aim line, so that once it has
+        // converged you can see the two sitting exactly on top of each other
+        if (S.n > 0) {
+          ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (var k = 0; k < S.n; k++) {
+            var px = X(k + 1), py = Y(S.means[k]);
+            k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          if (S.n === 1) {
+            ctx.fillStyle = c.series[1];
+            ctx.beginPath(); ctx.arc(X(1), Y(S.means[0]), 2.8, 0, 6.2832); ctx.fill();
+          }
+        }
+
+        var biased = Math.abs(state.bias) > 0.004;
+        if (biased) {
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, Y(aim)); ctx.lineTo(x1, Y(aim)); ctx.stroke();
+          ctx.setLineDash([]);
+
+          // the gap that averaging never closes
+          var gx = x0 + (x1 - x0) * 0.62;
+          var ya = Y(MU), yb = Y(aim), dirn = yb < ya ? -1 : 1;
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(gx, ya); ctx.lineTo(gx, yb); ctx.stroke();
+          ctx.fillStyle = c.bad;
+          [[ya, dirn], [yb, -dirn]].forEach(function (p) {
+            ctx.beginPath();
+            ctx.moveTo(gx, p[0]); ctx.lineTo(gx - 3.5, p[0] + p[1] * 5); ctx.lineTo(gx + 3.5, p[0] + p[1] * 5);
+            ctx.closePath(); ctx.fill();
+          });
+          font(ctx, 10.5, 600);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText('bias ' + (state.bias >= 0 ? '+' : '−') + Math.abs(state.bias).toFixed(2) + ' g',
+            gx + 6, (ya + yb) / 2);
+        }
+
+        ctx.restore();
+
+        // right-hand line labels
+        font(ctx, 10);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        var yTrue = Y(MU), yAim = Y(aim);
+        ctx.fillStyle = c.ok;
+        ctx.fillText(MU.toFixed(3), x1 + 5, yTrue);
+        if (biased && Math.abs(yAim - yTrue) > 11) {
+          ctx.fillStyle = c.bad;
+          ctx.fillText(aim.toFixed(3), x1 + 5, yAim);
+        }
+
+        // x axis
+        ctx.strokeStyle = c.lineSoft; ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var q = 0; q <= 4; q++) {
+          var nv = Math.round(nMax * q / 4), nx = X(nv);
+          ctx.beginPath(); ctx.moveTo(nx, y0); ctx.lineTo(nx, y0 + 4); ctx.stroke();
+          ctx.fillText(String(nv), nx, y0 + 6);
+        }
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        font(ctx, 10.5);
+        ctx.fillText('number of weighings, n', w - 2, h - 1);
+        ctx.save();
+        ctx.translate(11, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('running mean (g)', 0, 0);
+        ctx.restore();
+      }, { aspect: 0.56, minHeight: 210, maxHeight: 300 });
+
+      // ---------------------------------------------------------------
+      // DOM
+      // ---------------------------------------------------------------
+      function $(id) { return document.getElementById(id); }
+      function gsign(x, n) { return (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(n); }
+
+      var PRESETS = ['p1', 'p2', 'p3', 'p4'];
+
+      function refresh() {
+        recompute();
+
+        var n = S.n, se = sigmaEff();
+        var acc = Math.abs(state.bias) <= TOL + 1e-9;
+        var pre = state.sigma <= TOL + 1e-9;
+
+        // verdict
+        var vname, vcls, vsub;
+        if (acc && pre) {
+          vname = 'Accurate and precise'; vcls = 'is-ok';
+          vsub = 'Close to 10.000 g, and tightly repeatable. This is the only case where a single reading can be trusted.';
+        } else if (pre && !acc) {
+          vname = 'Precise, but not accurate'; vcls = 'is-bad';
+          vsub = 'Beautifully repeatable and wrong by ' + gsign(state.bias, 2) + ' g. Repeating will not help.';
+        } else if (acc && !pre) {
+          vname = 'Accurate, but not precise'; vcls = 'is-warn';
+          vsub = 'Any one reading is unreliable, but the readings are centred on the truth, so averaging works.';
+        } else {
+          vname = 'Neither accurate nor precise'; vcls = 'is-bad';
+          vsub = 'Scattered and off-centre. Averaging fixes the scatter and leaves the offset.';
+        }
+        var vEl = $('verdict');
+        vEl.className = 'verdict ' + vcls;
+        vEl.innerHTML = vname + '<span class="v-sub">' + vsub + '</span>';
+
+        // readouts
+        $('rn').textContent = String(n);
+        $('rmean').innerHTML = n ? Demo.fmt.dec(S.mean, 3) + '<span class="r-unit">g</span>' : '&mdash;';
+        $('rerr').innerHTML = n ? gsign(S.mean - MU, 3) + '<span class="r-unit">g</span>' : '&mdash;';
+        $('rerrBox').className = 'readout' + (n && Math.abs(S.mean - MU) > TOL ? ' is-bad' : (n ? ' is-ok' : ''));
+        $('rsd').innerHTML = n > 1 ? Demo.fmt.dec(S.sd, 3) + '<span class="r-unit">g</span>' : '&mdash;';
+        $('rse').innerHTML = n > 1 ? Demo.fmt.dec(S.se, 4) + '<span class="r-unit">g</span>' : '&mdash;';
+        $('rsep').innerHTML = n ? Demo.fmt.dec(se / Math.sqrt(n), 4) + '<span class="r-unit">g</span>' : '&mdash;';
+
+        $('lastRead').innerHTML = n
+          ? S.vals[n - 1].toFixed(2) + '<span class="r-unit">g</span>'
+          : '&mdash;<span class="r-unit">g</span>';
+
+        var tail = S.vals.slice(Math.max(0, n - 5)).map(function (v) { return v.toFixed(2); });
+        $('recent').innerHTML = 'Last readings: <strong>' + (tail.length ? tail.join(', ') + ' g' : '—') + '</strong>';
+
+        // the message that carries the lesson
+        var msg = $('msg'), cls = 'note', txt;
+        if (!acc && n >= 20) {
+          txt = 'After <strong>' + n + '</strong> weighings the mean is <strong>' + gsign(S.mean - MU, 3) +
+            ' g</strong> from the truth, and the bias is ' + gsign(state.bias, 2) + ' g. ' +
+            'Take 10 000 more and it will still be ' + gsign(state.bias, 2) + ' g. Averaging cannot see it.';
+          cls = 'note bad';
+        } else if (!acc) {
+          txt = 'This balance aims at <strong>' + (MU + state.bias).toFixed(2) + ' g</strong>, not 10.000 g. ' +
+            'Add trials and watch the mean settle onto the red line, not the green one.';
+          cls = 'note bad';
+        } else if (n > 1) {
+          txt = 'Standard error now <strong>' + Demo.fmt.dec(S.se, 4) + ' g</strong>. ' +
+            'Halving it takes four times the trials — <strong>' + (4 * n) +
+            '</strong> weighings — because SE falls as 1/√n, not as 1/n.';
+          cls = 'note';
+        } else {
+          txt = 'Standard error = SD ÷ √n. It shrinks with more trials. The bias term does not appear ' +
+            'in it anywhere.';
+        }
+        msg.className = cls;
+        msg.innerHTML = txt;
+
+        // captions
+        $('capTarget').innerHTML = n
+          ? 'Each dot is one weighing. Left–right position is the reading; the up–down spread carries no ' +
+            'information, it only stops the dots piling up. Green is the certified 10.000 g. ' +
+            'Rings mark ±0.05, ±0.20 and ±0.45 g.'
+          : 'Each dot will be one weighing of a certified 10.000 g mass. Green marks the truth; the rings mark ' +
+            '±0.05, ±0.20 and ±0.45 g.';
+
+        $('capConv').innerHTML = 'Running mean of the first n weighings. The shaded band is the predicted ' +
+          '95 % range, ±1.96·σ/√n. It narrows as 1/√n, and it is centred on what the balance aims at — ' +
+          (acc
+            ? 'here that is the truth, so averaging really does walk you toward 10.000 g.'
+            : 'here that is <strong>' + (MU + state.bias).toFixed(3) +
+              ' g</strong>, so the band closes onto the red dashed line and never reaches 10.000 g.');
+
+        // preset pressed-state
+        PRESETS.forEach(function (id) {
+          var b = $(id);
+          var on = Math.abs(parseFloat(b.dataset.b) - state.bias) < 0.005 &&
+                   Math.abs(parseFloat(b.dataset.s) - state.sigma) < 0.005;
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+
+        $('one').disabled = n >= NMAX;
+        $('add25').disabled = n >= NMAX;
+        $('run').disabled = n >= NMAX;
+
+        target.redraw();
+        conv.redraw();
+      }
+
+      // ---- sliders ----
+      var biasSlider = Demo.range('#bias', function (v) {
+        state.bias = v;
+        $('biasOut').textContent = gsign(v, 2) + ' g';
+        refresh();
+      });
+
+      var scatterSlider = Demo.range('#scatter', function (v) {
+        state.sigma = v;
+        $('scatterOut').textContent = v.toFixed(2) + ' g';
+        refresh();
+      });
+
+      // ---- presets ----
+      PRESETS.forEach(function (id) {
+        $(id).addEventListener('click', function () {
+          biasSlider.set(parseFloat(this.dataset.b));
+          scatterSlider.set(parseFloat(this.dataset.s));
+          if (S.n < 25) { for (var i = S.n; i < 25; i++) addShot(); }
+          refresh();
+        });
+      });
+
+      // ---- trial buttons ----
+      $('one').addEventListener('click', function () { addShot(); refresh(); });
+      $('add25').addEventListener('click', function () {
+        for (var i = 0; i < 25; i++) { if (!addShot()) break; }
+        refresh();
+      });
+
+      var tAcc = 0;
+      var anim = Demo.loop(function (dt) {
+        tAcc += dt;
+        var changed = false;
+        while (tAcc > 0.04) {
+          tAcc -= 0.04;
+          var k = 1 + Math.floor(state.shots.length / 50);
+          for (var i = 0; i < k; i++) { if (addShot()) changed = true; }
+        }
+        if (state.shots.length >= NMAX) { anim.stop(); $('run').textContent = 'Run to 500'; }
+        if (changed) refresh();
+      });
+
+      $('run').addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Run to 500';
+      });
+
+      $('reset').addEventListener('click', function () {
+        anim.stop();
+        $('run').textContent = 'Run to 500';
+        state.seed = (state.seed * 1103515245 + 12345) >>> 0 || 1;
+        newRun();
+        refresh();
+      });
+
+      // ---- go ----
+      newRun();
+      for (var i = 0; i < 25; i++) addShot();
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,451 @@
+/* =========================================================
+   DEMO SHELL — shared chrome for every interactive under
+   resources/demos/<slug>/. Requires tokens.css to be loaded
+   first (it owns the palette).
+
+   Layout contract:
+     .demo-head        page header: back link, title, theme toggle
+     .demo-grid        stage (canvas/plot) + controls sidebar
+       > .stage          the visual; pinned to the viewport on desktop,
+                         and collapses above the controls on mobile
+       > .controls       sliders, toggles, readouts; this column scrolls
+     .why              the "misconception this fixes" footer
+
+   Everything is theme-aware and phone-first.
+   ========================================================= */
+
+*,
+*::before,
+*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-2);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  padding: 18px 16px 72px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4 { color: var(--text); line-height: 1.25; font-weight: 600; }
+a { color: var(--accent-strong); text-decoration: none; transition: color 0.2s ease; }
+a:hover { color: var(--accent); }
+img, svg, canvas { max-width: 100%; display: block; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.wrap { max-width: 1100px; margin: 0 auto; }
+
+/* =========================================================
+   Header
+   ========================================================= */
+.demo-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.demo-head .dh-body { flex: 1; min-width: 0; }
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.back-link:hover { color: var(--accent-strong); }
+.back-link::before { content: '\2190'; font-size: 14px; }
+
+.demo-title { font-size: 24px; margin-bottom: 4px; }
+.demo-sub { font-size: 14px; color: var(--muted); }
+
+/* course / unit chips */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.tag.is-accent { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+.tag.is-bio    { background: var(--ok-soft);   border-color: transparent; color: var(--ok); }
+.tag.is-chem   { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+
+/* =========================================================
+   Layout
+   ========================================================= */
+.demo-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 18px;
+  align-items: start;
+}
+.demo-grid > * { min-width: 0; }
+.demo-grid.controls-left { grid-template-columns: 300px 1fr; }
+.demo-grid.wide-controls { grid-template-columns: 1fr 360px; }
+
+@media (max-width: 880px) {
+  .demo-grid,
+  .demo-grid.controls-left,
+  .demo-grid.wide-controls { grid-template-columns: 1fr; }
+  /* stage always reads first on a phone, whatever the desktop order */
+  .demo-grid > .stage { order: -1; }
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 15px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+.panel + .panel { margin-top: 14px; }
+
+.panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.controls { display: flex; flex-direction: column; gap: 14px; }
+
+@media (min-width: 881px) {
+  /* The demonstration holds still and the controls column is what scrolls.
+     A student changing a slider far down the panel must still be able to see
+     what it does. max-height keeps a tall stage reachable: it pins to the
+     viewport and scrolls internally instead of having its bottom cut off. */
+  .demo-grid > .stage {
+    position: sticky;
+    top: 18px;
+    max-height: calc(100vh - 36px);
+    overflow-y: auto;
+  }
+
+  /* Demos still carry class="controls sticky" from the original template.
+     The stage pins now, so that class is deliberately neutralised here
+     rather than edited out of every demo. */
+  .controls.sticky { position: static; top: auto; }
+}
+
+/* =========================================================
+   Stage — canvas / SVG surface
+   ========================================================= */
+.stage {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+/* Demo.canvas() sizes the bitmap; CSS owns the box. */
+.stage canvas { width: 100%; height: auto; display: block; border-radius: 10px; }
+.stage-caption { font-size: 12.5px; color: var(--muted); margin-top: 10px; }
+
+/* =========================================================
+   Controls — sliders
+   ========================================================= */
+.ctrl { display: block; }
+.ctrl-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+.ctrl-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.ctrl-value {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-strong);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.ctrl-hint { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.45; }
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+  display: block;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 4px; background: var(--track);
+}
+input[type="range"]::-moz-range-track {
+  height: 6px; border-radius: 4px; background: var(--track);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; margin-top: -6px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transition: background 0.15s ease;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+}
+input[type="range"]:hover::-webkit-slider-thumb { background: var(--accent-strong); }
+input[type="range"]:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* =========================================================
+   Controls — buttons, segmented control, inputs
+   ========================================================= */
+.btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface-2);
+  color: var(--text-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.btn:hover { border-color: var(--accent-line); color: var(--accent-strong); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-row .btn { flex: 1 1 auto; }
+
+/* segmented control — for tabbed demos (Allele Machine, Electronic Structure Bench) */
+.seg {
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 3px;
+}
+.seg button {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  flex: 1;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+  white-space: nowrap;
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-selected="true"] {
+  background: var(--surface);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* checkbox / switch rows */
+.check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+}
+.check input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; flex: none; }
+
+input[type="number"],
+input[type="text"],
+select {
+  font: inherit;
+  font-size: 13px;
+  width: 100%;
+  padding: 7px 10px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  transition: border-color 0.2s ease;
+}
+input[type="number"]:focus,
+input[type="text"]:focus,
+select:focus { outline: none; border-color: var(--accent); }
+input.is-bad { border-color: var(--bad); }
+
+/* =========================================================
+   Readouts — the big live numbers
+   ========================================================= */
+.readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
+.readout {
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 11px;
+  padding: 9px 11px;
+  min-width: 0;
+}
+.readout .r-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.readout .r-value {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+.readout .r-unit { font-size: 12px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+.readout.is-accent .r-value { color: var(--accent-strong); }
+.readout.is-ok  .r-value { color: var(--ok); }
+.readout.is-bad .r-value { color: var(--bad); }
+
+/* horizontal proportion bar (allele frequency, percent yield, ...) */
+.bar { height: 15px; background: var(--track); border-radius: 5px; overflow: hidden; display: flex; }
+.bar > span { height: 100%; display: block; transition: width 0.25s ease; }
+
+/* =========================================================
+   Tables
+   ========================================================= */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th, .tbl td { padding: 7px 9px; text-align: right; border-bottom: 1px solid var(--line-soft); }
+.tbl th {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tbl td { font-variant-numeric: tabular-nums; color: var(--text); }
+.tbl th:first-child, .tbl td:first-child { text-align: left; color: var(--text-2); }
+.tbl tr:last-child td { border-bottom: 0; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* =========================================================
+   Callouts + the misconception footer
+   ========================================================= */
+.note {
+  font-size: 13px;
+  line-height: 1.55;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-2);
+}
+.note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+.note.bad  { border-left-color: var(--bad);  background: var(--bad-soft); }
+.note strong { color: var(--text); font-weight: 600; }
+
+/* Every demo ends with this: what it is for, and the trap it defuses. */
+.why {
+  margin-top: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+}
+.why h2 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 9px;
+}
+.why p { font-size: 14px; line-height: 1.65; color: var(--text-2); }
+.why p + p { margin-top: 9px; }
+.why strong { color: var(--text); font-weight: 600; }
+
+/* =========================================================
+   Theme toggle (matches the portfolio's .theme-fab)
+   ========================================================= */
+.theme-toggle {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.theme-toggle:hover { color: var(--accent-strong); border-color: var(--accent-line); }
+.theme-toggle .bi-sun-fill { display: none; }
+:root[data-theme="light"] .theme-toggle .bi-sun-fill { display: block; }
+:root[data-theme="light"] .theme-toggle .bi-moon-stars-fill { display: none; }
+
+/* =========================================================
+   Utilities
+   ========================================================= */
+.stack   { display: flex; flex-direction: column; gap: 10px; }
+.stack-s { display: flex; flex-direction: column; gap: 6px; }
+.row     { display: flex; align-items: center; gap: 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sep { height: 1px; background: var(--line-soft); margin: 4px 0; border: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.num { font-variant-numeric: tabular-nums; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+@media (max-width: 560px) {
+  body { padding: 14px 12px 64px; }
+  .demo-title { font-size: 20px; }
+  .panel, .stage { padding: 13px; border-radius: 14px; }
+}
+
+/* Users who ask for less motion get no transitions or animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* suppress transition ghosting while the window is being resized */
+.no-transition *,
+.no-transition *::before,
+.no-transition *::after { transition: none !important; }

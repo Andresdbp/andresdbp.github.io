@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Where Did the Heat Go? | Dr. Andres Barboza</title>
+  <meta name="description" content="Energy moves between a reaction and the water around it. Watch the system gain what the surroundings lose — and see why an endothermic reaction feels cold.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: the left column stacks the beaker scene above the
+       enthalpy diagram, and the readouts carry a one-line gloss. */
+    .stage-col   { display: flex; flex-direction: column; gap: 14px; }
+    /* demo.css only sizes canvases inside .stage; the enthalpy diagram lives in a .panel */
+    .panel canvas { width: 100%; height: auto; display: block; border-radius: 10px; }
+    .stage-tools { display: flex; flex-direction: column; gap: 12px; margin-top: 13px; }
+    .r-sub       { font-size: 11px; line-height: 1.35; color: var(--muted); margin-top: 3px; }
+    .work        { font-size: 11.5px; line-height: 1.65; color: var(--text-2); overflow-wrap: anywhere; }
+    .work div + div { margin-top: 4px; }
+    .work b      { color: var(--text); font-weight: 600; }
+    .work .lead  { color: var(--muted); }
+    /* the accounting boxes need room for their labels; the sum gets its own row */
+    .readouts.acc { grid-template-columns: 1fr 1fr; }
+    .readouts.acc .span2 { grid-column: 1 / -1; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Where Did the Heat Go?</h1>
+        <p class="demo-sub">Flip the reaction from endothermic to exothermic and watch which way the energy moves.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Thermochemistry</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- left column: scene + enthalpy diagram ---------------- -->
+      <div class="stage-col">
+
+        <div class="stage">
+          <canvas id="scene" role="img"
+            aria-label="A small reaction vessel (the system) sitting in a 100 gram water bath (the surroundings), with a thermometer, a hand on the outside of the bath, and energy packets moving across the boundary."></canvas>
+
+          <div class="stage-tools">
+            <div class="seg" role="tablist" aria-label="Type of reaction">
+              <button role="tab" aria-selected="true" data-dir="1" id="tabEndo">Endothermic (+&Delta;H)</button>
+              <button role="tab" aria-selected="false" data-dir="-1" id="tabExo">Exothermic (&minus;&Delta;H)</button>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mag">&Delta;H of the reaction</label>
+                <span class="ctrl-value" id="magOut">+25.7 kJ/mol</span>
+              </div>
+              <input type="range" id="mag" min="5" max="85" step="0.1" value="25.7">
+              <p class="ctrl-hint">&Delta;H is always written <em>for the system</em>. Positive means the system takes energy in; negative means the system gives energy off.</p>
+            </div>
+
+            <div class="readouts">
+              <div class="readout">
+                <div class="r-label">System &mdash; energy</div>
+                <div class="r-value" id="qSysOut">+2.57<span class="r-unit">kJ</span></div>
+                <div class="r-sub" id="qSysSub">the reaction gains energy</div>
+              </div>
+              <div class="readout is-accent" id="tCell">
+                <div class="r-label">Surroundings &Delta;T</div>
+                <div class="r-value" id="dTOut">&minus;6.15<span class="r-unit">&deg;C</span></div>
+                <div class="r-sub" id="dTSub">the water cools down</div>
+              </div>
+            </div>
+
+            <p class="note" id="feel"><strong>Your hand feels cold.</strong> The water handed 2.57 kJ to the reaction, so the water &mdash; and your hand resting on the glass &mdash; ended up colder.</p>
+          </div>
+
+          <p class="stage-caption">
+            Simplification: we assume every joule the reaction takes in or gives off is exchanged with the
+            100.0 g of water, and nothing leaks to the glass, the air, or the bench. Real calorimeters warm
+            their own container too, so measured temperature changes come out a little smaller.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Enthalpy diagram</div>
+          <canvas id="levels" role="img"
+            aria-label="Energy level diagram showing the enthalpy of the reactants and the products, with an arrow for delta H."></canvas>
+          <p class="stage-caption">
+            &Delta;H = H(products) &minus; H(reactants). The height of the arrow is the size of &Delta;H, and the
+            slider changes it. The direction the arrow points is the <em>sign</em> of &Delta;H, and only the
+            endothermic / exothermic toggle flips that.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Set-up</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="amt">Amount reacting</label>
+                <span class="ctrl-value" id="amtOut">0.100 mol</span>
+              </div>
+              <input type="range" id="amt" min="0.02" max="0.1" step="0.005" value="0.1">
+              <p class="ctrl-hint">&Delta;H is <em>per mole</em>. The total energy moved is the amount &times; &Delta;H.</p>
+            </div>
+
+            <hr class="sep">
+
+            <div class="stack-s">
+              <div class="ctrl-label">Real examples</div>
+              <div class="btn-row">
+                <button class="btn" data-dir="1"  data-mag="25.7">NH&#8324;NO&#8323;</button>
+                <button class="btn" data-dir="1"  data-mag="14.8">NH&#8324;Cl</button>
+                <button class="btn" data-dir="-1" data-mag="44.5">NaOH</button>
+                <button class="btn" data-dir="-1" data-mag="82.8">CaCl&#8322;</button>
+              </div>
+              <p class="ctrl-hint">
+                Enthalpies of solution (kJ/mol): NH&#8324;NO&#8323; +25.7, NH&#8324;Cl +14.8, NaOH &minus;44.5,
+                CaCl&#8322; &minus;82.8. The first two are what instant cold packs use; the last two are what
+                hot packs and drain cleaner use.
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="run">Pause</button>
+              <button class="btn" id="replay">Replay</button>
+            </div>
+            <p class="ctrl-hint">Each replay starts a fresh beaker at 22.0 &deg;C.</p>
+
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Energy accounting</div>
+          <div class="readouts acc">
+            <div class="readout">
+              <div class="r-label">q system</div>
+              <div class="r-value" id="accSys">+2.57<span class="r-unit">kJ</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">q surroundings</div>
+              <div class="r-value" id="accSur">&minus;2.57<span class="r-unit">kJ</span></div>
+            </div>
+            <div class="readout is-ok span2">
+              <div class="r-label">system + surroundings</div>
+              <div class="r-value" id="accSum">0.00<span class="r-unit">kJ</span></div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="work" id="work"></div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <p class="note" id="conserveNote">
+            <strong>Nothing is created or destroyed.</strong> The bottom box reads 0.00 kJ for every setting
+            you can choose. Energy only changed address.
+          </p>
+          <p class="note warn" id="limitNote" style="display:none;margin-top:10px">
+            <strong>Careful:</strong> the bath would be close to freezing here. Below 0 &deg;C the water starts
+            turning to ice, and <em>q</em> = <em>mc</em>&Delta;<em>T</em> stops describing it.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students say an endothermic reaction &ldquo;gets cold.&rdquo; That
+        collapses two different things into one. The <em>reaction</em> is the system and the <em>water</em> is
+        the surroundings, and they do opposite things. In an endothermic reaction the system <em>gains</em>
+        energy &mdash; it has to get that energy from somewhere, and the only place available is the water
+        around it. The water loses energy, so the water cools, so the beaker feels cold in your hand. The cold
+        you feel is the surroundings being drained, not the reaction &ldquo;being cold.&rdquo;
+      </p>
+      <p>
+        <strong>The other half of it:</strong> a negative &Delta;H is not &ldquo;negative energy.&rdquo; The
+        minus sign is a direction, not a quantity. &Delta;H is defined for the system, so &Delta;H = &minus;44.5
+        kJ/mol means 44.5 kJ of perfectly ordinary energy <em>left</em> each mole of system and went into the
+        surroundings. Watch the two boxes labelled <em>q system</em> and <em>q surroundings</em>: they are
+        always the same size and always opposite in sign.
+      </p>
+      <p>
+        <strong>What to notice:</strong> flip the toggle without touching the slider. The size of every number
+        stays the same; only the arrows and the signs reverse. Then watch the box marked
+        <em>system + surroundings</em>. It reads 0.00 kJ no matter what you do &mdash; that is conservation of
+        energy, on screen, in the units of the problem.
+      </p>
+      <p>
+        <strong>Where the model stops:</strong> this treats the water bath as the only surroundings and gives
+        the glass, the thermometer and the air a heat capacity of zero. It also assumes the reaction goes to
+        completion. In a real coffee-cup calorimeter you would measure the calorimeter constant and correct for
+        it, and the temperature change you record would be somewhat smaller than the one shown here.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------- constants (stated on screen) ----------------
+      var M_WATER = 100.0;   // g of water in the bath  (surroundings)
+      var C_WATER = 4.18;    // J g^-1 °C^-1, specific heat of liquid water
+      var T_START = 22.0;    // °C, starting temperature of everything
+      var DURATION = 5.0;    // s for the reaction to run to completion
+      var HOLD = 1.5;        // s to hold on the finished state
+      var SCALE_KJ = 9.0;    // kJ that fills half of the ledger bar
+
+      var reduceMotion = false;
+      try {
+        reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      } catch (e) { }
+
+      var S = {
+        dir: 1,        // +1 endothermic (ΔH > 0), -1 exothermic (ΔH < 0)
+        mag: 25.7,     // |ΔH| in kJ/mol
+        n: 0.100,      // mol of reactant
+        p: reduceMotion ? 1 : 0,   // reaction progress, 0 → 1
+        t: 0,          // animation clock, s
+        hold: 0
+      };
+
+      // ---------------- the model ----------------
+      //   ΔH is defined FOR THE SYSTEM.
+      //   q_system      = n × ΔH                       (kJ)
+      //   q_surroundings= −q_system                    (kJ)   ← conservation
+      //   ΔT_water      = q_surroundings / (m × c)     (°C)
+      function calc() {
+        var dH = S.dir * S.mag;                       // kJ/mol, signed, for the system
+        var qSys = S.n * dH;                          // kJ
+        var qSur = -qSys;                             // kJ
+        var dT = (qSur * 1000) / (M_WATER * C_WATER); // J / (g · J g⁻¹ °C⁻¹) = °C
+        return { dH: dH, qSys: qSys, qSur: qSur, dT: dT, Tf: T_START + dT };
+      }
+
+      // signed formatter: "+2.57", "−6.15", "0.00" — never "-0.00"
+      function signed(x, n) {
+        var s = Demo.fmt.dec(x, n);
+        if (s.charAt(0) === '-') return '−' + s.slice(1);
+        return parseFloat(s) === 0 ? s : '+' + s;
+      }
+      function plain(x, n) {
+        return Demo.fmt.dec(x, n).replace('-', '−');
+      }
+
+      // ---------------- small canvas helpers ----------------
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r);
+        ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+        ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r);
+        ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r);
+        ctx.closePath();
+      }
+      function font(ctx, size, weight) {
+        ctx.font = (weight || 500) + ' ' + size.toFixed(1) + 'px Poppins, system-ui, sans-serif';
+      }
+      // ray from (cx,cy) at angle a, out to the edge of a half-width/half-height box
+      function rayBox(cx, cy, hw, hh, a) {
+        var ca = Math.cos(a), sa = Math.sin(a);
+        var tx = Math.abs(ca) > 1e-6 ? hw / Math.abs(ca) : Infinity;
+        var ty = Math.abs(sa) > 1e-6 ? hh / Math.abs(sa) : Infinity;
+        var t = Math.min(tx, ty);
+        return { x: cx + ca * t, y: cy + sa * t, t: t };
+      }
+      function arrow(ctx, x0, y0, x1, y1, head, lw) {
+        var a = Math.atan2(y1 - y0, x1 - x0);
+        ctx.lineWidth = lw;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 - head * Math.cos(a - 0.42), y1 - head * Math.sin(a - 0.42));
+        ctx.lineTo(x1 - head * Math.cos(a + 0.42), y1 - head * Math.sin(a + 0.42));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // ---------------- energy packets ----------------
+      var packets = [];
+      function buildPackets() {
+        var q = Math.abs(calc().qSys);
+        var N = Math.round(Demo.clamp(q * 3.2, 8, 34));
+        var rand = Demo.rng(20250607);
+        packets = [];
+        for (var i = 0; i < N; i++) {
+          packets.push({
+            ang: rand() * Math.PI * 2,
+            rad: 0.80 + rand() * 0.20,
+            ph: i / N
+          });
+        }
+      }
+
+      // ================= SCENE: beaker, bath, thermometer, hand =================
+      var scene = Demo.canvas('#scene', function (ctx, w, h, c) {
+        var d = calc();
+        var p = S.p;
+        var qNow = p * d.qSys;                 // kJ, system so far
+        var tNow = T_START + p * d.dT;         // °C, water right now
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.textBaseline = 'alphabetic';
+
+        var ledgerTop = h * 0.775;
+        var sh = ledgerTop - 4;                // height available for the scene
+
+        // keep the apparatus from stretching out on a wide screen
+        var cw = Math.min(w, sh * 1.62);
+        var ox = (w - cw) / 2;
+        var fs = Demo.clamp(cw / 33, 9.5, 14);
+
+        // --- bath (surroundings) geometry ---
+        var bx0 = ox + cw * 0.155, bx1 = ox + cw * 0.655;
+        var by0 = sh * 0.155, by1 = sh * 0.955;
+        var wy = by0 + (by1 - by0) * 0.15;     // water surface
+
+        // --- system vessel geometry (left of the thermometer, centred in the water) ---
+        var vx0 = bx0 + (bx1 - bx0) * 0.22, vx1 = bx0 + (bx1 - bx0) * 0.62;
+        var vy0 = wy + (by1 - wy) * 0.28, vy1 = wy + (by1 - wy) * 0.78;
+        var vcx = (vx0 + vx1) / 2, vcy = (vy0 + vy1) / 2;
+        var vhw = (vx1 - vx0) / 2, vhh = (vy1 - vy0) / 2;
+
+        // --- thermometer geometry: the bulb sits IN the bath ---
+        var bulbR = Demo.clamp(cw * 0.017, 6.5, 11);
+        var tw = bulbR * 1.2;
+        var tcx = bx1 - Math.max(14, (bx1 - bx0) * 0.09);
+        var tTop = sh * 0.10;
+        var bulbCy = by1 - 6 - bulbR;
+        var colTop = tTop + 3;
+        var colBot = bulbCy - bulbR * 0.2;
+        function yOfT(T) { return Demo.lerp(colBot, colTop, Demo.clamp(T / 50, 0, 1)); }
+
+        // ---------- hand (part of the surroundings) ----------
+        var hx1 = bx0 - 1, hx0 = ox + cw * 0.008;
+        var hy0 = sh * 0.44, hy1 = sh * 0.80;
+        var hW = hx1 - hx0, hH = hy1 - hy0;
+        if (hW > 26) {
+          ctx.fillStyle = c.surface2;
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 1.4;
+          // four fingers reaching the glass
+          var fH = hH * 0.185;
+          for (var f = 0; f < 4; f++) {
+            var fy = hy0 + hH * (0.045 + f * 0.245);
+            rr(ctx, hx0 + hW * 0.42, fy, hW * 0.58, fH, fH / 2);
+            ctx.fill(); ctx.stroke();
+          }
+          // thumb, tucked below the palm
+          rr(ctx, hx0 + hW * 0.10, hy1 - hH * 0.10, hW * 0.62, hH * 0.30, hH * 0.15);
+          ctx.fill(); ctx.stroke();
+          // palm, drawn over the finger roots
+          rr(ctx, hx0, hy0, hW * 0.60, hH * 0.94, Math.min(10, hH * 0.16));
+          ctx.fill(); ctx.stroke();
+
+          ctx.fillStyle = c.muted;
+          font(ctx, fs * 0.78, 500);
+          ctx.textAlign = 'center';
+          ctx.fillText('your hand', hx0 + hW * 0.5, hy1 + hH * 0.30 + fs * 1.3);
+        }
+
+        // ---------- bath glass + water ----------
+        // water body
+        ctx.save();
+        rr(ctx, bx0 + 1.5, wy, (bx1 - bx0) - 3, by1 - wy - 1.5, 8);
+        ctx.clip();
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(bx0, wy - 2, bx1 - bx0, by1 - wy + 4);
+        // temperature tint — blue when the water has cooled, red when it has warmed
+        var warmed = p * d.dT;
+        var tint = Demo.clamp(Math.abs(warmed) / 20, 0, 1) * 0.45;
+        if (tint > 0.001) {
+          ctx.globalAlpha = tint;
+          ctx.fillStyle = warmed > 0 ? c.bad : c.accent;
+          ctx.fillRect(bx0, wy - 2, bx1 - bx0, by1 - wy + 4);
+          ctx.globalAlpha = 1;
+        }
+        ctx.restore();
+
+        // glass outline (open at the top, like a beaker)
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx0, by0);
+        ctx.lineTo(bx0, by1 - 8);
+        ctx.arcTo(bx0, by1, bx0 + 8, by1, 8);
+        ctx.lineTo(bx1 - 8, by1);
+        ctx.arcTo(bx1, by1, bx1, by1 - 8, 8);
+        ctx.lineTo(bx1, by0);
+        ctx.stroke();
+        // water line
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(bx0 + 1.5, wy); ctx.lineTo(bx1 - 1.5, wy); ctx.stroke();
+
+        ctx.fillStyle = c.muted;
+        font(ctx, fs * 0.82, 600);
+        ctx.textAlign = 'left';
+        ctx.fillText('SURROUNDINGS · 100.0 g water', bx0, by0 - fs * 0.5);
+
+        // ---------- energy packets ----------
+        var speed = 0.30 + 0.55 * Demo.clamp(Math.abs(d.qSys) / 8.5, 0, 1);
+        if (p < 1 && p > 0) {
+          // how far a packet may travel outward without leaving the water
+          // (or sliding under the thermometer)
+          var ohw = Math.min(vcx - (bx0 + 7), (tcx - tw / 2 - 8) - vcx);
+          var ohh = Math.min(vcy - (wy + 7), (by1 - 7) - vcy);
+          ctx.fillStyle = c.warn;
+          for (var i = 0; i < packets.length; i++) {
+            var pk = packets[i];
+            var inner = rayBox(vcx, vcy, vhw + 5, vhh + 5, pk.ang);
+            var outer = rayBox(vcx, vcy, ohw * pk.rad, ohh * pk.rad, pk.ang);
+            if (outer.t <= inner.t + 4) continue;
+            var phase = (S.t * speed + pk.ph) % 1;
+            var u = S.dir > 0 ? 1 - phase : phase;     // endothermic: outside → inside
+            var px = Demo.lerp(inner.x, outer.x, u);
+            var py = Demo.lerp(inner.y, outer.y, u);
+            ctx.globalAlpha = Demo.clamp(Math.sin(Math.PI * phase) * 2.4, 0, 1) * 0.95;
+            ctx.beginPath();
+            ctx.arc(px, py, Math.max(2.2, fs * 0.24), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        // ---------- system vessel ----------
+        ctx.save();
+        rr(ctx, vx0, vy0, vx1 - vx0, vy1 - vy0, 7);
+        ctx.fillStyle = c.surface;
+        ctx.fill();
+        ctx.clip();
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = c.series[3];
+        ctx.fillRect(vx0, vy0 + (vy1 - vy0) * 0.34, vx1 - vx0, (vy1 - vy0) * 0.7);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+        rr(ctx, vx0, vy0, vx1 - vx0, vy1 - vy0, 7);
+        ctx.strokeStyle = c.text2;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c.text;
+        font(ctx, fs * 0.82, 600);
+        ctx.fillText('SYSTEM', vcx, vy0 + (vy1 - vy0) * 0.26);
+        ctx.fillStyle = c.text2;
+        font(ctx, fs * 0.78, 500);
+        ctx.fillText('the reaction', vcx, vy0 + (vy1 - vy0) * 0.62);
+
+        // ---------- direction arrows once the reaction has finished ----------
+        if (p >= 1) {
+          ctx.fillStyle = c.warn;
+          ctx.strokeStyle = c.warn;
+          var span = Math.min(30, (vx0 - bx0) - 12);
+          if (span > 12) {
+            var aL0 = vx0 - 6 - span, aL1 = vx0 - 6;
+            var aR0 = vx1 + 6, aR1 = vx1 + 6 + span;
+            if (S.dir > 0) {                       // into the system
+              arrow(ctx, aL0, vcy, aL1, vcy, 7, 2.6);
+              arrow(ctx, aR1, vcy, aR0, vcy, 7, 2.6);
+            } else {                                // out of the system
+              arrow(ctx, aL1, vcy, aL0, vcy, 7, 2.6);
+              arrow(ctx, aR0, vcy, aR1, vcy, 7, 2.6);
+            }
+          }
+        }
+
+        // ---------- thermometer (drawn last so it reads as sitting in the bath) ----------
+        rr(ctx, tcx - tw / 2, tTop, tw, bulbCy - tTop, tw / 2);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.beginPath(); ctx.arc(tcx, bulbCy, bulbR, 0, Math.PI * 2);
+        ctx.fillStyle = c.surface2; ctx.fill(); ctx.stroke();
+
+        var tCol = Math.abs(warmed) < 0.05 ? c.muted : (warmed > 0 ? c.bad : c.accentStrong);
+        ctx.fillStyle = tCol;
+        ctx.beginPath(); ctx.arc(tcx, bulbCy, bulbR - 2, 0, Math.PI * 2); ctx.fill();
+        rr(ctx, tcx - tw / 2 + 2, yOfT(tNow), tw - 4, colBot - yOfT(tNow) + 2, (tw - 4) / 2);
+        ctx.fill();
+
+        // scale: short leaders out through the glass, numbers outside the bath
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted;
+        font(ctx, Math.max(8, fs * 0.68), 500);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        for (var T = 0; T <= 50; T += 10) {
+          var ty = yOfT(T);
+          ctx.beginPath();
+          ctx.moveTo(tcx + tw / 2 + 1.5, ty);
+          ctx.lineTo(bx1 + 3, ty);
+          ctx.stroke();
+          ctx.fillText(String(T), bx1 + 6, ty);
+        }
+        ctx.textBaseline = 'alphabetic';
+
+        ctx.textAlign = 'center';
+        ctx.fillStyle = tCol;
+        font(ctx, fs * 1.05, 600);
+        ctx.fillText(plain(tNow, 1) + ' °C', tcx, tTop - fs * 0.5);
+
+        // ---------- conservation ledger ----------
+        var lh = h - ledgerTop;
+        var lcx = ox + cw * 0.55;
+        var half = cw * 0.235;
+        var barH = Demo.clamp(lh * 0.15, 7, 11);
+        var yHdr = ledgerTop + lh * 0.15;
+        var y1 = ledgerTop + lh * 0.42;
+        var y2 = ledgerTop + lh * 0.70;
+        var yCap = ledgerTop + lh * 0.965;
+
+        ctx.fillStyle = c.muted;
+        font(ctx, Math.max(8, fs * 0.7), 500);
+        ctx.textAlign = 'right';
+        ctx.fillText('← loses energy', lcx - 5, yHdr);
+        ctx.textAlign = 'left';
+        ctx.fillText('gains energy →', lcx + 5, yHdr);
+
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(lcx, yHdr + 4); ctx.lineTo(lcx, y2 + barH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        function ledgerRow(y, label, value) {
+          ctx.fillStyle = c.text2;
+          font(ctx, Math.max(8.5, fs * 0.74), 500);
+          ctx.textAlign = 'left';
+          ctx.fillText(label, ox + 1, y + barH * 0.85);
+          var len = Demo.clamp(Math.abs(value) / SCALE_KJ, 0, 1) * half;
+          ctx.fillStyle = c.warn;
+          if (len > 0.4) {
+            if (value >= 0) rr(ctx, lcx, y, len, barH, barH / 2);
+            else rr(ctx, lcx - len, y, len, barH, barH / 2);
+            ctx.fill();
+          }
+          ctx.fillStyle = c.text;
+          font(ctx, Math.max(8.5, fs * 0.76), 600);
+          ctx.textAlign = 'right';
+          ctx.fillText(signed(value, 2) + ' kJ', ox + cw - 1, y + barH * 0.85);
+        }
+        ledgerRow(y1, 'reaction', qNow);
+        ledgerRow(y2, 'water', -qNow);
+
+        ctx.fillStyle = c.muted;
+        font(ctx, Math.max(8, fs * 0.68), 500);
+        ctx.textAlign = 'center';
+        ctx.fillText('energy moved so far · the two bars are always mirror images', ox + cw / 2, yCap);
+        ctx.textAlign = 'left';
+      }, { aspect: 0.66, minHeight: 320, maxHeight: 430 });
+
+      // ================= ENTHALPY DIAGRAM =================
+      var levels = Demo.canvas('#levels', function (ctx, w, h, c) {
+        var d = calc();
+        var cw = Math.min(w, h * 2.05);
+        var ox = (w - cw) / 2;
+        var fs = Demo.clamp(cw / 33, 9.5, 12.5);
+        var padL = 32, padR = 10, padT = 14, padB = 42;
+        var x0 = ox + padL, x1 = ox + cw - padR, y0 = h - padB, y1 = padT;
+        var plotH = y0 - y1;
+
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.textBaseline = 'alphabetic';
+
+        // enthalpy axis
+        ctx.strokeStyle = c.line;
+        ctx.fillStyle = c.line;
+        ctx.lineWidth = 1.4;
+        arrow(ctx, x0 - 8, y0, x0 - 8, y1 - 2, 6, 1.4);
+
+        ctx.save();
+        ctx.translate(ox + 11, (y0 + y1) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillStyle = c.muted;
+        font(ctx, fs * 0.82, 600);
+        ctx.textAlign = 'center';
+        ctx.fillText('ENTHALPY, H', 0, 0);
+        ctx.restore();
+
+        // levels
+        var gap = plotH * Demo.lerp(0.18, 0.66, (S.mag - 5) / 80);
+        var mid = (y0 + y1) / 2;
+        var yR = S.dir > 0 ? mid + gap / 2 : mid - gap / 2;   // reactants
+        var yP = S.dir > 0 ? mid - gap / 2 : mid + gap / 2;   // products
+
+        var rx0 = x0 + 4, rx1 = x0 + (x1 - x0) * 0.36;
+        var px0 = x0 + (x1 - x0) * 0.64, px1 = x1 - 4;
+
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(rx1, yR); ctx.lineTo(px0, yR);
+        ctx.moveTo(rx0, yP); ctx.lineTo(px0, yP);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = c.text;
+        ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.moveTo(rx0, yR); ctx.lineTo(rx1, yR); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(px0, yP); ctx.lineTo(px1, yP); ctx.stroke();
+
+        ctx.fillStyle = c.text2;
+        font(ctx, fs * 0.86, 600);
+        ctx.textAlign = 'center';
+        ctx.fillText('reactants', (rx0 + rx1) / 2, yR + fs * 1.35);
+        ctx.fillText('products', (px0 + px1) / 2, yP + fs * 1.35);
+
+        // ΔH arrow — energy colour, so "cold" never gets attached to the system
+        var xa = x0 + (x1 - x0) * 0.50;
+        ctx.strokeStyle = c.warn;
+        ctx.fillStyle = c.warn;
+        arrow(ctx, xa, yR, xa, yP, 8, 2.6);
+        font(ctx, fs * 0.86, 600);
+        ctx.textAlign = 'left';
+        ctx.fillText('ΔH', xa + 7, (yR + yP) / 2 + fs * 0.3);
+
+        // caption block
+        ctx.textAlign = 'center';
+        ctx.fillStyle = c.text;
+        font(ctx, fs * 1.0, 600);
+        ctx.fillText('ΔH = ' + signed(d.dH, 1) + ' kJ/mol', ox + cw / 2, h - padB + fs * 1.6);
+        ctx.fillStyle = c.muted;
+        font(ctx, fs * 0.82, 500);
+        ctx.fillText(S.dir > 0
+          ? 'products sit higher · energy flows IN: surroundings → system'
+          : 'products sit lower · energy flows OUT: system → surroundings',
+          ox + cw / 2, h - padB + fs * 3.0);
+        ctx.textAlign = 'left';
+      }, { aspect: 0.46, minHeight: 200, maxHeight: 265 });
+
+      // ================= HTML readouts =================
+      function el(id) { return document.getElementById(id); }
+
+      function refresh() {
+        var d = calc();
+
+        el('magOut').textContent = signed(d.dH, 1) + ' kJ/mol';
+        el('amtOut').textContent = Demo.fmt.dec(S.n, 3) + ' mol';
+
+        el('qSysOut').innerHTML = signed(d.qSys, 2) + '<span class="r-unit">kJ</span>';
+        el('qSysSub').textContent = S.dir > 0
+          ? 'the reaction gains energy'
+          : 'the reaction gives energy off';
+
+        el('dTOut').innerHTML = signed(d.dT, 2) + '<span class="r-unit">°C</span>';
+        el('dTSub').textContent = S.dir > 0 ? 'the water cools down' : 'the water warms up';
+        el('tCell').className = 'readout ' + (S.dir > 0 ? 'is-accent' : 'is-bad');
+
+        el('accSys').innerHTML = signed(d.qSys, 2) + '<span class="r-unit">kJ</span>';
+        el('accSur').innerHTML = signed(d.qSur, 2) + '<span class="r-unit">kJ</span>';
+        el('accSum').innerHTML = Demo.fmt.dec(d.qSys + d.qSur, 2) + '<span class="r-unit">kJ</span>';
+
+        // Direction is always true; "you can feel it" is not. Skin needs roughly a
+        // degree before it registers, so don't promise cold at ΔT = −0.24 °C.
+        var qAbs = Demo.fmt.dec(Math.abs(d.qSys), 2);
+        var feelable = Math.abs(d.dT) >= 1.0;
+        el('feel').className = 'note' + (feelable && S.dir < 0 ? ' bad' : '');
+        if (!feelable) {
+          el('feel').innerHTML = '<strong>Too small to feel.</strong> ' + qAbs + ' kJ moved ' +
+            (S.dir > 0 ? 'from the water into the reaction' : 'from the reaction into the water') +
+            ', but spread over 100.0 g of water that is only ' + plain(Math.abs(d.dT), 2) +
+            ' °C. The direction is real; your hand just cannot detect a change this small. ' +
+            'Turn up ΔH or the amount reacting.';
+        } else {
+          el('feel').innerHTML = S.dir > 0
+            ? '<strong>Your hand feels cold.</strong> The water handed ' + qAbs +
+              ' kJ to the reaction, so the water — and your hand resting on the glass — ended up colder.'
+            : '<strong>Your hand feels warm.</strong> The reaction handed ' + qAbs +
+              ' kJ to the water, so the water — and your hand resting on the glass — ended up warmer.';
+        }
+
+        el('work').innerHTML =
+          '<div><span class="lead">q<sub>system</sub></span> = n × ΔH = ' +
+            Demo.fmt.dec(S.n, 3) + ' mol × (' + signed(d.dH, 1) + ' kJ/mol) = <b>' +
+            signed(d.qSys, 2) + ' kJ</b></div>' +
+          '<div><span class="lead">q<sub>surroundings</sub></span> = −q<sub>system</sub> = <b>' +
+            signed(d.qSur, 2) + ' kJ</b> = ' + signed(d.qSur * 1000, 0) + ' J</div>' +
+          '<div><span class="lead">ΔT</span> = q<sub>surroundings</sub> ÷ (m × c) = ' +
+            signed(d.qSur * 1000, 0) + ' J ÷ (' + Demo.fmt.dec(M_WATER, 1) + ' g × ' +
+            Demo.fmt.dec(C_WATER, 2) + ' J g⁻¹ °C⁻¹) = <b>' +
+            signed(d.dT, 2) + ' °C</b></div>' +
+          '<div><span class="lead">final water temp</span> = ' + Demo.fmt.dec(T_START, 1) +
+            ' °C + (' + signed(d.dT, 2) + ' °C) = <b>' + plain(d.Tf, 1) + ' °C</b></div>';
+
+        el('limitNote').style.display = d.Tf < 5 ? '' : 'none';
+
+        buildPackets();
+        scene.redraw();
+        levels.redraw();
+      }
+
+      // ================= controls =================
+      Demo.range('#mag', function (v) { S.mag = v; refresh(); });
+      Demo.range('#amt', function (v) { S.n = v; refresh(); });
+
+      function setDir(dir) {
+        S.dir = dir;
+        el('tabEndo').setAttribute('aria-selected', dir > 0 ? 'true' : 'false');
+        el('tabExo').setAttribute('aria-selected', dir > 0 ? 'false' : 'true');
+        refresh();
+      }
+
+      document.querySelectorAll('.seg button').forEach(function (b) {
+        b.addEventListener('click', function () { setDir(parseInt(b.dataset.dir, 10)); });
+      });
+
+      document.querySelectorAll('.btn-row .btn[data-mag]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var slider = el('mag');
+          slider.value = b.dataset.mag;
+          S.mag = parseFloat(b.dataset.mag);
+          setDir(parseInt(b.dataset.dir, 10));
+          restart();
+        });
+      });
+
+      // ================= animation =================
+      var anim = Demo.loop(function (dt) {
+        S.t += dt;
+        if (S.hold > 0) {
+          S.hold -= dt;
+          if (S.hold <= 0) { S.hold = 0; S.p = 0; }
+        } else if (S.p < 1) {
+          S.p = Math.min(1, S.p + dt / DURATION);
+          if (S.p >= 1) S.hold = HOLD;
+        }
+        scene.paint();
+      });
+
+      function restart() {
+        S.p = 0; S.hold = 0;
+        if (!anim.running) { anim.start(); el('run').textContent = 'Pause'; }
+      }
+
+      el('run').addEventListener('click', function () {
+        // a run that already finished (or the reduced-motion start state) is
+        // parked at p = 1 with no hold left — rewind it or nothing would move
+        if (!anim.running && S.p >= 1 && S.hold <= 0) S.p = 0;
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Run';
+      });
+      el('replay').addEventListener('click', restart);
+
+      refresh();
+
+      if (reduceMotion) {
+        el('run').textContent = 'Run';
+      } else {
+        anim.start();
+      }
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Why Water Should Boil at Minus 80 | Dr. Andres Barboza</title>
+  <meta name="description" content="Real boiling points of the group 14-17 hydrides plotted against molar mass, with the trend line extrapolated back to show where water 'should' have boiled.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: legend swatches and the compact fact lines */
+    .legend { display: flex; flex-direction: column; gap: 10px; }
+    .swatch {
+      width: 13px; height: 13px; border-radius: 4px; flex: none;
+      display: inline-block; vertical-align: middle;
+    }
+    .leg-text { min-width: 0; line-height: 1.45; }
+    #inspectReadouts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .leg-note { font-size: 11.5px; color: var(--muted); margin: -5px 0 0 39px; line-height: 1.4; }
+    .fact { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; }
+    .fact span:first-child { color: var(--muted); }
+    .fact span:last-child { color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tbl td.anom { color: var(--warn); font-weight: 600; }
+    .tbl tr.first-member td:first-child { color: var(--text); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Why Water Should Boil at Minus 80</h1>
+        <p class="demo-sub">Start with group 14 alone — a clean straight line. Then switch on group 16 and find water.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Intermolecular forces</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="plot" role="img"
+          aria-label="Scatter plot of normal boiling point in degrees Celsius against molar mass for the hydrides of groups 14 through 17, with dashed trend lines fitted through the three heavier members of each group and extrapolated back to the lightest member."></canvas>
+        <p class="stage-caption" id="caption">Tap or hover any point to read its molar mass and boiling point.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Series</div>
+          <div class="legend">
+            <label class="check"><input type="checkbox" id="s0" checked><span class="swatch" data-sw="0"></span><span class="leg-text">Group 14 &mdash; CH<sub>4</sub>, SiH<sub>4</sub>, GeH<sub>4</sub>, SnH<sub>4</sub></span></label>
+            <p class="leg-note">The control: no hydrogen bonding anywhere in this series.</p>
+            <label class="check"><input type="checkbox" id="s1"><span class="swatch" data-sw="1"></span><span class="leg-text">Group 15 &mdash; NH<sub>3</sub>, PH<sub>3</sub>, AsH<sub>3</sub>, SbH<sub>3</sub></span></label>
+            <label class="check"><input type="checkbox" id="s2"><span class="swatch" data-sw="2"></span><span class="leg-text">Group 16 &mdash; H<sub>2</sub>O, H<sub>2</sub>S, H<sub>2</sub>Se, H<sub>2</sub>Te</span></label>
+            <label class="check"><input type="checkbox" id="s3"><span class="swatch" data-sw="3"></span><span class="leg-text">Group 17 &mdash; HF, HCl, HBr, HI</span></label>
+            <hr class="sep" style="margin:4px 0">
+            <label class="check"><input type="checkbox" id="extrap" checked><span class="leg-text">Show extrapolation lines</span></label>
+            <p class="leg-note">Dashed line = least-squares fit through the three <em>heavier</em> members only, run backwards to the lightest.</p>
+          </div>
+          <div class="btn-row" style="margin-top:12px">
+            <button class="btn" id="pControl">Control only</button>
+            <button class="btn" id="pWater">Water only</button>
+            <button class="btn primary" id="pAll">All four</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Inspect a group</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Which group to inspect">
+              <button role="tab" aria-selected="true" data-g="0" aria-label="Group 14">14</button>
+              <button role="tab" aria-selected="false" data-g="1" aria-label="Group 15">15</button>
+              <button role="tab" aria-selected="false" data-g="2" aria-label="Group 16">16</button>
+              <button role="tab" aria-selected="false" data-g="3" aria-label="Group 17">17</button>
+            </div>
+
+            <div class="readouts" id="inspectReadouts">
+              <div class="readout">
+                <div class="r-label">Lightest</div>
+                <div class="r-value" id="rName">CH<sub>4</sub></div>
+              </div>
+              <div class="readout is-accent">
+                <div class="r-label">Actual b.p.</div>
+                <div class="r-value" id="rAct">-161.5<span class="r-unit">&deg;C</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Trend says</div>
+                <div class="r-value" id="rPred">-124.6<span class="r-unit">&deg;C</span></div>
+              </div>
+              <div class="readout" id="rGapBox">
+                <div class="r-label">Gap</div>
+                <div class="r-value" id="rGap">-36.9<span class="r-unit">&deg;C</span></div>
+              </div>
+            </div>
+
+            <hr class="sep">
+
+            <div class="stack-s">
+              <div class="fact"><span>Trend through the 3 heavy members</span><span id="fSlope">+0.66 &deg;C per g/mol</span></div>
+              <div class="fact"><span id="fRiseLabel">SiH&#8324; &rarr; SnH&#8324;</span><span id="fRise">+59.9 &deg;C over +90.6 g/mol</span></div>
+              <div class="fact"><span>Fit quality (R&sup2;, heavy members)</span><span id="fR2">1.000</span></div>
+            </div>
+
+            <p class="note warn" id="verdict">
+              Within this series the heavier molecule always boils higher. That part of the rule is real.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Read this before you conclude anything</div>
+          <p class="note">
+            The dashed line is an <strong>extrapolation</strong>, not a measurement. Nobody has ever measured
+            water boiling at &minus;73&nbsp;&deg;C, because water always has hydrogen bonds. Different reasonable
+            fits (molar mass vs. period number, three anchor points vs. two) put the estimate anywhere from about
+            &minus;70 to &minus;100&nbsp;&deg;C. Treat it as an order-of-magnitude argument: the anomaly is
+            <em>hundreds</em> of degrees, not tens.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-title">The data &mdash; normal boiling points at 1 atm</div>
+      <div class="table-scroll">
+        <table class="tbl" id="dataTable">
+          <thead>
+            <tr>
+              <th>Hydride</th><th>Group</th><th>Period</th>
+              <th>Molar mass<br>(g/mol)</th><th>b.p.<br>(&deg;C)</th><th>b.p.<br>(K)</th>
+              <th>Extrapolated<br>(&deg;C)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="small muted" style="margin-top:10px">
+        Boiling points are the accepted normal (1&nbsp;atm) values, rounded to 0.1&nbsp;&deg;C. The kelvin column is
+        the exact conversion (K = &deg;C + 273.15) and carries no extra precision &mdash; the last digit is always a 5.
+        Molar masses use current IUPAC standard atomic weights. Only the lightest
+        member of each group gets an extrapolated value, because the fit is built from the other three.
+      </p>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn "bigger molecules boil at higher temperatures" and
+        then cannot say why water &mdash; the <em>lightest</em> molecule in its column &mdash; boils about 173&nbsp;&deg;C
+        above where its own family's trend line lands. Some students go the other way after seeing the anomaly and
+        decide molar mass does not matter at all. Both conclusions are wrong.
+      </p>
+      <p>
+        <strong>What to notice, part one:</strong> turn on group 14 by itself. CH<sub>4</sub>, SiH<sub>4</sub>,
+        GeH<sub>4</sub>, SnH<sub>4</sub> climb steadily with molar mass. Nothing in that series can hydrogen bond,
+        so the only thing holding the molecules together is London dispersion &mdash; and dispersion forces get
+        stronger as a molecule gets bigger and has more electrons to slosh around. The mass rule is real. Now check
+        groups 15, 16 and 17: from the <em>second</em> member onward every one of them does the same thing. Heavier
+        really does mean higher.
+      </p>
+      <p>
+        <strong>What to notice, part two:</strong> now look at the first member of each of those three groups.
+        NH<sub>3</sub>, H<sub>2</sub>O and HF sit far above the line their own heavier relatives define
+        (+71, +173 and +116&nbsp;&deg;C). Those are the three hydrides where H is bonded to N, O or F &mdash; small,
+        very electronegative atoms with lone pairs. Hydrogen bonding is an <em>extra</em> attraction stacked on top
+        of dispersion, not a replacement for it. That is why the fix is "water boils 173&nbsp;&deg;C higher than the
+        trend predicts", and not "the trend is fake".
+      </p>
+      <p>
+        <strong>The honest caveat:</strong> CH<sub>4</sub> also misses its own extrapolated line &mdash; by
+        &minus;37&nbsp;&deg;C, in the <em>downward</em> direction. Boiling point versus molar mass is not exactly a
+        straight line even with only one kind of force acting, so a fit through three points will never land
+        perfectly on a fourth. That miss is the size of the ordinary scatter in this kind of plot. Water's miss is
+        almost five times larger and points the other way. That contrast &mdash; sign and size &mdash; is the evidence,
+        not the precise value of &minus;73&nbsp;&deg;C.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------------------------------------------------------
+      // Data: normal (1 atm) boiling points in degrees Celsius.
+      // Molar masses from IUPAC standard atomic weights.
+      // f = canvas label (unicode subscripts), h = HTML label.
+      // ---------------------------------------------------------------
+      var GROUPS = [
+        {
+          name: 'Group 14', si: 0,
+          members: [
+            { f: 'CH₄',  h: 'CH<sub>4</sub>',   m: 16.043,  bp: -161.5, period: 2 },
+            { f: 'SiH₄', h: 'SiH<sub>4</sub>',  m: 32.117,  bp: -111.9, period: 3 },
+            { f: 'GeH₄', h: 'GeH<sub>4</sub>',  m: 76.662,  bp: -88.5,  period: 4 },
+            { f: 'SnH₄', h: 'SnH<sub>4</sub>',  m: 122.742, bp: -52.0,  period: 5 }
+          ]
+        },
+        {
+          name: 'Group 15', si: 3,
+          members: [
+            { f: 'NH₃',  h: 'NH<sub>3</sub>',   m: 17.031,  bp: -33.3,  period: 2 },
+            { f: 'PH₃',  h: 'PH<sub>3</sub>',   m: 33.998,  bp: -87.7,  period: 3 },
+            { f: 'AsH₃', h: 'AsH<sub>3</sub>',  m: 77.946,  bp: -62.5,  period: 4 },
+            { f: 'SbH₃', h: 'SbH<sub>3</sub>',  m: 124.784, bp: -17.1,  period: 5 }
+          ]
+        },
+        {
+          name: 'Group 16', si: 1,
+          members: [
+            { f: 'H₂O',  h: 'H<sub>2</sub>O',   m: 18.015,  bp: 100.0,  period: 2 },
+            { f: 'H₂S',  h: 'H<sub>2</sub>S',   m: 34.076,  bp: -60.3,  period: 3 },
+            { f: 'H₂Se', h: 'H<sub>2</sub>Se',  m: 80.987,  bp: -41.3,  period: 4 },
+            { f: 'H₂Te', h: 'H<sub>2</sub>Te',  m: 129.616, bp: -2.2,   period: 5 }
+          ]
+        },
+        {
+          name: 'Group 17', si: 2,
+          members: [
+            { f: 'HF',  h: 'HF',  m: 20.006,  bp: 19.5,  period: 2 },
+            { f: 'HCl', h: 'HCl', m: 36.458,  bp: -85.1, period: 3 },
+            { f: 'HBr', h: 'HBr', m: 80.912,  bp: -66.8, period: 4 },
+            { f: 'HI',  h: 'HI',  m: 127.912, bp: -35.4, period: 5 }
+          ]
+        }
+      ];
+
+      // ---- least-squares line through the heavy members: bp = a + b*M ----
+      function fitLine(pts) {
+        var n = pts.length, i, sx = 0, sy = 0;
+        for (i = 0; i < n; i++) { sx += pts[i].m; sy += pts[i].bp; }
+        var mx = sx / n, my = sy / n, sxy = 0, sxx = 0, syy = 0, dx, dy;
+        for (i = 0; i < n; i++) {
+          dx = pts[i].m - mx; dy = pts[i].bp - my;
+          sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+        }
+        var slope = sxy / sxx;
+        var intercept = my - slope * mx;
+        return {
+          slope: slope,
+          intercept: intercept,
+          r2: syy > 0 ? (sxy * sxy) / (sxx * syy) : 1,
+          at: function (m) { return intercept + slope * m; }
+        };
+      }
+
+      GROUPS.forEach(function (g) {
+        g.heavy = g.members.slice(1);
+        g.fit = fitLine(g.heavy);
+        g.pred = g.fit.at(g.members[0].m);
+        g.gap = g.members[0].bp - g.pred;
+      });
+
+      var state = { on: [true, false, false, false], extrap: true, focus: 0, hover: null };
+
+      // ---------------------------------------------------------------
+      // Canvas
+      // ---------------------------------------------------------------
+      var view = null;
+
+      function rrect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function signed(x, n) {
+        var s = Demo.fmt.dec(x, n == null ? 1 : n);
+        return (x > 0 ? '+' : '') + s;
+      }
+
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var narrow = w < 430;
+        var base = narrow ? 10 : 11;
+        var FONT = base + 'px Poppins, system-ui, sans-serif';
+        var padL = narrow ? 34 : 44, padR = 12, padT = 24, padB = narrow ? 34 : 38;
+        var X0 = padL, X1 = w - padR, Y0 = h - padB, Y1 = padT;
+        var xmin = 4, xmax = 140, ymin = -180, ymax = 120;
+
+        function X(m) { return X0 + (m - xmin) / (xmax - xmin) * (X1 - X0); }
+        function Y(t) { return Y0 - (t - ymin) / (ymax - ymin) * (Y0 - Y1); }
+        view = { X: X, Y: Y, X0: X0, X1: X1, Y0: Y0, Y1: Y1 };
+
+        ctx.font = FONT;
+        ctx.lineWidth = 1;
+
+        // ---- grid ----
+        var yticks = [-150, -100, -50, 0, 50, 100];
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        yticks.forEach(function (t) {
+          var py = Math.round(Y(t)) + 0.5;
+          ctx.strokeStyle = (t === 0) ? c.line : c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(X0, py); ctx.lineTo(X1, py); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(t), X0 - 6, py);
+        });
+
+        var xticks = narrow ? [40, 80, 120] : [20, 40, 60, 80, 100, 120, 140];
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        xticks.forEach(function (m) {
+          var px = Math.round(X(m)) + 0.5;
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(px, Y1); ctx.lineTo(px, Y0); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(m), px, Y0 + 6);
+        });
+
+        // ---- axis frame ----
+        ctx.strokeStyle = c.line;
+        ctx.beginPath();
+        ctx.moveTo(X0 + 0.5, Y1); ctx.lineTo(X0 + 0.5, Y0 + 0.5); ctx.lineTo(X1, Y0 + 0.5);
+        ctx.stroke();
+
+        // ---- axis titles ----
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('Boiling point (°C) at 1 atm', 2, 3);
+        ctx.textAlign = 'center';
+        ctx.fillText('Molar mass (g/mol)', (X0 + X1) / 2, Y0 + 6 + base + 5);
+
+        var visible = state.on.reduce(function (a, b) { return a + (b ? 1 : 0); }, 0);
+
+        // ---- extrapolation lines (drawn under the data) ----
+        if (state.extrap) {
+          GROUPS.forEach(function (g, gi) {
+            if (!state.on[gi]) return;
+            var col = c.series[g.si];
+            var mA = g.members[0].m, mB = g.members[g.members.length - 1].m;
+            ctx.save();
+            ctx.globalAlpha = 0.8;
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath();
+            ctx.moveTo(X(mA), Y(g.fit.at(mA)));
+            ctx.lineTo(X(mB), Y(g.fit.at(mB)));
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
+            // hollow marker at the extrapolated value for the lightest member
+            ctx.fillStyle = c.surface;
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(X(mA), Y(g.pred), 4.5, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            ctx.restore();
+          });
+        }
+
+        // ---- measured data ----
+        GROUPS.forEach(function (g, gi) {
+          if (!state.on[gi]) return;
+          var col = c.series[g.si];
+          ctx.strokeStyle = col;
+          ctx.lineWidth = 2;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          g.members.forEach(function (p, i) {
+            var px = X(p.m), py = Y(p.bp);
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          });
+          ctx.stroke();
+
+          g.members.forEach(function (p, i) {
+            var px = X(p.m), py = Y(p.bp);
+            ctx.fillStyle = col;
+            ctx.beginPath(); ctx.arc(px, py, i === 0 ? 5 : 3.6, 0, Math.PI * 2); ctx.fill();
+            if (i === 0) {
+              ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+              ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+              ctx.beginPath(); ctx.arc(px, py, 7.5, 0, Math.PI * 2); ctx.stroke();
+            }
+          });
+
+          // labels: lightest member always; all members when one series is alone
+          ctx.font = FONT;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          g.members.forEach(function (p, i) {
+            if (i > 0 && visible > 1) return;
+            var px = X(p.m), py = Y(p.bp);
+            var dx = (i === 0 ? 11 : 8);
+            var label = p.f;
+            if (px + dx + ctx.measureText(label).width > X1) {
+              ctx.textAlign = 'right'; dx = -dx;
+            } else {
+              ctx.textAlign = 'left';
+            }
+            ctx.fillStyle = i === 0 ? c.text : c.text2;
+            ctx.fillText(label, px + dx, py - (i === 0 ? 0 : 10));
+          });
+        });
+
+        // ---- the gap annotation, for the inspected group only (drawn on top) ----
+        var fg = GROUPS[state.focus];
+        if (state.extrap && state.on[state.focus]) {
+          var gx = X(fg.members[0].m);
+          var yA = Y(fg.members[0].bp);
+          var yP = Y(fg.pred);
+          ctx.save();
+          ctx.strokeStyle = c.text2;
+          ctx.fillStyle = c.text2;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(gx, yA); ctx.lineTo(gx, yP); ctx.stroke();
+          [[yA, yA < yP ? -1 : 1], [yP, yP < yA ? -1 : 1]].forEach(function (a) {
+            ctx.beginPath();
+            ctx.moveTo(gx, a[0]);
+            ctx.lineTo(gx - 3.5, a[0] - a[1] * 6);
+            ctx.lineTo(gx + 3.5, a[0] - a[1] * 6);
+            ctx.closePath(); ctx.fill();
+          });
+
+          // keep the label clear of other groups' lightest-member labels
+          var busy = [];
+          GROUPS.forEach(function (g2, gj) {
+            if (gj === state.focus || !state.on[gj]) return;
+            busy.push(Y(g2.members[0].bp));
+          });
+          var mid = (yA + yP) / 2;
+          var lo = Math.min(yA, yP) + 10, hi = Math.max(yA, yP) - 10;
+          var cand = mid;
+          [0, -20, 20, -38, 38].some(function (off) {
+            var y = Demo.clamp(mid + off, Math.min(lo, hi), Math.max(lo, hi));
+            var clear = busy.every(function (b) { return Math.abs(y - b) > 15; });
+            if (clear) { cand = y; return true; }
+            return false;
+          });
+
+          var txt = signed(fg.gap, 1) + ' °C vs. the trend';
+          ctx.font = '600 ' + base + 'px Poppins, system-ui, sans-serif';
+          var tw2 = ctx.measureText(txt).width;
+          var lx = gx + 9;
+          if (lx + tw2 + 12 > X1) lx = gx - 9 - tw2 - 12;
+          ctx.fillStyle = c.surface;
+          rrect(ctx, lx - 5, cand - (base + 8) / 2 - 2, tw2 + 12, base + 10, 5);
+          ctx.fill();
+          ctx.fillStyle = c.text;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(txt, lx + 1, cand);
+          ctx.restore();
+        }
+
+        // ---- hover tooltip ----
+        if (state.hover) {
+          var g2 = GROUPS[state.hover.g], p2 = g2.members[state.hover.i];
+          var hx = X(p2.m), hy = Y(p2.bp);
+          var lines = [
+            p2.f + '  ·  ' + g2.name,
+            'M = ' + Demo.fmt.dec(p2.m, 2) + ' g/mol',
+            'b.p. = ' + Demo.fmt.dec(p2.bp, 1) + ' °C  (' + Demo.fmt.dec(p2.bp + 273.15, 2) + ' K)'
+          ];
+          if (state.hover.i === 0) {
+            lines.push('trend line predicts ' + Demo.fmt.dec(g2.pred, 1) + ' °C');
+          }
+          ctx.font = FONT;
+          var tw = 0;
+          lines.forEach(function (L) { tw = Math.max(tw, ctx.measureText(L).width); });
+          var bw = tw + 18, bh = lines.length * (base + 4) + 12;
+          var bx = Demo.clamp(hx + 12, X0, X1 - bw);
+          var by = Demo.clamp(hy - bh - 12, 2, Y0 - bh);
+          ctx.fillStyle = c.surface2;
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 1;
+          rrect(ctx, bx, by, bw, bh, 8);
+          ctx.fill(); ctx.stroke();
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          lines.forEach(function (L, k) {
+            ctx.fillStyle = k === 0 ? c.text : c.text2;
+            ctx.font = (k === 0 ? '600 ' : '') + base + 'px Poppins, system-ui, sans-serif';
+            ctx.fillText(L, bx + 9, by + 6 + k * (base + 4));
+          });
+        }
+      }, { aspect: 0.66, minHeight: 300, maxHeight: 470 });
+
+      // ---------------------------------------------------------------
+      // Pointer: nearest visible point within 24 px
+      // ---------------------------------------------------------------
+      var cv = document.getElementById('plot');
+
+      function pick(ev) {
+        if (!view) return null;
+        var r = cv.getBoundingClientRect();
+        var mx = ev.clientX - r.left, my = ev.clientY - r.top;
+        var best = null, bd = 24 * 24;
+        GROUPS.forEach(function (g, gi) {
+          if (!state.on[gi]) return;
+          g.members.forEach(function (p, i) {
+            var dx = view.X(p.m) - mx, dy = view.Y(p.bp) - my;
+            var d = dx * dx + dy * dy;
+            if (d < bd) { bd = d; best = { g: gi, i: i }; }
+          });
+        });
+        return best;
+      }
+
+      function setHover(hit) {
+        var same = (!hit && !state.hover) ||
+          (hit && state.hover && hit.g === state.hover.g && hit.i === state.hover.i);
+        if (same) return;
+        state.hover = hit;
+        plot.redraw();
+      }
+
+      cv.addEventListener('pointermove', function (ev) { setHover(pick(ev)); });
+      cv.addEventListener('pointerdown', function (ev) { setHover(pick(ev)); });
+      cv.addEventListener('pointerleave', function () { setHover(null); });
+
+      // ---------------------------------------------------------------
+      // Panel + caption
+      // ---------------------------------------------------------------
+      function setHTML(id, html) { document.getElementById(id).innerHTML = html; }
+
+      function refresh() {
+        var g = GROUPS[state.focus];
+        var first = g.members[0];
+        var h2 = g.members[1], h4 = g.members[3];
+
+        setHTML('rName', first.h);
+        setHTML('rAct', Demo.fmt.dec(first.bp, 1) + '<span class="r-unit">&deg;C</span>');
+        setHTML('rPred', Demo.fmt.dec(g.pred, 1) + '<span class="r-unit">&deg;C</span>');
+        setHTML('rGap', signed(g.gap, 1) + '<span class="r-unit">&deg;C</span>');
+
+        var box = document.getElementById('rGapBox');
+        box.className = 'readout' + (g.gap > 50 ? ' is-bad' : '');
+
+        setHTML('fSlope', signed(g.fit.slope, 2) + ' &deg;C per g/mol');
+        setHTML('fRiseLabel', h2.h + ' &rarr; ' + h4.h);
+        setHTML('fRise', signed(h4.bp - h2.bp, 1) + ' &deg;C over ' +
+          signed(h4.m - h2.m, 1) + ' g/mol');
+        setHTML('fR2', Demo.fmt.dec(g.fit.r2, 3));
+
+        var v = document.getElementById('verdict');
+        if (g.gap > 50) {
+          v.className = 'note bad';
+          v.innerHTML = '<strong>' + first.h + ' breaks the line by ' + signed(g.gap, 0) +
+            '&nbsp;&deg;C.</strong> Its H is bonded to N, O or F, so it hydrogen bonds &mdash; an extra ' +
+            'attraction on top of the dispersion forces that set the rest of the series. Note the rest of ' +
+            'the series still climbs with molar mass: hydrogen bonding adds to the trend, it does not cancel it.';
+        } else {
+          v.className = 'note warn';
+          v.innerHTML = '<strong>No hydrogen bonding anywhere in group 14.</strong> Only London dispersion acts, ' +
+            'and it strengthens as molar mass (and electron count) grows, so the series climbs steadily. ' +
+            'CH<sub>4</sub> still misses the fitted line by ' + signed(g.gap, 0) + '&nbsp;&deg;C &mdash; ' +
+            'downward, and small. That is the size of an ordinary miss in this plot.';
+        }
+
+        var cap;
+        if (state.on[state.focus]) {
+          cap = g.name + ': ' + first.f + ' actually boils at ' + Demo.fmt.dec(first.bp, 1) +
+            ' °C. The line fitted through ' + h2.f + ', ' + g.members[2].f + ' and ' + h4.f +
+            ' predicts ' + Demo.fmt.dec(g.pred, 1) + ' °C — a gap of ' + signed(g.gap, 1) + ' °C.';
+        } else {
+          cap = 'Switch on ' + g.name + ' to see its trend line and gap.';
+        }
+        document.getElementById('caption').textContent = cap;
+
+        plot.redraw();
+      }
+
+      // ---- swatches read the live palette; refreshed on theme flip ----
+      function paintSwatches() {
+        var c = Demo.colors();
+        document.querySelectorAll('.swatch').forEach(function (el) {
+          el.style.background = c.series[GROUPS[+el.dataset.sw].si];
+        });
+      }
+      Demo.onTheme(paintSwatches);
+
+      // ---- checkboxes ----
+      [0, 1, 2, 3].forEach(function (i) {
+        var box = document.getElementById('s' + i);
+        box.checked = state.on[i];
+        box.addEventListener('change', function () {
+          state.on[i] = box.checked;
+          if (!box.checked && state.hover && state.hover.g === i) state.hover = null;
+          refresh();
+        });
+      });
+
+      document.getElementById('extrap').addEventListener('change', function () {
+        state.extrap = this.checked;
+        refresh();
+      });
+
+      // ---- focus segmented control ----
+      var segBtns = document.querySelectorAll('.seg button');
+      function setFocus(gi) {
+        state.focus = gi;
+        segBtns.forEach(function (b) {
+          b.setAttribute('aria-selected', +b.dataset.g === gi ? 'true' : 'false');
+        });
+        if (!state.on[gi]) {
+          state.on[gi] = true;
+          document.getElementById('s' + gi).checked = true;
+        }
+        refresh();
+      }
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () { setFocus(+b.dataset.g); });
+      });
+
+      // ---- presets ----
+      function applyPreset(on, focus) {
+        state.on = on.slice();
+        [0, 1, 2, 3].forEach(function (i) { document.getElementById('s' + i).checked = on[i]; });
+        state.hover = null;
+        setFocus(focus);
+      }
+      document.getElementById('pControl').addEventListener('click', function () {
+        applyPreset([true, false, false, false], 0);
+      });
+      document.getElementById('pWater').addEventListener('click', function () {
+        applyPreset([false, false, true, false], 2);
+      });
+      document.getElementById('pAll').addEventListener('click', function () {
+        applyPreset([true, true, true, true], 2);
+      });
+
+      // ---- data table ----
+      (function buildTable() {
+        var rows = [];
+        GROUPS.forEach(function (g) {
+          g.members.forEach(function (p, i) {
+            rows.push(
+              '<tr' + (i === 0 ? ' class="first-member"' : '') + '>' +
+              '<td>' + p.h + '</td>' +
+              '<td>' + g.name.replace('Group ', '') + '</td>' +
+              '<td>' + p.period + '</td>' +
+              '<td>' + Demo.fmt.dec(p.m, 2) + '</td>' +
+              '<td' + (i === 0 && g.gap > 50 ? ' class="anom"' : '') + '>' + Demo.fmt.dec(p.bp, 1) + '</td>' +
+              '<td>' + Demo.fmt.dec(p.bp + 273.15, 2) + '</td>' +
+              '<td>' + (i === 0 ? Demo.fmt.dec(g.pred, 1) : '—') + '</td>' +
+              '</tr>'
+            );
+          });
+        });
+        document.querySelector('#dataTable tbody').innerHTML = rows.join('');
+      })();
+
+      Demo.ready(function () {
+        paintSwatches();
+        refresh();
+      });
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Stoichiometry Road Map | Dr. Andres Barboza</title>
+  <meta name="description" content="Molar mass from a formula, mole-gram-particle conversions, the mole ratio bridge, and the full grams-to-grams road map — with every conversion factor shown as a fraction you can flip.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the level pad, the flippable fractions, the equation line. */
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 4px 0 8px;
+    }
+
+    /* level chooser: 2x2 so four levels fit a phone */
+    .lvls { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .lvls .btn { padding: 8px 9px; text-align: left; line-height: 1.25; }
+    .lvls .btn b { display: block; font-size: 12.5px; font-weight: 600; }
+    .lvls .btn span { display: block; font-size: 10.5px; color: var(--muted); font-weight: 500; }
+    .lvls .btn.is-on {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+    .lvls .btn.is-on b { color: var(--accent-strong); }
+
+    .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 6px; }
+    .presets .btn { padding: 6px 6px; font-size: 12px; }
+    .presets .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    /* ---- the dimensional-analysis line ---- */
+    .calc { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .calc .op { color: var(--muted); font-size: 14px; }
+    .term { display: inline-flex; align-items: baseline; gap: 4px; }
+    .t-val { font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .term .u { font-size: 12px; color: var(--text-2); }
+    .term.is-result {
+      background: var(--ok-soft); border-radius: 9px; padding: 5px 10px;
+    }
+    .term.is-result .t-val, .term.is-result .u { color: var(--ok); }
+    .term.is-dead { background: var(--bad-soft); border-radius: 9px; padding: 5px 10px; }
+    .term.is-dead .t-val, .term.is-dead .u { color: var(--bad); }
+
+    .frac {
+      position: relative;
+      display: inline-flex; flex-direction: column; align-items: center;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 7px 11px 6px;
+      cursor: pointer;
+      font: inherit; font-size: 12px; line-height: 1.35;
+      color: var(--text-2);
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .frac:hover { border-color: var(--accent-line); }
+    .frac.is-bad { border-color: var(--bad); background: var(--bad-soft); }
+    .f-num, .f-den { white-space: nowrap; }
+    .f-bar { display: block; width: 100%; height: 1px; background: var(--muted); margin: 3px 0; opacity: 0.6; }
+    .f-flip {
+      position: absolute; top: 2px; right: 4px;
+      font-size: 9px; color: var(--muted); opacity: 0.55; line-height: 1;
+    }
+    .u.x { text-decoration: line-through; color: var(--muted); opacity: 0.65; }
+    .u.stuck { color: var(--bad); font-weight: 600; }
+
+    /* ---- balanced equation ---- */
+    .eqline { font-size: 16px; color: var(--text); line-height: 2.1; }
+    .eqline .coef {
+      font-weight: 700; color: var(--accent-strong);
+      background: var(--accent-soft); border: 1px solid var(--accent-line);
+      border-radius: 6px; padding: 1px 6px; margin-right: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .eqline .sp { white-space: nowrap; padding: 1px 4px; border-radius: 5px; }
+    .eqline sub { font-size: 0.66em; color: var(--muted); font-weight: 500; vertical-align: -0.25em; }
+    .eqline .plus, .eqline .arw { color: var(--muted); margin: 0 2px; }
+    .eqline .sp.is-from { background: var(--ok-soft); box-shadow: inset 0 0 0 1px var(--ok); }
+    .eqline .sp.is-to { background: var(--warn-soft); box-shadow: inset 0 0 0 1px var(--warn); }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .chip {
+      font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+      padding: 2px 8px; border-radius: 20px;
+      background: var(--ok-soft); color: var(--ok);
+      white-space: nowrap;
+    }
+    .chip.is-bad { background: var(--bad-soft); color: var(--bad); }
+    .chip.is-plain { background: var(--surface-2); color: var(--muted); font-weight: 500; }
+
+    /* ---- element mass bar (level 1) ---- */
+    .massbar { height: 18px; border-radius: 6px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+    .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; font-style: normal; }
+
+    .sfnote { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+    .sfnote b { color: var(--accent-strong); font-weight: 600; }
+    .hide { display: none !important; }
+
+    /* the widest fraction is "6.022 × 10²³ formula units Al₂(SO₄)₃" — keep it
+       inside a 375 px phone rather than pushing the page sideways */
+    @media (max-width: 430px) {
+      .calc { gap: 6px; }
+      .frac { font-size: 10.5px; padding: 6px 8px 5px; }
+      .t-val { font-size: 14px; }
+      .eqline { font-size: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Stoichiometry Road Map</h1>
+        <p class="demo-sub">
+          Four levels on one road. Tap any conversion factor to flip it upside down and watch the units stop
+          cancelling.
+        </p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Chemical Reactions</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div id="eqBox" class="hide">
+          <p class="stage-label">The balanced equation</p>
+          <div class="eqline" id="eqline"></div>
+          <div class="chips" id="atomChips"></div>
+          <p class="stage-caption" style="margin-top:9px">
+            The boxed number in <strong>front</strong> of a formula is a <strong>coefficient</strong> — that is what a
+            mole ratio is made of. The small low number <em>inside</em> a formula is a subscript; it never becomes a
+            mole ratio.
+          </p>
+          <hr class="sep" style="margin:14px 0">
+        </div>
+
+        <p class="stage-label">The road map</p>
+        <canvas id="map" role="img" aria-label="Road map of the current conversion"></canvas>
+        <p class="stage-caption" id="cap">Pick a level to begin.</p>
+
+        <div id="workWrap">
+          <hr class="sep" style="margin:16px 0">
+          <p class="stage-label" id="workLabel">The work — tap a fraction to flip it</p>
+          <div class="calc" id="work"></div>
+          <div id="workMsg" style="margin-top:11px"></div>
+        </div>
+
+        <div id="extra"></div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Level</div>
+          <div class="lvls" id="lvls">
+            <button class="btn" type="button" data-lvl="1"><b>1 &middot; Molar mass</b><span>from the formula</span></button>
+            <button class="btn" type="button" data-lvl="2"><b>2 &middot; Convert</b><span>mole &harr; gram &harr; particle</span></button>
+            <button class="btn" type="button" data-lvl="3"><b>3 &middot; Mole ratio</b><span>the bridge</span></button>
+            <button class="btn" type="button" data-lvl="4"><b>4 &middot; Road map</b><span>grams A to grams B</span></button>
+          </div>
+        </div>
+
+        <!-- Level 1 -->
+        <div class="panel hide" id="p1">
+          <div class="panel-title">Formula</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="f1">Chemical formula</label>
+              </div>
+              <input type="text" id="f1" value="C6H12O6" autocapitalize="off" autocorrect="off" spellcheck="false">
+              <p class="ctrl-hint">Type it the normal way: <code>C6H12O6</code>, <code>Ca(OH)2</code>,
+                <code>CuSO4*5H2O</code>. Case matters — Co is cobalt, CO is carbon monoxide.</p>
+            </div>
+            <div class="presets" id="pre1"></div>
+          </div>
+        </div>
+
+        <!-- Level 2 -->
+        <div class="panel hide" id="p2">
+          <div class="panel-title">One substance, three units</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="sub2">Substance</label></div>
+              <select id="sub2"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><span class="ctrl-label">You are given</span></div>
+              <div class="seg" id="from2" role="tablist" aria-label="Given quantity">
+                <button role="tab" type="button" data-node="g" aria-selected="true">grams</button>
+                <button role="tab" type="button" data-node="mol" aria-selected="false">moles</button>
+                <button role="tab" type="button" data-node="p" aria-selected="false">particles</button>
+              </div>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="v2">Amount</label></div>
+              <input type="text" id="v2" inputmode="decimal" value="25.0">
+              <p class="sfnote" id="sf2"></p>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><span class="ctrl-label">Find</span></div>
+              <div class="seg" id="to2" role="tablist" aria-label="Target quantity">
+                <button role="tab" type="button" data-node="g" aria-selected="false">grams</button>
+                <button role="tab" type="button" data-node="mol" aria-selected="true">moles</button>
+                <button role="tab" type="button" data-node="p" aria-selected="false">particles</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level 3 -->
+        <div class="panel hide" id="p3">
+          <div class="panel-title">Mole ratio</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="rx3">Reaction</label></div>
+              <select id="rx3"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="a3">You know moles of</label></div>
+              <select id="a3"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="v3">Moles</label></div>
+              <input type="text" id="v3" inputmode="decimal" value="4.00">
+              <p class="sfnote" id="sf3"></p>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="b3">Find moles of</label></div>
+              <select id="b3"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level 4 -->
+        <div class="panel hide" id="p4">
+          <div class="panel-title">Full road map</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="rx4">Reaction</label></div>
+              <select id="rx4"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="a4">You have grams of</label></div>
+              <select id="a4"></select>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="v4">Grams</label></div>
+              <input type="text" id="v4" inputmode="decimal" value="25.0">
+              <p class="sfnote" id="sf4"></p>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><label class="ctrl-label" for="b4">Find grams of</label></div>
+              <select id="b4"></select>
+            </div>
+            <label class="check"><input type="checkbox" id="showAll" checked> Show every species in the reaction</label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Readouts</div>
+          <div class="readouts" id="readouts"></div>
+          <hr class="sep" style="margin:12px 0">
+          <div id="sideNote"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Numbers used</div>
+          <p class="small muted" style="line-height:1.5">
+            Atomic masses are the IUPAC 2021 conventional values (H&nbsp;1.008, C&nbsp;12.011, N&nbsp;14.007,
+            O&nbsp;15.999, Cl&nbsp;35.45, Fe&nbsp;55.845, and so on). Avogadro's number is taken as
+            <span class="num" id="avoTxt"></span>&nbsp;particles per mole; the defined value is
+            6.02214076&nbsp;&times;&nbsp;10<sup>23</sup>&nbsp;mol<sup>&minus;1</sup>.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn "grams &rarr; moles &rarr; moles &rarr; grams" as a chant
+        and then treat the middle step as decoration. Two things go wrong. Some skip it entirely and just divide by one
+        molar mass and multiply by the other — which silently assumes the mole ratio is 1&nbsp;:&nbsp;1. Others use it
+        but write it upside down, because they never had a reason to care which number goes on top. A third group
+        builds the ratio out of <em>subscripts</em> (the small numbers inside a formula) instead of
+        <em>coefficients</em> (the big numbers in front), which is a different substance's worth of a different
+        mistake.
+      </p>
+      <p>
+        <strong>What to notice:</strong> every step on this road stays inside one substance except one. Dividing by
+        molar mass changes the unit but not the substance — you still have methane. Multiplying by Avogadro's number
+        does the same. Only the <strong>mole ratio</strong> crosses the dashed line, and it can only be built from the
+        coefficients of a balanced equation, because those coefficients are the only statement anyone ever made about
+        how the two substances are related. Flip any fraction on the screen and watch what happens: the arithmetic
+        still produces a number, but the units stop cancelling and you are left holding g&nbsp;&times;&nbsp;g/mol
+        instead of grams. That is the check that catches an inverted factor every time, and it costs nothing.
+      </p>
+      <p>
+        <strong>Where the model stops:</strong> Level 4 assumes the substance you start with is completely consumed —
+        that it is the limiting reactant, that the reaction goes all the way, and that the yield is 100&nbsp;percent.
+        Real reactions rarely oblige on all three counts, which is exactly why limiting reactant and percent yield are
+        the next two topics. Also notice in the full-reaction table that <em>mass</em> totals match on both sides but
+        <em>mole</em> totals usually do not. Atoms are conserved. Molecules are not.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+         DATA
+         Atomic masses: IUPAC 2021 conventional atomic weights, stored as
+         STRINGS so the number of decimal places is preserved — the addition
+         significant-figure rule needs it.
+         ===================================================================== */
+      var MASS = {
+        H: '1.008', He: '4.003', Li: '6.94', Be: '9.012', B: '10.81', C: '12.011',
+        N: '14.007', O: '15.999', F: '18.998', Ne: '20.180', Na: '22.990', Mg: '24.305',
+        Al: '26.982', Si: '28.085', P: '30.974', S: '32.06', Cl: '35.45', Ar: '39.948',
+        K: '39.098', Ca: '40.078', Ti: '47.867', Cr: '51.996', Mn: '54.938', Fe: '55.845',
+        Co: '58.933', Ni: '58.693', Cu: '63.546', Zn: '65.38', Br: '79.904', Ag: '107.87',
+        Sn: '118.71', I: '126.90', Ba: '137.33', Pt: '195.08', Au: '196.97', Hg: '200.59',
+        Pb: '207.2', U: '238.03'
+      };
+
+      var AVO = 6.022e23;
+      var AVO_TXT = Demo.fmt.sci(AVO, 3);          // 6.022 × 10²³
+
+      // kind drives the particle noun: there is no NaCl molecule.
+      var SUBS = {
+        'CH4': { name: 'methane', kind: 'molecules' },
+        'C3H8': { name: 'propane', kind: 'molecules' },
+        'O2': { name: 'oxygen gas', kind: 'molecules' },
+        'N2': { name: 'nitrogen gas', kind: 'molecules' },
+        'H2': { name: 'hydrogen gas', kind: 'molecules' },
+        'CO2': { name: 'carbon dioxide', kind: 'molecules' },
+        'H2O': { name: 'water', kind: 'molecules' },
+        'NH3': { name: 'ammonia', kind: 'molecules' },
+        'C6H12O6': { name: 'glucose', kind: 'molecules' },
+        'HCl': { name: 'hydrogen chloride', kind: 'molecules' },
+        'H2O2': { name: 'hydrogen peroxide', kind: 'molecules' },
+        'H2SO4': { name: 'sulfuric acid', kind: 'molecules' },
+        'Fe': { name: 'iron', kind: 'atoms' },
+        'Al': { name: 'aluminium', kind: 'atoms' },
+        'Zn': { name: 'zinc', kind: 'atoms' },
+        'NaCl': { name: 'sodium chloride', kind: 'formula units' },
+        'KCl': { name: 'potassium chloride', kind: 'formula units' },
+        'KClO3': { name: 'potassium chlorate', kind: 'formula units' },
+        'Fe2O3': { name: 'iron(III) oxide', kind: 'formula units' },
+        'Al2O3': { name: 'aluminium oxide', kind: 'formula units' },
+        'Ca(OH)2': { name: 'calcium hydroxide', kind: 'formula units' },
+        'CaCl2': { name: 'calcium chloride', kind: 'formula units' },
+        'ZnCl2': { name: 'zinc chloride', kind: 'formula units' },
+        'MgCl2': { name: 'magnesium chloride', kind: 'formula units' },
+        'Al2(SO4)3': { name: 'aluminium sulfate', kind: 'formula units' }
+      };
+
+      // own-property lookups only: a formula box will happily accept "constructor"
+      var owns = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+      function kindOf(f) { return (owns(SUBS, f) && SUBS[f].kind) || 'particles'; }
+      function nameOf(f) { return (owns(SUBS, f) && SUBS[f].name) || ''; }
+
+      // Every coefficient below was checked atom-by-atom; the demo also
+      // re-checks them at runtime and shows the counts on screen.
+      var RXNS = [
+        { n: 'Combustion of methane', L: [[1, 'CH4'], [2, 'O2']], R: [[1, 'CO2'], [2, 'H2O']] },
+        { n: 'Combustion of propane', L: [[1, 'C3H8'], [5, 'O2']], R: [[3, 'CO2'], [4, 'H2O']] },
+        { n: 'Haber process (ammonia)', L: [[1, 'N2'], [3, 'H2']], R: [[2, 'NH3']] },
+        { n: 'Thermite reaction', L: [[2, 'Al'], [1, 'Fe2O3']], R: [[1, 'Al2O3'], [2, 'Fe']] },
+        { n: 'Rusting of iron', L: [[4, 'Fe'], [3, 'O2']], R: [[2, 'Fe2O3']] },
+        { n: 'Decomposition of potassium chlorate', L: [[2, 'KClO3']], R: [[2, 'KCl'], [3, 'O2']] },
+        { n: 'Photosynthesis (overall)', L: [[6, 'CO2'], [6, 'H2O']], R: [[1, 'C6H12O6'], [6, 'O2']] },
+        { n: 'Neutralization of lime by acid', L: [[2, 'HCl'], [1, 'Ca(OH)2']], R: [[1, 'CaCl2'], [2, 'H2O']] },
+        { n: 'Zinc in hydrochloric acid', L: [[1, 'Zn'], [2, 'HCl']], R: [[1, 'ZnCl2'], [1, 'H2']] },
+        { n: 'Decomposition of hydrogen peroxide', L: [[2, 'H2O2']], R: [[2, 'H2O'], [1, 'O2']] }
+      ];
+
+      var L1_PRESETS = ['H2O', 'CO2', 'NaCl', 'C6H12O6', 'Ca(OH)2', 'Al2(SO4)3', 'H2SO4', 'KClO3',
+        'Fe2O3', 'MgCl2', 'NH3', 'CuSO4*5H2O'];
+      var L2_LIST = ['H2O', 'CO2', 'O2', 'NaCl', 'C6H12O6', 'CH4', 'NH3', 'Fe', 'Ca(OH)2',
+        'H2SO4', 'C3H8', 'KClO3', 'Fe2O3', 'Al2(SO4)3'];
+
+      /* =====================================================================
+         FORMULA PARSING + RENDERING
+         ===================================================================== */
+      var SUBDIG = { '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+                     '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉' };
+
+      function splitHydrate(f) {
+        return String(f).split(/[·*.]/).filter(function (s) { return s.length; });
+      }
+
+      // HTML with <sub>, keeping a hydrate multiplier full size
+      function fH(f) {
+        return splitHydrate(f).map(function (p) {
+          var m = p.match(/^(\d+)([\s\S]*)$/);
+          var lead = m ? m[1] : '', rest = m ? m[2] : p;
+          return lead + rest.replace(/(\d+)/g, '<sub>$1</sub>');
+        }).join('&middot;');
+      }
+
+      // plain text with unicode subscripts, for canvas
+      function fT(f) {
+        return splitHydrate(f).map(function (p) {
+          var m = p.match(/^(\d+)([\s\S]*)$/);
+          var lead = m ? m[1] : '', rest = m ? m[2] : p;
+          return lead + rest.replace(/\d/g, function (d) { return SUBDIG[d]; });
+        }).join('·');
+      }
+
+      function parseSimple(s) {
+        var i = 0, n = s.length;
+        function num() {
+          var t = '';
+          while (i < n && s[i] >= '0' && s[i] <= '9') { t += s[i]; i++; }
+          return t ? parseInt(t, 10) : 1;
+        }
+        function grp(depth) {
+          var loc = { order: [], counts: {} };
+          function add(sym, k) {
+            if (loc.order.indexOf(sym) < 0) loc.order.push(sym);
+            loc.counts[sym] = (loc.counts[sym] || 0) + k;
+          }
+          while (i < n) {
+            var ch = s[i];
+            if (ch === '(' || ch === '[') {
+              i++;
+              var inner = grp(depth + 1);
+              if (s[i] !== ')' && s[i] !== ']') throw new Error('A parenthesis is never closed.');
+              i++;
+              var m = num();
+              inner.order.forEach(function (k) { add(k, inner.counts[k] * m); });
+            } else if (ch === ')' || ch === ']') {
+              if (depth === 0) throw new Error('There is a ")" with no "(" in front of it.');
+              break;
+            } else if (ch >= 'A' && ch <= 'Z') {
+              var sym = ch; i++;
+              while (i < n && s[i] >= 'a' && s[i] <= 'z') { sym += s[i]; i++; }
+              if (!MASS[sym]) throw new Error('No atomic mass on file for "' + sym + '".');
+              add(sym, num());
+            } else if (ch === ' ') { i++; }
+            else throw new Error('Cannot read the character "' + ch + '".');
+          }
+          return loc;
+        }
+        var r = grp(0);
+        if (i < n) throw new Error('Cannot read the character "' + s[i] + '".');
+        return r;
+      }
+
+      function parseFormula(f) {
+        var parts = splitHydrate(f);
+        if (!parts.length) throw new Error('Type a chemical formula.');
+        var order = [], counts = {};
+        parts.forEach(function (p) {
+          var mult = 1;
+          var m = p.match(/^(\d+)([\s\S]*)$/);
+          if (m) { mult = parseInt(m[1], 10); p = m[2]; }
+          if (!p.length) throw new Error('A hydrate multiplier has no formula after it.');
+          var sub = parseSimple(p);
+          sub.order.forEach(function (k) {
+            if (order.indexOf(k) < 0) order.push(k);
+            counts[k] = (counts[k] || 0) + sub.counts[k] * mult;
+          });
+        });
+        if (!order.length) throw new Error('Type a chemical formula.');
+        return { order: order, counts: counts };
+      }
+
+      function decimalsOf(str) {
+        var d = str.indexOf('.');
+        return d < 0 ? 0 : str.length - d - 1;
+      }
+
+      // no prototype on the cache: "toString" and "__proto__" are legal keystrokes
+      var mmCache = Object.create(null);
+      function molarMass(f) {
+        if (mmCache[f]) return mmCache[f];
+        var p = parseFormula(f);
+        var terms = [], raw = 0, dec = 9, decSym = '';
+        p.order.forEach(function (sym) {
+          var ms = MASS[sym], mv = parseFloat(ms), k = p.counts[sym];
+          if (k <= 0) return;                       // "C0" contributes nothing
+          var d = decimalsOf(ms);
+          if (d < dec) { dec = d; decSym = sym; }
+          raw += mv * k;
+          terms.push({ sym: sym, k: k, massStr: ms, mass: mv, sub: mv * k });
+        });
+        if (!terms.length || !(raw > 0)) throw new Error('That formula has no atoms in it.');
+        // only name the element that sets the rounding when it does so on its own
+        var tied = 0;
+        terms.forEach(function (t) { if (decimalsOf(t.massStr) === dec) tied++; });
+        if (tied !== 1) decSym = '';
+        // addition rule: the sum keeps the fewest decimal places of any term
+        var mass = parseFloat(raw.toFixed(dec));
+        var out = { formula: f, order: p.order, counts: p.counts, terms: terms,
+                    mass: mass, raw: raw, dec: dec, decSym: decSym, massStr: raw.toFixed(dec) };
+        mmCache[f] = out;
+        return out;
+      }
+
+      /* =====================================================================
+         SIGNIFICANT FIGURES
+         ===================================================================== */
+      function sigFigsOf(s) {
+        s = String(s).trim().replace(/^[+-]/, '');
+        var m = s.split(/[eE]/)[0];
+        if (!/\d/.test(m)) return 3;
+        var hasDot = m.indexOf('.') >= 0;
+        var d = m.replace('.', '').replace(/^0+/, '');
+        if (d === '') return 1;
+        if (!hasDot) { d = d.replace(/0+$/, ''); if (d === '') d = '1'; }
+        return Demo.clamp(d.length, 1, 6);
+      }
+
+      // Demo.fmt.sig drops trailing zeros; sig figs need them back.
+      function sigStr(x, n) {
+        if (!isFinite(x)) return '—';
+        if (x === 0) return '0';
+        var s = Demo.fmt.sig(x, n);
+        if (s.indexOf('×') >= 0) return s;
+        var neg = s.charAt(0) === '-';
+        var body = neg ? s.slice(1) : s;
+        var digits = body.replace('.', '').replace(/^0+/, '');
+        var count = digits.length;
+        if (body.indexOf('.') < 0) {
+          if (count > n) return Demo.fmt.sci(x, n - 1);
+          if (count < n) return s + '.' + new Array(n - count + 1).join('0');
+          return s;
+        }
+        if (count < n) return s + new Array(n - count + 1).join('0');
+        return s;
+      }
+
+      function numOK(s) { return /^\s*\d*\.?\d+\s*([eE]\s*[-+]?\d+)?\s*$/.test(String(s)); }
+
+      /* =====================================================================
+         UNIT TOKENS + THE FLIPPABLE CALCULATION LINE
+         ===================================================================== */
+      function uG(f) { return { id: 'g|' + f, html: 'g ' + fH(f), text: 'g ' + fT(f) }; }
+      function uM(f) { return { id: 'mol|' + f, html: 'mol ' + fH(f), text: 'mol ' + fT(f) }; }
+      function uP(f) {
+        var w = kindOf(f);
+        return { id: 'p|' + f, html: w + ' ' + fH(f), text: w + ' ' + fT(f) };
+      }
+
+      function part(coefText, coefVal, unit) {
+        return { t: coefText, v: coefVal, u: unit };
+      }
+
+      var workEl = document.getElementById('work');
+      var msgEl = document.getElementById('workMsg');
+
+      function uSpan(u) {
+        var s = document.createElement('span');
+        s.className = 'u';
+        s.innerHTML = u.html;
+        return s;
+      }
+
+      /* start = {text, value, unit}; factors = [{a, b, flipped}] where a/b are
+         the correct-orientation numerator and denominator. Returns the result. */
+      function renderCalc(start, factors, sig, onFlip) {
+        workEl.innerHTML = '';
+        var val = start.value, curId = start.unit.id, curSpan = null;
+        var ok = true, badIdx = -1, badDen = null;
+
+        var t0 = document.createElement('span');
+        t0.className = 'term';
+        var v0 = document.createElement('span');
+        v0.className = 't-val'; v0.textContent = start.text;
+        t0.appendChild(v0);
+        curSpan = uSpan(start.unit);
+        t0.appendChild(curSpan);
+        workEl.appendChild(t0);
+
+        factors.forEach(function (f, i) {
+          var op = document.createElement('span');
+          op.className = 'op'; op.textContent = '×';
+          workEl.appendChild(op);
+
+          var num = f.flipped ? f.b : f.a;
+          var den = f.flipped ? f.a : f.b;
+
+          var btn = document.createElement('button');
+          btn.type = 'button'; btn.className = 'frac';
+          btn.setAttribute('aria-label', 'Conversion factor ' + (i + 1) + ' — activate to turn it upside down');
+          btn.title = 'Flip this conversion factor';
+
+          var nEl = document.createElement('span'); nEl.className = 'f-num';
+          nEl.appendChild(document.createTextNode(num.t + ' '));
+          var nu = uSpan(num.u); nEl.appendChild(nu);
+
+          var bar = document.createElement('span'); bar.className = 'f-bar';
+
+          var dEl = document.createElement('span'); dEl.className = 'f-den';
+          dEl.appendChild(document.createTextNode(den.t + ' '));
+          var du = uSpan(den.u); dEl.appendChild(du);
+
+          var flip = document.createElement('span');
+          flip.className = 'f-flip'; flip.textContent = '⇅';
+
+          btn.appendChild(nEl); btn.appendChild(bar); btn.appendChild(dEl); btn.appendChild(flip);
+          btn.addEventListener('click', function () { f.flipped = !f.flipped; onFlip(); });
+          workEl.appendChild(btn);
+
+          val = val * (num.v / den.v);
+
+          if (ok) {
+            if (den.u.id === curId) {
+              curSpan.classList.add('x');
+              du.classList.add('x');
+              curId = num.u.id;
+              curSpan = nu;
+            } else {
+              ok = false; badIdx = i; badDen = den.u;
+              btn.classList.add('is-bad');
+              du.classList.add('stuck');
+              curSpan.classList.add('stuck');
+            }
+          }
+        });
+
+        var eq = document.createElement('span');
+        eq.className = 'op'; eq.textContent = '=';
+        workEl.appendChild(eq);
+
+        var res = document.createElement('span');
+        res.className = 'term ' + (ok ? 'is-result' : 'is-dead');
+        var rv = document.createElement('span');
+        rv.className = 't-val';
+        rv.textContent = sigStr(val, sig);
+        res.appendChild(rv);
+        if (ok) {
+          var ru = document.createElement('span');
+          ru.className = 'u';
+          ru.innerHTML = unitById(curId).html;
+          res.appendChild(ru);
+        } else {
+          var rb = document.createElement('span');
+          rb.className = 'u';
+          rb.textContent = 'units do not cancel';
+          res.appendChild(rb);
+        }
+        workEl.appendChild(res);
+
+        if (ok) {
+          msgEl.innerHTML = '<p class="note"><strong>Units cancel.</strong> Every unit that appears once on top ' +
+            'and once on the bottom crosses out, and the only unit left standing is the one you were asked for. ' +
+            'That is the check — do it before you touch the calculator.</p>';
+        } else {
+          msgEl.innerHTML = '<p class="note bad"><strong>Factor ' + (badIdx + 1) + ' is upside down.</strong> ' +
+            'You are carrying <strong>' + unitById(carriedBefore(start, factors, badIdx)).html + '</strong>, but the ' +
+            'bottom of that fraction says <strong>' + badDen.html + '</strong>. Nothing cancels, so the answer comes ' +
+            'out in units nobody asked for. Tap the fraction to turn it back over.</p>';
+        }
+        return { value: val, ok: ok, unitId: curId };
+      }
+
+      // which unit was being carried just before factor index k
+      function carriedBefore(start, factors, k) {
+        var cur = start.unit.id;
+        for (var i = 0; i < k; i++) {
+          var f = factors[i];
+          var num = f.flipped ? f.b : f.a;
+          cur = num.u.id;
+        }
+        return cur;
+      }
+
+      function unitById(id) {
+        var bits = id.split('|'), f = bits[1];
+        return bits[0] === 'g' ? uG(f) : bits[0] === 'mol' ? uM(f) : uP(f);
+      }
+
+      /* =====================================================================
+         THE CANVAS ROAD MAP
+         ===================================================================== */
+      var state = {
+        level: 1,
+        map: null,
+        flips: { 2: [], 3: [], 4: [] }
+      };
+
+      var mapEl = document.getElementById('map');
+      var mapOpts = { height: 200 };
+
+      function fitMap() {
+        var wpx = mapEl.getBoundingClientRect().width || (mapEl.parentNode ? mapEl.parentNode.clientWidth : 600);
+        var n = state.map ? state.map.nodes.length : 2;
+        mapOpts.height = wpx < 520 ? (24 + n * 44 + (n - 1) * 52) : 200;
+      }
+
+      function rr(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function arrowH(ctx, x0, x1, y, both) {
+        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke();
+        var d = x1 > x0 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(x1, y); ctx.lineTo(x1 - 6 * d, y - 4); ctx.lineTo(x1 - 6 * d, y + 4);
+        ctx.closePath(); ctx.fill();
+        if (both) {
+          ctx.beginPath();
+          ctx.moveTo(x0, y); ctx.lineTo(x0 + 6 * d, y - 4); ctx.lineTo(x0 + 6 * d, y + 4);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+
+      function arrowV(ctx, x, y0, y1, both) {
+        ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y1); ctx.lineTo(x - 4, y1 - 6); ctx.lineTo(x + 4, y1 - 6);
+        ctx.closePath(); ctx.fill();
+        if (both) {
+          ctx.beginPath();
+          ctx.moveTo(x, y0); ctx.lineTo(x - 4, y0 + 6); ctx.lineTo(x + 4, y0 + 6);
+          ctx.closePath(); ctx.fill();
+        }
+      }
+
+      // text with a surface-coloured backing plate so dashed lines never strike through it
+      function plate(ctx, c, s, x, y, align, font, color, maxW) {
+        if (!s) return;
+        ctx.font = font;
+        ctx.textAlign = align; ctx.textBaseline = 'middle';
+        var w = Math.min(ctx.measureText(s).width, maxW || 1e5);
+        var x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(x0 - 3, y - 7, w + 6, 14);
+        ctx.fillStyle = color;
+        ctx.fillText(s, x, y, maxW);
+      }
+
+      var map = Demo.canvas(mapEl, function (ctx, w, h, c) {
+        var m = state.map;
+        if (!m) return;
+        var n = m.nodes.length;
+        var vertical = w < 520;
+        ctx.lineWidth = 1.4;
+        ctx.textBaseline = 'middle';
+
+        if (!vertical) {
+          var padX = 4, W = w - 2 * padX, bh = 56;
+          var gapFrac = n === 2 ? 0.34 : n === 3 ? 0.20 : 0.155;
+          var gap = W * gapFrac;
+          var bw = (W - gap * (n - 1)) / n;
+          var by = Math.round(h / 2 - bh / 2 + 8);
+
+          // substance-boundary divider, drawn first so plates sit on top
+          if (m.bridge >= 0) {
+            var bx0 = padX + (m.bridge + 1) * bw + m.bridge * gap;
+            var dx = Math.round(bx0 + gap / 2) + 0.5;
+            ctx.strokeStyle = c.accentLine;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(dx, 34); ctx.lineTo(dx, by + bh + 26); ctx.stroke();
+            ctx.setLineDash([]);
+            plate(ctx, c, 'the only crossing', dx, by + bh + 34, 'center',
+              '600 10px Poppins, system-ui, sans-serif', c.accentStrong);
+            if (m.sideA) {
+              plate(ctx, c, m.sideA + ' side', padX + 2, 18, 'left',
+                '600 10px Poppins, system-ui, sans-serif', c.muted, W / 2 - 6);
+              plate(ctx, c, m.sideB + ' side', w - padX - 2, 18, 'right',
+                '600 10px Poppins, system-ui, sans-serif', c.muted, W / 2 - 6);
+            }
+          }
+
+          m.nodes.forEach(function (nd, i) {
+            var x = padX + i * (bw + gap);
+            ctx.fillStyle = nd.hi ? c.accentSoft : c.surface2;
+            ctx.strokeStyle = nd.hi ? c.accentLine : c.line;
+            rr(ctx, x, by, bw, bh, 10);
+            ctx.fill(); ctx.stroke();
+            var cx = x + bw / 2, mw = bw - 10;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = c.muted;
+            ctx.font = '10px Poppins, system-ui, sans-serif';
+            ctx.fillText(nd.kind, cx, by + 14, mw);
+            ctx.fillStyle = c.text;
+            ctx.font = '600 12px Poppins, system-ui, sans-serif';
+            ctx.fillText(nd.formula, cx, by + 29, mw);
+            ctx.fillStyle = nd.hi ? c.accentStrong : c.text2;
+            ctx.font = '600 11.5px Poppins, system-ui, sans-serif';
+            ctx.fillText(nd.value, cx, by + 44, mw);
+          });
+
+          m.arrows.forEach(function (ar, i) {
+            var x0 = padX + (i + 1) * bw + i * gap;
+            var x1 = x0 + gap;
+            var isB = i === m.bridge;
+            ctx.strokeStyle = isB ? c.accentStrong : c.muted;
+            ctx.fillStyle = isB ? c.accentStrong : c.muted;
+            ctx.lineWidth = isB ? 2 : 1.4;
+            arrowH(ctx, x0 + 5, x1 - 5, by + bh / 2, !!ar.both);
+            ctx.lineWidth = 1.4;
+            var mx = (x0 + x1) / 2;
+            plate(ctx, c, ar.l1, mx, by - 22, 'center',
+              '600 10.5px Poppins, system-ui, sans-serif', isB ? c.accentStrong : c.text2, gap + 24);
+            plate(ctx, c, ar.l2, mx, by - 9, 'center',
+              '10px Poppins, system-ui, sans-serif', c.muted, gap + 24);
+          });
+          return;
+        }
+
+        /* ---- vertical (phone) ---- */
+        var vx = 8, vw = w - 16, vbh = 44, vgap = 52;
+        m.arrows.forEach(function (ar, i) {
+          var gy0 = 12 + i * (vbh + vgap) + vbh;
+          if (i === m.bridge) {
+            var ly = Math.round(gy0 + vgap / 2) + 0.5;
+            ctx.strokeStyle = c.accentLine;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(w, ly); ctx.stroke();
+            ctx.setLineDash([]);
+            plate(ctx, c, 'the only crossing', w - 6, ly, 'right',
+              '600 9.5px Poppins, system-ui, sans-serif', c.accentStrong, vw * 0.36);
+          }
+        });
+
+        m.nodes.forEach(function (nd, i) {
+          var y = 12 + i * (vbh + vgap);
+          ctx.fillStyle = nd.hi ? c.accentSoft : c.surface2;
+          ctx.strokeStyle = nd.hi ? c.accentLine : c.line;
+          rr(ctx, vx, y, vw, vbh, 10);
+          ctx.fill(); ctx.stroke();
+          ctx.textAlign = 'left';
+          ctx.fillStyle = c.text2;
+          ctx.font = '11px Poppins, system-ui, sans-serif';
+          ctx.fillText(nd.kind + ' ' + nd.formula, vx + 12, y + vbh / 2, vw * 0.55);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = nd.hi ? c.accentStrong : c.text;
+          ctx.font = '600 12.5px Poppins, system-ui, sans-serif';
+          ctx.fillText(nd.value, vx + vw - 12, y + vbh / 2, vw * 0.4);
+        });
+
+        m.arrows.forEach(function (ar, i) {
+          var gy0 = 12 + i * (vbh + vgap) + vbh;
+          var isB = i === m.bridge;
+          ctx.strokeStyle = isB ? c.accentStrong : c.muted;
+          ctx.fillStyle = isB ? c.accentStrong : c.muted;
+          ctx.lineWidth = isB ? 2 : 1.4;
+          arrowV(ctx, vx + 24, gy0 + 8, gy0 + vgap - 8, !!ar.both);
+          ctx.lineWidth = 1.4;
+          plate(ctx, c, ar.l1, vx + 40, gy0 + vgap / 2 - 8, 'left',
+            '600 10.5px Poppins, system-ui, sans-serif', isB ? c.accentStrong : c.text2, vw - 60);
+          plate(ctx, c, ar.l2, vx + 40, gy0 + vgap / 2 + 6, 'left',
+            '10px Poppins, system-ui, sans-serif', c.muted, vw - 60);
+        });
+      }, mapOpts);
+
+      window.addEventListener('resize', function () { fitMap(); map.resize(); });
+
+      function refreshMap() { fitMap(); map.resize(); }
+
+      /* =====================================================================
+         SHARED UI BITS
+         ===================================================================== */
+      var readEl = document.getElementById('readouts');
+      var sideEl = document.getElementById('sideNote');
+      var capEl = document.getElementById('cap');
+      var extraEl = document.getElementById('extra');
+      var eqBox = document.getElementById('eqBox');
+      var eqLine = document.getElementById('eqline');
+      var atomChips = document.getElementById('atomChips');
+      var workWrap = document.getElementById('workWrap');
+
+      function ro(label, value, unit, cls) {
+        return '<div class="readout ' + (cls || '') + '"><div class="r-label">' + label +
+          '</div><div class="r-value">' + value +
+          (unit ? '<span class="r-unit">' + unit + '</span>' : '') + '</div></div>';
+      }
+
+      function sfLine(el, raw) {
+        if (!numOK(raw)) { el.innerHTML = '<span style="color:var(--bad)">Type a positive number.</span>'; return; }
+        var n = sigFigsOf(raw);
+        el.innerHTML = 'This measurement carries <b>' + n + ' significant figure' + (n === 1 ? '' : 's') +
+          '</b>, so the final answer is rounded to ' + n + '. Write <span class="num">1.00</span> rather than ' +
+          '<span class="num">1</span> if you measured to three.';
+      }
+
+      function eqHTML(rx, from, to) {
+        function side(arr) {
+          return arr.map(function (s) {
+            var cls = 'sp' + (s[1] === from ? ' is-from' : s[1] === to ? ' is-to' : '');
+            var coef = s[0] > 1 ? '<span class="coef">' + s[0] + '</span>' : '<span class="coef">1</span>';
+            return coef + '<span class="' + cls + '">' + fH(s[1]) + '</span>';
+            // note: the spaces below are real break opportunities — without them a
+            // long equation cannot wrap on a narrow phone
+          }).join(' <span class="plus">+</span> ');
+        }
+        return side(rx.L) + ' <span class="arw">→</span> ' + side(rx.R);
+      }
+
+      function atomTally(side) {
+        var t = {};
+        side.forEach(function (s) {
+          var p = parseFormula(s[1]);
+          p.order.forEach(function (k) { t[k] = (t[k] || 0) + p.counts[k] * s[0]; });
+        });
+        return t;
+      }
+
+      function atomChipsHTML(rx) {
+        var l = atomTally(rx.L), r = atomTally(rx.R);
+        var keys = [];
+        Object.keys(l).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+        Object.keys(r).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+        var html = '<span class="chip is-plain">atom check</span>';
+        keys.forEach(function (k) {
+          var a = l[k] || 0, b = r[k] || 0;
+          html += '<span class="chip' + (a === b ? '' : ' is-bad') + '">' + k + '&nbsp;' + a + ' = ' + b + '</span>';
+        });
+        return html;
+      }
+
+      function coefOf(rx, f) {
+        var all = rx.L.concat(rx.R), c = 0;
+        all.forEach(function (s) { if (s[1] === f) c = s[0]; });
+        return c;
+      }
+
+      function fillSelect(sel, list, value) {
+        sel.innerHTML = list.map(function (o) {
+          return '<option value="' + o.v + '"' + (o.v === value ? ' selected' : '') + '>' + o.t + '</option>';
+        }).join('');
+      }
+
+      function segValue(id) {
+        var b = document.querySelector('#' + id + ' button[aria-selected="true"]');
+        return b ? b.dataset.node : null;
+      }
+      function setSeg(id, node) {
+        document.querySelectorAll('#' + id + ' button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.node === node ? 'true' : 'false');
+        });
+      }
+      function segWire(id, fn) {
+        document.querySelectorAll('#' + id + ' button').forEach(function (b) {
+          b.addEventListener('click', function () {
+            setSeg(id, b.dataset.node);
+            fn(b.dataset.node);
+          });
+        });
+      }
+
+      function flips(level, n) {
+        var a = state.flips[level];
+        if (!a || a.length !== n) { a = []; for (var i = 0; i < n; i++) a.push(false); state.flips[level] = a; }
+        return a;
+      }
+      function resetFlips(level) { state.flips[level] = []; }
+
+      /* =====================================================================
+         LEVEL 1 — MOLAR MASS
+         ===================================================================== */
+      var f1 = document.getElementById('f1');
+
+      document.getElementById('pre1').innerHTML = L1_PRESETS.map(function (f) {
+        return '<button class="btn" type="button" data-f="' + f + '">' + fH(f) + '</button>';
+      }).join('');
+      document.querySelectorAll('#pre1 .btn').forEach(function (b) {
+        b.addEventListener('click', function () { f1.value = b.dataset.f; render(); });
+      });
+
+      function renderL1() {
+        eqBox.classList.add('hide');
+        workWrap.classList.add('hide');
+        var raw = f1.value.trim();
+        document.querySelectorAll('#pre1 .btn').forEach(function (b) {
+          b.classList.toggle('is-on', b.dataset.f === raw);
+        });
+
+        var mm;
+        try { mm = molarMass(raw); }
+        catch (e) {
+          state.map = { nodes: [{ kind: 'grams', formula: '?', value: '—' },
+                                { kind: 'moles', formula: '?', value: '—' }],
+                        arrows: [{ l1: 'molar mass', l2: '—', both: true }], bridge: -1 };
+          refreshMap();
+          capEl.textContent = 'Molar mass is the number that lives on this arrow.';
+          extraEl.innerHTML = '<p class="note bad" style="margin-top:14px"><strong>' + e.message + '</strong></p>';
+          readEl.innerHTML = ro('Molar mass', '—', '');
+          sideEl.innerHTML = '<p class="small muted">Try one of the buttons above.</p>';
+          return;
+        }
+
+        state.map = {
+          nodes: [
+            { kind: 'grams', formula: fT(raw), value: mm.massStr + ' g' },
+            { kind: 'moles', formula: fT(raw), value: '1 mol' }
+          ],
+          arrows: [{ l1: 'molar mass', l2: mm.massStr + ' g/mol', both: true }],
+          bridge: -1
+        };
+        refreshMap();
+        mapEl.setAttribute('aria-label', 'One mole of ' + raw + ' has a mass of ' + mm.massStr + ' grams.');
+        capEl.innerHTML = 'Molar mass is not a step of its own — it is the <strong>label on the grams-to-moles ' +
+          'arrow</strong>. The arrow points both ways because the same number does both jobs.';
+
+        var pal = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)'];
+        var rows = '', bars = '', leg = '', pctSum = 0;
+        mm.terms.forEach(function (t, i) {
+          var pct = t.sub / mm.mass;
+          pctSum += pct;
+          var col = pal[i % 4];
+          rows += '<tr><td>' + t.sym + '</td><td>' + t.k + '</td><td>' + t.massStr + '</td><td>' +
+            t.k + ' × ' + t.massStr + ' = ' + Demo.fmt.dec(t.sub, 3) + '</td><td>' +
+            Demo.fmt.dec(pct * 100, 2) + '%</td></tr>';
+          bars += '<span style="width:' + (pct * 100) + '%;background:' + col + '"></span>';
+          leg += '<span><i style="background:' + col + '"></i>' + t.sym + ' &middot; ' +
+            Demo.fmt.dec(pct * 100, 1) + '% of the mass</span>';
+        });
+
+        extraEl.innerHTML =
+          '<hr class="sep" style="margin:16px 0">' +
+          '<p class="stage-label">Atom by atom</p>' +
+          '<div class="table-scroll"><table class="tbl"><thead><tr>' +
+          '<th>Element</th><th>Atoms</th><th>Atomic mass (g/mol)</th><th>Contribution (g/mol)</th><th>Share of mass</th>' +
+          '</tr></thead><tbody>' + rows +
+          '<tr><td><strong>Molar mass</strong></td><td></td><td></td><td><strong>' + mm.massStr +
+          ' g/mol</strong></td><td>' + Demo.fmt.dec(pctSum * 100, 2) + '%</td></tr>' +
+          '</tbody></table></div>' +
+          '<p class="stage-label" style="margin-top:16px">Where the mass actually sits</p>' +
+          '<div class="bar massbar">' + bars + '</div>' +
+          '<div class="legend">' + leg + '</div>' +
+          '<p class="note warn" style="margin-top:12px"><strong>Rounding rule.</strong> These masses are added, ' +
+          'so the sum keeps the <strong>fewest decimal places</strong> of any atomic mass used — here that is <b>' +
+          mm.dec + '</b> decimal place' + (mm.dec === 1 ? '' : 's') +
+          (mm.decSym ? ', set by ' + mm.decSym + ' (' + MASS[mm.decSym] + ')' : '') +
+          '. The atom counts are exact counting numbers and never limit the answer.</p>';
+
+        readEl.innerHTML =
+          ro('Molar mass', mm.massStr, 'g/mol', 'is-accent') +
+          ro('Elements', String(mm.terms.length), '') +
+          ro('Atoms per unit', String(mm.terms.reduce(function (a, t) { return a + t.k; }, 0)), '');
+
+        sideEl.innerHTML = '<p class="small">One mole of <strong>' + fH(raw) + '</strong>' +
+          (nameOf(raw) ? ' (' + nameOf(raw) + ')' : '') + ' has a mass of <strong>' + mm.massStr +
+          ' g</strong> and contains ' + AVO_TXT + ' ' + kindOf(raw) + '.</p>' +
+          '<p class="small muted" style="margin-top:8px">Count the atoms of each element <em>after</em> multiplying ' +
+          'through every parenthesis. That is where most molar-mass errors are born, not in the arithmetic.</p>';
+      }
+
+      /* =====================================================================
+         LEVEL 2 — MOLE / GRAM / PARTICLE
+         ===================================================================== */
+      var sub2 = document.getElementById('sub2');
+      var v2 = document.getElementById('v2');
+      fillSelect(sub2, L2_LIST.map(function (f) {
+        return { v: f, t: f + (nameOf(f) ? '  —  ' + nameOf(f) : '') };
+      }), 'H2O');
+
+      var NODEKIND = { g: 'grams', mol: 'moles', p: 'particles' };
+
+      function stepFactor(a, b, f, mm) {
+        if (a === 'g' && b === 'mol') return { a: part('1', 1, uM(f)), b: part(mm.massStr, mm.mass, uG(f)), flipped: false };
+        if (a === 'mol' && b === 'g') return { a: part(mm.massStr, mm.mass, uG(f)), b: part('1', 1, uM(f)), flipped: false };
+        if (a === 'mol' && b === 'p') return { a: part(AVO_TXT, AVO, uP(f)), b: part('1', 1, uM(f)), flipped: false };
+        return { a: part('1', 1, uM(f)), b: part(AVO_TXT, AVO, uP(f)), flipped: false };
+      }
+
+      function renderL2() {
+        eqBox.classList.add('hide');
+        workWrap.classList.remove('hide');
+        var f = sub2.value;
+        var mm = molarMass(f);
+        var from = segValue('from2'), to = segValue('to2');
+        var raw = v2.value.trim();
+        sfLine(document.getElementById('sf2'), raw);
+
+        if (from === to) { setSeg('to2', otherNode(from)); to = otherNode(from); }
+        if (!numOK(raw)) {
+          workEl.innerHTML = '';
+          msgEl.innerHTML = '<p class="note bad">Enter a positive number in the amount box.</p>';
+          return;
+        }
+
+        var sig = sigFigsOf(raw);
+        var val = parseFloat(raw);
+
+        // every route runs through moles: that is the whole point of the hub
+        var path = (from === 'mol' || to === 'mol') ? [from, to] : [from, 'mol', to];
+        var n = path.length - 1;
+        var fl = flips(2, n);
+        var factors = [];
+        for (var i = 0; i < n; i++) {
+          var fac = stepFactor(path[i], path[i + 1], f, mm);
+          fac.flipped = fl[i];
+          factors.push(fac);
+        }
+
+        var start = {
+          text: raw, value: val,
+          unit: from === 'g' ? uG(f) : from === 'mol' ? uM(f) : uP(f)
+        };
+
+        var out = renderCalc(start, factors, sig, function () {
+          for (var i = 0; i < factors.length; i++) fl[i] = factors[i].flipped;
+          renderL2();
+        });
+
+        // the map always shows all three, computed correctly, regardless of flips
+        var moles = from === 'g' ? val / mm.mass : from === 'mol' ? val : val / AVO;
+        var grams = moles * mm.mass;
+        var parts = moles * AVO;
+        var carry = Math.min(sig + 1, 6);
+
+        state.map = {
+          nodes: [
+            { kind: 'grams', formula: fT(f), value: sigStr(grams, from === 'g' ? sig : carry) + ' g', hi: from === 'g' },
+            { kind: 'moles', formula: fT(f), value: sigStr(moles, from === 'mol' ? sig : carry) + ' mol', hi: from === 'mol' },
+            { kind: kindOf(f), formula: fT(f), value: sigStr(parts, from === 'p' ? sig : carry), hi: from === 'p' }
+          ],
+          arrows: [
+            { l1: 'molar mass', l2: mm.massStr + ' g/mol', both: true },
+            { l1: "Avogadro's number", l2: AVO_TXT + ' /mol', both: true }
+          ],
+          bridge: -1
+        };
+        refreshMap();
+        mapEl.setAttribute('aria-label', 'Grams, moles and ' + kindOf(f) + ' of ' + f +
+          ', linked by molar mass and Avogadro’s number.');
+        capEl.innerHTML = 'Both arrows point both ways, and <strong>moles sits in the middle of every route</strong>. ' +
+          'There is no direct grams-to-particles conversion factor; you go through the mole or you go nowhere.';
+
+        readEl.innerHTML =
+          ro('Given (' + NODEKIND[from] + ')', raw, from === 'g' ? 'g' : from === 'mol' ? 'mol' : '') +
+          ro('Answer (' + NODEKIND[to] + ')', out.ok ? sigStr(out.value, sig) : '—',
+            out.ok ? (to === 'g' ? 'g' : to === 'mol' ? 'mol' : '') : '', out.ok ? 'is-ok' : 'is-bad') +
+          ro('Molar mass', mm.massStr, 'g/mol', 'is-accent');
+
+        sideEl.innerHTML = '<p class="small"><strong>' + AVO_TXT + '</strong> is a count, not a mass. For ' +
+          fH(f) + ' those particles are <strong>' + kindOf(f) + '</strong>' +
+          (kindOf(f) === 'formula units'
+            ? ' &mdash; an ionic solid is a lattice, so there is no such thing as one ' + fH(f) + ' molecule.'
+            : '.') + '</p>' +
+          '<p class="small muted" style="margin-top:8px">The map carries one extra digit through the middle. ' +
+          'Round once, at the end.</p>';
+        extraEl.innerHTML = '';
+      }
+
+      function otherNode(v) { return v === 'mol' ? 'g' : 'mol'; }
+
+      sub2.addEventListener('change', function () { resetFlips(2); render(); });
+      v2.addEventListener('input', render);
+      segWire('from2', function (v) {
+        if (segValue('to2') === v) setSeg('to2', otherNode(v));
+        resetFlips(2); render();
+      });
+      segWire('to2', function (v) {
+        if (segValue('from2') === v) setSeg('from2', otherNode(v));
+        resetFlips(2); render();
+      });
+
+      /* =====================================================================
+         LEVEL 3 — MOLE RATIO
+         ===================================================================== */
+      var rx3 = document.getElementById('rx3'), a3 = document.getElementById('a3'),
+        b3 = document.getElementById('b3'), v3 = document.getElementById('v3');
+
+      fillSelect(rx3, RXNS.map(function (r, i) { return { v: String(i), t: r.n }; }), '1');
+
+      function speciesOptions(rx) {
+        return rx.L.concat(rx.R).map(function (s) {
+          return { v: s[1], t: s[1] + (nameOf(s[1]) ? '  —  ' + nameOf(s[1]) : '') };
+        });
+      }
+
+      function syncSpecies(rxSel, aSel, bSel, defA, defB) {
+        var rx = RXNS[parseInt(rxSel.value, 10)];
+        var opts = speciesOptions(rx);
+        var names = opts.map(function (o) { return o.v; });
+        var av = names.indexOf(aSel.value) >= 0 ? aSel.value : (defA && names.indexOf(defA) >= 0 ? defA : names[0]);
+        var bv = names.indexOf(bSel.value) >= 0 ? bSel.value : (defB && names.indexOf(defB) >= 0 ? defB : names[names.length - 1]);
+        if (bv === av) bv = names.filter(function (x) { return x !== av; })[0];
+        fillSelect(aSel, opts, av);
+        fillSelect(bSel, opts, bv);
+        return rx;
+      }
+
+      function renderL3() {
+        workWrap.classList.remove('hide');
+        eqBox.classList.remove('hide');
+        var rx = syncSpecies(rx3, a3, b3, 'O2', 'CO2');
+        var A = a3.value, B = b3.value;
+        var cA = coefOf(rx, A), cB = coefOf(rx, B);
+        var raw = v3.value.trim();
+        sfLine(document.getElementById('sf3'), raw);
+
+        eqLine.innerHTML = eqHTML(rx, A, B);
+        atomChips.innerHTML = atomChipsHTML(rx);
+
+        if (!numOK(raw)) {
+          workEl.innerHTML = '';
+          msgEl.innerHTML = '<p class="note bad">Enter a positive number of moles.</p>';
+          return;
+        }
+        var sig = sigFigsOf(raw), val = parseFloat(raw);
+
+        var fl = flips(3, 1);
+        var fac = {
+          a: part(String(cB), cB, uM(B)),
+          b: part(String(cA), cA, uM(A)),
+          flipped: fl[0]
+        };
+        var out = renderCalc({ text: raw, value: val, unit: uM(A) }, [fac], sig, function () {
+          fl[0] = fac.flipped; renderL3();
+        });
+
+        state.map = {
+          nodes: [
+            { kind: 'moles', formula: fT(A), value: raw + ' mol', hi: true },
+            { kind: 'moles', formula: fT(B), value: sigStr(val * cB / cA, sig) + ' mol' }
+          ],
+          arrows: [{ l1: '× mole ratio', l2: cB + ' mol ' + fT(B) + ' / ' + cA + ' mol ' + fT(A) }],
+          bridge: 0, sideA: fT(A), sideB: fT(B)
+        };
+        refreshMap();
+        mapEl.setAttribute('aria-label', 'Moles of ' + A + ' converted to moles of ' + B +
+          ' using the mole ratio ' + cB + ' to ' + cA + '.');
+        capEl.innerHTML = 'This single arrow is the <strong>bridge</strong>. It is the only conversion in all of ' +
+          'stoichiometry that changes which substance you are talking about, and the only place the balanced ' +
+          'coefficients are allowed in.';
+
+        readEl.innerHTML =
+          ro('Mole ratio', cB + ' : ' + cA, '', 'is-accent') +
+          ro('Moles ' + fH(A), raw, 'mol') +
+          ro('Moles ' + fH(B), out.ok ? sigStr(out.value, sig) : '—', out.ok ? 'mol' : '', out.ok ? 'is-ok' : 'is-bad');
+
+        sideEl.innerHTML = '<p class="small">The ratio <strong>' + cB + ' mol ' + fH(B) + ' / ' + cA + ' mol ' +
+          fH(A) + '</strong> comes from the boxed coefficients and from nothing else. Change the equation and the ' +
+          'ratio changes; change a subscript and you have changed the substance.</p>' +
+          '<p class="small muted" style="margin-top:8px">The coefficients are exact counting numbers, so they never ' +
+          'limit significant figures.</p>';
+
+        extraEl.innerHTML =
+          '<hr class="sep" style="margin:16px 0">' +
+          '<p class="note warn"><strong>The classic trap.</strong> In ' + fH(A) + ' the small numbers are ' +
+          'subscripts: they tell you what one particle is made of. The boxed ' + cA + ' in front is a coefficient: ' +
+          'it tells you how many of those particles take part. A mole ratio is built only from coefficients. If you ' +
+          'ever find yourself writing a subscript into a ratio, stop.</p>';
+      }
+
+      rx3.addEventListener('change', function () { resetFlips(3); render(); });
+      a3.addEventListener('change', function () { resetFlips(3); render(); });
+      b3.addEventListener('change', function () { resetFlips(3); render(); });
+      v3.addEventListener('input', render);
+
+      /* =====================================================================
+         LEVEL 4 — FULL ROAD MAP
+         ===================================================================== */
+      var rx4 = document.getElementById('rx4'), a4 = document.getElementById('a4'),
+        b4 = document.getElementById('b4'), v4 = document.getElementById('v4'),
+        showAll = document.getElementById('showAll');
+
+      fillSelect(rx4, RXNS.map(function (r, i) { return { v: String(i), t: r.n }; }), '0');
+
+      function renderL4() {
+        workWrap.classList.remove('hide');
+        eqBox.classList.remove('hide');
+        var rx = syncSpecies(rx4, a4, b4, 'CH4', 'CO2');
+        var A = a4.value, B = b4.value;
+        var cA = coefOf(rx, A), cB = coefOf(rx, B);
+        var mA = molarMass(A), mB = molarMass(B);
+        var raw = v4.value.trim();
+        sfLine(document.getElementById('sf4'), raw);
+
+        eqLine.innerHTML = eqHTML(rx, A, B);
+        atomChips.innerHTML = atomChipsHTML(rx);
+
+        if (!numOK(raw)) {
+          workEl.innerHTML = '';
+          msgEl.innerHTML = '<p class="note bad">Enter a positive mass in grams.</p>';
+          return;
+        }
+        var sig = sigFigsOf(raw), val = parseFloat(raw);
+        var carry = Math.min(sig + 1, 6);
+
+        var fl = flips(4, 3);
+        var factors = [
+          { a: part('1', 1, uM(A)), b: part(mA.massStr, mA.mass, uG(A)), flipped: fl[0] },
+          { a: part(String(cB), cB, uM(B)), b: part(String(cA), cA, uM(A)), flipped: fl[1] },
+          { a: part(mB.massStr, mB.mass, uG(B)), b: part('1', 1, uM(B)), flipped: fl[2] }
+        ];
+        var out = renderCalc({ text: raw, value: val, unit: uG(A) }, factors, sig, function () {
+          for (var i = 0; i < factors.length; i++) fl[i] = factors[i].flipped;
+          renderL4();
+        });
+
+        var molA = val / mA.mass;
+        var molB = molA * cB / cA;
+        var gB = molB * mB.mass;
+
+        state.map = {
+          nodes: [
+            { kind: 'grams', formula: fT(A), value: raw + ' g', hi: true },
+            { kind: 'moles', formula: fT(A), value: sigStr(molA, carry) + ' mol' },
+            { kind: 'moles', formula: fT(B), value: sigStr(molB, carry) + ' mol' },
+            { kind: 'grams', formula: fT(B), value: sigStr(gB, sig) + ' g' }
+          ],
+          arrows: [
+            { l1: '÷ molar mass', l2: 'of ' + fT(A) },
+            { l1: '× mole ratio', l2: cB + ' : ' + cA + ' from coefficients' },
+            { l1: '× molar mass', l2: 'of ' + fT(B) }
+          ],
+          bridge: 1, sideA: fT(A), sideB: fT(B)
+        };
+        refreshMap();
+        mapEl.setAttribute('aria-label', raw + ' grams of ' + A + ' converted to grams of ' + B +
+          ' through moles of each.');
+        capEl.innerHTML = 'Three arrows, one of which is different in kind. The two outer arrows only change the ' +
+          '<em>unit</em>; you are still holding the same substance. The middle arrow is the only one that crosses ' +
+          'the dashed line, and it needs the balanced equation to exist at all.';
+
+        readEl.innerHTML =
+          ro('Grams ' + fH(A), raw, 'g') +
+          ro('Moles ' + fH(A), sigStr(molA, carry), 'mol') +
+          ro('Moles ' + fH(B), sigStr(molB, carry), 'mol') +
+          ro('Grams ' + fH(B), out.ok ? sigStr(out.value, sig) : '—', out.ok ? 'g' : '',
+            out.ok ? 'is-ok' : 'is-bad');
+
+        var aIsReactant = false;
+        rx.L.forEach(function (s) { if (s[1] === A) aIsReactant = true; });
+        var bIsProduct = false;
+        rx.R.forEach(function (s) { if (s[1] === B) bIsProduct = true; });
+        // gB is the correctly oriented answer, so the note still reads properly
+        // while a fraction is flipped (the readout above still shows a dash)
+        var ansTxt = sigStr(out.ok ? out.value : gB, sig);
+
+        sideEl.innerHTML = aIsReactant
+          ? '<p class="note warn"><strong>What this assumes.</strong> That all ' + raw + ' g of ' + fH(A) +
+            ' actually reacts &mdash; that it is the limiting reactant, the reaction goes to completion, and the ' +
+            'yield is 100&nbsp;percent. Change any one of those and the ' +
+            (bIsProduct ? 'real amount of ' + fH(B) + ' drops below ' + ansTxt + ' g'
+                        : 'real amount of ' + fH(B) + ' consumed comes out below ' + ansTxt + ' g') + '.</p>'
+          : '<p class="note warn"><strong>What this assumes.</strong> ' + fH(A) +
+            ' is a <strong>product</strong> here, so the road map is running backwards. The ' + ansTxt + ' g of ' +
+            fH(B) + ' is what goes with making exactly ' + raw + ' g of ' + fH(A) + ' in a reaction that runs to ' +
+            'completion at 100&nbsp;percent yield. Real reactions fall short of that, so read it as a best case, ' +
+            'not a promise.</p>';
+
+        // full-reaction table: mass balances, moles usually do not
+        if (showAll.checked) {
+          var rows = '', molR = 0, molP = 0, gR = 0, gP = 0;
+          function row(s, side) {
+            var mm = molarMass(s[1]);
+            var mol = molA * s[0] / cA;
+            var g = mol * mm.mass;
+            if (side === 'R') { molR += mol; gR += g; } else { molP += mol; gP += g; }
+            rows += '<tr><td>' + fH(s[1]) + '</td><td>' + (side === 'R' ? 'reactant' : 'product') +
+              '</td><td>' + s[0] + '</td><td>' + mm.massStr + '</td><td>' + sigStr(mol, carry) +
+              '</td><td>' + sigStr(g, sig) + '</td></tr>';
+          }
+          rx.L.forEach(function (s) { row(s, 'R'); });
+          rx.R.forEach(function (s) { row(s, 'P'); });
+          // compare the coefficient sums, not the scaled moles: exact, and safe at 0 g
+          var coefL = 0, coefR = 0;
+          rx.L.forEach(function (s) { coefL += s[0]; });
+          rx.R.forEach(function (s) { coefR += s[0]; });
+          var molsMatch = coefL === coefR;
+
+          extraEl.innerHTML =
+            '<hr class="sep" style="margin:16px 0">' +
+            '<p class="stage-label">The whole reaction, at this scale</p>' +
+            '<div class="table-scroll"><table class="tbl"><thead><tr><th>Species</th><th>Role</th>' +
+            '<th>Coefficient</th><th>Molar mass (g/mol)</th><th>Moles</th><th>Mass (g)</th></tr></thead><tbody>' +
+            rows +
+            '<tr><td><strong>Reactants total</strong></td><td></td><td></td><td></td><td><strong>' +
+            sigStr(molR, carry) + '</strong></td><td><strong>' + sigStr(gR, sig) + '</strong></td></tr>' +
+            '<tr><td><strong>Products total</strong></td><td></td><td></td><td></td><td><strong>' +
+            sigStr(molP, carry) + '</strong></td><td><strong>' + sigStr(gP, sig) + '</strong></td></tr>' +
+            '</tbody></table></div>' +
+            '<p class="note" style="margin-top:12px"><strong>Mass totals agree</strong> (any last-digit ' +
+            'disagreement is the rounded molar masses, not the chemistry) &mdash; atoms are conserved. ' +
+            (molsMatch
+              ? 'The mole totals happen to match here because the coefficients add to the same number on both sides. '
+              + 'Switch to the propane or photosynthesis reaction and watch them come apart. '
+              : 'The <strong>mole totals do not agree</strong>, and they are not supposed to: ' +
+              sigStr(molR, carry) + ' mol of reactant particles became ' + sigStr(molP, carry) +
+              ' mol of product particles. ') +
+            'Molecules are rearranged, not counted out.</p>';
+        } else {
+          extraEl.innerHTML = '';
+        }
+      }
+
+      rx4.addEventListener('change', function () { resetFlips(4); render(); });
+      a4.addEventListener('change', function () { resetFlips(4); render(); });
+      b4.addEventListener('change', function () { resetFlips(4); render(); });
+      v4.addEventListener('input', render);
+      showAll.addEventListener('change', render);
+      f1.addEventListener('input', render);
+
+      /* =====================================================================
+         LEVEL SWITCHING
+         ===================================================================== */
+      function render() {
+        for (var i = 1; i <= 4; i++) {
+          document.getElementById('p' + i).classList.toggle('hide', i !== state.level);
+        }
+        document.querySelectorAll('#lvls .btn').forEach(function (b) {
+          b.classList.toggle('is-on', parseInt(b.dataset.lvl, 10) === state.level);
+        });
+        if (state.level === 1) renderL1();
+        else if (state.level === 2) renderL2();
+        else if (state.level === 3) renderL3();
+        else renderL4();
+      }
+
+      document.querySelectorAll('#lvls .btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+          state.level = parseInt(b.dataset.lvl, 10);
+          render();
+        });
+      });
+
+      document.getElementById('avoTxt').textContent = AVO_TXT;
+      render();
+      Demo.ready(function () { fitMap(); map.resize(); });
+    })();
+  </script>
+</body>
+
+</html>

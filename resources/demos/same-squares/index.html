@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Same Squares, Different Ratios | Dr. Andres Barboza</title>
+  <meta name="description" content="One dihybrid Punnett square, many phenotype ratios: the genotypes never change, only which ones get lumped together.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific bits only: preset list, phenotype legend, genotype ledger */
+    sup { font-size: 0.68em; line-height: 0; vertical-align: super; font-weight: 600; }
+
+    #plot { cursor: pointer; touch-action: manipulation; }
+
+    .preset-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      text-align: left;
+      line-height: 1.35;
+    }
+    .preset-btn[aria-pressed="true"] {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+    .preset-ratio { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+
+    .legend { display: flex; flex-direction: column; gap: 7px; margin-top: 11px; }
+    .lg-row {
+      display: grid;
+      grid-template-columns: 13px 1fr auto;
+      gap: 9px;
+      align-items: center;
+      font-size: 12.5px;
+    }
+    .sw { width: 13px; height: 13px; border-radius: 4px; }
+    .lg-name { color: var(--text); min-width: 0; }
+    .lg-count { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    .gt-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      font-size: 12.5px;
+      padding: 3px 0;
+      border-bottom: 1px solid var(--line-soft);
+    }
+    .gt-row:last-child { border-bottom: 0; }
+    .gt-key { color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .gt-n { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    .parent-line { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+    .parent-line strong { color: var(--text-2); font-weight: 600; }
+    .seg.tight button { font-size: 12px; padding: 6px 4px; }
+    .hide { display: none !important; }
+
+    /* three nowrap tabs will not fit a 375px phone at the default padding */
+    @media (max-width: 560px) {
+      .seg button { font-size: 11.5px; padding: 7px 5px; }
+      .seg.tight button { font-size: 11.5px; padding: 6px 3px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Same Squares, Different Ratios</h1>
+        <p class="demo-sub">
+          Press the preset buttons and watch the top number stay put while the bottom one moves.
+        </p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 5: Heredity</span>
+          <span class="tag is-accent">Epistasis &amp; sex linkage</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="plot" tabindex="0" role="img" aria-label="Punnett square"></canvas>
+        <p class="stage-caption" id="caption">Loading.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">The cross</div>
+          <div class="stack">
+            <div class="seg" role="tablist" aria-label="Type of cross">
+              <button role="tab" aria-selected="true" data-mode="di">Dihybrid 4&times;4</button>
+              <button role="tab" aria-selected="false" data-mode="mono">Monohybrid 2&times;2</button>
+              <button role="tab" aria-selected="false" data-mode="sex">Sex-linked</button>
+            </div>
+
+            <!-- autosomal: phenotype-grouping presets -->
+            <div id="autoBlock">
+              <div class="stack-s" id="presetList"></div>
+              <p class="ctrl-hint" id="presetNote"></p>
+            </div>
+
+            <!-- sex-linked: pick the two parents -->
+            <div id="sexBlock" class="hide">
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <span class="ctrl-label">Mother (two X chromosomes)</span>
+                </div>
+                <div class="seg tight" role="tablist" aria-label="Mother's genotype">
+                  <button role="tab" aria-selected="true" data-mom="AA">X<sup>A</sup>X<sup>A</sup></button>
+                  <button role="tab" aria-selected="false" data-mom="Aa">X<sup>A</sup>X<sup>a</sup></button>
+                  <button role="tab" aria-selected="false" data-mom="aa">X<sup>a</sup>X<sup>a</sup></button>
+                </div>
+                <p class="parent-line" id="momLine"></p>
+              </div>
+
+              <div class="ctrl" style="margin-top:12px">
+                <div class="ctrl-row">
+                  <span class="ctrl-label">Father (one X, one Y)</span>
+                </div>
+                <div class="seg tight" role="tablist" aria-label="Father's genotype">
+                  <button role="tab" aria-selected="false" data-dad="A">X<sup>A</sup>Y</button>
+                  <button role="tab" aria-selected="true" data-dad="a">X<sup>a</sup>Y</button>
+                </div>
+                <p class="parent-line" id="dadLine"></p>
+              </div>
+
+              <div class="btn-row" style="margin-top:12px">
+                <button class="btn primary" id="swap">Swap parents (reciprocal cross)</button>
+              </div>
+              <p class="ctrl-hint" id="swapHint"></p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="reset">Reset grouping</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- THE INVARIANT — pinned above the thing that moves -->
+        <div class="panel">
+          <div class="panel-title" id="gtTitle">Genotype tally &mdash; does not move</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label" id="gtRatioLabel">Dominance classes</div>
+              <div class="r-value" id="gtRatio">9 : 3 : 3 : 1</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:11px 0">
+          <div id="gtRows"></div>
+          <p class="small muted" id="gtFoot" style="margin-top:9px"></p>
+        </div>
+
+        <!-- THE THING THAT MOVES -->
+        <div class="panel">
+          <div class="panel-title">Phenotype tally &mdash; you decide this</div>
+          <div class="readouts">
+            <div class="readout is-ok">
+              <div class="r-label">Phenotype ratio</div>
+              <div class="r-value" id="phRatio">9 : 3 : 3 : 1</div>
+            </div>
+          </div>
+          <div class="bar" id="phBar" style="margin-top:11px"></div>
+          <div class="legend" id="phLegend"></div>
+
+          <div id="sexTableWrap" class="hide" style="margin-top:12px">
+            <hr class="sep" style="margin:0 0 8px">
+            <div class="table-scroll"><table class="tbl" id="sexTable"></table></div>
+          </div>
+
+          <hr class="sep" style="margin:12px 0">
+          <p class="note" id="modeNote"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the model stops</div>
+          <p class="small muted">
+            Every ratio here assumes the two genes sit on <em>different</em> chromosomes (independent
+            assortment), that all 16 gamete pairings are equally likely, and that you have counted
+            <em>many</em> offspring. A real litter of 8 puppies almost never lands on 9 : 3 : 4. The block
+            colors mark phenotype <em>groups</em>; they are not the organism's actual colors.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students meet 9:7 or 12:3:1 or 9:3:4 and conclude that the
+        Punnett square "works differently" for epistasis and other non-Mendelian traits &mdash; that some
+        other rule replaces the normal one. It does not. Every cross on this page is the same
+        <strong>AaBb &times; AaBb</strong>, the same four gamete types, the same sixteen boxes.
+      </p>
+      <p>
+        <strong>What to notice:</strong> click through all six dihybrid presets and keep one eye on the
+        blue <em>Genotype tally</em>. It reads 9 : 3 : 3 : 1 every single time, and the nine individual
+        genotypes stay at 1:2:1:2:4:2:1:2:1. Only the colors move. A phenotype ratio is not produced by the
+        square &mdash; it is produced by <em>biochemistry deciding which genotypes end up looking alike</em>.
+        Notice too that "complementary genes" and "duplicate recessive" give the identical 9:7. The square
+        cannot tell those two mechanisms apart; only an experiment on the actual pathway can.
+      </p>
+      <p>
+        <strong>The sex-linked tab is the exception that proves the rule.</strong> There the genotype tally
+        <em>does</em> change when you swap the parents &mdash; not because the square changed its behavior,
+        but because the gametes going into it changed. A father hands his single X to every daughter and
+        his Y to every son. So a white-eyed mother crossed with a red-eyed father gives white eyes to
+        <em>every</em> son and red eyes to every daughter, while the reverse cross &mdash; white-eyed
+        father, red-eyed mother with two normal alleles &mdash; gives a whole generation with red eyes.
+        (Give that mother one hidden white allele instead and half her sons go white again, because now
+        she has one to hand down. Try it.) Remember that males are <strong>hemizygous</strong>:
+        X<sup>a</sup>Y is not "homozygous recessive," it is one allele and one Y that carries no copy of
+        this gene at all.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+         MODEL
+         Autosomal modes: both parents are heterozygous at every locus, so the
+         gamete list is the full 2^L set and every pairing is equally likely.
+         Dominance classes (2 loci): 0 = A_B_, 1 = A_bb, 2 = aaB_, 3 = aabb
+                                     counts 9 : 3 : 3 : 1  -- invariant.
+         Dominance classes (1 locus): 0 = AA, 1 = Aa, 2 = aa  -- 1 : 2 : 1.
+         Sex-linked: mother contributes one of her two X's; father contributes
+         either his single X or his Y. Males are HEMIZYGOUS -- one allele only.
+         ===================================================================== */
+
+      var DI_PRESETS = [
+        {
+          id: 'std', label: 'Complete dominance', ratio: '9:3:3:1',
+          letters: ['R', 'Y'], map: [0, 1, 2, 3],
+          names: ['Round, yellow', 'Round, green', 'Wrinkled, yellow', 'Wrinkled, green'],
+          org: 'Garden pea seeds, RrYy × RrYy',
+          note: 'Two genes, two independent traits. Each dominance class looks like itself, so you see all four.'
+        },
+        {
+          id: 'comp', label: 'Complementary genes', ratio: '9:7',
+          letters: ['C', 'P'], map: [0, 1, 1, 1],
+          names: ['Purple flowers', 'White flowers'],
+          org: 'Sweet pea flower color, CcPp × CcPp',
+          note: 'Two different enzymes are both needed to finish one pigment. Lose either one and the flower is white.'
+        },
+        {
+          id: 'domep', label: 'Dominant epistasis', ratio: '12:3:1',
+          letters: ['W', 'Y'], map: [0, 0, 1, 2],
+          names: ['White fruit', 'Yellow fruit', 'Green fruit'],
+          org: 'Summer squash fruit color, WwYy × WwYy',
+          note: 'One dominant W allele blocks all pigment, so the Y gene never gets to show. W_ swallows two classes at once.'
+        },
+        {
+          id: 'recep', label: 'Recessive epistasis', ratio: '9:3:4',
+          letters: ['E', 'B'], map: [0, 1, 2, 2],
+          names: ['Black coat', 'Chocolate coat', 'Yellow coat'],
+          org: 'Labrador retriever coat, EeBb × EeBb',
+          note: 'ee keeps dark pigment out of the hair entirely, so eeB_ and eebb dogs are both yellow — with different noses.'
+        },
+        {
+          id: 'duprec', label: 'Duplicate recessive', ratio: '9:7',
+          letters: ['A', 'B'], map: [0, 1, 1, 1],
+          names: ['Pigmented', 'Colorless'],
+          org: 'Two-step pathway, AaBb × AaBb',
+          note: 'Homozygous recessive at EITHER gene stops the pathway. Same 9:7 numbers as complementary genes — the square cannot tell the two mechanisms apart.'
+        },
+        {
+          id: 'dupdom', label: 'Duplicate dominant', ratio: '15:1',
+          letters: ['A', 'B'], map: [0, 0, 0, 1],
+          names: ['Triangular capsule', 'Ovoid capsule'],
+          org: "Shepherd's purse seed capsule, AaBb × AaBb",
+          note: 'Either gene on its own does the whole job. Only the double recessive is left looking different.'
+        }
+      ];
+
+      var MONO_PRESETS = [
+        {
+          id: 'mcd', label: 'Complete dominance', ratio: '3:1',
+          letters: ['P'], map: [0, 0, 1],
+          names: ['Purple flowers', 'White flowers'],
+          org: 'Garden pea flower color, Pp × Pp',
+          note: 'One dominant allele is enough, so PP and Pp are lumped together into the same 3.'
+        },
+        {
+          id: 'minc', label: 'Incomplete dominance', ratio: '1:2:1',
+          letters: ['R'], map: [0, 1, 2],
+          names: ['Red flowers', 'Pink flowers', 'White flowers'],
+          org: 'Snapdragon flower color, Rr × Rr',
+          note: 'The heterozygote makes about half the pigment, so it looks like neither parent. Most textbooks write these alleles C<sup>R</sup> and C<sup>W</sup> rather than R and r, because neither one is dominant.'
+        },
+        {
+          id: 'mcodom', label: 'Codominance', ratio: '1:2:1',
+          letters: ['R'], map: [0, 1, 2],
+          names: ['Red coat', 'Roan coat', 'White coat'],
+          org: 'Shorthorn cattle coat, Rr × Rr',
+          note: 'A roan animal is not blended — it grows red hairs AND white hairs, both alleles fully expressed. Same 1:2:1 as incomplete dominance, different biology.'
+        }
+      ];
+
+      var GENERIC = ['Group 1', 'Group 2', 'Group 3', 'Group 4'];
+
+      var state = {
+        mode: 'di',
+        presetId: 'std',
+        custom: false,
+        mom: 'AA',
+        dad: 'a',
+        assign: {},      // genotype key -> phenotype group index
+        names: [],
+        focus: -1,
+        hoverKey: null
+      };
+
+      // ---------------- cross construction ----------------
+      function presetsFor(mode) { return mode === 'di' ? DI_PRESETS : MONO_PRESETS; }
+      function currentPreset() {
+        var list = presetsFor(state.mode);
+        for (var i = 0; i < list.length; i++) if (list[i].id === state.presetId) return list[i];
+        return list[0];
+      }
+
+      function gameteList(letters) {
+        var out = [''];
+        for (var L = 0; L < letters.length; L++) {
+          var next = [];
+          for (var i = 0; i < out.length; i++) {
+            next.push(out[i] + letters[L].toUpperCase());
+            next.push(out[i] + letters[L].toLowerCase());
+          }
+          out = next;
+        }
+        return out;                       // 2 loci -> AB, Ab, aB, ab
+      }
+
+      var model = null;
+
+      function buildAutosomal() {
+        var p = currentPreset();
+        var L = p.letters.length;
+        var gam = gameteList(p.letters);
+        var n = gam.length;
+        var cells = [];
+        for (var i = 0; i < n; i++) {            // i = row = father's gamete
+          for (var j = 0; j < n; j++) {          // j = col = mother's gamete
+            var key = '', doms = [];
+            for (var k = 0; k < L; k++) {
+              var a = gam[j].charAt(k), b = gam[i].charAt(k);
+              var up = (a === a.toUpperCase()) ? a : (b === b.toUpperCase() ? b : null);
+              var lo = up ? (a === up ? b : a) : a;
+              var pair = up ? up + lo : a + b;
+              // both dominant -> "AA"; mixed -> dominant first; neither -> "aa"
+              if (up && lo === up) pair = up + up;
+              key += pair;
+              doms.push(!!up);
+            }
+            var cls;
+            if (L === 2) cls = doms[0] && doms[1] ? 0 : doms[0] ? 1 : doms[1] ? 2 : 3;
+            else cls = key.charAt(0) === key.charAt(1)
+              ? (doms[0] ? 0 : 2) : 1;           // AA / Aa / aa
+            cells.push({ key: key, geno: key, cls: cls, sex: null });
+          }
+        }
+        var u0 = p.letters[0].toUpperCase(), l0 = p.letters[0].toLowerCase();
+        var classLabels;
+        if (L === 2) {
+          var u1 = p.letters[1].toUpperCase(), l1 = p.letters[1].toLowerCase();
+          classLabels = [u0 + '_' + u1 + '_', u0 + '_' + l1 + l1, l0 + l0 + u1 + '_', l0 + l0 + l1 + l1];
+        } else {
+          classLabels = [u0 + u0, u0 + l0, l0 + l0];
+        }
+        model = {
+          n: n, kind: 'auto', cells: cells,
+          colGam: gam.map(function (g) { return { text: g }; }),
+          rowGam: gam.map(function (g) { return { text: g }; }),
+          colTitle: 'Mother’s gametes', rowTitle: 'Father’s gametes',
+          classLabels: classLabels, nClasses: classLabels.length
+        };
+      }
+
+      function buildSexLinked() {
+        var mom = state.mom.split('');            // e.g. ['A','a']
+        var dad = state.dad;                      // 'A' or 'a'
+        var cols = [{ type: 'X', allele: mom[0] }, { type: 'X', allele: mom[1] }];
+        var rows = [{ type: 'X', allele: dad }, { type: 'Y' }];
+        var cells = [];
+        for (var i = 0; i < 2; i++) {
+          for (var j = 0; j < 2; j++) {
+            var m = cols[j].allele, c;
+            if (rows[i].type === 'X') {
+              var f = rows[i].allele;
+              var first = (m === 'A' || f === 'A') ? 'A' : 'a';
+              var second = (m === 'A' && f === 'A') ? 'A' : (m === 'a' && f === 'a') ? 'a'
+                : (first === 'A' ? 'a' : 'A');
+              c = {
+                key: 'X' + first + 'X' + second, sex: 'daughter',
+                parts: [{ base: 'X', sup: first }, { base: 'X', sup: second }],
+                hasA: (m === 'A' || f === 'A')
+              };
+            } else {
+              // MALE: hemizygous. One X allele, and a Y that carries no allele.
+              c = {
+                key: 'X' + m + 'Y', sex: 'son',
+                parts: [{ base: 'X', sup: m }, { base: 'Y', sup: null }],
+                hasA: (m === 'A')
+              };
+            }
+            c.cls = c.hasA ? 0 : 1;
+            cells.push(c);
+          }
+        }
+        model = {
+          n: 2, kind: 'sex', cells: cells,
+          colGam: cols, rowGam: rows,
+          colTitle: 'Mother’s eggs', rowTitle: 'Father’s sperm',
+          classLabels: ['Red eyes', 'White eyes'], nClasses: 2
+        };
+      }
+
+      function rebuild() {
+        if (state.mode === 'sex') buildSexLinked(); else buildAutosomal();
+        if (!state.custom) applyPreset();
+        else {
+          // keep any assignment we still recognise, default the rest
+          model.cells.forEach(function (c) {
+            if (state.assign[c.key] == null) state.assign[c.key] = c.cls;
+          });
+        }
+      }
+
+      function applyPreset() {
+        state.assign = {};
+        if (state.mode === 'sex') {
+          state.names = ['Red eyes', 'White eyes'];
+          model.cells.forEach(function (c) { state.assign[c.key] = c.cls; });
+        } else {
+          var p = currentPreset();
+          state.names = p.names.slice();
+          model.cells.forEach(function (c) { state.assign[c.key] = p.map[c.cls]; });
+        }
+        state.custom = false;
+      }
+
+      function cycleN() {
+        return state.mode === 'di' ? 4 : state.mode === 'mono' ? 3 : 2;
+      }
+
+      // ---------------- tallies ----------------
+      function phenoCounts() {
+        var n = cycleN(), out = [];
+        for (var i = 0; i < n; i++) out.push(0);
+        model.cells.forEach(function (c) { out[state.assign[c.key] || 0]++; });
+        return out;
+      }
+
+      function classCounts() {
+        var out = [];
+        for (var i = 0; i < model.nClasses; i++) out.push(0);
+        model.cells.forEach(function (c) { out[c.cls]++; });
+        return out;
+      }
+
+      function pairRank(p) {
+        if (p.charAt(0) === p.charAt(1)) return p.charAt(0) === p.charAt(0).toUpperCase() ? 0 : 2;
+        return 1;                                   // AA = 0, Aa = 1, aa = 2
+      }
+
+      function genotypeCounts() {
+        var order = [], map = {};
+        model.cells.forEach(function (c) {
+          if (map[c.key] == null) { map[c.key] = 0; order.push(c.key); }
+          map[c.key]++;
+        });
+        // autosomal: sort into the canonical AABB, AABb, AAbb, AaBB, ... order
+        if (model.kind === 'auto') {
+          order.sort(function (a, b) {
+            for (var k = 0; k < a.length; k += 2) {
+              var d = pairRank(a.substr(k, 2)) - pairRank(b.substr(k, 2));
+              if (d) return d;
+            }
+            return 0;
+          });
+        }
+        return { order: order, map: map };
+      }
+
+      function gcd(a, b) { return b ? gcd(b, a % b) : a; }
+      function reduceRatio(arr) {
+        var nz = arr.filter(function (x) { return x > 0; });
+        if (!nz.length) return [];
+        var g = nz.reduce(gcd, 0) || 1;
+        return nz.map(function (x) { return x / g; });
+      }
+      function ratioText(arr) {
+        var r = reduceRatio(arr);
+        if (r.length === 0) return '—';
+        if (r.length === 1) return 'all alike';
+        return r.join(' : ');
+      }
+
+      /* =====================================================================
+         CANVAS
+         ===================================================================== */
+      var rects = [];
+
+      function roundRect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function font(px, weight) {
+        return (weight || 600) + ' ' + px.toFixed(1) + 'px Poppins, system-ui, sans-serif';
+      }
+
+      // an X chromosome: two chromatid arms crossing at the centromere
+      function drawXChrom(ctx, cx, cy, s, col) {
+        var w = s * 0.46;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(2, s * 0.17);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - w / 2, cy - s / 2); ctx.lineTo(cx + w / 2, cy + s / 2);
+        ctx.moveTo(cx + w / 2, cy - s / 2); ctx.lineTo(cx - w / 2, cy + s / 2);
+        ctx.stroke();
+      }
+
+      // a Y chromosome: shorter, one long arm and two stubby ones
+      function drawYChrom(ctx, cx, bottom, s, col) {
+        var s2 = s * 0.66, w = s2 * 0.52;
+        var top = bottom - s2, mid = top + s2 * 0.42;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = Math.max(2, s * 0.17);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx - w / 2, top); ctx.lineTo(cx, mid);
+        ctx.moveTo(cx + w / 2, top); ctx.lineTo(cx, mid);
+        ctx.moveTo(cx, mid); ctx.lineTo(cx, bottom);
+        ctx.stroke();
+      }
+
+      // "X^A X^a" with real superscripts, measured so it can be centred
+      function genoWidth(ctx, parts, f) {
+        var total = 0;
+        for (var i = 0; i < parts.length; i++) {
+          ctx.font = font(f);
+          total += ctx.measureText(parts[i].base).width;
+          if (parts[i].sup) {
+            ctx.font = font(f * 0.7);
+            total += ctx.measureText(parts[i].sup).width;
+          }
+          if (i < parts.length - 1) total += f * 0.22;
+        }
+        return total;
+      }
+
+      function drawGeno(ctx, parts, cx, baseY, f, col) {
+        var x = cx - genoWidth(ctx, parts, f) / 2;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        for (var i = 0; i < parts.length; i++) {
+          ctx.font = font(f);
+          ctx.fillText(parts[i].base, x, baseY);
+          x += ctx.measureText(parts[i].base).width;
+          if (parts[i].sup) {
+            ctx.font = font(f * 0.7);
+            ctx.fillText(parts[i].sup, x, baseY - f * 0.36);
+            x += ctx.measureText(parts[i].sup).width;
+          }
+          x += f * 0.22;
+        }
+        ctx.textAlign = 'center';
+      }
+
+      var square = Demo.canvas('#plot', function (ctx, w, h, c) {
+        if (!model) return;
+        rects = [];
+        var n = model.n;
+        var topLab = 15, leftLab = 14;
+        var availW = w - leftLab - 2, availH = h - topLab - 2;
+        var cell = Math.max(20, Math.min(availW / (n + 1), availH / (n + 1)));
+        var gw = cell * (n + 1);
+        var x0 = leftLab + Math.max(0, (availW - gw) / 2);
+        var y0 = topLab + Math.max(0, (availH - gw) / 2);
+        var pad = Math.max(1.5, cell * 0.035);
+        var r = Math.max(4, cell * 0.11);
+
+        // axis titles
+        ctx.font = font(10);
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(model.colTitle, x0 + gw / 2, Math.max(7, y0 - 8));
+        ctx.save();
+        ctx.translate(Math.max(7, x0 - 7), y0 + gw / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(model.rowTitle, 0, 0);
+        ctx.restore();
+
+        // corner
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0 + pad, y0 + pad);
+        ctx.lineTo(x0 + cell - pad, y0 + cell - pad);
+        ctx.stroke();
+
+        var hf = Math.max(9, Math.min(cell * 0.24, 17));
+
+        // headers
+        function header(g, x, y) {
+          ctx.fillStyle = c.surface2;
+          roundRect(ctx, x + pad, y + pad, cell - 2 * pad, cell - 2 * pad, r); ctx.fill();
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+          if (model.kind === 'auto') {
+            ctx.font = font(hf);
+            ctx.fillStyle = c.text2;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(g.text, x + cell / 2, y + cell / 2);
+          } else {
+            var s = cell * 0.40, cx = x + cell / 2, cy = y + cell * 0.50;
+            if (g.type === 'X') {
+              drawXChrom(ctx, cx, cy, s, c.text2);
+              ctx.font = font(hf * 0.85);
+              ctx.fillStyle = g.allele === 'A' ? c.accentStrong : c.text2;
+              ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+              ctx.fillText(g.allele, cx + s * 0.34, cy - s * 0.44);
+            } else {
+              drawYChrom(ctx, cx, cy + s / 2, s, c.text2);
+              ctx.font = font(9, 500);
+              ctx.fillStyle = c.muted;
+              ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+              ctx.fillText('no allele', cx, y + cell - pad - 12);
+            }
+          }
+        }
+        for (var j = 0; j < n; j++) header(model.colGam[j], x0 + cell * (j + 1), y0);
+        for (var i = 0; i < n; i++) header(model.rowGam[i], x0, y0 + cell * (i + 1));
+
+        // cells
+        var showNames = cell >= 78;
+        for (i = 0; i < n; i++) {
+          for (j = 0; j < n; j++) {
+            var cellData = model.cells[i * n + j];
+            var pi = state.assign[cellData.key] || 0;
+            var col = c.series[pi % 4];
+            var x = x0 + cell * (j + 1), y = y0 + cell * (i + 1);
+            var bx = x + pad, by = y + pad, bw = cell - 2 * pad, bh = cell - 2 * pad;
+            rects.push({ x: bx, y: by, w: bw, h: bh, idx: i * n + j, key: cellData.key });
+
+            ctx.save();
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = col;
+            roundRect(ctx, bx, by, bw, bh, r); ctx.fill();
+            ctx.restore();
+
+            var isHover = state.hoverKey === cellData.key;
+            var isFocus = state.focus === i * n + j;
+            ctx.strokeStyle = isFocus ? c.accentStrong : col;
+            ctx.lineWidth = isFocus ? 2.5 : (isHover ? 2.2 : 1.3);
+            ctx.save();
+            if (!isFocus) ctx.globalAlpha = isHover ? 0.95 : 0.55;
+            roundRect(ctx, bx, by, bw, bh, r); ctx.stroke();
+            ctx.restore();
+
+            if (model.kind === 'auto') {
+              var f = Math.max(9, Math.min(cell * 0.21, 19));
+              ctx.font = font(f);
+              ctx.fillStyle = c.text;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = showNames ? 'alphabetic' : 'middle';
+              ctx.fillText(cellData.geno, x + cell / 2, showNames ? y + cell * 0.46 : y + cell / 2);
+              if (showNames) {
+                var nm = state.names[pi] || GENERIC[pi];
+                ctx.font = font(Math.max(8.5, f * 0.55), 500);
+                ctx.fillStyle = c.muted;
+                ctx.textBaseline = 'top';
+                wrapText(ctx, nm, x + cell / 2, y + cell * 0.56, bw - 8, f * 0.68);
+              }
+            } else {
+              var s2 = cell * 0.34;
+              var gcy = y + cell * 0.36;
+              var off = s2 * 0.44;
+              // left glyph is always an X; for a son the right glyph is the Y
+              drawXChrom(ctx, x + cell / 2 - off, gcy, s2, c.text2);
+              ctx.font = font(Math.max(8.5, s2 * 0.42));
+              ctx.fillStyle = cellData.parts[0].sup === 'A' ? c.accentStrong : c.text2;
+              ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+              ctx.fillText(cellData.parts[0].sup, x + cell / 2 - off + s2 * 0.30, gcy - s2 * 0.45);
+              // right chromosome: second X for a daughter, Y for a son
+              if (cellData.sex === 'daughter') {
+                drawXChrom(ctx, x + cell / 2 + off, gcy, s2, c.text2);
+                ctx.fillStyle = cellData.parts[1].sup === 'A' ? c.accentStrong : c.text2;
+                ctx.fillText(cellData.parts[1].sup, x + cell / 2 + off + s2 * 0.30, gcy - s2 * 0.45);
+              } else {
+                drawYChrom(ctx, x + cell / 2 + off, gcy + s2 / 2, s2, c.muted);
+              }
+              var f2 = Math.max(9.5, Math.min(cell * 0.15, 17));
+              drawGeno(ctx, cellData.parts, x + cell / 2, y + cell * 0.72, f2, c.text);
+              if (cell >= 86) {
+                ctx.font = font(Math.max(8.5, f2 * 0.62), 500);
+                ctx.fillStyle = c.muted;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText((state.names[pi] || GENERIC[pi]), x + cell / 2, y + cell * 0.76);
+                ctx.fillText(cellData.sex, x + cell / 2, y + cell * 0.76 + f2 * 0.78);
+              }
+            }
+          }
+        }
+      }, { aspect: 0.84, minHeight: 300, maxHeight: 540 });
+
+      function wrapText(ctx, text, cx, y, maxW, lh) {
+        var words = text.split(' '), line = '', lines = [];
+        for (var i = 0; i < words.length; i++) {
+          var test = line ? line + ' ' + words[i] : words[i];
+          if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = words[i]; }
+          else line = test;
+        }
+        if (line) lines.push(line);
+        for (i = 0; i < Math.min(lines.length, 2); i++) ctx.fillText(lines[i], cx, y + i * lh);
+      }
+
+      /* =====================================================================
+         INTERACTION
+         Identical genotypes MUST share a phenotype, so a click recolors every
+         box with the same genotype at once.
+         ===================================================================== */
+      var canvasEl = document.getElementById('plot');
+
+      function hit(e) {
+        var box = canvasEl.getBoundingClientRect();
+        var px = e.clientX - box.left, py = e.clientY - box.top;
+        for (var i = 0; i < rects.length; i++) {
+          var q = rects[i];
+          if (px >= q.x && px <= q.x + q.w && py >= q.y && py <= q.y + q.h) return q;
+        }
+        return null;
+      }
+
+      function cycleKey(key) {
+        var n = cycleN();
+        state.assign[key] = ((state.assign[key] || 0) + 1) % n;
+        if (!state.custom) {
+          state.custom = true;
+          state.names = GENERIC.slice(0, n);
+        }
+        refresh();
+      }
+
+      canvasEl.addEventListener('click', function (e) {
+        var q = hit(e);
+        if (q) { state.focus = q.idx; cycleKey(q.key); }
+      });
+
+      canvasEl.addEventListener('pointermove', function (e) {
+        var q = hit(e);
+        var k = q ? q.key : null;
+        if (k !== state.hoverKey) { state.hoverKey = k; square.redraw(); }
+      });
+      canvasEl.addEventListener('pointerleave', function () {
+        if (state.hoverKey) { state.hoverKey = null; square.redraw(); }
+      });
+
+      canvasEl.addEventListener('keydown', function (e) {
+        var n = model.n;
+        if (state.focus < 0) state.focus = 0;
+        var row = Math.floor(state.focus / n), col = state.focus % n, used = true;
+        if (e.key === 'ArrowRight') col = Math.min(n - 1, col + 1);
+        else if (e.key === 'ArrowLeft') col = Math.max(0, col - 1);
+        else if (e.key === 'ArrowDown') row = Math.min(n - 1, row + 1);
+        else if (e.key === 'ArrowUp') row = Math.max(0, row - 1);
+        else if (e.key === 'Enter' || e.key === ' ') {
+          cycleKey(model.cells[state.focus].key); e.preventDefault(); return;
+        } else used = false;
+        if (used) { e.preventDefault(); state.focus = row * n + col; square.redraw(); }
+      });
+      canvasEl.addEventListener('focus', function () {
+        if (state.focus < 0) { state.focus = 0; square.redraw(); }
+      });
+      canvasEl.addEventListener('blur', function () { state.focus = -1; square.redraw(); });
+
+      /* =====================================================================
+         UI WIRING
+         ===================================================================== */
+      var elPresetList = document.getElementById('presetList');
+      var elPresetNote = document.getElementById('presetNote');
+      var elAuto = document.getElementById('autoBlock');
+      var elSex = document.getElementById('sexBlock');
+
+      function renderPresetButtons() {
+        elPresetList.innerHTML = '';
+        presetsFor(state.mode).forEach(function (p) {
+          var b = document.createElement('button');
+          b.className = 'btn preset-btn';
+          b.type = 'button';
+          b.setAttribute('aria-pressed', String(!state.custom && p.id === state.presetId));
+          b.innerHTML = '<span>' + p.label + '</span><span class="preset-ratio">' + p.ratio + '</span>';
+          b.addEventListener('click', function () {
+            state.presetId = p.id;
+            state.custom = false;
+            state.focus = -1;
+            rebuild();
+            refresh();
+          });
+          elPresetList.appendChild(b);
+        });
+      }
+
+      document.querySelectorAll('.seg [data-mode]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('.seg [data-mode]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.mode = b.dataset.mode;
+          state.custom = false;
+          state.focus = -1;
+          state.presetId = presetsFor(state.mode)[0].id;
+          elAuto.classList.toggle('hide', state.mode === 'sex');
+          elSex.classList.toggle('hide', state.mode !== 'sex');
+          document.getElementById('sexTableWrap').classList.toggle('hide', state.mode !== 'sex');
+          renderPresetButtons();
+          rebuild();
+          refresh();
+        });
+      });
+
+      document.querySelectorAll('[data-mom]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-mom]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.mom = b.dataset.mom;
+          state.custom = false; state.focus = -1;
+          rebuild(); refresh();
+        });
+      });
+      document.querySelectorAll('[data-dad]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('[data-dad]').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.dad = b.dataset.dad;
+          state.custom = false; state.focus = -1;
+          rebuild(); refresh();
+        });
+      });
+
+      // Reciprocal cross: the trait swaps sexes.
+      // Mother X^A X^A  x  father X^a Y   <->   mother X^a X^a  x  father X^A Y
+      // A heterozygous mother has NO male counterpart -- males carry one X.
+      document.getElementById('swap').addEventListener('click', function () {
+        if (state.mom === 'Aa') return;
+        var momAllele = state.mom.charAt(0);      // 'A' or 'a' (homozygous)
+        var dadAllele = state.dad;
+        state.mom = dadAllele + dadAllele;
+        state.dad = momAllele;
+        syncSexSegs();
+        state.custom = false; state.focus = -1;
+        rebuild(); refresh();
+      });
+
+      function syncSexSegs() {
+        document.querySelectorAll('[data-mom]').forEach(function (o) {
+          o.setAttribute('aria-selected', String(o.dataset.mom === state.mom));
+        });
+        document.querySelectorAll('[data-dad]').forEach(function (o) {
+          o.setAttribute('aria-selected', String(o.dataset.dad === state.dad));
+        });
+      }
+
+      document.getElementById('reset').addEventListener('click', function () {
+        state.custom = false;
+        state.focus = -1;
+        rebuild();
+        refresh();
+      });
+
+      /* =====================================================================
+         READOUTS
+         ===================================================================== */
+      function refresh() {
+        var c = Demo.colors();
+        var ph = phenoCounts();
+        var total = model.cells.length;
+
+        // ---- the invariant, on top ----
+        var cls = classCounts();
+        // raw counts on both branches, so the number a student reads off the panel
+        // is the same number they can count in the boxes
+        document.getElementById('gtRatio').textContent =
+          model.kind === 'sex' ? genotypeCountArray().join(' : ') : cls.join(' : ');
+
+        var gtRows = document.getElementById('gtRows');
+        gtRows.innerHTML = '';
+        if (model.kind === 'auto') {
+          document.getElementById('gtTitle').textContent = 'Genotype tally — does not move';
+          // two loci: each label covers several genotypes, so "class" is the honest word.
+          // one locus: AA / Aa / aa are the genotypes themselves.
+          document.getElementById('gtRatioLabel').textContent =
+            state.mode === 'di' ? 'Dominance classes' : 'Genotypes';
+          model.classLabels.forEach(function (lab, i) {
+            gtRows.appendChild(row(lab, cls[i] + ' / ' + total));
+          });
+          var g = genotypeCounts();
+          var full = g.order.map(function (k) { return g.map[k]; }).join(':');
+          document.getElementById('gtFoot').innerHTML =
+            'All ' + g.order.length + ' individual genotypes, in order: <span class="num">' + full +
+            '</span>. This does not move either — change the preset and check.';
+        } else {
+          document.getElementById('gtTitle').textContent = 'Genotype tally — set by the gametes';
+          document.getElementById('gtRatioLabel').textContent = 'Offspring genotypes';
+          var gs = genotypeCounts();
+          gs.order.forEach(function (k) {
+            gtRows.appendChild(row(prettyKey(k), gs.map[k] + ' / ' + total));
+          });
+          document.getElementById('gtFoot').innerHTML =
+            'This tally <strong>does</strong> change when you swap the parents — not because the ' +
+            'square behaves differently, but because the father sends his X to every daughter and his ' +
+            'Y to every son.';
+        }
+
+        // ---- the thing that moves ----
+        document.getElementById('phRatio').textContent = ratioText(ph);
+
+        var bar = document.getElementById('phBar');
+        bar.innerHTML = '';
+        var legend = document.getElementById('phLegend');
+        legend.innerHTML = '';
+        ph.forEach(function (count, i) {
+          if (!count) return;
+          var sp = document.createElement('span');
+          sp.style.width = (100 * count / total) + '%';
+          sp.style.background = c.series[i % 4];
+          bar.appendChild(sp);
+
+          var r = document.createElement('div');
+          r.className = 'lg-row';
+          var sw = document.createElement('span');
+          sw.className = 'sw';
+          sw.style.background = c.series[i % 4];
+          var nm = document.createElement('span');
+          nm.className = 'lg-name';
+          nm.textContent = state.names[i] || GENERIC[i];
+          var ct = document.createElement('span');
+          ct.className = 'lg-count';
+          ct.textContent = count + ' / ' + total + '  (' + Demo.fmt.dec(100 * count / total, 1) + '%)';
+          r.appendChild(sw); r.appendChild(nm); r.appendChild(ct);
+          legend.appendChild(r);
+        });
+
+        // ---- sex-linked split table ----
+        if (model.kind === 'sex') {
+          var used = [];
+          ph.forEach(function (n, i) { if (n) used.push(i); });
+          var tally = { daughter: [0, 0], son: [0, 0] };
+          model.cells.forEach(function (cl) { tally[cl.sex][state.assign[cl.key] || 0]++; });
+          var html = '<thead><tr><th>Offspring</th>';
+          used.forEach(function (i) { html += '<th>' + (state.names[i] || GENERIC[i]) + '</th>'; });
+          html += '</tr></thead><tbody>';
+          ['daughter', 'son'].forEach(function (sx) {
+            html += '<tr><td>' + (sx === 'daughter' ? 'Daughters' : 'Sons') + '</td>';
+            used.forEach(function (i) { html += '<td>' + tally[sx][i] + '</td>'; });
+            html += '</tr>';
+          });
+          html += '</tbody>';
+          document.getElementById('sexTable').innerHTML = html;
+        }
+
+        // ---- notes, captions, parent lines ----
+        updateProse(ph, cls, total);
+
+        // ---- preset button pressed-state ----
+        var btns = elPresetList.querySelectorAll('.preset-btn');
+        var list = presetsFor(state.mode);
+        for (var i = 0; i < btns.length; i++) {
+          btns[i].setAttribute('aria-pressed',
+            String(!state.custom && list[i].id === state.presetId));
+        }
+
+        square.redraw();
+      }
+
+      function row(label, value) {
+        var d = document.createElement('div');
+        d.className = 'gt-row';
+        d.innerHTML = '<span class="gt-key">' + label + '</span><span class="gt-n">' + value + '</span>';
+        return d;
+      }
+
+      // 'XAXa' -> 'X<sup>A</sup>X<sup>a</sup>' ; 'XaY' -> 'X<sup>a</sup>Y'
+      function prettyKey(k) {
+        return k.replace(/X([Aa])/g, 'X<sup>$1</sup>');
+      }
+
+      function genotypeCountArray() {
+        var g = genotypeCounts();
+        return g.order.map(function (k) { return g.map[k]; });
+      }
+
+      function updateProse(ph, cls, total) {
+        var cap = document.getElementById('caption');
+        var note = document.getElementById('modeNote');
+
+        if (state.mode === 'sex') {
+          var momTxt = { AA: 'Red-eyed, two copies of the normal allele.',
+                         Aa: 'Red-eyed, but a carrier — one white allele hidden.',
+                         aa: 'White-eyed.' }[state.mom];
+          var dadTxt = { A: 'Red-eyed. His single X carries the normal allele.',
+                         a: 'White-eyed. With only one X, he has nothing to mask it.' }[state.dad];
+          document.getElementById('momLine').innerHTML = '<strong>' + momTxt + '</strong>';
+          document.getElementById('dadLine').innerHTML = '<strong>' + dadTxt + '</strong>';
+
+          var swapBtn = document.getElementById('swap');
+          var canSwap = state.mom !== 'Aa';
+          swapBtn.disabled = !canSwap;
+          document.getElementById('swapHint').textContent = canSwap
+            ? 'Gives the mother’s phenotype to the father and the father’s to the mother. For a gene on an ordinary chromosome this would change nothing.'
+            : 'A heterozygous mother has no male counterpart — a male has one X, so he cannot be a carrier. Pick a homozygous mother to run the reciprocal.';
+
+          var sons = { r: 0, w: 0 }, daus = { r: 0, w: 0 };
+          model.cells.forEach(function (cl) {
+            var red = (state.assign[cl.key] || 0) === 0;
+            var t = cl.sex === 'son' ? sons : daus;
+            red ? t.r++ : t.w++;
+          });
+          var g0 = (state.names[0] || GENERIC[0]).toLowerCase();
+          cap.textContent = 'Mother’s eggs run across the top, father’s sperm down the side. '
+            + daus.r + ' of ' + (daus.r + daus.w) + ' daughters and '
+            + sons.r + ' of ' + (sons.r + sons.w) + ' sons have ' + g0 + '. '
+            + 'Press "Swap parents" and compare — for an X-linked gene the two directions are not the same cross.';
+          note.innerHTML = '<strong>Males are hemizygous.</strong> X<sup>a</sup>Y is <em>not</em> '
+            + '"homozygous recessive" — there is one allele and one Y, and the Y carries no copy of '
+            + 'this gene at all. That is the whole reason the reciprocal cross comes out different.';
+        } else {
+          var p = currentPreset();
+          elPresetNote.innerHTML = p.org + '. ' + p.note;
+          var invariant = state.mode === 'di' ? '9 : 3 : 3 : 1' : '1 : 2 : 1';
+          cap.textContent = (state.custom
+            ? 'Custom grouping. '
+            : p.label + ' — ' + p.org + '. ')
+            + 'Genotype classes are still ' + invariant + ' out of ' + total + ' boxes. '
+            + 'Phenotypes read ' + ratioText(ph) + '. Click any box to regroup it by hand — every box '
+            + 'with that same genotype moves with it, because identical genotypes must look identical.';
+          var U = p.letters[0].toUpperCase(), lc = p.letters[0].toLowerCase(), het = U + lc;
+          note.innerHTML = state.mode === 'di'
+            ? '<strong>Nothing about the square changed.</strong> Same parents, same four gamete types, '
+            + 'same sixteen boxes, same 9 : 3 : 3 : 1 of genotype classes. The preset only changed which '
+            + 'classes get painted the same color.'
+            : '<strong>Nothing about the square changed.</strong> ' + het + ' × ' + het + ' always gives '
+            + '1 ' + U + U + ' : 2 ' + het + ' : 1 ' + lc + lc + '. Complete dominance hides the '
+            + 'heterozygote inside the dominant group; incomplete dominance and codominance let it show '
+            + 'as its own phenotype.';
+        }
+
+        canvasEl.setAttribute('aria-label',
+          'Punnett square, ' + model.n + ' by ' + model.n + '. '
+          + (model.kind === 'auto'
+            ? 'Genotype classes ' + cls.join(' to ') + '. '
+            : 'Offspring genotypes ' + genotypeCountArray().join(' to ') + '. ')
+          + 'Phenotype ratio ' + ratioText(ph) + '.');
+      }
+
+      // repaint the JS-set swatch colors when the theme flips
+      Demo.onTheme(function () { refresh(); });
+
+      renderPresetButtons();
+      rebuild();
+      syncSexSegs();
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

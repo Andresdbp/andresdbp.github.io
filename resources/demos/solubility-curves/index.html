@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Solubility Curves | Dr. Andres Barboza</title>
+  <meta name="description" content="Read a real solubility curve as a ceiling, not a measurement. Mix a sample, cool it, and watch the excess crystallise — and see why a point above the curve means two different flasks.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the state badge, the draggable chart, the small data table. */
+    #chart { touch-action: none; cursor: crosshair; }
+
+    .state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      line-height: 1.35;
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--text-2);
+    }
+    .state-badge .bi { font-size: 13px; flex: none; }
+    .state-badge.is-unsat  { background: var(--ok-soft);     border-color: transparent;        color: var(--ok); }
+    .state-badge.is-sat    { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .state-badge.is-excess { background: var(--warn-soft);   border-color: transparent;        color: var(--warn); }
+    .state-badge.is-super  { background: var(--bad-soft);    border-color: transparent;        color: var(--bad); }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 4px 0 8px;
+    }
+
+    .seg button { font-size: 12px; padding: 7px 4px; }
+
+    .msg {
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: var(--text-2);
+      min-height: 2.2em;
+    }
+    .msg strong { color: var(--text); font-weight: 600; }
+
+    .data-tbl td, .data-tbl th { padding: 4px 8px; }
+    .data-wrap { max-height: 230px; overflow-y: auto; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Solubility Curves</h1>
+        <p class="demo-sub">Mix a sample, then press <strong>Cool it</strong> and watch the excess fall out of solution.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label">Solubility curves &mdash; g solute per 100 g water</p>
+        <canvas id="chart" role="img" aria-label="Solubility curves for potassium nitrate, potassium chloride, sodium chloride and ammonia gas, with the current sample marked"></canvas>
+        <p class="stage-caption" id="capChart">
+          Tap or drag on the chart to mix a fresh sample at that temperature. The filled dot is
+          <strong>what you added</strong>; the ring is <strong>what is actually dissolved</strong>.
+        </p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">What is actually in the flask</p>
+        <canvas id="flasks" role="img" aria-label="Diagram of the flask contents for the current sample"></canvas>
+        <p class="stage-caption" id="capFlask">
+          One point above the curve, two different flasks. Which one you have depends on how you got there.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">The sample</div>
+          <div class="stack">
+
+            <div class="seg" role="tablist" aria-label="Solute">
+              <button role="tab" aria-selected="true"  data-key="KNO3">KNO₃</button>
+              <button role="tab" aria-selected="false" data-key="KCl">KCl</button>
+              <button role="tab" aria-selected="false" data-key="NaCl">NaCl</button>
+              <button role="tab" aria-selected="false" data-key="NH3">NH₃ (g)</button>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="temp">Temperature</label>
+                <span class="ctrl-value" id="tempOut">60 °C</span>
+              </div>
+              <input type="range" id="temp" min="0" max="100" step="1" value="60">
+              <p class="ctrl-hint" id="tempHint">Moving this slider is a <em>path</em>: the solution follows it.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mass">Solute added</label>
+                <span class="ctrl-value" id="massOut">110 g</span>
+              </div>
+              <input type="range" id="mass" min="0" max="250" step="1" value="110">
+              <p class="ctrl-hint">Changing this is a fresh mix, stirred at the current temperature.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="water">Water</label>
+                <span class="ctrl-value" id="waterOut">100 g</span>
+              </div>
+              <input type="range" id="water" min="25" max="300" step="5" value="100">
+              <p class="ctrl-hint">Curves are per 100 g of water, so the ceiling scales with this.</p>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="stir" checked>
+              <span>Stir and seed while cooling</span>
+            </label>
+            <p class="ctrl-hint" style="margin-top:-4px">
+              On: solid comes out the moment you cross the curve. Off: cool gently and undisturbed, and the
+              solution can hang on past the line.
+            </p>
+
+            <label class="check">
+              <input type="checkbox" id="zoom">
+              <span>Zoom the y-axis to this solute</span>
+            </label>
+
+            <div class="btn-row">
+              <button class="btn primary" id="cool">Cool it &rarr; 20 °C</button>
+              <button class="btn" id="heat">Heat it &rarr; 80 °C</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="disturb" disabled>Disturb it</button>
+              <button class="btn" id="reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">State of the solution</div>
+          <div class="stack">
+            <div><span class="state-badge is-sat" id="badge"><i class="bi bi-circle-fill"></i><span id="badgeText">Saturated</span></span></div>
+
+            <div class="readouts">
+              <div class="readout is-accent">
+                <div class="r-label">Can dissolve</div>
+                <div class="r-value" id="rCap">110.0<span class="r-unit">g</span></div>
+              </div>
+              <div class="readout is-ok">
+                <div class="r-label">Dissolved</div>
+                <div class="r-value" id="rDiss">110.0<span class="r-unit">g</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Room left</div>
+                <div class="r-value" id="rRoom">0.0<span class="r-unit">g</span></div>
+              </div>
+              <div class="readout is-bad">
+                <div class="r-label" id="rExcessLabel">Undissolved</div>
+                <div class="r-value" id="rExcess">0.0<span class="r-unit">g</span></div>
+              </div>
+            </div>
+            <p class="ctrl-hint" style="margin-top:0">
+              <strong>Can dissolve</strong> is the ceiling read off the curve.
+              <strong>Dissolved</strong> is what is really in the solution. They are not the same number.
+            </p>
+
+            <p class="msg" id="msg">Right on the line: this is exactly saturated at 60 °C.</p>
+            <hr class="sep">
+            <p class="note" id="stateNote">
+              The curve is a <strong>ceiling</strong>, not a measurement. It says how much <em>could</em>
+              dissolve, not how much you put in.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Measured points <span class="muted" id="tblSolute">KNO₃</span></div>
+          <div class="table-scroll data-wrap">
+            <table class="tbl data-tbl">
+              <thead>
+                <tr><th>T (°C)</th><th>g / 100 g H₂O</th></tr>
+              </thead>
+              <tbody id="dataBody"></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:8px">
+            Handbook values, rounded. The line between them is a <strong>monotone</strong> (PCHIP)
+            interpolation, so it never invents a bump that the data do not show.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception, part one:</strong> students read a solubility curve as
+        <em>how much is dissolved</em>. It is not. It is the <em>ceiling</em> &mdash; the most that
+        <em>can</em> dissolve in 100 g of water at that temperature. Your sample can sit anywhere on the
+        chart; the curve does not move to meet it.
+      </p>
+      <p>
+        <strong>The misconception, part two:</strong> "hotter dissolves more." That is a habit picked up
+        from sugar and salt, and it is false for gases. Switch the solute to NH₃ and the curve runs
+        <em>downhill</em>: heating drives dissolved gas out. This is why a warm river holds less dissolved
+        oxygen than a cold one (about 14.6 mg/L at 0 °C, 8.3 mg/L at 25 °C, 6.4 mg/L at 40 °C in water open
+        to air) and why a warm soda goes flat the instant you open it. Some solids do it too &mdash;
+        cerium(III) sulfate is <em>less</em> soluble hot than cold.
+      </p>
+      <p>
+        <strong>What to notice:</strong> put the dot <em>above</em> the curve two different ways. Dump 110 g
+        of KNO₃ into 100 g of water at 20 °C and you get a saturated solution with 78.4 g of solid sitting
+        on the bottom. Dissolve the same 110 g at 60 °C and cool it gently with stirring switched off, and
+        all 110 g stays in solution &mdash; supersaturated, with nothing on the bottom. Same dot. Different
+        flask. Position on the chart alone cannot tell you which one you have; only the path can. That is
+        why "supersaturated" is not something you can read off a graph, and why a supersaturated solution
+        dumps its excess the moment you scratch the glass or drop in a seed crystal.
+      </p>
+      <p>
+        <strong>Where the model stops being true:</strong> these curves assume the solution is at
+        equilibrium with pure solute and nothing else is dissolved in the water &mdash; add a second salt
+        and the numbers shift. The NH₃ curve is for 1 atm of ammonia gas above the liquid and is tabulated
+        only to 60 °C; halve the pressure and you roughly halve the solubility (Henry's law). Real
+        supersaturated solutions are far more fragile than this demo makes them look &mdash; most collapse
+        on their own long before you touch them. And the drawings of the flasks are schematic, not to scale.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+         1. DATA — handbook solubilities, g solute per 100 g water.
+            Solids: saturated with respect to the pure solid.
+            NH3: at 1 atm partial pressure of NH3, tabulated 0–60 °C only.
+         ===================================================================== */
+      var SOLUTES = {
+        KNO3: {
+          label: 'KNO₃', name: 'potassium nitrate', phase: 'solid', color: 0, tMax: 100,
+          T: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+          S: [13.3, 20.9, 31.6, 45.8, 63.9, 85.5, 110.0, 138.0, 169.0, 202.0, 246.0]
+        },
+        KCl: {
+          label: 'KCl', name: 'potassium chloride', phase: 'solid', color: 1, tMax: 100,
+          T: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+          S: [28.0, 31.2, 34.2, 37.2, 40.1, 42.8, 45.8, 48.3, 51.3, 54.0, 56.3]
+        },
+        NaCl: {
+          label: 'NaCl', name: 'sodium chloride', phase: 'solid', color: 2, tMax: 100,
+          T: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+          S: [35.7, 35.8, 36.0, 36.3, 36.6, 37.0, 37.3, 37.8, 38.4, 39.0, 39.8]
+        },
+        NH3: {
+          label: 'NH₃ (g)', name: 'ammonia gas, at 1 atm NH₃', phase: 'gas', color: 3, tMax: 60,
+          T: [0, 10, 20, 30, 40, 50, 60],
+          S: [89.9, 68.4, 52.9, 40.9, 31.6, 23.5, 16.8]
+        }
+      };
+      var ORDER = ['KNO3', 'KCl', 'NaCl', 'NH3'];
+
+      /* =====================================================================
+         2. MONOTONE CUBIC INTERPOLATION (PCHIP / Fritsch–Carlson).
+            A natural cubic spline would overshoot between the tabulated points
+            and draw wiggles that the data do not contain — on the almost-flat
+            NaCl curve that would be a visible lie. PCHIP cannot overshoot.
+         ===================================================================== */
+      function endSlope(h0, h1, d0, d1) {
+        var s = ((2 * h0 + h1) * d0 - h0 * d1) / (h0 + h1);
+        if (s * d0 <= 0) s = 0;
+        else if (d0 * d1 < 0 && Math.abs(s) > Math.abs(3 * d0)) s = 3 * d0;
+        return s;
+      }
+
+      function buildSpline(xs, ys) {
+        var n = xs.length, h = [], d = [], m = new Array(n), i;
+        for (i = 0; i < n - 1; i++) {
+          h[i] = xs[i + 1] - xs[i];
+          d[i] = (ys[i + 1] - ys[i]) / h[i];
+        }
+        for (i = 1; i < n - 1; i++) {
+          if (d[i - 1] * d[i] <= 0) {
+            m[i] = 0;                                     // local extremum → flat, no overshoot
+          } else {
+            var w1 = 2 * h[i] + h[i - 1], w2 = h[i] + 2 * h[i - 1];
+            m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i]);  // weighted harmonic mean
+          }
+        }
+        m[0] = endSlope(h[0], h[1], d[0], d[1]);
+        m[n - 1] = endSlope(h[n - 2], h[n - 3], d[n - 2], d[n - 3]);
+        return { xs: xs, ys: ys, m: m };
+      }
+
+      function evalSpline(sp, x) {
+        var xs = sp.xs, ys = sp.ys, m = sp.m, n = xs.length;
+        if (x <= xs[0]) return ys[0];
+        if (x >= xs[n - 1]) return ys[n - 1];
+        var i = 0;
+        while (i < n - 2 && x > xs[i + 1]) i++;
+        var h = xs[i + 1] - xs[i], t = (x - xs[i]) / h, t2 = t * t, t3 = t2 * t;
+        var h00 = 2 * t3 - 3 * t2 + 1, h10 = t3 - 2 * t2 + t;
+        var h01 = -2 * t3 + 3 * t2, h11 = t3 - t2;
+        var v = h00 * ys[i] + h10 * h * m[i] + h01 * ys[i + 1] + h11 * h * m[i + 1];
+        return v < 0 ? 0 : v;
+      }
+
+      ORDER.forEach(function (k) { SOLUTES[k].sp = buildSpline(SOLUTES[k].T, SOLUTES[k].S); });
+
+      // g of solute per 100 g water that CAN dissolve at temperature T
+      function solubility(key, T) {
+        var s = SOLUTES[key];
+        return evalSpline(s.sp, Demo.clamp(T, 0, s.tMax));
+      }
+
+      /* =====================================================================
+         3. STATE — the physics is in how these three numbers change.
+              total     g of solute put into the flask
+              dissolved g of that actually in solution
+              total - dissolved = solid on the bottom (or gas that left)
+         ===================================================================== */
+      var st = {
+        key: 'KNO3',
+        T: 60,
+        water: 100,
+        total: 110,
+        dissolved: 110,
+        stir: true,
+        zoom: false,
+        trail: []
+      };
+
+      function cur() { return SOLUTES[st.key]; }
+      function capacity(T) { return solubility(st.key, T) * st.water / 100; }
+      function tol() { return Math.max(0.05, capacity(st.T) * 0.002); }
+      function isSuper() { return st.dissolved > capacity(st.T) + tol(); }
+
+      // A fresh mix: stir it in at this temperature and let it come to equilibrium.
+      function remix() {
+        st.dissolved = Math.min(st.total, capacity(st.T));
+        st.trail = [];
+        pushTrail();
+      }
+
+      // A temperature change is a PATH, and the path is what decides the state.
+      function setTemp(T) {
+        var capNew = capacity(T);
+        var solid = st.total - st.dissolved;
+        if (st.dissolved > capNew + 1e-9) {
+          // We are now over the ceiling. Excess solute leaves only if something
+          // gives it a place to start: stirring, or solid already present.
+          if (st.stir || solid > 1e-9) st.dissolved = capNew;
+          // otherwise: gently cooled and undisturbed → metastable, stays up there
+        } else {
+          // Below the ceiling: any solid that was sitting there redissolves.
+          st.dissolved = Math.min(st.total, capNew);
+        }
+        st.T = T;
+        pushTrail();
+      }
+
+      function pushTrail() {
+        var y = st.dissolved * 100 / st.water;
+        var last = st.trail[st.trail.length - 1];
+        if (last && Math.abs(last.T - st.T) < 1e-9 && Math.abs(last.y - y) < 1e-9) return;
+        st.trail.push({ T: st.T, y: y });
+        if (st.trail.length > 700) st.trail.shift();
+      }
+
+      /* =====================================================================
+         4. CHART
+         ===================================================================== */
+      function yMax() {
+        if (!st.zoom) return 250;
+        var s = cur(), top = 0, i;
+        for (i = 0; i < s.S.length; i++) top = Math.max(top, s.S[i]);
+        top = Math.max(top, st.total * 100 / st.water) * 1.12;
+        var step = niceStep(top / 5);
+        return Math.max(step, Math.ceil(top / step) * step);
+      }
+
+      function niceStep(raw) {
+        var pow = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-6))));
+        var n = raw / pow;
+        var s = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+        return s * pow;
+      }
+
+      var chart = Demo.canvas('#chart', function (ctx, w, h, c) {
+        var small = w < 420;
+        var fs = small ? 10 : 11;
+        var padL = small ? 40 : 50, padR = 14, padT = 14, padB = small ? 34 : 36;
+        var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+        var ymax = yMax();
+        var s = cur();
+
+        function X(T) { return x0 + (T / 100) * (x1 - x0); }
+        function Y(v) { return y0 - (Demo.clamp(v, 0, ymax) / ymax) * (y0 - y1); }
+
+        ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+
+        // ---- grid ----
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (var t = 10; t <= 100; t += 10) { ctx.moveTo(X(t), y0); ctx.lineTo(X(t), y1); }
+        var ystep = niceStep(ymax / 5);
+        for (var v = ystep; v <= ymax + 1e-9; v += ystep) { ctx.moveTo(x0, Y(v)); ctx.lineTo(x1, Y(v)); }
+        ctx.stroke();
+
+        // ---- shaded regions for the SELECTED curve ----
+        function curvePath(upTo) {
+          ctx.beginPath();
+          var first = true;
+          for (var px = X(0); px <= X(upTo) + 0.5; px += 1) {
+            var T = Demo.clamp((px - x0) / (x1 - x0) * 100, 0, upTo);
+            var py = Y(solubility(st.key, T));
+            first ? (ctx.moveTo(px, py), first = false) : ctx.lineTo(px, py);
+          }
+        }
+        ctx.save();
+        ctx.globalAlpha = 0.07;
+        curvePath(s.tMax); ctx.lineTo(X(s.tMax), y1); ctx.lineTo(X(0), y1); ctx.closePath();
+        ctx.fillStyle = c.warn; ctx.fill();
+        curvePath(s.tMax); ctx.lineTo(X(s.tMax), y0); ctx.lineTo(X(0), y0); ctx.closePath();
+        ctx.fillStyle = c.ok; ctx.fill();
+        ctx.restore();
+
+        // ---- all four curves ----
+        var labels = [];
+        ORDER.forEach(function (k) {
+          var sub = SOLUTES[k], sel = (k === st.key);
+          ctx.save();
+          ctx.globalAlpha = sel ? 1 : 0.34;
+          ctx.strokeStyle = c.series[sub.color];
+          ctx.lineWidth = sel ? 2.6 : 1.3;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          var started = false;
+          for (var px = X(0); px <= X(sub.tMax) + 0.5; px += 1) {
+            var T = Demo.clamp((px - x0) / (x1 - x0) * 100, 0, sub.tMax);
+            var py = Y(evalSpline(sub.sp, T));
+            started ? ctx.lineTo(px, py) : (ctx.moveTo(px, py), started = true);
+          }
+          ctx.stroke();
+          ctx.restore();
+
+          labels.push({
+            text: sub.label,
+            y: Y(evalSpline(sub.sp, sub.tMax)),
+            x: X(sub.tMax),
+            color: c.series[sub.color],
+            sel: sel
+          });
+        });
+
+        // measured points on the selected curve — these are the real data
+        ctx.fillStyle = c.series[s.color];
+        for (var i = 0; i < s.T.length; i++) {
+          ctx.beginPath();
+          ctx.arc(X(s.T[i]), Y(s.S[i]), 2.6, 0, 6.2832);
+          ctx.fill();
+        }
+
+        // ---- curve end labels, pushed apart so they never overlap ----
+        labels.sort(function (a, b) { return a.y - b.y; });
+        for (var i = 0; i < labels.length; i++) {
+          labels[i].ly = Demo.clamp(labels[i].y, y1 + 7, y0 - 7);
+          if (i > 0 && labels[i].ly < labels[i - 1].ly + 13) labels[i].ly = labels[i - 1].ly + 13;
+        }
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        labels.forEach(function (L) {
+          ctx.save();
+          ctx.font = (L.sel ? '600 ' : '') + fs + 'px Poppins, system-ui, sans-serif';
+          var lx = Math.min(L.x, x1) - 5;
+          var ly = Demo.clamp(L.ly, y1 + 7, y0 - 7);
+          var tw = ctx.measureText(L.text).width;
+          ctx.globalAlpha = 0.82;                       // let the curve show through, but keep it legible
+          ctx.fillStyle = c.surface;
+          ctx.fillRect(lx - tw - 3, ly - fs * 0.75, tw + 6, fs * 1.5);
+          ctx.globalAlpha = L.sel ? 1 : 0.55;
+          ctx.fillStyle = L.color;
+          ctx.fillText(L.text, lx, ly);
+          ctx.restore();
+        });
+        ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+
+        // ---- the path actually taken ----
+        if (st.trail.length > 1) {
+          ctx.save();
+          ctx.strokeStyle = c.accent;
+          ctx.globalAlpha = 0.6;
+          ctx.lineWidth = 1.6;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath();
+          for (var i = 0; i < st.trail.length; i++) {
+            var p = st.trail[i];
+            i === 0 ? ctx.moveTo(X(p.T), Y(p.y)) : ctx.lineTo(X(p.T), Y(p.y));
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // ---- the sample ----
+        var yTotal = st.total * 100 / st.water;
+        var yDiss = st.dissolved * 100 / st.water;
+        var px0 = X(st.T);
+
+        ctx.save();
+        ctx.strokeStyle = c.muted;
+        ctx.globalAlpha = 0.55;
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px0, y0); ctx.lineTo(px0, Y(yTotal));
+        ctx.moveTo(x0, Y(yTotal)); ctx.lineTo(px0, Y(yTotal));
+        ctx.stroke();
+        ctx.restore();
+
+        // the gap between "added" and "dissolved"
+        if (yTotal - yDiss > 1e-6) {
+          ctx.strokeStyle = c.warn;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(px0, Y(yTotal)); ctx.lineTo(px0, Y(yDiss));
+          ctx.stroke();
+        }
+
+        // ring = actually dissolved
+        ctx.strokeStyle = isSuper() ? c.bad : c.ok;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(px0, Y(yDiss), 5.2, 0, 6.2832); ctx.stroke();
+
+        // filled dot = what you added
+        ctx.fillStyle = c.accentStrong;
+        ctx.beginPath(); ctx.arc(px0, Y(yTotal), 4.6, 0, 6.2832); ctx.fill();
+
+        if (isSuper()) {   // metastable halo
+          ctx.save();
+          ctx.strokeStyle = c.bad; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.4;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.arc(px0, Y(yDiss), 10, 0, 6.2832); ctx.stroke();
+          ctx.restore();
+        }
+
+        // ---- axes ----
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.stroke();
+
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var v = 0; v <= ymax + 1e-9; v += ystep) {
+          ctx.fillText(ymax >= 20 ? String(Math.round(v)) : Demo.fmt.dec(v, 1), x0 - 6, Y(v));
+        }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var t = 0; t <= 100; t += 20) ctx.fillText(String(t), X(t), y0 + 6);
+        ctx.fillText('temperature (°C)', (x0 + x1) / 2, y0 + 6 + fs + 4);
+
+        ctx.save();
+        ctx.translate(small ? 11 : 13, (y0 + y1) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('g per 100 g H₂O', 0, 0);
+        ctx.restore();
+      }, { aspect: 0.66, minHeight: 250, maxHeight: 380 });
+
+      /* =====================================================================
+         5. THE FLASKS — the same dot drawn two different ways
+         ===================================================================== */
+      var jitter = (function () {
+        var r = Demo.rng(20250724), a = [];
+        for (var i = 0; i < 120; i++) a.push(r());
+        return a;
+      })();
+
+      function wrapLines(ctx, text, maxW) {
+        var words = text.split(' '), lines = [], line = '';
+        for (var i = 0; i < words.length; i++) {
+          var test = line ? line + ' ' + words[i] : words[i];
+          if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = words[i]; }
+          else line = test;
+        }
+        if (line) lines.push(line);
+        return lines;
+      }
+
+      var flasks = Demo.canvas('#flasks', function (ctx, w, h, c) {
+        var s = cur(), gas = s.phase === 'gas';
+        var capNow = capacity(st.T);
+        var excess = Math.max(0, st.total - st.dissolved);
+        var above = st.total > capNow + tol();
+        var fs = w < 420 ? 9.5 : 10.5;
+
+        ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+
+        function cell(cx, cw, opts) {
+          ctx.font = '600 ' + fs + 'px Poppins, system-ui, sans-serif';
+          var headLines = wrapLines(ctx, opts.head, cw - 8).slice(0, 2);
+          ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+
+          var capSpace = 3 * (fs + 3) + 10;
+          var by = 8 + Math.max(opts.headRows || 1, headLines.length) * (fs + 2) + 6;
+          var bw = Math.min(74, cw * 0.52);
+          var bh = Demo.clamp(h - by - capSpace, 46, 96);
+          var bx = cx + (cw - bw) / 2;
+
+          if (opts.active) {                       // highlight the flask you actually have
+            ctx.save();
+            ctx.strokeStyle = c.accent; ctx.globalAlpha = 0.85; ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(cx + 1, 4, cw - 2, h - 8, 10);
+            else ctx.rect(cx + 1, 4, cw - 2, h - 8);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          ctx.save();
+          if (opts.dim) ctx.globalAlpha = 0.4;
+
+          // header
+          ctx.fillStyle = opts.active ? c.accentStrong : c.muted;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + 'px Poppins, system-ui, sans-serif';
+          for (var hi = 0; hi < headLines.length; hi++) {
+            ctx.fillText(headLines[hi], cx + cw / 2, 8 + hi * (fs + 2));
+          }
+          ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+
+          // glass
+          var liqTop = by + bh * 0.24;
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(bx, by); ctx.lineTo(bx, by + bh); ctx.lineTo(bx + bw, by + bh); ctx.lineTo(bx + bw, by);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.stroke();
+          ctx.restore();
+
+          // liquid
+          ctx.save();
+          ctx.globalAlpha = (opts.dim ? 0.4 : 1) * 0.18;
+          ctx.fillStyle = c.accent;
+          ctx.fillRect(bx + 1, liqTop, bw - 2, by + bh - liqTop - 1);
+          ctx.restore();
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(bx + 1, liqTop); ctx.lineTo(bx + bw - 1, liqTop); ctx.stroke();
+
+          // contents
+          if (opts.solid) {
+            ctx.fillStyle = c.warn;
+            var n = Demo.clamp(Math.round(10 + 34 * opts.solidFrac), 8, 44);
+            var bandH = 5 + 26 * opts.solidFrac;
+            for (var i = 0; i < n; i++) {
+              var jx = jitter[(i * 2) % jitter.length], jy = jitter[(i * 2 + 1) % jitter.length];
+              var sx = bx + 3 + jx * (bw - 10);
+              var sy = by + bh - 3 - jy * jy * bandH;   // squared → piles up at the bottom
+              ctx.fillRect(sx, sy - 3.6, 3.6, 3.6);
+            }
+          }
+          if (opts.bubbles) {
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.1;
+            for (var i = 0; i < 9; i++) {
+              var jx = jitter[(i * 3) % jitter.length], jy = jitter[(i * 3 + 2) % jitter.length];
+              var bxx = bx + 6 + jx * (bw - 12);
+              var byy = by - 8 + jy * (bh * 0.9);
+              ctx.beginPath(); ctx.arc(bxx, byy, 1.8 + jy * 1.6, 0, 6.2832); ctx.stroke();
+            }
+          }
+          if (opts.sparkleClear) {
+            ctx.save();
+            ctx.strokeStyle = c.bad; ctx.globalAlpha = 0.75; ctx.lineWidth = 1.2;
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(bx + 5, by + bh - 5); ctx.lineTo(bx + bw - 5, by + bh - 5);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // caption
+          ctx.fillStyle = c.text2;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          var lines = wrapLines(ctx, opts.cap, cw - 8);
+          for (var i = 0; i < lines.length && i < 3; i++) {
+            ctx.fillText(lines[i], cx + cw / 2, by + bh + 7 + i * (fs + 3));
+          }
+          ctx.restore();
+        }
+
+        var g = 8;
+        if (!above) {
+          var cw = Math.min(w - 2 * g, 260);
+          cell((w - cw) / 2, cw, {
+            head: 'Everything dissolved',
+            active: true, solid: false, bubbles: false,
+            cap: Demo.fmt.dec(st.dissolved, 1) + ' g of ' + s.label +
+                 ' in solution; the ceiling here is ' + Demo.fmt.dec(capNow, 1) + ' g. Clear, no excess.'
+          });
+        } else {
+          var cw2 = (w - 3 * g) / 2;
+          var headA = '(a) Mixed at ' + Math.round(st.T) + ' °C';
+          var headB = '(b) Cooled from hot, undisturbed';
+          ctx.font = '600 ' + fs + 'px Poppins, system-ui, sans-serif';
+          var rows = Math.max(
+            wrapLines(ctx, headA, cw2 - 8).slice(0, 2).length,
+            wrapLines(ctx, headB, cw2 - 8).slice(0, 2).length
+          );
+          ctx.font = fs + 'px Poppins, system-ui, sans-serif';
+          cell(g, cw2, {
+            head: headA, headRows: rows,
+            active: !isSuper(), dim: isSuper(),
+            solid: !gas, solidFrac: Demo.clamp(excess / Math.max(st.total, 1), 0, 1),
+            bubbles: gas,
+            cap: gas
+              ? 'Saturated. The extra ' + Demo.fmt.dec(st.total - capNow, 1) + ' g never dissolved — it stayed as gas.'
+              : 'Saturated solution + ' + Demo.fmt.dec(st.total - capNow, 1) + ' g of solid on the bottom.'
+          });
+          cell(2 * g + cw2, cw2, {
+            head: headB, headRows: rows,
+            active: isSuper(), dim: !isSuper(),
+            solid: false, sparkleClear: true,
+            cap: 'Supersaturated: all ' + Demo.fmt.dec(st.total, 1) + ' g still in solution. Nothing on the bottom — until you disturb it.'
+          });
+        }
+      }, { aspect: 0.50, minHeight: 190, maxHeight: 230 });
+
+      /* =====================================================================
+         6. DOM
+         ===================================================================== */
+      var $ = function (id) { return document.getElementById(id); };
+      var elTemp = $('temp'), elMass = $('mass'), elWater = $('water');
+      var running = false;
+
+      function gEl(x) { return Demo.fmt.dec(x, 1) + '<span class="r-unit">g</span>'; }
+
+      function render(sync) {
+        var s = cur(), gas = s.phase === 'gas';
+        var capNow = capacity(st.T);
+        var excess = Math.max(0, st.total - st.dissolved);
+        var room = Math.max(0, capNow - st.dissolved);
+        var t = tol();
+        var superNow = isSuper();
+
+        $('rCap').innerHTML = gEl(capNow);
+        $('rDiss').innerHTML = gEl(st.dissolved);
+        $('rRoom').innerHTML = gEl(room);
+        $('rExcess').innerHTML = gEl(excess);
+        $('rExcessLabel').textContent = gas ? 'Never dissolved (gas)' : 'Undissolved solid';
+
+        // ---- classification: position alone is not enough ----
+        var badge = $('badge'), text, cls, note;
+        if (superNow) {
+          cls = 'is-super';
+          text = 'Supersaturated (metastable)';
+          note = '<strong>You could only get here by cooling.</strong> ' +
+                 Demo.fmt.dec(st.dissolved - capNow, 1) + ' g more is dissolved than the ceiling allows. ' +
+                 'This state is fragile — stir it, scratch the glass or add a seed and it collapses.';
+        } else if (st.total > capNow + t) {
+          cls = 'is-excess';
+          text = gas ? 'Saturated + undissolved excess (gas)' : 'Saturated + undissolved excess';
+          note = '<strong>This is not supersaturated.</strong> The dot is above the curve only because you ' +
+                 'added more than could dissolve. The solution itself is exactly saturated at ' +
+                 Demo.fmt.dec(capNow, 1) + ' g; the other ' + Demo.fmt.dec(excess, 1) + ' g ' +
+                 (gas ? 'never went in.' : 'is sitting on the bottom.');
+        } else if (st.total > capNow - t) {
+          cls = 'is-sat';
+          text = 'Saturated';
+          note = 'Right on the curve: the solution holds exactly as much as it can at ' +
+                 Math.round(st.T) + ' °C. One more grain would not dissolve.';
+        } else {
+          cls = 'is-unsat';
+          text = 'Unsaturated';
+          note = 'Below the ceiling. <strong>' + Demo.fmt.dec(room, 1) + ' g more</strong> of ' + s.label +
+                 ' would still dissolve at ' + Math.round(st.T) + ' °C before the solution is saturated.';
+        }
+        badge.className = 'state-badge ' + cls;
+        $('badgeText').textContent = text;
+        $('stateNote').innerHTML = note;
+        $('stateNote').className = 'note' + (cls === 'is-super' ? ' bad' : cls === 'is-excess' ? ' warn' : '');
+
+        $('disturb').disabled = !superNow || running;
+        $('cool').disabled = running || st.T <= 20.001;
+        $('heat').disabled = running || st.T >= heatTarget() - 0.001;
+        $('heat').innerHTML = 'Heat it &rarr; ' + heatTarget() + ' °C';
+
+        chart.el.setAttribute('aria-label',
+          'Solubility curves. Selected solute ' + s.name + '. At ' + Math.round(st.T) + ' degrees Celsius the ceiling is ' +
+          Demo.fmt.dec(capNow, 1) + ' grams; you added ' + Demo.fmt.dec(st.total, 1) + ' grams; ' +
+          Demo.fmt.dec(st.dissolved, 1) + ' grams are dissolved. State: ' + text + '.');
+
+        if (sync) { chart.paint(); flasks.paint(); }
+        else { chart.redraw(); flasks.redraw(); }
+      }
+
+      function syncLabels() {
+        $('tempOut').textContent = Math.round(st.T) + ' °C';
+        $('massOut').textContent = Demo.fmt.dec(st.total, 0) + ' g';
+        $('waterOut').textContent = st.water + ' g';
+      }
+
+      function heatTarget() { return Math.min(80, cur().tMax); }
+
+      function say(html) { $('msg').innerHTML = html; }
+
+      // A plain description of where the sample sits right now — used whenever the
+      // student moves a slider, so the message never goes stale.
+      function sayState() {
+        var s = cur(), capNow = capacity(st.T);
+        var excess = Math.max(0, st.total - st.dissolved);
+        var head = 'At ' + Math.round(st.T) + ' °C, ' + st.water + ' g of water can hold <strong>' +
+                   Demo.fmt.dec(capNow, 1) + ' g</strong> of ' + s.label + '. ';
+        if (isSuper()) {
+          say(head + 'You are carrying ' + Demo.fmt.dec(st.dissolved - capNow, 1) +
+              ' g more than that, with nothing coming out yet.');
+        } else if (excess > 0.05) {
+          say(head + 'You added ' + Demo.fmt.dec(st.total, 1) + ' g, so ' + Demo.fmt.dec(excess, 1) +
+              ' g ' + (s.phase === 'gas' ? 'stayed out as gas.' : 'is sitting on the bottom.'));
+        } else {
+          say(head + 'You added ' + Demo.fmt.dec(st.total, 1) + ' g — all of it dissolved.');
+        }
+      }
+
+      // ---- data table ----
+      function fillTable() {
+        var s = cur(), rows = '';
+        for (var i = 0; i < s.T.length; i++) {
+          rows += '<tr><td>' + s.T[i] + '</td><td>' + Demo.fmt.dec(s.S[i], 1) + '</td></tr>';
+        }
+        $('dataBody').innerHTML = rows;
+        $('tblSolute').textContent = s.label;
+      }
+
+      /* ---- solute selector ---- */
+      document.querySelectorAll('.seg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (running) return;
+          document.querySelectorAll('.seg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          st.key = b.dataset.key;
+          var s = cur();
+          elTemp.max = s.tMax;
+          st.T = Demo.clamp(st.T, 0, s.tMax);
+          elTemp.value = Math.round(st.T);
+          $('tempHint').innerHTML = s.phase === 'gas'
+            ? 'Tabulated 0–60 °C at <strong>1 atm NH₃</strong> above the liquid. Heating drives gas <em>out</em>.'
+            : 'Moving this slider is a <em>path</em>: the solution follows it.';
+          remix();
+          fillTable();
+          syncLabels();
+          say('Switched to ' + s.name + '. Notice which way its curve runs.');
+          render();
+        });
+      });
+
+      /* ---- sliders ---- */
+      Demo.range('#temp', function (v) {
+        if (running) return;
+        setTemp(Demo.clamp(v, 0, cur().tMax));
+        syncLabels();
+        sayState();
+        render();
+      });
+
+      Demo.range('#mass', function (v) {
+        if (running) return;
+        st.total = v;
+        remix();
+        syncLabels();
+        sayState();
+        render();
+      });
+
+      Demo.range('#water', function (v) {
+        if (running) return;
+        st.water = v;
+        var mMax = Math.round(2.5 * st.water);
+        elMass.max = mMax;
+        if (st.total > mMax) { st.total = mMax; elMass.value = mMax; }
+        remix();
+        syncLabels();
+        sayState();
+        render();
+      });
+
+      $('stir').addEventListener('change', function () {
+        st.stir = this.checked;
+        if (st.stir && isSuper()) {
+          var out = st.dissolved - capacity(st.T);
+          st.dissolved = capacity(st.T);
+          pushTrail();
+          say('Stirring a supersaturated solution collapses it: <strong>' + Demo.fmt.dec(out, 1) +
+              ' g</strong> came out at once.');
+        }
+        render();
+      });
+
+      $('zoom').addEventListener('change', function () { st.zoom = this.checked; render(); });
+
+      /* ---- buttons ---- */
+      $('disturb').addEventListener('click', function () {
+        if (!isSuper()) return;
+        var s = cur();
+        var out = st.dissolved - capacity(st.T);
+        st.dissolved = capacity(st.T);
+        pushTrail();
+        say('Seed crystal in. <strong>' + Demo.fmt.dec(out, 1) + ' g</strong> of ' + s.label +
+            (s.phase === 'gas' ? ' bubbled straight out.' : ' crystallised out at once.') +
+            ' The dot did not move — the flask did.');
+        render();
+      });
+
+      $('reset').addEventListener('click', function () {
+        anim.stop(); running = false; animTo = null;
+        st.key = 'KNO3'; st.T = 60; st.water = 100; st.total = 110; st.stir = true; st.zoom = false;
+        document.querySelectorAll('.seg button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.key === 'KNO3' ? 'true' : 'false');
+        });
+        elTemp.max = 100; elTemp.value = 60;
+        elMass.max = 250; elMass.value = 110;
+        elWater.value = 100;
+        $('stir').checked = true; $('zoom').checked = false;
+        $('tempHint').innerHTML = 'Moving this slider is a <em>path</em>: the solution follows it.';
+        remix(); fillTable(); syncLabels();
+        say('Reset: 110 g of KNO₃ in 100 g of water at 60 °C — exactly saturated.');
+        render();
+      });
+
+      /* ---- the cool / heat run ---- */
+      var animTo = null, runFrom = null;
+
+      var anim = Demo.loop(function (dt) {
+        if (animTo === null) { anim.stop(); running = false; return; }
+        var dir = animTo > st.T ? 1 : -1;
+        var next = st.T + dir * 16 * dt;
+        if ((dir > 0 && next >= animTo) || (dir < 0 && next <= animTo)) next = animTo;
+        setTemp(next);
+        elTemp.value = Math.round(st.T);
+        syncLabels();
+        render(true);
+        if (Math.abs(st.T - animTo) < 1e-9) {
+          animTo = null; anim.stop(); running = false;
+          finishRun();
+          render();
+        }
+      });
+
+      function startRun(target) {
+        if (running || Math.abs(target - st.T) < 0.001) return;
+        runFrom = { T: st.T, dissolved: st.dissolved };
+        st.trail = [];
+        pushTrail();
+        animTo = target;
+        running = true;
+        render(true);
+        anim.start();
+      }
+
+      function finishRun() {
+        var s = cur(), gas = s.phase === 'gas';
+        var left = runFrom.dissolved - st.dissolved;
+        var dir = st.T < runFrom.T ? 'Cooled' : 'Heated';
+        var head = dir + ' ' + Math.round(runFrom.T) + ' → ' + Math.round(st.T) + ' °C. ';
+        if (left > 0.05) {
+          say(head + '<strong>' + Demo.fmt.dec(left, 1) + ' g</strong> of ' + s.label +
+              (gas ? ' left the solution as gas.' : ' crystallised out.'));
+        } else if (isSuper()) {
+          say(head + 'The dot crossed the curve and <strong>nothing came out</strong> — ' +
+              Demo.fmt.dec(st.dissolved - capacity(st.T), 1) + ' g is hanging on above the ceiling. ' +
+              'Press Disturb it.');
+        } else if (st.dissolved - runFrom.dissolved > 0.05) {
+          say(head + '<strong>' + Demo.fmt.dec(st.dissolved - runFrom.dissolved, 1) + ' g</strong> more of ' +
+              s.label + ' dissolved.');
+        } else {
+          say(head + 'Nothing came out and nothing more dissolved — the sample stayed under the ceiling.');
+        }
+      }
+
+      $('cool').addEventListener('click', function () { startRun(20); });
+      $('heat').addEventListener('click', function () { startRun(heatTarget()); });
+
+      /* ---- drag on the chart = mix a fresh sample ---- */
+      (function () {
+        var el = chart.el, dragging = false;
+
+        function place(ev) {
+          var r = el.getBoundingClientRect();
+          var w = r.width, h = r.height;
+          var small = w < 420;
+          var padL = small ? 40 : 50, padR = 14, padT = 14, padB = small ? 34 : 36;
+          var x0 = padL, x1 = w - padR, y0 = h - padB, y1 = padT;
+          var px = ev.clientX - r.left, py = ev.clientY - r.top;
+          var ymax = yMax();
+
+          var T = Demo.clamp((px - x0) / (x1 - x0) * 100, 0, cur().tMax);
+          var yv = Demo.clamp((y0 - py) / (y0 - y1) * ymax, 0, ymax);
+
+          st.T = Math.round(T);
+          st.total = Math.min(Math.round(yv * st.water / 100), parseFloat(elMass.max));
+          elTemp.value = st.T;
+          elMass.value = st.total;
+          remix();
+          syncLabels();
+          say('Fresh mix: ' + Demo.fmt.dec(st.total, 0) + ' g of ' + cur().label + ' stirred into ' +
+              st.water + ' g of water at ' + st.T + ' °C.');
+          render(true);
+        }
+
+        el.addEventListener('pointerdown', function (ev) {
+          if (running) return;
+          dragging = true;
+          el.setPointerCapture(ev.pointerId);
+          place(ev);
+          ev.preventDefault();
+        });
+        el.addEventListener('pointermove', function (ev) { if (dragging && !running) place(ev); });
+        el.addEventListener('pointerup', function (ev) {
+          dragging = false;
+          try { el.releasePointerCapture(ev.pointerId); } catch (e) { }
+        });
+        el.addEventListener('pointercancel', function () { dragging = false; });
+      })();
+
+      /* ---- boot ---- */
+      remix();
+      fillTable();
+      syncLabels();
+      render();
+    })();
+  </script>
+</body>
+
+</html>

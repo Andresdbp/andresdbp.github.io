@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Gas Law Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="One relation, PV = nRT, plotted from four different angles. Set three variables, the fourth follows, and watch what happens when the temperature axis is drawn in Celsius instead of kelvin.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: the plot + piston pair, the equation banner, fact rows */
+    .stage-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 212px;
+      gap: 14px;
+      align-items: start;
+    }
+    .stage-split > div { min-width: 0; }
+    @media (max-width: 720px) {
+      .stage-split { grid-template-columns: 1fr; }
+    }
+
+    .eq {
+      text-align: center;
+      font-size: 19px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+    .eq em { font-style: italic; }
+    .eq-sub {
+      text-align: center;
+      font-size: 11.5px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .selrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .selrow label { font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+                    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 4px; }
+
+    .fact { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; line-height: 1.5; }
+    .fact > span:first-child { color: var(--muted); }
+    .fact > span:last-child { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+
+    .oor { color: var(--warn); font-size: 10.5px; font-weight: 500; margin-left: 5px; }
+    .dep-tag { color: var(--muted); font-size: 10.5px; font-weight: 500; margin-left: 5px; }
+
+    .box-note { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+    .presets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .presets .btn { width: 100%; }
+    .presets .btn[aria-pressed="true"] {
+      border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft);
+    }
+
+    #cmp { min-width: 540px; }
+    .relgrid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Gas Law Bench</h1>
+        <p class="demo-sub">Start where it opens: volume against temperature, axis in &deg;C. Then flip the axis to kelvin and watch the same line move onto the origin.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 5</span>
+          <span class="tag is-accent">Gases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <div class="stage-split">
+          <div>
+            <canvas id="plot" role="img" aria-label="Plot of the dependent gas variable against the swept variable"></canvas>
+          </div>
+          <div>
+            <canvas id="box" role="img" aria-label="Cartoon cylinder with a piston, showing gas particles at the current state"></canvas>
+            <p class="box-note" id="boxNote">Cartoon cylinder.</p>
+          </div>
+        </div>
+        <p class="stage-caption" id="caption">Volume against temperature.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">One relation</div>
+          <p class="eq"><em>P</em>&thinsp;<em>V</em> = <em>n</em>&thinsp;<em>R</em>&thinsp;<em>T</em></p>
+          <p class="eq-sub">R = 0.08206 L&middot;atm/(mol&middot;K) &nbsp;&middot;&nbsp; P in atm, V in L, T in <strong>kelvin</strong>, n in mol</p>
+          <hr class="sep" style="margin:10px 0">
+
+          <div class="stack">
+            <div>
+              <div class="panel-title" style="margin-bottom:8px">Four classic views</div>
+              <div class="presets">
+                <button class="btn" id="pBoyle" aria-pressed="false">Boyle: P&ndash;V</button>
+                <button class="btn" id="pCharles" aria-pressed="true">Charles: V&ndash;T</button>
+                <button class="btn" id="pGay" aria-pressed="false">Gay-Lussac: P&ndash;T</button>
+                <button class="btn" id="pAvo" aria-pressed="false">Avogadro: V&ndash;n</button>
+              </div>
+              <p class="ctrl-hint">These are not four laws. They are one equation with two of its four variables pinned down.</p>
+            </div>
+
+            <div class="selrow">
+              <div>
+                <label for="selY">Vertical axis</label>
+                <select id="selY">
+                  <option value="P">P &mdash; pressure</option>
+                  <option value="V" selected>V &mdash; volume</option>
+                  <option value="T">T &mdash; temperature</option>
+                  <option value="n">n &mdash; moles</option>
+                </select>
+              </div>
+              <div>
+                <label for="selX">Horizontal axis</label>
+                <select id="selX">
+                  <option value="P">P &mdash; pressure</option>
+                  <option value="V">V &mdash; volume</option>
+                  <option value="T" selected>T &mdash; temperature</option>
+                  <option value="n">n &mdash; moles</option>
+                </select>
+              </div>
+            </div>
+            <p class="ctrl-hint" id="depHint">The vertical variable is the <strong>dependent</strong> one: it is solved from the other three, so its slider is locked.</p>
+
+            <div>
+              <div class="panel-title" style="margin-bottom:6px">Temperature axis</div>
+              <div class="seg" role="tablist" aria-label="Temperature scale on the axis">
+                <button role="tab" aria-selected="false" data-unit="K">Kelvin (K)</button>
+                <button role="tab" aria-selected="true" data-unit="C">Celsius (&deg;C)</button>
+              </div>
+              <p class="ctrl-hint">This changes only the <em>label on the axis</em>. It does not change the gas.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Set three &mdash; the fourth follows</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="slP">Pressure <em>P</em><span class="dep-tag" id="tagP"></span></label>
+                <span class="ctrl-value" id="outP">1.000 atm</span>
+              </div>
+              <input type="range" id="slP" min="0.25" max="4" step="0.01" value="1">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="slV">Volume <em>V</em><span class="dep-tag" id="tagV"></span></label>
+                <span class="ctrl-value" id="outV">22.41 L</span>
+              </div>
+              <input type="range" id="slV" min="2" max="60" step="0.1" value="22.4">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="slT">Temperature <em>T</em><span class="dep-tag" id="tagT"></span></label>
+                <span class="ctrl-value" id="outT">273.15 K</span>
+              </div>
+              <input type="range" id="slT" min="100" max="600" step="0.05" value="273.15">
+              <p class="ctrl-hint" id="hintT">0.00 &deg;C. The slider is always in kelvin, because that is the only scale the equation accepts.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sln">Amount <em>n</em><span class="dep-tag" id="tagn"></span></label>
+                <span class="ctrl-value" id="outn">1.000 mol</span>
+              </div>
+              <input type="range" id="sln" min="0.2" max="2.5" step="0.01" value="1">
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="stp">Set to STP</button>
+              <button class="btn" id="playBtn">Pause particles</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">This state</div>
+          <div class="readouts" id="readouts">
+            <div class="readout" id="rbP">
+              <div class="r-label">Pressure</div>
+              <div class="r-value"><span id="rP">1.000</span><span class="r-unit">atm</span></div>
+            </div>
+            <div class="readout" id="rbV">
+              <div class="r-label">Volume</div>
+              <div class="r-value"><span id="rV">22.41</span><span class="r-unit">L</span></div>
+            </div>
+            <div class="readout" id="rbn">
+              <div class="r-label">Amount</div>
+              <div class="r-value"><span id="rn">1.000</span><span class="r-unit">mol</span></div>
+            </div>
+            <div class="readout" id="rbT">
+              <div class="r-label">Temp</div>
+              <div class="r-value"><span id="rT">273.15</span><span class="r-unit">K</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Temp</div>
+              <div class="r-value"><span id="rTc">0.00</span><span class="r-unit">&deg;C</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="stack-s">
+            <div class="fact"><span>Molar volume V/n</span><span id="fVm">22.41 L/mol</span></div>
+            <div class="fact"><span>PV / (nT)</span><span id="fR">0.08206 L&middot;atm/(mol&middot;K)</span></div>
+          </div>
+          <p class="small muted" style="margin-top:8px">
+            PV/(nT) is the same number in every one of the four views, at every slider setting. That number
+            <em>is</em> R. Four "laws", one constant.
+          </p>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note" id="idealNote">Dilute gas.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- two points on the curve ---------------- -->
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-title">Two points on the same curve</div>
+
+      <div class="ctrl" style="max-width:460px">
+        <div class="ctrl-row">
+          <label class="ctrl-label" for="slX2" id="labX2">Second state: T<sub>2</sub></label>
+          <span class="ctrl-value" id="outX2">373.15 K</span>
+        </div>
+        <input type="range" id="slX2" min="100" max="600" step="0.05" value="373.15">
+        <p class="ctrl-hint">State 1 is the filled dot on the curve, state 2 is the open dot. Both are real, physical states of the same gas.</p>
+      </div>
+
+      <div class="table-scroll" style="margin-top:14px">
+        <table class="tbl" id="cmp">
+          <thead>
+            <tr>
+              <th>State</th><th>P (atm)</th><th>V (L)</th><th>n (mol)</th>
+              <th>T (K)</th><th>T (&deg;C)</th><th>PV/nT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>State 1</td><td id="c1P"></td><td id="c1V"></td><td id="c1n"></td><td id="c1T"></td><td id="c1Tc"></td><td id="c1R"></td></tr>
+            <tr><td>State 2</td><td id="c2P"></td><td id="c2V"></td><td id="c2n"></td><td id="c2T"></td><td id="c2Tc"></td><td id="c2R"></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="sep" style="margin:14px 0">
+
+      <div class="relgrid">
+        <div class="fact"><span id="relName">Held constant between the two states</span><span id="relHeld"></span></div>
+        <div class="fact"><span id="relLab1">Expression, state 1</span><span id="relV1"></span></div>
+        <div class="fact"><span id="relLab2">Expression, state 2</span><span id="relV2"></span></div>
+      </div>
+
+      <p class="note" id="relNote" style="margin-top:12px"></p>
+      <p class="note bad" id="trapNote" style="margin-top:10px"></p>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception, part one:</strong> students file Boyle, Charles, Gay-Lussac and Avogadro
+        as four unrelated laws with four formulas to memorise, and then panic when a problem changes three
+        things at once. They are not four laws. There is one equation, <em>PV</em> = <em>nRT</em>, and each
+        "law" is that equation with two of its four variables pinned down. Switch between the four preset
+        buttons without touching a slider: the gas never changes, only the camera angle does. The readout
+        PV/(nT) sits on 0.08206 L&middot;atm/(mol&middot;K) the entire time. That is the whole subject in one number.
+      </p>
+      <p>
+        <strong>The misconception, part two:</strong> students put Celsius into gas-law ratios. It looks
+        harmless &mdash; degrees are degrees. Set 1.000 mol at 1.000 atm and 298.15 K (25.00 &deg;C): the volume is
+        24.47 L. Warm it to 373.15 K (100.00 &deg;C) and the true volume is 30.62 L. Do it "in Celsius" instead
+        &mdash; 24.47 L &times; (100/25) &mdash; and you get 97.9 L, more than three times too big. Start from 0 &deg;C
+        and the Celsius version divides by zero and returns nothing at all.
+      </p>
+      <p>
+        <strong>What to notice:</strong> put V on the vertical axis, T on the horizontal, and set the axis to
+        &deg;C. The line is straight, but it does not go through the origin &mdash; at 0 &deg;C the gas still has
+        22.41 L of volume, because 0 &deg;C is just the freezing point of water and has nothing to do with gases.
+        Follow the line left. It reaches <em>V</em> = 0 at &minus;273.15 &deg;C, and everything past that point is
+        shaded, dashed, and negative: a gas with negative volume, which is not a thing. Now flip the axis to
+        kelvin. Same line, same gas, but now it lands on the origin, because 0 K <em>is</em> &minus;273.15 &deg;C.
+        The kelvin scale was not invented to annoy you; the gases picked the zero and Kelvin just moved the
+        label there.
+      </p>
+      <p>
+        <strong>The rule underneath it:</strong> a ratio only means something when zero on the scale means
+        zero of the thing being measured. 2 L really is twice 1 L, and 2 atm really is twice 1 atm, so V and P
+        ratios work. 20 &deg;C is <em>not</em> twice 10 &deg;C in any physical sense &mdash; it is 293.15 K against
+        283.15 K, a 3.5% difference, not a doubling. Notice that Boyle's law is the one preset with no
+        temperature in it at all. That is exactly why students get away with sloppy units for a while, and then
+        get slaughtered the first time temperature enters the problem.
+      </p>
+      <p>
+        <strong>The honest caveat:</strong> <em>PV</em> = <em>nRT</em> is a model, not a law of nature. It
+        assumes gas particles have no volume of their own and no attraction for each other, which is false for
+        every real gas. At 0 &deg;C and 1 atm the model predicts 22.41 L per mole; helium measures about 22.43 L,
+        nitrogen about 22.40 L, carbon dioxide about 22.26 L and ammonia about 22.08 L. Those errors are under
+        1.5% because the gas is dilute. Squeeze the molar volume down &mdash; the readout panel flags it &mdash; or
+        cool the gas toward its boiling point, and the errors grow to tens of percent. This bench will happily
+        draw you a smooth curve through 80 K; a real sample of carbon dioxide would have been a solid block
+        since 195 K, and the equation would not warn you.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // MODEL
+      //   PV = nRT with R = 0.08206 L*atm/(mol*K)  (CODATA: 0.0820573...)
+      //   Three variables are set by sliders; the fourth is solved.
+      //   Temperature is stored in KELVIN everywhere. Celsius exists only as
+      //   an axis label / readout, which is exactly the point of the demo.
+      // =====================================================================
+      var R = 0.08206;           // L*atm/(mol*K), 4 significant figures
+      var ABS0 = -273.15;        // degC of 0 K, exact by definition of the scale
+
+      var VARS = {
+        P: { sym: 'P', name: 'Pressure',    unit: 'atm', min: 0.25, max: 4.00, step: 0.01, dec: 3, axMax: 4.00 },
+        V: { sym: 'V', name: 'Volume',      unit: 'L',   min: 2.0,  max: 60.0, step: 0.1,  dec: 2, axMax: 60.0 },
+        T: { sym: 'T', name: 'Temperature', unit: 'K',   min: 100,  max: 600,  step: 0.05, dec: 2, axMax: 650 },
+        n: { sym: 'n', name: 'Amount',      unit: 'mol', min: 0.20, max: 2.50, step: 0.01, dec: 3, axMax: 2.50 }
+      };
+      var KEYS = ['P', 'V', 'T', 'n'];
+
+      var st = {
+        P: 1.000, V: 22.414689, T: 273.15, n: 1.000,
+        y: 'V', x: 'T', unit: 'C', x2: 373.15
+      };
+
+      function solve(s, dep) {
+        if (dep === 'P') return s.n * R * s.T / s.V;
+        if (dep === 'V') return s.n * R * s.T / s.P;
+        if (dep === 'T') return s.P * s.V / (s.n * R);
+        return s.P * s.V / (R * s.T);          // n
+      }
+
+      // full state with the swept variable set to xv (xv in KELVIN when x is T)
+      function stateAt(xv) {
+        var s = { P: st.P, V: st.V, T: st.T, n: st.n };
+        s[st.x] = xv;
+        s[st.y] = solve(s, st.y);
+        return s;
+      }
+
+      function physical(s) {
+        return isFinite(s.P) && isFinite(s.V) && isFinite(s.T) && isFinite(s.n) &&
+               s.P > 0 && s.V > 0 && s.T > 0 && s.n > 0;
+      }
+
+      // axis units: identical to model units except T in Celsius mode
+      function toAxis(v, key) { return (key === 'T' && st.unit === 'C') ? v + ABS0 : v; }
+      function fromAxis(v, key) { return (key === 'T' && st.unit === 'C') ? v - ABS0 : v; }
+
+      function axisUnit(key) { return (key === 'T' && st.unit === 'C') ? '°C' : VARS[key].unit; }
+
+      function xDomain() {
+        if (st.x === 'T') return st.unit === 'C' ? [-350, 350] : [0, 650];
+        return [0, VARS[st.x].axMax];
+      }
+
+      var HYPER = { 'P|V': 1, 'V|P': 1, 'T|n': 1, 'n|T': 1 };
+      function isHyper() { return !!HYPER[st.y + '|' + st.x]; }
+
+      // ---------------- number formatting ----------------
+      // toPrecision keeps trailing zeros, which Demo.fmt.sig deliberately drops.
+      // Sig figs matter here, so keep them.
+      function sg(v, d) {
+        d = d || 4;
+        if (!isFinite(v)) return '—';
+        if (v === 0) return '0';
+        var a = Math.abs(v);
+        if (a >= 1e-3 && a < 1e7) {
+          var s = v.toPrecision(d);
+          if (s.indexOf('e') >= 0) s = String(Number(s));
+          return s;
+        }
+        return Demo.fmt.sci(v, d - 1);
+      }
+      function dc(v, d) { return Demo.fmt.dec(v, d); }
+
+      // =====================================================================
+      // PLOT
+      // =====================================================================
+      function niceUp(v) {
+        if (!(v > 0)) return 0;
+        var mag = Math.pow(10, Math.floor(Math.log10(v))), n = v / mag;
+        var ms = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+        for (var i = 0; i < ms.length; i++) if (n <= ms[i] + 1e-12) return ms[i] * mag;
+        return 10 * mag;
+      }
+
+      function tickSet(lo, hi, approx) {
+        var raw = (hi - lo) / approx;
+        if (!(raw > 0)) return { vals: [lo], dec: 2 };
+        var mag = Math.pow(10, Math.floor(Math.log10(raw))), norm = raw / mag;
+        var step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+        var out = [], t = Math.ceil(lo / step - 1e-9) * step;
+        for (var g = 0; t <= hi + step * 1e-6 && g < 40; t += step, g++) {
+          out.push(Math.abs(t) < step * 1e-9 ? 0 : t);
+        }
+        // enough decimals that the step itself prints exactly (0.5, 2.5, ...)
+        var d = 0;
+        while (d < 4 && Math.abs(step * Math.pow(10, d) - Math.round(step * Math.pow(10, d))) > 1e-9) d++;
+        return { vals: out, dec: d };
+      }
+
+      var NSAMP = 260;
+      function sampleCurve() {
+        var xd = xDomain(), out = [];
+        for (var i = 0; i <= NSAMP; i++) {
+          var xa = xd[0] + (xd[1] - xd[0]) * i / NSAMP;
+          var s = stateAt(fromAxis(xa, st.x));
+          out.push({ xa: xa, ya: toAxis(s[st.y], st.y), ok: physical(s) });
+        }
+        return out;
+      }
+
+      function quant(sorted, p) {
+        if (!sorted.length) return 0;
+        var i = Demo.clamp(Math.round(p * (sorted.length - 1)), 0, sorted.length - 1);
+        return sorted[i];
+      }
+
+      function yDomain(samples) {
+        var vals = [], i;
+        for (i = 0; i < samples.length; i++) {
+          var v = samples[i].ya;
+          if (isFinite(v) && Math.abs(v) < 1e6) vals.push(v);
+        }
+        var lo, hi;
+        if (!vals.length) { lo = 0; hi = 1; }
+        else {
+          var s = vals.slice().sort(function (a, b) { return a - b; });
+          if (isHyper()) { lo = quant(s, 0.08); hi = quant(s, 0.92); }
+          else { lo = s[0]; hi = s[s.length - 1]; }
+        }
+        var pts = [toAxis(st[st.y], st.y), toAxis(stateAt(st.x2)[st.y], st.y)];
+        for (i = 0; i < pts.length; i++) {
+          if (isFinite(pts[i]) && Math.abs(pts[i]) < 1e6) {
+            lo = Math.min(lo, pts[i]); hi = Math.max(hi, pts[i]);
+          }
+        }
+        hi = hi > 0 ? niceUp(hi * 1.07) : 0;
+        lo = lo < 0 ? -niceUp(-lo * 1.07) : 0;
+        if (hi - lo < 1e-9) hi = lo + 1;
+        return [lo, hi];
+      }
+
+      function heldKeys() {
+        var out = [];
+        for (var i = 0; i < KEYS.length; i++) {
+          if (KEYS[i] !== st.x && KEYS[i] !== st.y) out.push(KEYS[i]);
+        }
+        return out;
+      }
+
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var F = narrow ? 10 : 11;
+        var padL = narrow ? 48 : 58, padR = narrow ? 14 : 18, padT = 16, padB = narrow ? 34 : 38;
+        var X0 = padL, X1 = w - padR, Y0 = h - padB, Y1 = padT;
+        if (X1 - X0 < 40 || Y0 - Y1 < 40) return;
+
+        var xd = xDomain();
+        var samples = sampleCurve();
+        var yd = yDomain(samples);
+        var PW = X1 - X0, PH = Y0 - Y1;
+
+        function px(v) { return X0 + (v - xd[0]) / (xd[1] - xd[0]) * PW; }
+        function py(v) { return Y0 - (v - yd[0]) / (yd[1] - yd[0]) * PH; }
+
+        ctx.font = F + 'px Poppins, system-ui, sans-serif';
+
+        // ---- shaded impossible zone: colder than absolute zero ----
+        if (st.x === 'T' && xd[0] < 0) {
+          var xz = px(toAxis(0, 'T'));
+          ctx.save();
+          ctx.globalAlpha = 0.13;
+          ctx.fillStyle = c.bad;
+          ctx.fillRect(X0, Y1, Math.max(0, xz - X0), PH);
+          ctx.restore();
+          if (xz - X0 > 16) {
+            ctx.save();
+            ctx.translate((X0 + xz) / 2, Y1 + PH / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = c.bad;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.font = (F - 1) + 'px Poppins, system-ui, sans-serif';
+            ctx.fillText('colder than 0 K — no such state', 0, 0);
+            ctx.restore();
+            ctx.font = F + 'px Poppins, system-ui, sans-serif';
+          }
+        }
+
+        // ---- gridlines ----
+        var xt = tickSet(xd[0], xd[1], narrow ? 4 : 7);
+        var yt = tickSet(yd[0], yd[1], narrow ? 4 : 6);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.beginPath();
+        var i;
+        for (i = 0; i < xt.vals.length; i++) {
+          var gx = Math.round(px(xt.vals[i])) + 0.5;
+          ctx.moveTo(gx, Y1); ctx.lineTo(gx, Y0);
+        }
+        for (i = 0; i < yt.vals.length; i++) {
+          var gy = Math.round(py(yt.vals[i])) + 0.5;
+          ctx.moveTo(X0, gy); ctx.lineTo(X1, gy);
+        }
+        ctx.stroke();
+
+        // ---- the true zero lines (y = 0 and x = 0 in model units) ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        if (yd[0] < 0 && yd[1] > 0) { ctx.moveTo(X0, py(0)); ctx.lineTo(X1, py(0)); }
+        var xZeroModel = toAxis(0, st.x);
+        if (xZeroModel > xd[0] && xZeroModel < xd[1]) { ctx.moveTo(px(xZeroModel), Y1); ctx.lineTo(px(xZeroModel), Y0); }
+        ctx.stroke();
+
+        // ---- absolute-zero marker when the x axis is temperature ----
+        if (st.x === 'T') {
+          var xa0 = px(toAxis(0, 'T'));
+          if (xa0 >= X0 - 1 && xa0 <= X1 + 1) {
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.6;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(xa0, Y1); ctx.lineTo(xa0, Y0); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.font = (F - 1) + 'px Poppins, system-ui, sans-serif';
+            var lbl = st.unit === 'C' ? '0 K = −273.15 °C' : '0 K';
+            var lw = ctx.measureText(lbl).width;
+            var lx = Demo.clamp(xa0 + 5, X0 + 2, X1 - lw - 2);
+            ctx.fillStyle = c.surface;
+            ctx.fillRect(lx - 2, Y1 + 1, lw + 4, F + 3);
+            ctx.fillStyle = c.bad;
+            ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+            ctx.fillText(lbl, lx, Y1 + 2);
+            ctx.font = F + 'px Poppins, system-ui, sans-serif';
+          }
+        }
+        // ---- same marker on the vertical axis when y is temperature ----
+        if (st.y === 'T' && st.unit === 'C') {
+          var ya0 = py(ABS0);
+          if (ya0 >= Y1 && ya0 <= Y0) {
+            ctx.strokeStyle = c.bad; ctx.lineWidth = 1.6;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath(); ctx.moveTo(X0, ya0); ctx.lineTo(X1, ya0); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.font = (F - 1) + 'px Poppins, system-ui, sans-serif';
+            var flbl = '−273.15 °C = 0 K — the floor';
+            var fw = ctx.measureText(flbl).width;
+            ctx.fillStyle = c.surface;
+            ctx.fillRect(X0 + 3, ya0 - F - 5, fw + 4, F + 4);
+            ctx.fillStyle = c.bad;
+            ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+            ctx.fillText(flbl, X0 + 5, ya0 - 3);
+            ctx.font = F + 'px Poppins, system-ui, sans-serif';
+          }
+        }
+
+        // ---- curve, clipped to the plot box ----
+        ctx.save();
+        ctx.beginPath(); ctx.rect(X0, Y1, PW, PH); ctx.clip();
+
+        function stroke(wantOK) {
+          var pen = false, lastY = 0;
+          ctx.beginPath();
+          for (var k = 0; k < samples.length; k++) {
+            var s = samples[k];
+            if (!isFinite(s.ya) || Math.abs(s.ya) > 1e5 || s.ok !== wantOK) { pen = false; continue; }
+            var X = px(s.xa), Y = py(s.ya);
+            var jump = pen && Math.abs(Y - lastY) > PH * 2.5;
+            if (!pen || jump) ctx.moveTo(X, Y); else ctx.lineTo(X, Y);
+            pen = true; lastY = Y;
+          }
+          ctx.stroke();
+        }
+
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.strokeStyle = c.bad; ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        stroke(false);
+        ctx.setLineDash([]);
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.4;
+        stroke(true);
+
+        // ---- the two marked states ----
+        var p1x = px(toAxis(st[st.x], st.x)), p1y = py(toAxis(st[st.y], st.y));
+        var s2 = stateAt(st.x2);
+        var p2x = px(toAxis(s2[st.x], st.x)), p2y = py(toAxis(s2[st.y], st.y));
+
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(X0, p1y); ctx.lineTo(p1x, p1y); ctx.lineTo(p1x, Y0);
+        ctx.moveTo(X0, p2y); ctx.lineTo(p2x, p2y); ctx.lineTo(p2x, Y0);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = c.series[1];
+        ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(p2x, p2y, 5, 0, 6.2832); ctx.stroke();
+
+        ctx.fillStyle = c.accentStrong;
+        ctx.beginPath(); ctx.arc(p1x, p1y, 5.5, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(p1x, p1y, 5.5, 0, 6.2832); ctx.stroke();
+
+        ctx.restore();
+
+        // ---- held-variable legend ----
+        var hk = heldKeys(), parts = [];
+        for (i = 0; i < hk.length; i++) {
+          parts.push(hk[i] + ' = ' + dc(st[hk[i]], VARS[hk[i]].dec) + ' ' + VARS[hk[i]].unit);
+        }
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.font = (F - 1) + 'px Poppins, system-ui, sans-serif';
+        ctx.fillText('held: ' + parts.join('   '), X1, Y1 - 12 > 0 ? Y1 - 13 : 1);
+        ctx.font = F + 'px Poppins, system-ui, sans-serif';
+
+        // ---- frame ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.strokeRect(X0 + 0.5, Y1 + 0.5, PW - 1, PH - 1);
+
+        // ---- tick labels ----
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (i = 0; i < yt.vals.length; i++) {
+          var yv = yt.vals[i];
+          ctx.fillText(dc(yv, yt.dec), X0 - 6, py(yv));
+        }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (i = 0; i < xt.vals.length; i++) {
+          var xv = xt.vals[i];
+          var xp = px(xv);
+          if (xp < X0 - 2 || xp > X1 + 2) continue;
+          ctx.fillText(dc(xv, xt.dec), xp, Y0 + 6);
+        }
+
+        // ---- axis titles ----
+        ctx.fillStyle = c.text2;
+        ctx.font = '600 ' + F + 'px Poppins, system-ui, sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(VARS[st.x].sym + ' (' + axisUnit(st.x) + ')', (X0 + X1) / 2, h - 2);
+        ctx.save();
+        ctx.translate(narrow ? 6 : 8, (Y0 + Y1) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(VARS[st.y].sym + ' (' + axisUnit(st.y) + ')', 0, 0);
+        ctx.restore();
+      }, { aspect: 0.66, minHeight: 250, maxHeight: 430 });
+
+      // =====================================================================
+      // PARTICLE BOX — a 2-D cartoon of the cylinder
+      // =====================================================================
+      var LADDER = [1, 2, 3, 5, 8, 10, 15, 20, 25, 30, 40, 50, 60, 80, 100, 150, 200,
+                    250, 300, 400, 500, 800, 1000, 1500, 2000, 3000, 5000];
+      function cylScale(V) {
+        var want = Math.max(V, 0) * 1.1;
+        for (var i = 0; i < LADDER.length; i++) if (LADDER[i] >= want) return LADDER[i];
+        return LADDER[LADDER.length - 1];
+      }
+
+      var parts = [];
+      var flash = { l: 0, r: 0, b: 0, p: 0 };
+      var rand = Demo.rng(20250724);   // seeded: the same box every reload
+
+      function particleTarget() { return Demo.clamp(Math.round(st.n * 14), 4, 42); }
+
+      function syncParts() {
+        var target = particleTarget();
+        while (parts.length < target) {
+          var a = rand() * Math.PI * 2;
+          parts.push({ u: 0.08 + rand() * 0.84, v: 0.08 + rand() * 0.84,
+                       dx: Math.cos(a), dy: Math.sin(a) });
+        }
+        while (parts.length > target) parts.pop();
+      }
+
+      var boxRect = { w: 100, h: 100 };
+
+      function stepParts(dt) {
+        var speed = 46 * Math.sqrt(Math.max(st.T, 1) / 273.15);   // px/s, cartoon scale
+        var du = speed * dt / Math.max(boxRect.w, 1);
+        var dv = speed * dt / Math.max(boxRect.h, 1);
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i];
+          p.u += p.dx * du; p.v += p.dy * dv;
+          if (p.u < 0.03) { p.u = 0.03; p.dx = Math.abs(p.dx); flash.l = 1; }
+          if (p.u > 0.97) { p.u = 0.97; p.dx = -Math.abs(p.dx); flash.r = 1; }
+          if (p.v < 0.03) { p.v = 0.03; p.dy = Math.abs(p.dy); flash.p = 1; }   // v measured from piston down
+          if (p.v > 0.97) { p.v = 0.97; p.dy = -Math.abs(p.dy); flash.b = 1; }
+        }
+        var k = Math.exp(-dt * 5);
+        flash.l *= k; flash.r *= k; flash.b *= k; flash.p *= k;
+      }
+
+      var box = Demo.canvas('#box', function (ctx, w, h, c) {
+        var padL = 34, padR = 12, padT = 26, padB = 20;
+        var CX0 = padL, CX1 = w - padR, CY1 = padT, CY0 = h - padB;
+        if (CX1 - CX0 < 30 || CY0 - CY1 < 40) return;
+        var CW = CX1 - CX0, CH = CY0 - CY1;
+
+        var full = cylScale(st.V);
+        var frac = Demo.clamp(st.V / full, 0.02, 1);
+        var pistonY = CY0 - frac * CH;
+        boxRect.w = CW; boxRect.h = CY0 - pistonY;
+
+        ctx.font = '10px Poppins, system-ui, sans-serif';
+
+        // volume scale on the left
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        var divs = 5;
+        for (var t = 0; t <= divs; t++) {
+          var val = full * t / divs;
+          var yy = Math.round(CY0 - (t / divs) * CH) + 0.5;
+          ctx.beginPath(); ctx.moveTo(CX0 - 4, yy); ctx.lineTo(CX0, yy); ctx.stroke();
+          ctx.fillText(String(Math.round(val)), CX0 - 7, yy);
+        }
+
+        // gas region fill
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(CX0, pistonY, CW, CY0 - pistonY);
+
+        // particles
+        ctx.fillStyle = c.series[0];
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i];
+          var x = CX0 + p.u * CW;
+          var y = pistonY + p.v * (CY0 - pistonY);
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, 6.2832); ctx.fill();
+        }
+
+        // walls, brightening briefly where a particle just hit
+        function wall(x1, y1, x2, y2, f) {
+          ctx.strokeStyle = c.text2; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+          if (f > 0.02) {
+            ctx.save();
+            ctx.globalAlpha = Demo.clamp(f, 0, 1);
+            ctx.strokeStyle = c.accent; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            ctx.restore();
+          }
+        }
+        wall(CX0, pistonY, CX0, CY0, flash.l);
+        wall(CX1, pistonY, CX1, CY0, flash.r);
+        wall(CX0, CY0, CX1, CY0, flash.b);
+
+        // piston (drawn just above the gas; the gas top face is the sealing surface)
+        ctx.fillStyle = c.line;
+        ctx.fillRect(CX0, pistonY - 6, CW, 6);
+        wall(CX0, pistonY - 6.5, CX1, pistonY - 6.5, flash.p);
+
+        // pressure arrows on the piston
+        var arrowL = Demo.clamp(6 + 12 * Math.sqrt(st.P / 1.0), 6, 22);
+        var topAvail = pistonY - 6 - CY1;
+        if (topAvail > 10) {
+          arrowL = Math.min(arrowL, topAvail - 2);
+          ctx.strokeStyle = c.series[1]; ctx.fillStyle = c.series[1]; ctx.lineWidth = 1.6;
+          for (var a = 0; a < 3; a++) {
+            var ax = CX0 + CW * (0.22 + 0.28 * a);
+            var ay = pistonY - 8;
+            ctx.beginPath(); ctx.moveTo(ax, ay - arrowL); ctx.lineTo(ax, ay); ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(ax, ay); ctx.lineTo(ax - 3.2, ay - 4.5); ctx.lineTo(ax + 3.2, ay - 4.5);
+            ctx.closePath(); ctx.fill();
+          }
+        }
+
+        // labels
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('L', 2, CY1 - 14 > 0 ? CY1 - 14 : 1);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = c.series[1];
+        ctx.fillText('P', CX1 - 2, 2);
+        ctx.fillStyle = c.text2;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.font = '600 10.5px Poppins, system-ui, sans-serif';
+        ctx.fillText(dc(st.V, 2) + ' L', (CX0 + CX1) / 2, h - 4);
+      }, { aspect: 1.3, minHeight: 250, maxHeight: 310 });
+
+      // =====================================================================
+      // RELATIONS between two states
+      // =====================================================================
+      // The quantity that stays constant when the two held variables are fixed.
+      var REL = {
+        'PV': { txt: 'P × V', unit: 'L·atm', f: function (s) { return s.P * s.V; }, hasT: false },
+        'TV': { txt: 'V / T', unit: 'L/K', f: function (s) { return s.V / s.T; }, hasT: true, div: true,
+                cTxt: 'V / T(°C)', cUnit: 'L/°C', cf: function (s) { return s.V / (s.T + ABS0); } },
+        'PT': { txt: 'P / T', unit: 'atm/K', f: function (s) { return s.P / s.T; }, hasT: true, div: true,
+                cTxt: 'P / T(°C)', cUnit: 'atm/°C', cf: function (s) { return s.P / (s.T + ABS0); } },
+        'Vn': { txt: 'V / n', unit: 'L/mol', f: function (s) { return s.V / s.n; }, hasT: false },
+        'Pn': { txt: 'P / n', unit: 'atm/mol', f: function (s) { return s.P / s.n; }, hasT: false },
+        'Tn': { txt: 'n × T', unit: 'mol·K', f: function (s) { return s.n * s.T; }, hasT: true, div: false,
+                cTxt: 'n × T(°C)', cUnit: 'mol·°C', cf: function (s) { return s.n * (s.T + ABS0); } }
+      };
+      function relKey() {
+        var a = st.y, b = st.x;
+        var order = 'PVTn';
+        var k = (order.indexOf(a) < order.indexOf(b)) ? a + b : b + a;
+        // normalise to the keys above
+        if (k === 'PV') return 'PV';
+        if (k === 'PT') return 'PT';
+        if (k === 'Pn') return 'Pn';
+        if (k === 'VT') return 'TV';
+        if (k === 'Vn') return 'Vn';
+        return 'Tn';
+      }
+
+      // =====================================================================
+      // UI
+      // =====================================================================
+      function el(id) { return document.getElementById(id); }
+
+      function heldText() {
+        var hk = heldKeys(), out = [];
+        for (var i = 0; i < hk.length; i++) out.push(hk[i] + ' = ' + dc(st[hk[i]], VARS[hk[i]].dec) + ' ' + VARS[hk[i]].unit);
+        return out.join(' and ');
+      }
+
+      function syncSliders() {
+        for (var i = 0; i < KEYS.length; i++) {
+          var k = KEYS[i], V = VARS[k], dep = (k === st.y);
+          var input = el('sl' + k);
+          input.disabled = dep;
+          input.value = Demo.clamp(st[k], V.min, V.max);
+          var oor = (st[k] < V.min - 1e-9 || st[k] > V.max + 1e-9);
+          var txt = dc(st[k], V.dec) + ' ' + V.unit;
+          if (dep && oor) txt += '<span class="oor">past slider end</span>';
+          el('out' + k).innerHTML = txt;
+          el('tag' + k).textContent = dep ? '— computed' : '';
+        }
+        el('hintT').innerHTML = dc(st.T + ABS0, 2) + ' &deg;C. The slider is always in kelvin, because that is the only scale the equation accepts.';
+      }
+
+      function syncReadouts() {
+        el('rP').textContent = dc(st.P, 3);
+        el('rV').textContent = dc(st.V, 2);
+        el('rn').textContent = dc(st.n, 3);
+        el('rT').textContent = dc(st.T, 2);
+        el('rTc').textContent = dc(st.T + ABS0, 2);
+        for (var i = 0; i < KEYS.length; i++) {
+          var k = KEYS[i];
+          el('rb' + k).className = 'readout' + (k === st.y ? ' is-accent' : '');
+        }
+        var Vm = st.V / st.n;
+        el('fVm').textContent = sg(Vm, 4) + ' L/mol';
+        el('fR').innerHTML = dc(st.P * st.V / (st.n * st.T), 5) + ' L&middot;atm/(mol&middot;K)';
+
+        // honest non-ideality flag
+        var cls = 'note', txt;
+        if (Vm >= 20) {
+          txt = 'Dilute gas: ' + sg(Vm, 4) + ' L per mole. Real gases obey PV = nRT to well under 1% in this range.';
+        } else if (Vm >= 5) {
+          txt = 'Moderate density: ' + sg(Vm, 4) + ' L per mole. Real gases are usually within a couple of percent of the ideal prediction here.';
+        } else if (Vm >= 1) {
+          cls = 'note warn';
+          txt = 'Dense: ' + sg(Vm, 4) + ' L per mole. Real gases start to disagree with the ideal prediction by several percent — CO₂ and NH₃ much more than He or N₂.';
+        } else {
+          cls = 'note bad';
+          txt = 'Very dense: ' + sg(Vm, 4) + ' L per mole. PV = nRT is no longer trustworthy. The molecules take up a real fraction of the volume and attract each other; the curve above is now fiction.';
+        }
+        if (st.T < 150) {
+          cls = (cls === 'note') ? 'note warn' : cls;
+          txt += ' At ' + dc(st.T, 2) + ' K many common gases have already condensed to a liquid or solid — the equation will not tell you that.';
+        }
+        el('idealNote').className = cls;
+        el('idealNote').textContent = txt;
+      }
+
+      function syncBoxNote() {
+        el('boxNote').innerHTML =
+          particleTarget() + ' particles drawn, speed ∝ &radic;T, cylinder height ∝ V (scale 0&ndash;' +
+          cylScale(st.V) + ' L). A 2-D cartoon: one mole is 6.02 &times; 10<sup>23</sup> particles, and this box shows ' +
+          particleTarget() + '. Shrink V or raise T and watch the walls get hit more often — that is pressure.';
+      }
+
+      function syncCompare() {
+        var s1 = { P: st.P, V: st.V, T: st.T, n: st.n };
+        var s2 = stateAt(st.x2);
+        function fill(pre, s) {
+          el(pre + 'P').textContent = dc(s.P, 3);
+          el(pre + 'V').textContent = dc(s.V, 2);
+          el(pre + 'n').textContent = dc(s.n, 3);
+          el(pre + 'T').textContent = dc(s.T, 2);
+          el(pre + 'Tc').textContent = dc(s.T + ABS0, 2);
+          el(pre + 'R').textContent = dc(s.P * s.V / (s.n * s.T), 5);
+        }
+        fill('c1', s1); fill('c2', s2);
+
+        var r = REL[relKey()];
+        el('relHeld').textContent = heldText();
+        el('relLab1').innerHTML = r.txt + ', state 1';
+        el('relLab2').innerHTML = r.txt + ', state 2';
+        el('relV1').textContent = sg(r.f(s1), 4) + ' ' + r.unit;
+        el('relV2').textContent = sg(r.f(s2), 4) + ' ' + r.unit;
+
+        el('relNote').innerHTML =
+          'With ' + heldText() + ' held fixed, <strong>' + r.txt + '</strong> is the combination that cannot change. ' +
+          'That is not a separate law &mdash; rearrange PV = nRT and it falls out. And PV/(nT) equals R in both columns above, ' +
+          'whichever two variables you pinned.';
+
+        var trap = el('trapNote');
+        if (r.hasT) {
+          var c1 = r.cf(s1), c2 = r.cf(s2);
+          var t1 = s1.T + ABS0, t2 = s2.T + ABS0;
+          var show = function (v, t) {
+            if (r.div && Math.abs(t) < 1e-9) {
+              return '<strong>undefined</strong> — that state sits at exactly 0 °C, so you are dividing by zero';
+            }
+            return sg(v, 4) + ' ' + r.cUnit;
+          };
+          var msg = '<strong>Now redo it in Celsius.</strong> State 1 gives ' + r.cTxt + ' = ' + show(c1, t1) +
+                    '. State 2 gives ' + show(c2, t2) + '. ';
+          if (isFinite(c1) && isFinite(c2) && Math.abs(c1) > 1e-12) {
+            msg += 'Those differ by a factor of ' + sg(c2 / c1, 3) + '. ';
+          }
+          msg += 'Same gas, same two states, same physics &mdash; but the "constant" is not constant, ' +
+                 'so any ratio or product you build on Celsius gives the wrong answer. Celsius has an arbitrary ' +
+                 'zero (the freezing point of water). Ratios only mean something on a scale whose zero means ' +
+                 '<em>none of the thing</em>, and that scale is kelvin.';
+          trap.innerHTML = msg;
+        } else {
+          trap.innerHTML =
+            '<strong>Notice what is missing:</strong> this view has no temperature in it at all, so nothing here ' +
+            'punishes you for using Celsius. That is exactly why the habit survives &mdash; and exactly why it ' +
+            'explodes the first time a problem changes the temperature. Switch to a view with T on an axis.';
+        }
+      }
+
+      function captionText() {
+        var base = VARS[st.y].name + ' against ' + VARS[st.x].name.toLowerCase() +
+                   ', with ' + heldText() + ' held fixed. ';
+        if (st.x === 'T') {
+          if (isHyper()) {   // y = n, which goes as 1/T — a hyperbola, not a line
+            return base + 'This view is a hyperbola, not a line: with P and V both pinned, a colder gas needs ' +
+              'more moles to hold that same pressure. ' + (st.unit === 'C'
+                ? 'It runs away to infinity at −273.15 °C, not at 0 °C, and everything left of the dashed line is negative moles of gas.'
+                : 'It runs away to infinity at 0 K. Nothing at all happens at 273.15 K, which is where 0 °C sits.');
+          }
+          if (st.unit === 'C') {
+            return base + 'On a Celsius axis the line misses the origin — at 0 °C the gas is still there. ' +
+              'It reaches zero only at −273.15 °C, and the shaded strip past that is a region no gas can occupy.';
+          }
+          return base + 'On a kelvin axis the same line runs straight through the origin. ' +
+            'That is what "directly proportional" actually looks like.';
+        }
+        if (st.y === 'T') {
+          return base + (st.unit === 'C'
+            ? 'The temperature axis has a hard floor at −273.15 °C: however far you push the other variable, this curve can never cross it.'
+            : 'The temperature axis has a hard floor at 0 K, which is the whole reason the scale starts there.');
+        }
+        if (isHyper()) {   // the P–V pair
+          return base + 'Halve the volume and the pressure doubles: the product P × V is what stays put. ' +
+            'Notice that no temperature appears anywhere in this view.';
+        }
+        return base + 'A straight line through the origin, because both of these scales have an honest zero: ' +
+          '0 ' + VARS[st.x].unit + ' really does mean none of it. Celsius does not have that property, and that is the whole problem.';
+      }
+
+      function syncCaption() {
+        var t = captionText();
+        el('caption').textContent = t;
+        plot.el.setAttribute('aria-label', t);
+        box.el.setAttribute('aria-label',
+          'Cartoon cylinder holding ' + particleTarget() + ' particles at ' + dc(st.V, 2) + ' litres, ' +
+          dc(st.T, 2) + ' kelvin and ' + dc(st.P, 3) + ' atmospheres.');
+      }
+
+      function refresh() {
+        syncSliders(); syncReadouts(); syncBoxNote(); syncCompare(); syncCaption();
+        syncParts();
+        plot.redraw();
+        if (!anim || !anim.running) box.redraw();
+      }
+
+      // ---------------- slider wiring ----------------
+      function wire(k, id) {
+        Demo.range(id, function (v) {
+          if (st.y === k) return;                 // dependent: locked
+          st[k] = v;
+          st[st.y] = solve(st, st.y);
+          refresh();
+        });
+      }
+      wire('P', '#slP'); wire('V', '#slV'); wire('T', '#slT'); wire('n', '#sln');
+
+      // ---------------- second state ----------------
+      function configX2(keepValue) {
+        var V = VARS[st.x], input = el('slX2');
+        input.min = V.min; input.max = V.max; input.step = V.step;
+        var d;
+        if (keepValue) {
+          d = Demo.clamp(st.x2, V.min, V.max);
+        } else {
+          d = st.x === 'T' ? 373.15 : Demo.clamp(st[st.x] * 1.6, V.min, V.max);
+          if (Math.abs(d - st[st.x]) < (V.max - V.min) * 0.06) {
+            d = Demo.clamp(st[st.x] + (V.max - V.min) * 0.35, V.min, V.max);
+          }
+        }
+        st.x2 = d;
+        input.value = d;
+        st.x2 = parseFloat(input.value);
+        el('labX2').innerHTML = 'Second state: ' + V.sym + '<sub>2</sub>';
+        syncX2Out();
+      }
+      function syncX2Out() {
+        var V = VARS[st.x];
+        var txt = dc(st.x2, V.dec) + ' ' + V.unit;
+        if (st.x === 'T') txt += '  (' + dc(st.x2 + ABS0, 2) + ' °C)';
+        el('outX2').textContent = txt;
+      }
+      el('slX2').addEventListener('input', function () {
+        st.x2 = parseFloat(this.value);
+        syncX2Out();
+        syncCompare();
+        plot.redraw();
+      });
+
+      // ---------------- view switching ----------------
+      var PRESETS = { pBoyle: ['P', 'V'], pCharles: ['V', 'T'], pGay: ['P', 'T'], pAvo: ['V', 'n'] };
+
+      function setView(y, x) {
+        st.y = y; st.x = x;
+        // everything that is now settable must live inside its slider, so clamp
+        for (var i = 0; i < KEYS.length; i++) {
+          var k = KEYS[i];
+          if (k !== st.y) st[k] = Demo.clamp(st[k], VARS[k].min, VARS[k].max);
+        }
+        st[st.y] = solve(st, st.y);
+        el('selY').value = y; el('selX').value = x;
+        for (var id in PRESETS) {
+          if (!Object.prototype.hasOwnProperty.call(PRESETS, id)) continue;
+          var on = PRESETS[id][0] === y && PRESETS[id][1] === x;
+          el(id).setAttribute('aria-pressed', on ? 'true' : 'false');
+        }
+        el('depHint').innerHTML =
+          '<strong>' + VARS[y].sym + '</strong> is the dependent variable here: it is solved from the other three, so its slider is locked. ' +
+          'Switching views never changes the gas &mdash; only which variable is doing the following.';
+        configX2(false);
+        refresh();
+      }
+
+      (function bindPresets() {
+        Object.keys(PRESETS).forEach(function (id) {
+          el(id).addEventListener('click', function () {
+            setView(PRESETS[id][0], PRESETS[id][1]);
+          });
+        });
+      })();
+
+      el('selY').addEventListener('change', function () {
+        var y = this.value, x = st.x;
+        if (y === x) x = st.y;                 // swap rather than collide
+        setView(y, x);
+      });
+      el('selX').addEventListener('change', function () {
+        var x = this.value, y = st.y;
+        if (y === x) y = st.x;
+        setView(y, x);
+      });
+
+      document.querySelectorAll('.seg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('.seg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          st.unit = b.dataset.unit;
+          syncX2Out();
+          refresh();
+        });
+      });
+
+      el('stp').addEventListener('click', function () {
+        // The older STP convention still used in most high-school courses: 0 degC and 1 atm.
+        // (IUPAC has used 0 degC and exactly 1 bar since 1982, where the molar volume is 22.71 L.)
+        st.T = 273.15; st.P = 1.000; st.n = 1.000;
+        st.V = st.n * R * st.T / st.P;       // 22.41 L, self-consistent whatever the current view
+        refresh();
+      });
+
+      // ---------------- animation ----------------
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var anim = Demo.loop(function (dt) { stepParts(dt); box.paint(); });
+
+      el('playBtn').addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause particles' : 'Run particles';
+      });
+
+      // ---------------- boot ----------------
+      syncParts();
+      setView('V', 'T');
+      if (reduce) {
+        el('playBtn').textContent = 'Run particles';
+      } else {
+        anim.start();
+      }
+    })();
+  </script>
+</body>
+
+</html>

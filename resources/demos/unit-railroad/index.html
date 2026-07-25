@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Unit Railroad | Dr. Andres Barboza</title>
+  <meta name="description" content="Chain conversion factors like railroad cars and watch the units cancel live. Flip a factor the wrong way and the units refuse to cancel — the setup is judged before any arithmetic happens.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the train of conversion cars and the unit chips. */
+    .prompt { font-size: 15.5px; font-weight: 500; color: var(--text); line-height: 1.5; }
+    .prompt .tgt { color: var(--accent-strong); font-weight: 600; white-space: nowrap; }
+    .prompt-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
+    .rail-scroll {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-top: 12px;
+      padding: 2px 2px 9px;
+    }
+    .rail {
+      display: flex;
+      align-items: stretch;
+      gap: 5px;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    .car {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 82px;
+      padding: 6px 11px 9px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .car.is-given { background: var(--accent-soft); border-color: var(--accent-line); }
+    .car.is-result { background: transparent; border-style: dashed; }
+    .car.is-result.ok { border-color: var(--ok); background: var(--ok-soft); }
+    .car.is-result.warn { border-color: var(--warn); background: var(--warn-soft); }
+    .car.is-result.bad { border-color: var(--bad); background: var(--bad-soft); }
+
+    .car-top { display: flex; align-items: center; gap: 4px; min-height: 22px; }
+    .car-tag {
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-right: auto;
+      white-space: nowrap;
+    }
+    .mini {
+      font: inherit;
+      font-size: 11px;
+      line-height: 1;
+      width: 26px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .mini:hover { color: var(--accent-strong); border-color: var(--accent-line); }
+    .mini.is-del:hover { color: var(--bad); border-color: var(--bad); }
+
+    .frac { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .frac-line {
+      font-size: 14.5px;
+      line-height: 1.35;
+      white-space: nowrap;
+      text-align: center;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+    }
+    .frac-bar { align-self: stretch; height: 1px; background: var(--line); }
+    .times { flex: none; align-self: center; color: var(--muted); font-size: 14px; }
+
+    .u { font-weight: 600; color: var(--text); }
+    .u.is-cut {
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-color: var(--ok);
+      text-decoration-thickness: 2px;
+    }
+
+    .stage-readouts { margin-top: 2px; }
+    .rail-actions { margin-top: 12px; }
+    .note.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+    .hintline { font-size: 13px; color: var(--text-2); margin-top: 9px; }
+    .hintline strong { color: var(--text); }
+
+    .plist { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 6px; }
+    .plist .btn { padding: 7px 9px; font-size: 12px; text-align: left; }
+    .plist .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .plist .done { color: var(--ok); }
+
+    #unitsOut { font-size: 17px; }
+
+    .bank { display: flex; flex-direction: column; gap: 6px; }
+    .bank .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-align: left;
+      padding: 8px 11px;
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .bank .bf { flex: 1; min-width: 0; }
+    .bank .bplus { flex: none; font-size: 11px; color: var(--muted); }
+    .bank .btn:hover .bplus { color: var(--accent-strong); }
+    .bank .typed {
+      flex: none;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--warn);
+    }
+
+    details.custom summary {
+      font-size: 12.5px;
+      color: var(--muted);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    details.custom summary::-webkit-details-marker { display: none; }
+    details.custom summary::before { content: '\002B'; font-weight: 700; }
+    details.custom[open] summary::before { content: '\2212'; }
+    .cf-grid { display: grid; grid-template-columns: 66px 1fr; gap: 6px; margin-top: 10px; align-items: center; }
+    .cf-grid span { font-size: 11.5px; color: var(--muted); }
+    /* These inputs are flex items; pin the basis so they split the row evenly
+       and cannot refuse to shrink below their intrinsic width on a phone. */
+    .cf-grid .row { gap: 6px; }
+    .cf-grid .row input { flex: 1 1 0; min-width: 0; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Unit Railroad</h1>
+        <p class="demo-sub">Add a conversion factor, then flip it. Only one orientation makes the unwanted unit cancel.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Dimensional analysis</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="prompt" id="prompt">Convert 2.50 km to meters.</p>
+        <p class="prompt-sub" id="promptSub"></p>
+
+        <div class="rail-scroll">
+          <div class="rail" id="rail"></div>
+        </div>
+
+        <div class="readouts stage-readouts">
+          <div class="readout" id="roUnits">
+            <div class="r-label">Units surviving</div>
+            <div class="r-value" id="unitsOut">km</div>
+          </div>
+          <div class="readout" id="roVal">
+            <div class="r-label">Number</div>
+            <div class="r-value" id="valOut">2.50</div>
+          </div>
+        </div>
+
+        <div class="btn-row rail-actions">
+          <button class="btn" id="undo">Remove last car</button>
+          <button class="btn" id="clear">Clear chain</button>
+          <button class="btn" id="hint">What has to cancel next?</button>
+        </div>
+
+        <p class="note" id="verdict" aria-live="polite">Pick a factor from the bank.</p>
+        <p class="hintline" id="hintline" hidden></p>
+
+        <p class="stage-caption">
+          A struck-through unit has cancelled: each struck unit on top is matched by one on the bottom.
+          Units that are still solid are the units your number actually has. Every factor the demo
+          supplies is an <strong>exact definition</strong>, so it never limits precision — the answer
+          carries the significant figures of the measured starting value (<span id="sfOut">3</span> here).
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Problem</div>
+          <div class="plist" id="plist"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Conversion factor bank</div>
+          <div class="bank" id="bank"></div>
+          <p class="ctrl-hint">
+            Every factor is written the same way, with the <strong>1</strong> on top. Clicking adds it in
+            that orientation; use the flip button on the car to turn it over.
+          </p>
+        </div>
+
+        <div class="panel">
+          <details class="custom">
+            <summary>Type your own factor</summary>
+            <div class="cf-grid">
+              <span>Top</span>
+              <div class="row">
+                <input type="text" id="cfNumV" inputmode="decimal" value="1" aria-label="Top value">
+                <input type="text" id="cfNumU" value="qt" aria-label="Top unit">
+              </div>
+              <span>Bottom</span>
+              <div class="row">
+                <input type="text" id="cfDenV" inputmode="decimal" value="0.946352946" aria-label="Bottom value">
+                <input type="text" id="cfDenU" value="L" aria-label="Bottom unit">
+              </div>
+            </div>
+            <div class="btn-row" style="margin-top:9px">
+              <button class="btn" id="cfAdd">Add to bank</button>
+            </div>
+            <p class="ctrl-hint" id="cfMsg">
+              One unit per box. Write a cubed unit as <code>cm3</code>. The demo checks whether your units
+              cancel — it cannot check whether the equality you typed is <em>true</em>.
+            </p>
+          </details>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students believe the hard part of a conversion is remembering
+        whether to multiply or divide, so they guess, get a number, and then check the back of the book to
+        find out if the guess was right. That makes the answer key the judge of the work.
+      </p>
+      <p>
+        <strong>What to notice:</strong> flip any car the wrong way and watch what happens. The units stop
+        cancelling, and you end up with something like <span class="num">km²/m</span> instead of
+        <span class="num">m</span>. A calculator will still hand you a number — it just isn't an answer to
+        the question you were asked. Nothing about the arithmetic tells you that; only the units do. In
+        problem 4 you cannot cancel <span class="num">cm³</span> with one <span class="num">cm</span>: you
+        need the centimeter-to-meter factor three times, or the <span class="num">cm³</span>-to-<span
+          class="num">m³</span> factor once. That is not a rule to memorize — it is what "per cubic
+        centimeter" means.
+      </p>
+      <p>
+        <strong>The honest caveat:</strong> cancelling units proves your <em>setup</em> is right. It cannot
+        prove your <em>facts</em> are right. Every factor in the bank is a true, exact definition, so here
+        correct units always give the correct number. Type a false factor into the custom box — say
+        1&nbsp;km&nbsp;=&nbsp;100&nbsp;m — and the units will still cancel beautifully while the answer is
+        wrong. The demo will tell you when that happens.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var SUP = Demo.fmt.sup;
+
+      /* =====================================================================
+         Conversion factors. Every one of these is an EXACT definition:
+           1 in = 2.54 cm  (international inch, 1959)
+           1 mi = 5280 ft  -> 1 mi = 1.609344 km exactly
+           1 lb = 453.59237 g (international avoirdupois pound)
+           1 mL = 1 cm3, 1 L = 1000 cm3 (litre = cubic decimetre, 1964)
+           1 US liquid gallon = 231 in3 = 3.785411784 L exactly
+         Each is stored with the "1" on top so the student, not the bank,
+         decides the orientation. `u` is a list of unit TOKENS: a cubed unit
+         is three separate tokens, which is what makes cancellation honest.
+         ===================================================================== */
+      var FACTORS = {
+        km_m:   { a: { v: 1, d: '1', u: ['km'] },  b: { v: 1000, d: '1,000', u: ['m'] } },
+        m_cm:   { a: { v: 1, d: '1', u: ['m'] },   b: { v: 100, d: '100', u: ['cm'] } },
+        cm_mm:  { a: { v: 1, d: '1', u: ['cm'] },  b: { v: 10, d: '10', u: ['mm'] } },
+        in_cm:  { a: { v: 1, d: '1', u: ['in'] },  b: { v: 2.54, d: '2.54', u: ['cm'] } },
+        ft_in:  { a: { v: 1, d: '1', u: ['ft'] },  b: { v: 12, d: '12', u: ['in'] } },
+        mi_ft:  { a: { v: 1, d: '1', u: ['mi'] },  b: { v: 5280, d: '5,280', u: ['ft'] } },
+        mi_km:  { a: { v: 1, d: '1', u: ['mi'] },  b: { v: 1.609344, d: '1.609344', u: ['km'] } },
+        hr_min: { a: { v: 1, d: '1', u: ['hr'] },  b: { v: 60, d: '60', u: ['min'] } },
+        min_s:  { a: { v: 1, d: '1', u: ['min'] }, b: { v: 60, d: '60', u: ['s'] } },
+        hr_s:   { a: { v: 1, d: '1', u: ['hr'] },  b: { v: 3600, d: '3,600', u: ['s'] } },
+        kg_g:   { a: { v: 1, d: '1', u: ['kg'] },  b: { v: 1000, d: '1,000', u: ['g'] } },
+        g_mg:   { a: { v: 1, d: '1', u: ['g'] },   b: { v: 1000, d: '1,000', u: ['mg'] } },
+        lb_g:   { a: { v: 1, d: '1', u: ['lb'] },  b: { v: 453.59237, d: '453.59237', u: ['g'] } },
+        L_mL:   { a: { v: 1, d: '1', u: ['L'] },   b: { v: 1000, d: '1,000', u: ['mL'] } },
+        mL_cm3: { a: { v: 1, d: '1', u: ['mL'] },  b: { v: 1, d: '1', u: ['cm', 'cm', 'cm'] } },
+        m3_cm3: { a: { v: 1, d: '1', u: ['m', 'm', 'm'] }, b: { v: 1000000, d: '1,000,000', u: ['cm', 'cm', 'cm'] } },
+        gal_L:  { a: { v: 1, d: '1', u: ['gal'] }, b: { v: 3.785411784, d: '3.785411784', u: ['L'] } }
+      };
+
+      /* =====================================================================
+         Problems. `answer` is computed independently from the chain, so a
+         typed-in (possibly false) factor that happens to give the right units
+         is still caught.
+         ===================================================================== */
+      var PROBLEMS = [
+        {
+          short: 'km → m',
+          text: 'Convert 2.50 km to meters ({t}).',
+          sub: 'One car. The bank hands it to you with the 1 on top — that is not the orientation you need.',
+          given: { v: 2.50, d: '2.50', u: ['km'], denV: 1, denD: '1', denU: [] },
+          target: { m: 1 }, targetLabel: 'm',
+          sf: 3, answer: 2.50 * 1000,
+          bank: ['km_m', 'm_cm', 'cm_mm']
+        },
+        {
+          short: 'km → in',
+          text: 'Convert 2.50 km to inches ({t}).',
+          sub: 'Three cars is the short route: two of them get flipped and one does not, and the units tell you which.',
+          given: { v: 2.50, d: '2.50', u: ['km'], denV: 1, denD: '1', denU: [] },
+          target: { 'in': 1 }, targetLabel: 'in',
+          sf: 3, answer: 2.50 * 1000 * 100 / 2.54,
+          bank: ['km_m', 'm_cm', 'cm_mm', 'in_cm', 'ft_in']
+        },
+        {
+          short: 'mi/hr → m/s',
+          text: 'A car is traveling 55.0 mi/hr. Convert that speed to {t}.',
+          sub: 'Compound units: two different unwanted units, and they start on opposite sides of the bar.',
+          given: { v: 55.0, d: '55.0', u: ['mi'], denV: 1, denD: '1', denU: ['hr'] },
+          target: { m: 1, s: -1 }, targetLabel: 'm/s',
+          sf: 3, answer: 55.0 * 1.609344 * 1000 / 3600,
+          bank: ['mi_km', 'mi_ft', 'ft_in', 'in_cm', 'km_m', 'm_cm', 'hr_s', 'hr_min', 'min_s']
+        },
+        {
+          short: 'g/cm³ → kg/m³',
+          text: 'A liquid has a density of 1.20 g/cm³. Convert that density to {t}.',
+          sub: 'Cubed units. One cm on top will not cancel cm³ on the bottom — count the tokens.',
+          given: { v: 1.20, d: '1.20', u: ['g'], denV: 1, denD: '1', denU: ['cm', 'cm', 'cm'] },
+          target: { kg: 1, m: -3 }, targetLabel: 'kg/m³',
+          sf: 3, answer: 1.20 / 1000 * 1e6,
+          bank: ['kg_g', 'g_mg', 'm_cm', 'm3_cm3', 'mL_cm3', 'L_mL']
+        },
+        {
+          short: 'mi/gal → km/L',
+          text: 'A car gets 32.0 mi/gal of fuel. Convert that mileage to {t}.',
+          sub: 'Both units change, and they are on opposite sides. Fix one at a time and watch what is left.',
+          given: { v: 32.0, d: '32.0', u: ['mi'], denV: 1, denD: '1', denU: ['gal'] },
+          target: { km: 1, L: -1 }, targetLabel: 'km/L',
+          sf: 3, answer: 32.0 * 1.609344 / 3.785411784,
+          bank: ['mi_km', 'mi_ft', 'gal_L', 'L_mL', 'km_m', 'mL_cm3']
+        }
+      ];
+
+      var state = { p: 0, chain: [], solved: [], customIds: [] };
+      var customCount = 0;
+
+      // ---------------------------------------------------------------
+      // Significant figures. Demo.fmt.sig drops trailing zeros and leaves
+      // integers ambiguous; both are dishonest in a measurement course, so
+      // pad or fall back to scientific notation.
+      // ---------------------------------------------------------------
+      function fmtSig(x, n) {
+        if (!isFinite(x)) return '—';
+        if (x === 0) return '0';
+        var s = Demo.fmt.sig(x, n);
+        if (s.indexOf('×') >= 0) return s;          // already scientific
+        var neg = s.charAt(0) === '-';
+        var t = neg ? s.slice(1) : s;
+        var dot = t.indexOf('.') >= 0;
+        var count;
+        if (dot) {
+          var parts = t.split('.');
+          var ip = parts[0].replace(/^0+/, '');
+          count = ip.length ? ip.length + parts[1].length
+                            : parts[1].replace(/^0+/, '').length;
+        } else {
+          count = t.replace(/^0+/, '').length;
+        }
+        // A trailing zero in a plain integer is ambiguous (is 250 two s.f. or
+        // three?), so those get written in scientific notation instead.
+        if (!dot && (count > n || /0$/.test(t))) return Demo.fmt.sci(x, n - 1);
+        if (count < n) t += (dot ? '' : '.') + new Array(n - count + 1).join('0');
+        return (neg ? '-' : '') + t;
+      }
+
+      // ---------------------------------------------------------------
+      // Unit algebra. Units are lists of tokens; a cubed unit is three
+      // tokens. Cancellation is counted from the symbols, never assumed.
+      // ---------------------------------------------------------------
+      function getFactor(id) { return FACTORS[id]; }
+
+      function buildCars() {
+        var p = PROBLEMS[state.p];
+        var cars = [{
+          given: true,
+          num: { v: p.given.v, d: p.given.d, u: p.given.u.slice() },
+          den: { v: p.given.denV, d: p.given.denD, u: p.given.denU.slice() }
+        }];
+        state.chain.forEach(function (item) {
+          var f = getFactor(item.id);
+          var top = item.flip ? f.b : f.a;
+          var bot = item.flip ? f.a : f.b;
+          cars.push({
+            id: item.id,
+            typed: !!f.typed,
+            num: { v: top.v, d: top.d, u: top.u.slice() },
+            den: { v: bot.v, d: bot.d, u: bot.u.slice() }
+          });
+        });
+        return cars;
+      }
+
+      function analyze() {
+        var cars = buildCars();
+        var refN = {}, refD = {}, order = [];
+
+        cars.forEach(function (car, ci) {
+          car.numCut = car.num.u.map(function () { return false; });
+          car.denCut = car.den.u.map(function () { return false; });
+          car.num.u.forEach(function (s, ti) {
+            (refN[s] = refN[s] || []).push([ci, ti]);
+            if (order.indexOf(s) < 0) order.push(s);
+          });
+          car.den.u.forEach(function (s, ti) {
+            (refD[s] = refD[s] || []).push([ci, ti]);
+            if (order.indexOf(s) < 0) order.push(s);
+          });
+        });
+
+        var net = {};
+        order.forEach(function (s) {
+          var n = (refN[s] || []).length, d = (refD[s] || []).length;
+          var k = Math.min(n, d);
+          for (var i = 0; i < k; i++) {
+            var a = refN[s][i]; cars[a[0]].numCut[a[1]] = true;
+            var b = refD[s][i]; cars[b[0]].denCut[b[1]] = true;
+          }
+          net[s] = n - d;
+        });
+
+        var value = cars.reduce(function (acc, car) { return acc * car.num.v / car.den.v; }, 1);
+        return { cars: cars, net: net, order: order, value: value };
+      }
+
+      function unitStr(net, order) {
+        var nums = [], dens = [];
+        order.forEach(function (s) {
+          var e = net[s] || 0;
+          if (e > 0) nums.push(s + (e > 1 ? SUP(e) : ''));
+          else if (e < 0) dens.push(s + (e < -1 ? SUP(-e) : ''));
+        });
+        if (!nums.length && !dens.length) return 'none';
+        var n = nums.length ? nums.join('·') : '1';
+        if (!dens.length) return n;
+        return n + '/' + (dens.length > 1 ? '(' + dens.join('·') + ')' : dens[0]);
+      }
+
+      function unitsMatch(net, target) {
+        var live = {};
+        Object.keys(net).forEach(function (k) { if (net[k] !== 0) live[k] = net[k]; });
+        var tk = Object.keys(target), lk = Object.keys(live);
+        if (tk.length !== lk.length) return false;
+        for (var i = 0; i < tk.length; i++) if (live[tk[i]] !== target[tk[i]]) return false;
+        return true;
+      }
+
+      // ---------------------------------------------------------------
+      // Rendering
+      // ---------------------------------------------------------------
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      // Collapse consecutive identical tokens that share a cancellation state
+      // into one chip: three cancelled cm become a struck-through cm3.
+      function groupTokens(toks, cut) {
+        var out = [], i = 0;
+        while (i < toks.length) {
+          var s = toks[i], c = cut[i], n = 0;
+          while (i < toks.length && toks[i] === s && cut[i] === c) { n++; i++; }
+          out.push({ sym: s, n: n, cut: c });
+        }
+        return out;
+      }
+
+      function slotHTML(disp, toks, cut) {
+        var html = '<span class="v">' + esc(disp) + '</span>';
+        groupTokens(toks, cut || toks.map(function () { return false; })).forEach(function (t) {
+          html += ' <span class="u' + (t.cut ? ' is-cut' : '') + '">' +
+            esc(t.sym) + (t.n > 1 ? SUP(t.n) : '') + '</span>';
+        });
+        return html;
+      }
+
+      function render() {
+        var p = PROBLEMS[state.p];
+        var a = analyze();
+        var ok = unitsMatch(a.net, p.target);
+        var valueOk = Math.abs(a.value - p.answer) <= Math.abs(p.answer) * 1e-9;
+        var surviving = unitStr(a.net, a.order);
+        var anyTyped = a.cars.some(function (c) { return c.typed; });
+
+        // ---- the train ----
+        var rail = document.getElementById('rail');
+        rail.innerHTML = '';
+
+        a.cars.forEach(function (car, i) {
+          if (i > 0) {
+            var x = document.createElement('div');
+            x.className = 'times';
+            x.textContent = '×';
+            rail.appendChild(x);
+          }
+          var el = document.createElement('div');
+          el.className = 'car' + (car.given ? ' is-given' : '');
+          var top = '';
+          if (car.given) {
+            top = '<span class="car-tag">given</span>';
+          } else {
+            top = '<span class="car-tag">' + (car.typed ? 'typed' : '') + '</span>' +
+              '<button class="mini is-flip" data-flip="' + (i - 1) + '" title="Flip this factor" ' +
+              'aria-label="Flip factor ' + i + '"><i class="bi bi-arrow-down-up"></i></button>' +
+              '<button class="mini is-del" data-del="' + (i - 1) + '" title="Remove this factor" ' +
+              'aria-label="Remove factor ' + i + '"><i class="bi bi-x-lg"></i></button>';
+          }
+          el.innerHTML =
+            '<div class="car-top">' + top + '</div>' +
+            '<div class="frac">' +
+            '<div class="frac-line">' + slotHTML(car.num.d, car.num.u, car.numCut) + '</div>' +
+            '<div class="frac-bar"></div>' +
+            '<div class="frac-line">' + slotHTML(car.den.d, car.den.u, car.denCut) + '</div>' +
+            '</div>';
+          rail.appendChild(el);
+        });
+
+        var eq = document.createElement('div');
+        eq.className = 'times';
+        eq.textContent = '=';
+        rail.appendChild(eq);
+
+        // Nothing is judged until the student has actually added a car, so the
+        // untouched starting state reads neutral rather than "wrong".
+        var started = state.chain.length > 0;
+        var res = document.createElement('div');
+        var resState = !started ? '' : ok && valueOk ? 'ok' : ok ? 'warn' : 'bad';
+        res.className = 'car is-result ' + resState;
+        res.innerHTML =
+          '<div class="car-top"><span class="car-tag">' +
+          (!started ? 'so far'
+            : resState === 'ok' ? 'answer'
+              : resState === 'warn' ? 'right units, wrong number' : 'not the target') +
+          '</span></div>' +
+          '<div class="frac"><div class="frac-line">' +
+          '<span class="v">' + fmtSig(a.value, p.sf) + '</span> ' +
+          '<span class="u">' + esc(surviving === 'none' ? '(no units)' : surviving) + '</span>' +
+          '</div></div>';
+        rail.appendChild(res);
+
+        // ---- readouts ----
+        var ru = document.getElementById('roUnits');
+        var rv = document.getElementById('roVal');
+        ru.className = 'readout ' + (!started ? '' : ok ? 'is-ok' : 'is-bad');
+        rv.className = 'readout ' + (!started || !ok ? '' : valueOk ? 'is-ok' : 'is-bad');
+        document.getElementById('unitsOut').textContent = surviving === 'none' ? 'none' : surviving;
+        document.getElementById('valOut').textContent = fmtSig(a.value, p.sf);
+        document.getElementById('sfOut').textContent = p.sf;
+
+        // ---- verdict ----
+        var v = document.getElementById('verdict');
+        if (ok && valueOk) {
+          v.className = 'note ok';
+          v.innerHTML = '<strong>Units check out.</strong> Everything cancelled except ' +
+            esc(p.targetLabel) + '. You knew the setup was right before the calculator was involved: ' +
+            '<strong>' + fmtSig(a.value, p.sf) + ' ' + esc(p.targetLabel) + '</strong>.';
+          if (state.solved.indexOf(state.p) < 0) { state.solved.push(state.p); renderProblems(); }
+        } else if (ok && !valueOk) {
+          v.className = 'note warn';
+          v.innerHTML = '<strong>Units cancel, but the number does not check.</strong> ' +
+            (anyTyped
+              ? 'One of the factors you typed in is not a true equality. '
+              : 'One of the equalities in this chain is not true. ') +
+            'Cancelling units proves the setup, not the facts.';
+        } else if (state.chain.length === 0) {
+          v.className = 'note';
+          v.innerHTML = 'You are starting with <strong>' + esc(surviving) + '</strong> and you need <strong>' +
+            esc(p.targetLabel) + '</strong>. Add a factor from the bank, then decide which way up it goes.';
+        } else {
+          v.className = 'note bad';
+          v.innerHTML = 'Right now this number is in <strong>' + esc(surviving) + '</strong>, not <strong>' +
+            esc(p.targetLabel) + '</strong>. The calculator will still give you ' +
+            fmtSig(a.value, p.sf) + ', but that is not an answer to this question.';
+        }
+
+        document.getElementById('undo').disabled = state.chain.length === 0;
+        document.getElementById('clear').disabled = state.chain.length === 0;
+
+        var hl = document.getElementById('hintline');
+        if (!hl.hidden) hl.innerHTML = hintHTML(a, p);
+
+        // keep the newest car and the answer in view on a narrow screen
+        var sc = document.querySelector('.rail-scroll');
+        sc.scrollLeft = state.chain.length ? sc.scrollWidth : 0;
+      }
+
+      // " " + count, but silent for a single occurrence: "cm is on top", not
+      // "cm is on top 1 time".
+      function times(n) { return n === 1 ? '' : ' ' + n + ' times'; }
+
+      function hintHTML(a, p) {
+        var keys = a.order.slice();
+        Object.keys(p.target).forEach(function (k) { if (keys.indexOf(k) < 0) keys.push(k); });
+        for (var i = 0; i < keys.length; i++) {
+          var s = keys[i];
+          var have = a.net[s] || 0, want = p.target[s] || 0;
+          var diff = have - want;
+          if (diff === 0) continue;
+          var n = Math.abs(diff);
+          var side = diff > 0 ? 'the <strong>bottom</strong>' : '<strong>top</strong>';
+          var have_s = have > 0
+            ? esc(s) + ' is on top' + times(have)
+            : have < 0 ? esc(s) + ' is on the bottom' + times(-have)
+              : 'Your chain has no ' + esc(s);
+          var want_s = want === 0
+            ? 'the target has none'
+            : 'the target needs ' + (want > 0 ? want + ' on top' : (-want) + ' on the bottom');
+          return '<strong>' + have_s + '</strong>; ' + want_s +
+            '. Multiply by a factor with <strong>' + esc(s) + '</strong> on ' + side +
+            (n > 1 ? ' — ' + n + ' times, or once as ' + esc(s) + SUP(n) : '') + '.';
+        }
+        return 'Nothing left to cancel — the units already match the target.';
+      }
+
+      function renderProblems() {
+        var box = document.getElementById('plist');
+        box.innerHTML = '';
+        PROBLEMS.forEach(function (p, i) {
+          var b = document.createElement('button');
+          b.className = 'btn' + (i === state.p ? ' is-on' : '');
+          b.innerHTML = (i + 1) + '. ' + esc(p.short) +
+            (state.solved.indexOf(i) >= 0 ? ' <i class="bi bi-check-lg done"></i>' : '');
+          b.addEventListener('click', function () { loadProblem(i); });
+          box.appendChild(b);
+        });
+      }
+
+      function renderBank() {
+        var p = PROBLEMS[state.p];
+        var ids = p.bank.concat(state.customIds);
+        var box = document.getElementById('bank');
+        box.innerHTML = '';
+        ids.forEach(function (id) {
+          var f = FACTORS[id];
+          if (!f) return;
+          var b = document.createElement('button');
+          b.className = 'btn';
+          b.innerHTML = '<span class="bf">' + slotHTML(f.a.d, f.a.u) +
+            ' <span class="muted">/</span> ' + slotHTML(f.b.d, f.b.u) + '</span>' +
+            (f.typed ? '<span class="typed">typed</span>' : '') +
+            '<span class="bplus"><i class="bi bi-plus-lg"></i></span>';
+          b.addEventListener('click', function () {
+            state.chain.push({ id: id, flip: false });
+            render();
+          });
+          box.appendChild(b);
+        });
+      }
+
+      function loadProblem(i) {
+        state.p = i;
+        state.chain = [];
+        var p = PROBLEMS[i];
+        document.getElementById('prompt').innerHTML =
+          esc(p.text).replace('{t}', '<span class="tgt">' + esc(p.targetLabel) + '</span>');
+        document.getElementById('promptSub').textContent = p.sub;
+        document.getElementById('hintline').hidden = true;
+        renderProblems();
+        renderBank();
+        render();
+      }
+
+      // ---------------------------------------------------------------
+      // Events
+      // ---------------------------------------------------------------
+      document.getElementById('rail').addEventListener('click', function (e) {
+        var f = e.target.closest('[data-flip]');
+        if (f) { var i = +f.getAttribute('data-flip'); state.chain[i].flip = !state.chain[i].flip; render(); return; }
+        var d = e.target.closest('[data-del]');
+        if (d) { state.chain.splice(+d.getAttribute('data-del'), 1); render(); }
+      });
+
+      document.getElementById('undo').addEventListener('click', function () {
+        state.chain.pop(); render();
+      });
+      document.getElementById('clear').addEventListener('click', function () {
+        state.chain = []; render();
+      });
+      document.getElementById('hint').addEventListener('click', function () {
+        var hl = document.getElementById('hintline');
+        hl.hidden = !hl.hidden;
+        if (!hl.hidden) hl.innerHTML = hintHTML(analyze(), PROBLEMS[state.p]);
+      });
+
+      // custom factor: one symbol per box, optional single-digit exponent
+      document.getElementById('cfAdd').addEventListener('click', function () {
+        var msg = document.getElementById('cfMsg');
+        function parseU(raw) {
+          raw = raw.trim();
+          if (!raw) return [];
+          var m = /^([A-Za-z][A-Za-z]*)\^?([1-4])?$/.exec(raw);
+          if (!m) return null;
+          var n = m[2] ? parseInt(m[2], 10) : 1, out = [];
+          for (var i = 0; i < n; i++) out.push(m[1]);
+          return out;
+        }
+        var nv = parseFloat(document.getElementById('cfNumV').value);
+        var dv = parseFloat(document.getElementById('cfDenV').value);
+        var nu = parseU(document.getElementById('cfNumU').value);
+        var du = parseU(document.getElementById('cfDenU').value);
+        if (!isFinite(nv) || !isFinite(dv) || nv <= 0 || dv <= 0) {
+          msg.textContent = 'Both values must be positive numbers.'; return;
+        }
+        if (nu === null || du === null) {
+          msg.textContent = 'Units must be one symbol per box, e.g. mL or cm3.'; return;
+        }
+        if (!nu.length && !du.length) {
+          msg.textContent = 'Give at least one unit.'; return;
+        }
+        var id = 'custom' + (++customCount);
+        FACTORS[id] = {
+          typed: true,
+          a: { v: nv, d: String(document.getElementById('cfNumV').value).trim(), u: nu },
+          b: { v: dv, d: String(document.getElementById('cfDenV').value).trim(), u: du }
+        };
+        state.customIds.push(id);
+        msg.textContent = 'Added. Remember: the demo checks that your units cancel, not that your equality is true.';
+        renderBank();
+      });
+
+      loadProblem(0);
+    })();
+  </script>
+</body>
+
+</html>

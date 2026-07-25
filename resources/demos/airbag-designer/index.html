@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Airbag Designer | Dr. Andres Barboza</title>
+  <meta name="description" content="Weigh out sodium azide, set the temperature and pressure at deployment, and watch the airbag inflate. The conversion from moles of N2 to litres is not 22.4 L/mol unless you are at 0 degrees C and 1 atm.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the equation strip, the conversion chain, the preset pad. */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .eqn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      padding: 9px 10px;
+    }
+    .eqn .coef { color: var(--accent-strong); }
+    .eqn .arw { color: var(--muted); font-weight: 500; }
+    .eqn-note {
+      font-size: 11.5px;
+      color: var(--muted);
+      text-align: center;
+      margin: 7px 0 12px;
+      line-height: 1.5;
+    }
+
+    /* the grams -> moles -> moles -> litres chain, laid out as four cards */
+    .chain {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .chain-card {
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      padding: 8px 10px;
+      min-width: 0;
+    }
+    .chain-card.is-key { border-color: var(--accent-line); background: var(--accent-soft); }
+    .chain-op {
+      font-size: 10.5px;
+      line-height: 1.35;
+      color: var(--muted);
+      min-height: 29px;
+    }
+    .chain-val {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.35;
+      margin-top: 3px;
+    }
+    .chain-val .u { font-size: 11.5px; font-weight: 500; color: var(--muted); margin-left: 2px; }
+    .chain-lab { font-size: 11px; color: var(--text-2); }
+
+    .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 7px; }
+    .presets .btn { padding: 7px 8px; font-size: 12px; line-height: 1.35; }
+    .presets .btn.is-on { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+
+    .verdict { font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
+    .verdict strong { color: var(--text); font-weight: 600; }
+
+    @media (max-width: 560px) {
+      .eqn { font-size: 15px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Airbag Designer</h1>
+        <p class="demo-sub">Leave the mass alone and press <em>Hot deploy</em>. The bag you designed at room temperature is now far too big.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 5</span>
+          <span class="tag is-accent">Gases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage: the bag, drawn to scale ---------------- -->
+      <div class="stage">
+        <div class="eqn">
+          <span><span class="coef">2</span> NaN<sub>3</sub></span>
+          <span class="arw">&#8594;</span>
+          <span><span class="coef">2</span> Na</span>
+          <span class="arw">+</span>
+          <span><span class="coef">3</span> N<sub>2</sub></span>
+        </div>
+        <p class="eqn-note">
+          Balanced: 2 Na and 6 N on the left, 2 Na and 6 N on the right.
+          M(NaN<sub>3</sub>) = 22.990 + 3(14.007) = 65.01 g/mol.
+          Mole ratio from the coefficients: 3 mol N<sub>2</sub> per 2 mol NaN<sub>3</sub>.
+        </p>
+
+        <canvas id="bag" role="img" aria-label="Airbag drawn to scale against the target volume, with the volume the 22.4 litres per mole shortcut would have predicted"></canvas>
+        <p class="stage-caption" id="capBag"></p>
+
+        <div class="chain">
+          <div class="chain-card">
+            <div class="chain-op">on the balance</div>
+            <div class="chain-val" id="ch1">100.0<span class="u">g</span></div>
+            <div class="chain-lab">NaN<sub>3</sub> weighed out</div>
+          </div>
+          <div class="chain-card">
+            <div class="chain-op">&divide; 65.01 g/mol</div>
+            <div class="chain-val" id="ch2">1.538<span class="u">mol</span></div>
+            <div class="chain-lab">NaN<sub>3</sub></div>
+          </div>
+          <div class="chain-card">
+            <div class="chain-op">&times; (3 mol N<sub>2</sub> / 2 mol NaN<sub>3</sub>)</div>
+            <div class="chain-val" id="ch3">2.307<span class="u">mol</span></div>
+            <div class="chain-lab">N<sub>2</sub> produced</div>
+          </div>
+          <div class="chain-card is-key">
+            <div class="chain-op" id="ch4op">&times; 24.47 L/mol at 25 &deg;C, 1.00 atm</div>
+            <div class="chain-val" id="ch4">56.4<span class="u">L</span></div>
+            <div class="chain-lab">N<sub>2</sub> gas in the bag</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Design the inflator</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mass">Sodium azide weighed out</label>
+                <span class="ctrl-value" id="massOut">100.0 g</span>
+              </div>
+              <input type="range" id="mass" min="10" max="300" step="0.1" value="100">
+              <p class="ctrl-hint">The only thing you actually control at the bench. Everything else is set by the crash.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="temp">Gas temperature</label>
+                <span class="ctrl-value" id="tempOut">25 &deg;C</span>
+              </div>
+              <input type="range" id="temp" min="-40" max="600" step="1" value="25">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pres">Pressure in the bag</label>
+                <span class="ctrl-value" id="presOut">1.00 atm</span>
+              </div>
+              <input type="range" id="pres" min="0.8" max="2.5" step="0.01" value="1">
+            </div>
+
+            <hr class="sep">
+
+            <div class="presets" id="presets">
+              <button class="btn" data-t="-20" data-p="1">Cold morning<br>&minus;20 &deg;C, 1.00 atm</button>
+              <button class="btn" data-t="25" data-p="1">Room temperature<br>25 &deg;C, 1.00 atm</button>
+              <button class="btn" data-t="300" data-p="1.5">Hot deploy<br>300 &deg;C, 1.50 atm</button>
+              <button class="btn" data-t="0" data-p="1">Textbook STP<br>0 &deg;C, 1.00 atm</button>
+            </div>
+
+            <div class="seg" id="targetSeg" role="tablist" aria-label="Which bag are you filling">
+              <button role="tab" aria-selected="true" data-target="60">Driver bag &mdash; 60 L</button>
+              <button role="tab" aria-selected="false" data-target="150">Passenger &mdash; 150 L</button>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="fit">Weigh out exactly enough</button>
+              <button class="btn" id="reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Result</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Molar volume</div>
+              <div class="r-value" id="vmOut">24.47<span class="r-unit">L/mol</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Gas volume</div>
+              <div class="r-value" id="volOut">56.4<span class="r-unit">L</span></div>
+            </div>
+          </div>
+          <div class="row-between" style="margin:11px 0 5px">
+            <span class="small muted">fill of the <span id="tgtTxt">60</span> L bag</span>
+            <span class="ctrl-value" id="fillOut">94%</span>
+          </div>
+          <div class="bar"><span id="fillBar" style="width:94%"></span></div>
+          <p class="verdict" id="verdict" style="margin-top:9px"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">If you had used 22.4 L/mol</div>
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Shortcut answer</div>
+              <div class="r-value" id="naiveOut">51.7<span class="r-unit">L</span></div>
+            </div>
+            <div class="readout is-bad" id="errCard">
+              <div class="r-label">Off by</div>
+              <div class="r-value" id="errOut">8.4<span class="r-unit">%</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note warn" id="shortNote"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- molar volume is not a constant ---------------- -->
+    <div class="stage" style="margin-top:18px">
+      <canvas id="strip" role="img" aria-label="Bar chart of molar volume at five fixed temperature and pressure conditions plus your current setting, with 22.4 litres per mole marked"></canvas>
+      <p class="stage-caption">
+        One mole of any ideal gas occupies RT/P litres. The dashed marker is 22.4 L/mol &mdash; a single point on
+        this chart, not a property of gases. Move the temperature or pressure slider and watch your bar walk away
+        from it.
+      </p>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <p class="note warn">
+        <strong>Where this model stops being true.</strong> The ideal gas law is used throughout; for
+        N<sub>2</sub> between 0.8 and 2.5&nbsp;atm the real molar volume differs from RT/P by well under 1%, so
+        the arithmetic here is honest, but it is still a model. A real inflator is not pure sodium azide:
+        potassium nitrate and silicon dioxide are packed in with it, because the sodium metal in the balanced
+        equation is violently reactive and has to be converted to a harmless silicate glass. That side chemistry
+        makes a little extra gas, so a real cartridge delivers slightly more than the 3:2 ratio alone predicts.
+        The bag also vents through its own fabric and the gas cools within roughly 50&nbsp;ms, so the hot,
+        high-pressure state you can dial in here lasts only an instant. Sodium azide is acutely toxic; newer
+        inflators use guanidine nitrate instead. Nobody weighs this out by hand.
+      </p>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn 22.4 L/mol early, it works on every homework problem
+        for about a week, and it quietly becomes a universal conversion factor &mdash; a fact about gases, like
+        the molar mass is a fact about a compound. It is not. 22.4 L/mol is one measurement of one thing at one
+        set of conditions: 0&nbsp;&deg;C and 1&nbsp;atm. The real quantity is RT/P, and it changes every time the
+        temperature or the pressure changes. At 25&nbsp;&deg;C and 1&nbsp;atm it is already 24.47&nbsp;L/mol; at
+        300&nbsp;&deg;C and 1&nbsp;atm, which is the sort of temperature an inflator actually produces, it is
+        47.0&nbsp;L/mol &mdash; more than double the memorized number.
+      </p>
+      <p>
+        <strong>What to notice:</strong> set the mass to 100.0&nbsp;g and leave it there. At room temperature the
+        bag holds 56.4&nbsp;L; press <em>Hot deploy</em> and the same 2.307&nbsp;mol of N<sub>2</sub> fills
+        72.3&nbsp;L &mdash; the identical amount of solid, the identical number of gas molecules, a bag 28% larger.
+        Nothing was created. The molecules just spread further apart. Then watch the dotted outline: that is what
+        22.4&nbsp;L/mol would have told you, and it is 8.4% too small at room temperature and 28.6% too small at
+        300&nbsp;&deg;C and 1.50&nbsp;atm. Drag the temperature and pressure sliders until the dotted outline lands
+        back on your bag. You can get there &mdash; but only by keeping T/P near 273&nbsp;K per atm, which is a
+        condition you have to arrange, not a number you get for free.
+      </p>
+      <p>
+        <strong>The other half:</strong> the four cards under the bag are the whole calculation, and they run in
+        one direction &mdash; grams of solid, moles of solid, moles of gas, litres of gas. The mole ratio 3/2
+        comes from the coefficients of the balanced equation, not from anywhere else. Press
+        <em>Weigh out exactly enough</em> at room temperature and then at 300&nbsp;&deg;C: filling the same
+        60&nbsp;L bag takes 106.3&nbsp;g of azide in one case and 82.9&nbsp;g in the other. How much you weigh out
+        depends on the conditions the gas will be under. That is the connection the calculation exists to make.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------------------------------------------------------
+      // Model.  2 NaN3 -> 2 Na + 3 N2
+      //   Na: 2 = 2.   N: 2 x 3 = 6 on the left, 3 x 2 = 6 on the right.
+      //   M(NaN3) = 22.98977 + 3(14.007) = 65.011 g/mol  -> 65.01 g/mol
+      //   n(N2) = (3/2) n(NaN3)
+      //   V = nRT/P,  R = 8.314462618 J/(mol K) / 101.325 (J/(L atm))
+      //             = 0.0820574 L atm /(mol K)
+      //   Sanity: RT/P at 273.15 K, 1 atm = 22.414 L/mol  (this is where 22.4 comes from)
+      //           RT/P at 298.15 K, 1 atm = 24.465 L/mol
+      // ---------------------------------------------------------------
+      var M_AZIDE = 65.01;          // g/mol
+      var R = 0.0820574;            // L atm / (mol K)
+      var RATIO = 3 / 2;            // mol N2 per mol NaN3, from the coefficients
+      var NAIVE = 22.4;             // the memorized number, used exactly as students use it
+      var FONT = 'Poppins, system-ui, -apple-system, sans-serif';
+
+      var DEFAULTS = { mass: 100.0, tC: 25, P: 1.00, target: 60 };
+      var state = { mass: 100.0, tC: 25, P: 1.00, target: 60 };
+
+      function molarVolume(tC, P) { return R * (tC + 273.15) / P; }
+
+      function solve() {
+        var vm = molarVolume(state.tC, state.P);
+        var nAz = state.mass / M_AZIDE;
+        var nN2 = nAz * RATIO;
+        var V = nN2 * vm;
+        var V224 = nN2 * NAIVE;
+        return {
+          vm: vm, nAz: nAz, nN2: nN2, V: V, V224: V224,
+          pct: V / state.target * 100,
+          err: (V224 - V) / V * 100        // negative = the shortcut under-predicts
+        };
+      }
+
+      var m = solve();
+
+      // fixed reference conditions for the comparison strip
+      var CONDS = [
+        { t: 0,   p: 1.0, name: '0 °C, 1.00 atm',   sub: 'STP — the 22.4 point' },
+        { t: 25,  p: 1.0, name: '25 °C, 1.00 atm',  sub: 'room temperature' },
+        { t: 100, p: 1.0, name: '100 °C, 1.00 atm', sub: 'boiling water' },
+        { t: 300, p: 1.0, name: '300 °C, 1.00 atm', sub: 'hot inflator gas' },
+        { t: 300, p: 2.0, name: '300 °C, 2.00 atm', sub: 'hot and squeezed' }
+      ];
+
+      // ---------------------------------------------------------------
+      // Canvas helpers
+      // ---------------------------------------------------------------
+      // A pillow / superellipse: |x/a|^p + |y/b|^p = 1.  Reads as an airbag
+      // without pretending to be a photograph.
+      function pillow(ctx, cx, cy, a, b, p) {
+        var N = 168, e = 2 / p;
+        ctx.beginPath();
+        for (var i = 0; i <= N; i++) {
+          var t = i / N * Math.PI * 2;
+          var ct = Math.cos(t), st = Math.sin(t);
+          var x = cx + a * Math.sign(ct) * Math.pow(Math.abs(ct), e);
+          var y = cy + b * Math.sign(st) * Math.pow(Math.abs(st), e);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+      }
+
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, h / 2, w / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      var dec = Demo.fmt.dec;
+
+      // ---------------------------------------------------------------
+      // Stage 1 — the bag, drawn to scale
+      //   Volume is three-dimensional, so a bag holding twice the volume is
+      //   drawn only 2^(1/3) = 1.26 times wider.  Linear scale = cbrt(V/Vtarget).
+      // ---------------------------------------------------------------
+      var MAXS = 2.3;   // largest linear scale the drawing box can hold
+      var AR = 1.30;    // bag is wider than it is tall
+      var SHAPE = 2.4;  // superellipse exponent
+
+      var bagC = Demo.canvas('#bag', function (ctx, w, h, c) {
+        var narrow = w < 560;
+        var legendH = narrow ? 58 : 30;
+        var pad = 8;
+        var boxW = w - 2 * pad;
+        var boxH = h - pad - legendH - 6;
+        var cx = w / 2, cy = pad + boxH / 2;
+
+        var hw0 = Math.min(boxW / (2 * MAXS), boxH * AR / (2 * MAXS));
+        var hh0 = hw0 / AR;
+
+        var sA = Math.min(MAXS, Math.cbrt(m.V / state.target));
+        var sN = Math.min(MAXS, Math.cbrt(m.V224 / state.target));
+
+        // your bag: fill, then stroke
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = c.accent;
+        pillow(ctx, cx, cy, hw0 * sA, hh0 * sA, SHAPE);
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = c.accent;
+        ctx.lineWidth = 2.5;
+        pillow(ctx, cx, cy, hw0 * sA, hh0 * sA, SHAPE);
+        ctx.stroke();
+
+        // the target outline
+        ctx.strokeStyle = c.muted;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([7, 5]);
+        pillow(ctx, cx, cy, hw0, hh0, SHAPE);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // what 22.4 L/mol would have predicted — drawn last so it is never hidden
+        ctx.strokeStyle = c.warn;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([2, 4.5]);
+        pillow(ctx, cx, cy, hw0 * sN, hh0 * sN, SHAPE);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the number, in the middle
+        var fs = Demo.clamp(hw0 * 0.30, 17, 30);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = c.text;
+        ctx.font = '600 ' + fs.toFixed(1) + 'px ' + FONT;
+        ctx.fillText(dec(m.V, 1) + ' L', cx, cy - fs * 0.34);
+        ctx.fillStyle = c.text2;
+        ctx.font = (narrow ? 11 : 12) + 'px ' + FONT;
+        ctx.fillText(dec(m.pct, 0) + '% of the ' + state.target + ' L target', cx, cy + fs * 0.66);
+
+        // legend
+        var items = [
+          { kind: 'fill', col: c.accent, txt: 'your design — ' + dec(m.V, 1) + ' L' },
+          { kind: 'dash', col: c.muted,  txt: 'target — ' + state.target + ' L' },
+          { kind: 'dot',  col: c.warn,   txt: 'the 22.4 L/mol answer — ' + dec(m.V224, 1) + ' L' }
+        ];
+        ctx.font = (narrow ? 11 : 11.5) + 'px ' + FONT;
+        ctx.textBaseline = 'middle';
+
+        function swatch(x, y, it) {
+          if (it.kind === 'fill') {
+            ctx.save();
+            ctx.globalAlpha = 0.16; ctx.fillStyle = it.col;
+            rr(ctx, x, y - 5, 18, 10, 3); ctx.fill();
+            ctx.restore();
+            ctx.strokeStyle = it.col; ctx.lineWidth = 1.6;
+            rr(ctx, x, y - 5, 18, 10, 3); ctx.stroke();
+          } else {
+            ctx.strokeStyle = it.col;
+            ctx.lineWidth = it.kind === 'dash' ? 1.5 : 2;
+            ctx.setLineDash(it.kind === 'dash' ? [5, 4] : [2, 4]);
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 18, y); ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+
+        var i, y0 = h - legendH + (narrow ? 8 : 12);
+        if (narrow) {
+          for (i = 0; i < items.length; i++) {
+            var yy = y0 + i * 17;
+            swatch(pad + 2, yy, items[i]);
+            ctx.textAlign = 'left';
+            ctx.fillStyle = c.text2;
+            ctx.fillText(items[i].txt, pad + 26, yy);
+          }
+        } else {
+          var gap = 20, total = 0, wds = [];
+          for (i = 0; i < items.length; i++) {
+            wds[i] = 24 + ctx.measureText(items[i].txt).width;
+            total += wds[i];
+          }
+          total += gap * (items.length - 1);
+          var x = Math.max(pad, (w - total) / 2);
+          for (i = 0; i < items.length; i++) {
+            swatch(x, y0, items[i]);
+            ctx.textAlign = 'left';
+            ctx.fillStyle = c.text2;
+            ctx.fillText(items[i].txt, x + 24, y0);
+            x += wds[i] + gap;
+          }
+        }
+      }, { aspect: 0.6, minHeight: 280, maxHeight: 440 });
+
+      // ---------------------------------------------------------------
+      // Stage 2 — molar volume across conditions
+      // ---------------------------------------------------------------
+      var stripC = Demo.canvas('#strip', function (ctx, w, h, c) {
+        var rows = [];
+        var i;
+        for (i = 0; i < CONDS.length; i++) {
+          rows.push({
+            name: CONDS[i].name, sub: CONDS[i].sub,
+            v: molarVolume(CONDS[i].t, CONDS[i].p),
+            kind: i === 0 ? 'stp' : 'ref'
+          });
+        }
+        rows.push({
+          name: 'your setting', sub: dec(state.tC, 0) + ' °C, ' + dec(state.P, 2) + ' atm',
+          v: m.vm, kind: 'live'
+        });
+
+        var narrow = w < 430;
+        var fMain = narrow ? 10.5 : 12;
+        var fSub = narrow ? 9 : 10.5;
+        var labW = Demo.clamp(w * 0.34, 96, 152);
+        var valW = narrow ? 44 : 54;
+        var x0 = labW, x1 = w - valW - 6;
+        var top = 24, axisY = h - 26;
+        var rowH = (axisY - top) / rows.length;
+
+        var xmax = Math.max(50, m.vm * 1.10);
+        function px(v) { return x0 + (v / xmax) * (x1 - x0); }
+
+        // axis
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, axisY); ctx.lineTo(x1, axisY); ctx.stroke();
+
+        var step = xmax <= 30 ? 5 : xmax <= 60 ? 10 : 20;
+        ctx.fillStyle = c.muted;
+        ctx.font = (narrow ? 9.5 : 10.5) + 'px ' + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var v = 0; v <= xmax; v += step) {
+          var xt = px(v);
+          if (xt > x1) break;
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(xt, top - 4); ctx.lineTo(xt, axisY); ctx.stroke();
+          ctx.fillText(String(v), xt, axisY + 5);
+        }
+        ctx.textAlign = 'left';
+        ctx.fillStyle = c.muted;
+        ctx.fillText(narrow ? 'L per mole' : 'litres per mole of gas', 4, axisY + 5);
+
+        // the 22.4 marker — one point, not a constant
+        var xm = px(NAIVE);
+        ctx.strokeStyle = c.warn;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(xm, top - 8); ctx.lineTo(xm, axisY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.warn;
+        ctx.font = '600 ' + (narrow ? 10 : 11) + 'px ' + FONT;
+        ctx.textBaseline = 'bottom';
+        ctx.textAlign = xm > w - 90 ? 'right' : 'left';
+        ctx.fillText('22.4 L/mol', xm + (xm > w - 90 ? -5 : 5), top - 9);
+
+        // rows
+        for (i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          var yc = top + rowH * (i + 0.5);
+          var bh = Math.min(15, rowH * 0.42);
+          var bw = Math.max(1, px(r.v) - x0);
+
+          if (r.kind === 'live') {
+            ctx.save();
+            ctx.globalAlpha = 0.10;
+            ctx.fillStyle = c.accent;
+            rr(ctx, 2, yc - rowH / 2 + 2, w - 4, rowH - 4, 7);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.save();
+          if (r.kind === 'live') { ctx.fillStyle = c.accent; }
+          else if (r.kind === 'stp') { ctx.fillStyle = c.warn; }
+          else { ctx.fillStyle = c.muted; ctx.globalAlpha = 0.5; }
+          rr(ctx, x0, yc - bh / 2, bw, bh, 3);
+          ctx.fill();
+          ctx.restore();
+
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillStyle = r.kind === 'live' ? c.text : c.text2;
+          ctx.font = (r.kind === 'live' ? '600 ' : '') + fMain + 'px ' + FONT;
+          ctx.fillText(r.name, 4, yc - 1);
+          ctx.fillStyle = c.muted;
+          ctx.font = fSub + 'px ' + FONT;
+          ctx.fillText(r.sub, 4, yc + fSub + 2);
+
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = r.kind === 'live' ? c.accentStrong : r.kind === 'stp' ? c.warn : c.text2;
+          ctx.font = '600 ' + fMain + 'px ' + FONT;
+          ctx.fillText(dec(r.v, 1), w - 4, yc);
+        }
+      }, { height: 262 });
+
+      // ---------------------------------------------------------------
+      // Readouts
+      // ---------------------------------------------------------------
+      function el(id) { return document.getElementById(id); }
+
+      function refresh() {
+        m = solve();
+
+        el('ch1').innerHTML = dec(state.mass, 1) + '<span class="u">g</span>';
+        el('ch2').innerHTML = dec(m.nAz, 3) + '<span class="u">mol</span>';
+        el('ch3').innerHTML = dec(m.nN2, 3) + '<span class="u">mol</span>';
+        el('ch4').innerHTML = dec(m.V, 1) + '<span class="u">L</span>';
+        el('ch4op').innerHTML = '&times; ' + dec(m.vm, 2) + ' L/mol at ' +
+          dec(state.tC, 0) + ' &deg;C, ' + dec(state.P, 2) + ' atm';
+
+        el('vmOut').innerHTML = dec(m.vm, 2) + '<span class="r-unit">L/mol</span>';
+        el('volOut').innerHTML = dec(m.V, 1) + '<span class="r-unit">L</span>';
+        el('fillOut').textContent = dec(m.pct, 0) + '%';
+        el('tgtTxt').textContent = String(state.target);
+        el('naiveOut').innerHTML = dec(m.V224, 1) + '<span class="r-unit">L</span>';
+        el('errOut').innerHTML = dec(Math.abs(m.err), 1) + '<span class="r-unit">%</span>';
+
+        // fill bar + verdict
+        var pct = m.pct;
+        var ok = pct >= 90 && pct <= 110;
+        var bar = el('fillBar');
+        bar.style.width = Demo.clamp(pct, 0, 100) + '%';
+        bar.style.background = ok ? 'var(--ok)' : 'var(--bad)';
+        el('fillOut').style.color = ok ? 'var(--ok)' : 'var(--bad)';
+
+        var vtxt;
+        if (pct < 90) {
+          vtxt = '<strong>Underfilled.</strong> The bag reaches only ' + dec(pct, 0) +
+            '% of ' + state.target + ' L, so it is slack when the driver hits it. Weigh out more azide, or expect a hotter gas.';
+        } else if (pct > 110) {
+          vtxt = '<strong>Overfilled.</strong> ' + dec(m.V, 1) + ' L of gas for a ' + state.target +
+            ' L bag. A real bag would vent hard or split; here it just means you weighed out more azide than these conditions call for.';
+        } else {
+          vtxt = '<strong>Within 10% of the target.</strong> ' + dec(m.V, 1) + ' L into a ' +
+            state.target + ' L bag — that is a workable inflator charge <em>for these conditions only</em>.';
+        }
+        el('verdict').innerHTML = vtxt;
+
+        // the shortcut note
+        var errAbs = Math.abs(m.err);
+        el('errCard').className = 'readout ' + (errAbs < 0.5 ? 'is-ok' : 'is-bad');
+        var note;
+        if (errAbs < 0.5) {
+          note = '<strong>The shortcut happens to work here.</strong> RT/P at ' + dec(state.tC, 0) +
+            ' &deg;C and ' + dec(state.P, 2) + ' atm is ' + dec(m.vm, 2) +
+            ' L/mol, which rounds to 22.4. That is a coincidence of this particular T-to-P combination, ' +
+            'not a property of nitrogen &mdash; nudge one slider on its own and the agreement is gone.';
+        } else {
+          note = '<strong>22.4 L/mol is wrong here by ' + dec(errAbs, 1) + '%.</strong> The correct factor at ' +
+            dec(state.tC, 0) + ' &deg;C and ' + dec(state.P, 2) + ' atm is RT/P = ' + dec(m.vm, 2) +
+            ' L/mol. Same moles of N<sub>2</sub>, different litres per mole.';
+        }
+        el('shortNote').innerHTML = note;
+
+        // stage caption
+        var cap;
+        if (errAbs < 0.5) {
+          cap = 'The dotted outline is sitting on your bag. 22.4 L/mol is correct wherever T/P works out to about 273 K per atm — 0 °C at 1.00 atm is simply the version that got memorized.';
+        } else {
+          cap = 'The dotted outline is the bag you would have drawn with 22.4 L/mol: ' + dec(m.V224, 1) +
+            ' L instead of ' + dec(m.V, 1) + ' L, ' + dec(errAbs, 1) + '% too ' +
+            (m.err < 0 ? 'small' : 'large') +
+            '. Width grows as the cube root of volume, because volume is three-dimensional.';
+        }
+        el('capBag').textContent = cap;
+
+        markPresets();
+        bagC.redraw();
+        stripC.redraw();
+      }
+
+      // ---------------------------------------------------------------
+      // Controls
+      // ---------------------------------------------------------------
+      var massR = Demo.range('#mass', function (v) {
+        state.mass = v;
+        el('massOut').textContent = dec(v, 1) + ' g';
+        refresh();
+      });
+
+      var tempR = Demo.range('#temp', function (v) {
+        state.tC = v;
+        el('tempOut').innerHTML = dec(v, 0) + ' &deg;C';
+        refresh();
+      });
+
+      var presR = Demo.range('#pres', function (v) {
+        state.P = v;
+        el('presOut').textContent = dec(v, 2) + ' atm';
+        refresh();
+      });
+
+      function markPresets() {
+        document.querySelectorAll('#presets .btn').forEach(function (b) {
+          var on = Math.abs(parseFloat(b.dataset.t) - state.tC) < 0.5 &&
+                   Math.abs(parseFloat(b.dataset.p) - state.P) < 0.005;
+          b.classList.toggle('is-on', on);
+        });
+      }
+
+      document.querySelectorAll('#presets .btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+          tempR.set(parseFloat(b.dataset.t));
+          presR.set(parseFloat(b.dataset.p));
+        });
+      });
+
+      document.querySelectorAll('#targetSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#targetSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.target = parseFloat(b.dataset.target);
+          refresh();
+        });
+      });
+
+      // Solve the chain backwards: how much solid for exactly this bag?
+      //   n(N2) = Vtarget / (RT/P);  n(NaN3) = n(N2) x 2/3;  m = n x 65.01
+      el('fit').addEventListener('click', function () {
+        var need = state.target / m.vm * (2 / 3) * M_AZIDE;
+        massR.set(Demo.clamp(Math.round(need * 10) / 10, 10, 300));
+      });
+
+      el('reset').addEventListener('click', function () {
+        state.target = DEFAULTS.target;
+        document.querySelectorAll('#targetSeg button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.target === '60' ? 'true' : 'false');
+        });
+        tempR.set(DEFAULTS.tC);
+        presR.set(DEFAULTS.P);
+        massR.set(DEFAULTS.mass);
+      });
+
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Which One Runs Out? | Dr. Andres Barboza</title>
+  <meta name="description" content="Limiting reactant for N2 + 3 H2. Compare grams, compare moles, then compare moles divided by coefficient — and watch the first two shortcuts give the wrong answer.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the equation strip, the preset pad, the mass-balance line. */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .eqn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 6px 8px;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      padding: 9px 10px;
+      margin-bottom: 12px;
+    }
+    .eqn .coef { color: var(--accent-strong); }
+    .eqn .arw { color: var(--muted); font-weight: 500; }
+    .eqn-note { font-size: 11.5px; color: var(--muted); text-align: center; margin: -6px 0 12px; }
+
+    .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(126px, 1fr)); gap: 7px; }
+    .presets .btn { padding: 7px 8px; font-size: 12px; line-height: 1.35; }
+    .presets .btn.is-on { border-color: var(--accent); color: var(--accent-strong); background: var(--accent-soft); }
+
+    .balance {
+      font-size: 12px;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 8px 10px;
+    }
+    .balance strong { color: var(--text); font-weight: 600; }
+
+    /* three readouts in a narrow column: let the labels wrap instead of clipping */
+    .result-outs .readout { display: flex; flex-direction: column; }
+    .result-outs .r-label {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.3;
+      flex: 1;
+      margin-bottom: 2px;
+    }
+
+    @media (max-width: 560px) {
+      .eqn { font-size: 15.5px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Which One Runs Out?</h1>
+        <p class="demo-sub">Load the preset marked <em>Grams mislead</em>, then read the three comparisons top to bottom. The first one lies.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Limiting reactant</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid">
+
+      <!-- ---------------- stage: the three comparisons ---------------- -->
+      <div class="stage">
+        <div class="eqn">
+          <span>N<sub>2</sub></span>
+          <span class="arw">+</span>
+          <span><span class="coef">3</span> H<sub>2</sub></span>
+          <span class="arw">&#8594;</span>
+          <span><span class="coef">2</span> NH<sub>3</sub></span>
+        </div>
+        <p class="eqn-note">Balanced: 2 N and 6 H on each side. Molar masses 28.014, 2.016 and 17.031 g/mol.</p>
+        <canvas id="compare" role="img" aria-label="Three side-by-side comparisons of the two reactants"></canvas>
+        <p class="stage-caption" id="capCompare">Green means that shortcut happens to agree with the real answer here. Red means it does not.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">What you mixed</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mN2">Nitrogen, N<sub>2</sub></label>
+                <span class="ctrl-value" id="mN2Out">50.0 g</span>
+              </div>
+              <input type="range" id="mN2" min="5" max="100" step="0.1" value="50">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mH2">Hydrogen, H<sub>2</sub></label>
+                <span class="ctrl-value" id="mH2Out">10.0 g</span>
+              </div>
+              <input type="range" id="mH2" min="0.5" max="25" step="0.1" value="10">
+              <p class="ctrl-hint">Masses are treated as exact so you can follow the arithmetic.</p>
+            </div>
+
+            <hr class="sep">
+
+            <div class="presets" id="presets">
+              <button class="btn" data-n2="80" data-h2="4">All three agree</button>
+              <button class="btn" data-n2="20" data-h2="5">Grams mislead</button>
+              <button class="btn" data-n2="50" data-h2="10">Fewer moles misleads</button>
+              <button class="btn" data-n2="46.3" data-h2="10">Knife edge</button>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="hide">
+              <span>Predict first &mdash; hide the answers</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Result</div>
+          <div class="readouts result-outs">
+            <div class="readout is-accent">
+              <div class="r-label">Limiting reactant</div>
+              <div class="r-value" id="limOut">H<sub>2</sub></div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Theoretical yield</div>
+              <div class="r-value" id="yieldOut">56.32<span class="r-unit">g</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label" id="excessLabel">N<sub>2</sub> left over</div>
+              <div class="r-value" id="excessOut">3.68<span class="r-unit">g</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="balance" id="balance"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The three comparisons</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Compare</th><th>N<sub>2</sub></th><th>H<sub>2</sub></th></tr>
+              </thead>
+              <tbody>
+                <tr><td>grams</td><td id="tG1">50.0</td><td id="tG2">10.0</td></tr>
+                <tr><td>moles</td><td id="tM1">1.7848</td><td id="tM2">4.9603</td></tr>
+                <tr><td>coefficient</td><td>1</td><td>3</td></tr>
+                <tr><td>mol &divide; coef</td><td id="tR1">1.7848</td><td id="tR2">1.6534</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint">Only the bottom row answers the question. The first two rows are the shortcuts students actually use.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- particle picture ---------------- -->
+    <div class="stage" style="margin-top:18px">
+      <canvas id="particles" role="img" aria-label="Particle-level picture of the mixture before and after the reaction"></canvas>
+      <p class="stage-caption" id="capParticles"></p>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <p class="note warn">
+        <strong>Where this model stops being true.</strong> It assumes the reaction runs to completion with no
+        side reactions, so the yield shown is the <em>theoretical</em> ceiling, not a prediction. Real ammonia
+        synthesis is an equilibrium: one pass through an industrial reactor at about 450&nbsp;&deg;C and
+        200&nbsp;atm converts only roughly 15% of the feed, and the rest is recycled. Percent yield compares a
+        measured mass to the ceiling calculated here.
+      </p>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students decide which reactant runs out by asking &ldquo;which do I
+        have less of?&rdquo; &mdash; either in grams, or, after they learn to convert, in moles. Both shortcuts
+        are right often enough to survive several weeks of homework, which is exactly what makes them dangerous.
+        Grams are the wrong currency because a gram of H<sub>2</sub> contains almost fourteen times as many
+        molecules as a gram of N<sub>2</sub>. Moles are the right currency but still the wrong question, because
+        the equation does not consume the two reactants one for one &mdash; it eats three H<sub>2</sub> for every
+        one N<sub>2</sub>.
+      </p>
+      <p>
+        <strong>What to notice:</strong> on the <em>Grams mislead</em> preset you have only 5.0&nbsp;g of
+        H<sub>2</sub> against 20.0&nbsp;g of N<sub>2</sub>, yet nitrogen is what runs out and 0.68&nbsp;g of
+        hydrogen is still sitting in the flask at the end. On <em>Fewer moles misleads</em> you have far fewer
+        moles of N<sub>2</sub> (1.785) than of H<sub>2</sub> (4.960), and nitrogen still is not the limiting
+        reactant &mdash; dividing by the coefficients flips it, 1.785 against 1.653. The only comparison that
+        survives every preset is moles divided by the coefficient from the balanced equation. Everything else is
+        a coincidence you are one problem away from being burned by.
+      </p>
+      <p>
+        <strong>Check the bookkeeping:</strong> the leftover mass is never guessed. It is what remains after the
+        limiting reactant is fully consumed, and the mass line under the result always closes &mdash; grams in
+        equals grams out, because atoms are neither created nor destroyed.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------------------------------------------------------
+      // Model.  N2 + 3 H2 -> 2 NH3
+      // Molar masses from IUPAC standard atomic weights:
+      //   N 14.007, H 1.008  =>  N2 28.014, H2 2.016, NH3 17.031 g/mol
+      //   check: 28.014 + 3(2.016) = 34.062 = 2(17.031)   [mass conserved]
+      // ---------------------------------------------------------------
+      var M = { N2: 28.014, H2: 2.016, NH3: 17.031 };
+      var COEF = { N2: 1, H2: 3, NH3: 2 };
+      var NA = 6.02214076e23;
+      var FONT = 'Poppins, system-ui, -apple-system, sans-serif';
+
+      var state = { mN2: 50.0, mH2: 10.0, hide: false };
+      var m = null;   // current model solution
+
+      function solve() {
+        var nN2 = state.mN2 / M.N2;
+        var nH2 = state.mH2 / M.H2;
+        var rN2 = nN2 / COEF.N2;          // "how many times can the equation run on this reactant alone"
+        var rH2 = nH2 / COEF.H2;
+
+        var lim, xi;
+        if (Math.abs(rN2 - rH2) < 1e-12) { lim = 'tie'; xi = rN2; }
+        else if (rN2 < rH2) { lim = 'N2'; xi = rN2; }
+        else { lim = 'H2'; xi = rH2; }
+
+        var leftN2 = nN2 - COEF.N2 * xi;
+        var leftH2 = nH2 - COEF.H2 * xi;
+        if (lim === 'N2' || lim === 'tie') leftN2 = 0;   // kill float dust on the limiting side
+        if (lim === 'H2' || lim === 'tie') leftH2 = 0;
+
+        var nNH3 = COEF.NH3 * xi;
+
+        return {
+          nN2: nN2, nH2: nH2, rN2: rN2, rH2: rH2,
+          lim: lim, xi: xi,
+          nNH3: nNH3, mNH3: nNH3 * M.NH3,
+          leftN2mol: leftN2, leftH2mol: leftH2,
+          leftN2g: leftN2 * M.N2, leftH2g: leftH2 * M.H2,
+          usedN2g: COEF.N2 * xi * M.N2, usedH2g: COEF.H2 * xi * M.H2
+        };
+      }
+
+      // which reactant a given comparison points at
+      function pick(a, b) {
+        if (Math.abs(a - b) < 1e-12) return 'tie';
+        return a < b ? 'N2' : 'H2';
+      }
+
+      function label(sp) { return sp === 'N2' ? 'N₂' : sp === 'H2' ? 'H₂' : 'neither'; }
+      function labelHTML(sp) {
+        return sp === 'N2' ? 'N<sub>2</sub>' : sp === 'H2' ? 'H<sub>2</sub>' : 'neither';
+      }
+
+      // ---------------------------------------------------------------
+      // Canvas helpers
+      // ---------------------------------------------------------------
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, h / 2, w / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      // Draw a formula like "N2" / "NH3" with real subscripts, left aligned,
+      // vertically centred on y.  Returns the width drawn.
+      function chemW(ctx, s, size, weight) {
+        var w = 0;
+        for (var i = 0; i < s.length; i++) {
+          var d = s[i] >= '0' && s[i] <= '9';
+          ctx.font = (d ? '600 ' + (size * 0.72).toFixed(1) : weight + ' ' + size) + 'px ' + FONT;
+          w += ctx.measureText(s[i]).width;
+        }
+        return w;
+      }
+      function chem(ctx, s, x, y, size, weight) {
+        var prevA = ctx.textAlign, prevB = ctx.textBaseline;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        for (var i = 0; i < s.length; i++) {
+          var d = s[i] >= '0' && s[i] <= '9';
+          ctx.font = (d ? '600 ' + (size * 0.72).toFixed(1) : weight + ' ' + size) + 'px ' + FONT;
+          ctx.fillText(s[i], x, y + (d ? size * 0.22 : 0));
+          x += ctx.measureText(s[i]).width;
+        }
+        ctx.textAlign = prevA; ctx.textBaseline = prevB;
+        return x;
+      }
+
+      // ---------------------------------------------------------------
+      // Stage 1 — the three comparisons
+      // ---------------------------------------------------------------
+      var compare = Demo.canvas('#compare', function (ctx, w, h, c) {
+        var truth = m.lim;
+
+        var rows = [
+          {
+            n: '1', t: 'Compare grams',
+            q: '“which do I have fewer grams of?”',
+            v: [state.mN2, state.mH2],
+            txt: [Demo.fmt.dec(state.mN2, 1) + ' g', Demo.fmt.dec(state.mH2, 1) + ' g'],
+            p: pick(state.mN2, state.mH2), kind: 'guess'
+          },
+          {
+            n: '2', t: 'Compare moles',
+            q: '“which do I have fewer moles of?”',
+            v: [m.nN2, m.nH2],
+            txt: [Demo.fmt.dec(m.nN2, 4), Demo.fmt.dec(m.nH2, 4)],
+            p: pick(m.nN2, m.nH2), kind: 'guess'
+          },
+          {
+            n: '3', t: 'Compare mol ÷ coefficient',
+            q: 'divide by 1 and by 3 — the real test',
+            v: [m.rN2, m.rH2],
+            txt: [Demo.fmt.dec(m.rN2, 4), Demo.fmt.dec(m.rH2, 4)],
+            p: truth, kind: 'truth'
+          }
+        ];
+
+        var rh = h / 3;
+        var labW = 30;
+        var valW = w < 380 ? 66 : 78;
+        var barX = labW + 6;
+        var barW = Math.max(40, w - barX - valW);
+
+        for (var i = 0; i < 3; i++) {
+          var y0 = i * rh;
+          var content = 92;
+          var top = y0 + Math.max(2, (rh - content) / 2);
+
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, Math.round(y0) + 0.5);
+            ctx.lineTo(w, Math.round(y0) + 0.5);
+            ctx.stroke();
+          }
+
+          var r = rows[i];
+
+          // heading
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = r.kind === 'truth' ? c.accentStrong : c.text;
+          ctx.font = '600 12px ' + FONT;
+          ctx.fillText(r.n + ' · ' + r.t, 1, top + 7);
+
+          ctx.fillStyle = c.muted;
+          ctx.font = '400 10.5px ' + FONT;
+          ctx.fillText(r.q, 1, top + 22);
+
+          // verdict chip, right aligned on the heading line
+          if (!state.hide) {
+            var ok = r.kind === 'truth' ? null : (r.p === truth);
+            var col = r.kind === 'truth' ? c.accentStrong : (ok ? c.ok : c.bad);
+            var word = r.kind === 'truth' ? 'correct' : (ok ? 'agrees' : 'wrong');
+            ctx.font = '600 11px ' + FONT;
+            var arrowW = ctx.measureText('→ ').width;
+            var nameW = r.p === 'tie' ? ctx.measureText('neither').width : chemW(ctx, r.p === 'N2' ? 'N2' : 'H2', 11, '600');
+            ctx.font = '600 10px ' + FONT;
+            var wordW = ctx.measureText(word).width;
+            var chipW = arrowW + nameW + 6 + wordW + 16;
+            var chipX = w - chipW;
+            if (chipX > 1) {
+              ctx.fillStyle = col;
+              ctx.globalAlpha = 0.14;
+              rr(ctx, chipX, top - 2, chipW, 19, 9);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+              ctx.fillStyle = col;
+              ctx.font = '600 11px ' + FONT;
+              ctx.textAlign = 'left';
+              ctx.fillText('→ ', chipX + 8, top + 8);
+              var cx = chipX + 8 + arrowW;
+              if (r.p === 'tie') { ctx.fillText('neither', cx, top + 8); cx += ctx.measureText('neither').width; }
+              else { cx = chem(ctx, r.p === 'N2' ? 'N2' : 'H2', cx, top + 7, 11, '600'); }
+              ctx.font = '600 10px ' + FONT;
+              ctx.fillText(word, cx + 6, top + 8);
+            }
+          }
+
+          // the two bars
+          var mx = Math.max(r.v[0], r.v[1], 1e-12);
+          for (var j = 0; j < 2; j++) {
+            var by = top + 36 + j * 26;
+            var isPicked = (r.p === (j === 0 ? 'N2' : 'H2')) || r.p === 'tie';
+
+            ctx.fillStyle = c.text2;
+            chem(ctx, j === 0 ? 'N2' : 'H2', 1, by + 7, 12, '500');
+
+            ctx.fillStyle = c.track;
+            rr(ctx, barX, by, barW, 14, 7);
+            ctx.fill();
+
+            var fw = Math.max(3, barW * (r.v[j] / mx));
+            ctx.fillStyle = c.series[j];
+            ctx.globalAlpha = isPicked ? 1 : 0.42;
+            rr(ctx, barX, by, fw, 14, 7);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // ring the bar the row points at, on the row that is actually right
+            if (r.kind === 'truth' && isPicked) {
+              ctx.strokeStyle = c.accentStrong;
+              ctx.lineWidth = 1.5;
+              rr(ctx, barX - 2.5, by - 2.5, barW + 5, 19, 9.5);
+              ctx.stroke();
+            }
+
+            ctx.fillStyle = c.text;
+            ctx.font = '600 11.5px ' + FONT;
+            ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+            ctx.fillText(r.txt[j], w - 1, by + 7);
+            ctx.textAlign = 'left';
+          }
+        }
+      }, { aspect: 0.62, minHeight: 336, maxHeight: 392 });
+
+      // ---------------------------------------------------------------
+      // Stage 2 — particle picture, before and after
+      //
+      // One drawn molecule stands for s = xi / K mol, where xi is the extent
+      // of reaction in mol.  Choosing the scale from the extent means the
+      // limiting reactant is drawn exactly used up: K molecules of N2 and
+      // 3K of H2 react to give 2K of NH3, with the excess drawn to scale
+      // alongside.  K is picked as large as will fit the canvas.
+      // ---------------------------------------------------------------
+      function counts(K, capExcess) {
+        var s = m.xi / K;
+        var o = { K: K, s: s, over: 0 };
+        if (m.lim === 'H2' || m.lim === 'tie') {
+          o.h2 = 3 * K;
+          var exN = m.leftN2mol / s;
+          var eN = Math.round(exN);
+          if (eN === 0 && exN > 0.15) eN = 1;
+          o.trueExcess = eN;
+          if (capExcess != null && eN > capExcess) { o.over = eN - capExcess; eN = capExcess; }
+          o.n2 = K + eN;
+          o.leftN2 = eN; o.leftH2 = 0;
+        } else {
+          o.n2 = K;
+          var exH = m.leftH2mol / s;
+          var eH = Math.round(exH);
+          if (eH === 0 && exH > 0.15) eH = 1;
+          o.trueExcess = eH;
+          if (capExcess != null && eH > capExcess) { o.over = eH - capExcess; eH = capExcess; }
+          o.h2 = 3 * K + eH;
+          o.leftH2 = eH; o.leftN2 = 0;
+        }
+        o.nh3 = 2 * K;
+        return o;
+      }
+
+      function atom(ctx, x, y, r, fill, c) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = c.surface;
+        ctx.stroke();
+      }
+      function bond(ctx, x1, y1, x2, y2, c) {
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      }
+      var GLYPH = {
+        N2: { w: 30, h: 22, draw: function (ctx, x, y, c) {
+          bond(ctx, x - 6, y, x + 6, y, c);
+          atom(ctx, x - 6, y, 7, c.series[0], c);
+          atom(ctx, x + 6, y, 7, c.series[0], c);
+        } },
+        H2: { w: 21, h: 21, draw: function (ctx, x, y, c) {
+          bond(ctx, x - 4, y, x + 4, y, c);
+          atom(ctx, x - 4, y, 4.5, c.series[1], c);
+          atom(ctx, x + 4, y, 4.5, c.series[1], c);
+        } },
+        NH3: { w: 33, h: 29, draw: function (ctx, x, y, c) {
+          var d = 10.5, a = [-90, 30, 150];
+          var i, ang;
+          for (i = 0; i < 3; i++) {
+            ang = a[i] * Math.PI / 180;
+            bond(ctx, x, y, x + Math.cos(ang) * d, y + Math.sin(ang) * d, c);
+          }
+          for (i = 0; i < 3; i++) {
+            ang = a[i] * Math.PI / 180;
+            atom(ctx, x + Math.cos(ang) * d, y + Math.sin(ang) * d, 4.5, c.series[1], c);
+          }
+          atom(ctx, x, y, 7, c.series[0], c);
+        } }
+      };
+
+      // Draw (or just measure) one species block. Returns the y after it.
+      function block(ctx, c, x, y, availW, formula, n, glyph, note, dry) {
+        if (!dry) {
+          ctx.fillStyle = c.text2;
+          var lx = chem(ctx, formula, x, y + 7, 12, '600');
+          ctx.font = '500 11.5px ' + FONT;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = c.muted;
+          ctx.fillText(' × ' + n + (note ? '   ' + note : ''), lx + 2, y + 8);
+        }
+        y += 17;
+        if (n <= 0) return y + 4;
+        var per = Math.max(1, Math.floor(availW / glyph.w));
+        var rowsN = Math.ceil(n / per);
+        if (!dry) {
+          for (var i = 0; i < n; i++) {
+            var rIdx = Math.floor(i / per), col = i % per;
+            glyph.draw(ctx, x + col * glyph.w + glyph.w / 2, y + rIdx * glyph.h + glyph.h / 2, c);
+          }
+        }
+        return y + rowsN * glyph.h + 6;
+      }
+
+      function heading(ctx, c, x, y, w, text, dry) {
+        if (!dry) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.font = '600 10.5px ' + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(text, x, y + 7);
+        }
+        return y + 19;
+      }
+
+      function renderParticles(ctx, w, h, c, o, dry) {
+        var x = 1, availW = w - 2;
+        var y = 0;
+
+        y = heading(ctx, c, x, y, w, 'BEFORE — WHAT YOU MIXED IN', dry);
+        y = block(ctx, c, x, y, availW, 'N2', o.n2, GLYPH.N2, '', dry);
+        y = block(ctx, c, x, y, availW, 'H2', o.h2, GLYPH.H2, '', dry);
+
+        y += 4;
+        if (!dry) {
+          ctx.strokeStyle = c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, Math.round(y) + 0.5); ctx.lineTo(w, Math.round(y) + 0.5); ctx.stroke();
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.font = '500 10.5px ' + FONT;
+          ctx.fillStyle = c.muted;
+          var msg = 'every 1 N₂ pairs with 3 H₂ — the reaction stops when one side is gone';
+          if (w < 480) msg = 'every 1 N₂ takes 3 H₂ — it stops when one side is gone';
+          if (w < 360) msg = '1 N₂ takes 3 H₂ — stops when one side is gone';
+          ctx.fillText(msg, w / 2, y + 13);
+          ctx.textAlign = 'left';
+        }
+        y += 26;
+
+        // In predict-first mode the "after" half is the answer, so withhold it.
+        // Measurement still walks the full layout so the scale never jumps.
+        if (state.hide && !dry) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.font = '600 11.5px ' + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText('AFTER — hidden while you predict.', x, y + 8);
+          ctx.font = '400 11.5px ' + FONT;
+          ctx.fillText('Decide which reactant runs out, then uncheck “Predict first”.', x, y + 26);
+          return y + 40;
+        }
+
+        y = heading(ctx, c, x, y, w, 'AFTER — REACTION COMPLETE', dry);
+        y = block(ctx, c, x, y, availW, 'NH3', o.nh3, GLYPH.NH3, '', dry);
+
+        var exSp = (m.lim === 'H2' || m.lim === 'tie') ? 'N2' : 'H2';
+        var exN = exSp === 'N2' ? o.leftN2 : o.leftH2;
+        var exMol = exSp === 'N2' ? m.leftN2mol : m.leftH2mol;
+        var exNote = o.over > 0 ? '(+' + o.over + ' more not drawn)'
+          : (exMol <= 0 ? 'none left'
+            : exN === 0 ? 'less than one molecule at this scale' : 'left over');
+        y = block(ctx, c, x, y, availW, exSp, exN, GLYPH[exSp], exNote, dry);
+
+        var limSp = m.lim === 'tie' ? null : m.lim;
+        if (limSp && !dry) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = c.bad;
+          var px = chem(ctx, limSp, x, y + 7, 12, '600');
+          ctx.font = '500 11.5px ' + FONT;
+          ctx.fillText(' × 0   all consumed — this is the limiting reactant', px + 2, y + 8);
+        } else if (!dry) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.font = '500 11.5px ' + FONT;
+          ctx.fillStyle = c.bad;
+          ctx.fillText('both reactants fully consumed — an exact stoichiometric mix', x, y + 8);
+        }
+        y += 18;
+
+        return y;
+      }
+
+      var chosen = null;
+
+      var particles = Demo.canvas('#particles', function (ctx, w, h, c) {
+        // pick the largest scale that fits the box
+        var o = null;
+        for (var K = 6; K >= 1; K--) {
+          var t = counts(K, null);
+          if (renderParticles(ctx, w, h, c, t, true) <= h) { o = t; break; }
+        }
+        if (!o) {
+          o = counts(1, null);
+          var cap = o.trueExcess;
+          while (cap > 0 && renderParticles(ctx, w, h, c, o, true) > h) {
+            cap -= 1;
+            o = counts(1, cap);
+          }
+        }
+        chosen = o;
+        renderParticles(ctx, w, h, c, o, false);
+        updateParticleCaption();
+      }, { aspect: 0.52, minHeight: 340, maxHeight: 356 });
+
+      function updateParticleCaption() {
+        if (!chosen) return;
+        var el = document.getElementById('capParticles');
+        el.textContent =
+          'One drawn molecule stands for ' + Demo.fmt.sig(chosen.s, 3) + ' mol, about ' +
+          Demo.fmt.sci(chosen.s * NA, 1) + ' molecules. Counts are rounded to whole molecules, ' +
+          'so a leftover smaller than one molecule at this scale disappears from the picture even though ' +
+          'the mass in the panel above is real.';
+        document.getElementById('particles').setAttribute('aria-label',
+          'Before: ' + chosen.n2 + ' nitrogen molecules and ' + chosen.h2 + ' hydrogen molecules. ' +
+          'After: ' + chosen.nh3 + ' ammonia molecules, ' +
+          (chosen.leftN2 + chosen.leftH2) + ' molecules of the excess reactant left over, and none of ' +
+          label(m.lim) + '.');
+      }
+
+      // ---------------------------------------------------------------
+      // Readouts
+      // ---------------------------------------------------------------
+      function refresh() {
+        m = solve();
+
+        document.getElementById('mN2Out').textContent = Demo.fmt.dec(state.mN2, 1) + ' g';
+        document.getElementById('mH2Out').textContent = Demo.fmt.dec(state.mH2, 1) + ' g';
+
+        document.getElementById('tG1').textContent = Demo.fmt.dec(state.mN2, 1);
+        document.getElementById('tG2').textContent = Demo.fmt.dec(state.mH2, 1);
+        document.getElementById('tM1').textContent = Demo.fmt.dec(m.nN2, 4);
+        document.getElementById('tM2').textContent = Demo.fmt.dec(m.nH2, 4);
+        document.getElementById('tR1').textContent = Demo.fmt.dec(m.rN2, 4);
+        document.getElementById('tR2').textContent = Demo.fmt.dec(m.rH2, 4);
+
+        document.getElementById('limOut').innerHTML =
+          state.hide ? '<span class="muted">hidden</span>' : labelHTML(m.lim);
+
+        document.getElementById('yieldOut').innerHTML =
+          Demo.fmt.dec(m.mNH3, 2) + '<span class="r-unit">g NH<sub>3</sub></span>';
+
+        var exSp = (m.lim === 'H2' || m.lim === 'tie') ? 'N2' : 'H2';
+        var exG = exSp === 'N2' ? m.leftN2g : m.leftH2g;
+        document.getElementById('excessLabel').innerHTML =
+          state.hide ? 'Excess left over' : labelHTML(exSp) + ' left over';
+        document.getElementById('excessOut').innerHTML = state.hide
+          ? '<span class="muted">hidden</span>'
+          : (exG < 0.005 && exG > 0 ? '&lt;0.01' : Demo.fmt.dec(exG, 2)) + '<span class="r-unit">g</span>';
+
+        var totIn = state.mN2 + state.mH2;
+        var totOut = m.mNH3 + m.leftN2g + m.leftH2g;
+        document.getElementById('balance').innerHTML = state.hide
+          ? '<strong>Hidden.</strong> Work out which reactant runs out from the table below, then uncheck ' +
+            '&ldquo;Predict first&rdquo; to check yourself against the leftover mass and the mass balance.'
+          : '<strong>Mass check.</strong> In: ' + Demo.fmt.dec(state.mN2, 1) + ' + ' +
+            Demo.fmt.dec(state.mH2, 1) + ' = ' + Demo.fmt.dec(totIn, 2) + ' g. ' +
+            'Out: ' + Demo.fmt.dec(m.mNH3, 2) + ' g NH<sub>3</sub> + ' +
+            Demo.fmt.dec(exG, 2) + ' g ' + labelHTML(exSp) + ' = ' + Demo.fmt.dec(totOut, 2) + ' g. ' +
+            Demo.fmt.dec(m.nNH3, 4) + ' mol of NH<sub>3</sub> is formed from ' +
+            Demo.fmt.dec(m.xi, 4) + ' mol of reaction.';
+
+        // caption on the comparison stage
+        var gp = pick(state.mN2, state.mH2), mp = pick(m.nN2, m.nH2);
+        var cap;
+        if (state.hide) {
+          cap = 'Verdicts hidden. Work down the three comparisons and decide for yourself which reactant runs out.';
+        } else if (gp !== m.lim && mp !== m.lim) {
+          cap = 'Both shortcuts miss here.';
+        } else if (gp !== m.lim) {
+          cap = 'The grams shortcut points at ' + label(gp) + ', but ' + label(m.lim) +
+            ' is what actually runs out. Grams are the wrong currency.';
+        } else if (mp !== m.lim) {
+          cap = 'The fewer-moles shortcut points at ' + label(mp) + ', but ' + label(m.lim) +
+            ' is what actually runs out. Moles are the right currency, still the wrong question.';
+        } else {
+          cap = 'All three comparisons agree here — which is exactly why the shortcuts survive so long. ' +
+            'Move a slider until a chip turns red.';
+        }
+        document.getElementById('capCompare').textContent = cap;
+
+        document.getElementById('compare').setAttribute('aria-label',
+          'Grams comparison points to ' + label(gp) + '; moles comparison points to ' + label(mp) +
+          '; moles divided by coefficient points to ' + label(m.lim) + ', the true limiting reactant.');
+
+        // preset highlight
+        document.querySelectorAll('#presets .btn').forEach(function (b) {
+          var on = Math.abs(parseFloat(b.dataset.n2) - state.mN2) < 0.001 &&
+            Math.abs(parseFloat(b.dataset.h2) - state.mH2) < 0.001;
+          b.classList.toggle('is-on', on);
+        });
+
+        compare.redraw();
+        particles.redraw();
+      }
+
+      // ---------------------------------------------------------------
+      // Controls
+      // ---------------------------------------------------------------
+      Demo.range('#mN2', function (v) { state.mN2 = v; refresh(); });
+      Demo.range('#mH2', function (v) { state.mH2 = v; refresh(); });
+
+      document.getElementById('hide').addEventListener('change', function () {
+        state.hide = this.checked;
+        refresh();
+      });
+
+      document.querySelectorAll('#presets .btn').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.getElementById('mN2').value = b.dataset.n2;
+          document.getElementById('mH2').value = b.dataset.h2;
+          state.mN2 = parseFloat(b.dataset.n2);
+          state.mH2 = parseFloat(b.dataset.h2);
+          refresh();
+        });
+      });
+
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

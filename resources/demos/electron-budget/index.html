@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Electron Budget | Dr. Andres Barboza</title>
+  <meta name="description"
+    content="A Lewis structure is a fixed budget of valence electrons. Count it first, then spend it on bonds and lone pairs — including the molecules where the octet rule breaks.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific: the budget meter strip and a few status colours */
+    .meter { margin-top: 13px; }
+    .meter-top {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 10px; margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .meter-num { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+    .meter-num strong { color: var(--text); font-weight: 600; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 6px 14px;
+      margin-top: 7px; font-size: 11.5px; color: var(--muted);
+    }
+    .legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; flex: none; }
+    .stage .note { margin-top: 12px; }
+    .note.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+    .frow { display: flex; gap: 8px; align-items: stretch; }
+    .frow input { flex: 1 1 auto; min-width: 0; }
+    .frow .btn { flex: none; }
+    .st-ok  { color: var(--ok); font-weight: 600; }
+    .st-mid { color: var(--muted); }
+    .st-acc { color: var(--accent-strong); font-weight: 600; }
+    .st-bad { color: var(--bad); font-weight: 600; }
+    #board { touch-action: manipulation; }
+    .tbl.tight th, .tbl.tight td { padding: 6px 7px; }
+    .eq-total td { border-top: 1px solid var(--line); font-weight: 600; color: var(--text); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Electron Budget</h1>
+        <p class="demo-sub">The formula fixes the number of electrons before you draw anything. Spend them — you
+          cannot print more.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Lewis structures</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="board" role="img" aria-label="Lewis structure workspace"></canvas>
+
+        <div class="meter">
+          <div class="meter-top">
+            <span class="small muted">Electron budget</span>
+            <span class="meter-num"><strong id="mSpent">0</strong> placed of <strong id="mTotal">8</strong> ·
+              <strong id="mLeft">8</strong> left</span>
+          </div>
+          <div class="bar">
+            <span id="segBond" style="background:var(--series-1); width:0%"></span>
+            <span id="segLone" style="background:var(--series-3); width:0%"></span>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--series-1)"></i>electrons in bonds</span>
+            <span><i style="background:var(--series-3)"></i>lone-pair electrons</span>
+            <span><i style="background:var(--track)"></i>unspent</span>
+          </div>
+        </div>
+
+        <p class="note" id="msg" aria-live="polite">Pick a molecule, then click the dashed lines to make bonds.</p>
+
+        <p class="stage-caption">
+          <strong>Click a dashed line</strong> to make a bond — click it again for a double, again for a triple.
+          <strong>Click an atom</strong> to add a lone pair. <strong>Right-click or press and hold</strong> to take
+          electrons back. Where the atoms sit on screen is only a bookkeeping sketch; real molecular shape (VSEPR)
+          comes after the Lewis structure, not from it.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Molecule</div>
+          <div class="stack">
+            <select id="pick" aria-label="Choose a molecule"></select>
+
+            <div>
+              <label class="ctrl-label" for="formula">Or type any formula</label>
+              <div class="frow" style="margin-top:5px">
+                <input type="text" id="formula" spellcheck="false" autocomplete="off"
+                  aria-label="Type a chemical formula" value="H2O">
+                <button class="btn" id="draw">Draw</button>
+              </div>
+              <p class="ctrl-hint" id="fhint">Charges: <span class="num">NO3-</span>, <span class="num">NH4+</span>,
+                <span class="num">SO4^2-</span>. The budget is counted for anything you type; only the molecules in
+                the list have a skeleton to draw on.</p>
+            </div>
+
+            <p class="note" id="species-note">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the budget comes from</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Budget</div>
+              <div class="r-value" id="rTotal">8<span class="r-unit">e⁻</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Placed</div>
+              <div class="r-value" id="rSpent">0<span class="r-unit">e⁻</span></div>
+            </div>
+            <div class="readout" id="leftBox">
+              <div class="r-label">Left</div>
+              <div class="r-value" id="rLeft">8<span class="r-unit">e⁻</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:13px 0">
+          <div class="table-scroll">
+            <table class="tbl tight" id="eq">
+              <thead>
+                <tr><th>Source</th><th>each</th><th>e⁻</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" id="eqFor">for H₂O</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Atom by atom</div>
+          <div class="table-scroll">
+            <table class="tbl tight" id="atoms">
+              <thead>
+                <tr><th>Atom</th><th>shell e⁻</th><th>formal charge</th><th>status</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <hr class="sep" style="margin:11px 0">
+          <p class="small" id="fcSum">&nbsp;</p>
+          <label class="check" style="margin-top:9px">
+            <input type="checkbox" id="showFC"> Show formal charges on the drawing
+          </label>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Tools</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="check">Check</button>
+              <button class="btn" id="undo">Undo</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="clear">Clear</button>
+              <button class="btn" id="solve">Show accepted answer</button>
+            </div>
+            <label class="check">
+              <input type="checkbox" id="odd"> Place single electrons (1 e⁻ per click)
+            </label>
+            <p class="ctrl-hint">You only need single electrons when the budget is an <em>odd</em> number — no set of
+              pairs can ever add up to an odd total.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students draw a Lewis structure by walking around the molecule handing
+        every atom an octet, and only count electrons at the end — if they count at all. Done that way, electrons get
+        invented or dropped without anyone noticing. The truth is the opposite order: <strong>the moment you write the
+        formula, the total is already fixed.</strong> Add up the valence electrons, add one more for every negative
+        charge, subtract one for every positive charge, and that number never changes again. Drawing is spending, not
+        creating.
+      </p>
+      <p>
+        <strong>What to notice:</strong> try CO₂ by giving every atom single bonds and full lone pairs. You run out of
+        budget with carbon still short. The fix is never "add a pair" — it is to <em>move</em> a pair you already own
+        off an oxygen and spend it as a second bond. That is the whole reason double and triple bonds exist. Then try
+        NO₃⁻ and NH₄⁺ and watch the budget change by exactly one electron with the charge.
+      </p>
+      <p>
+        <strong>Where the octet rule stops:</strong> it is a pattern, not a law. BF₃ leaves boron with 6 electrons and
+        that is the accepted answer. PCl₅ and SF₆ put 10 and 12 around the central atom, which period-3 atoms can do
+        and period-2 atoms (C, N, O, F) never can. NO has 11 electrons — an odd number, so one electron simply cannot
+        be paired. And O₂ is a warning about the model itself: this drawing says all its electrons are paired, but
+        liquid oxygen sticks to a magnet, so two of them are not. Lewis structures are excellent bookkeeping and an
+        imperfect picture of reality.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ================= element data (main group only) ================= */
+      var VAL = {
+        H: 1, He: 2, Li: 1, Be: 2, B: 3, C: 4, N: 5, O: 6, F: 7, Ne: 8,
+        Na: 1, Mg: 2, Al: 3, Si: 4, P: 5, S: 6, Cl: 7, Ar: 8,
+        K: 1, Ca: 2, Ga: 3, Ge: 4, As: 5, Se: 6, Br: 7, Kr: 8,
+        Rb: 1, Sr: 2, In: 3, Sn: 4, Sb: 5, Te: 6, I: 7, Xe: 8,
+        Cs: 1, Ba: 2, Tl: 3, Pb: 4, Bi: 5, Po: 6, At: 7, Rn: 8
+      };
+      var PER = {
+        H: 1, He: 1, Li: 2, Be: 2, B: 2, C: 2, N: 2, O: 2, F: 2, Ne: 2,
+        Na: 3, Mg: 3, Al: 3, Si: 3, P: 3, S: 3, Cl: 3, Ar: 3,
+        K: 4, Ca: 4, Ga: 4, Ge: 4, As: 4, Se: 4, Br: 4, Kr: 4,
+        Rb: 5, Sr: 5, In: 5, Sn: 5, Sb: 5, Te: 5, I: 5, Xe: 5,
+        Cs: 6, Ba: 6, Tl: 6, Pb: 6, Bi: 6, Po: 6, At: 6, Rn: 6
+      };
+
+      /* ================= molecules =================
+         atoms[0] is always the central atom. Unit coordinates: y is DOWN.
+         target = the accepted Lewis structure (bond orders + non-bonding e- per atom).
+         Every budget below is hand-checked: sum of valence electrons, minus the charge.  */
+      var SPECIES = [
+        {
+          id: 'H2O', typed: 'H2O', label: 'H₂O', name: 'Water', group: 'Start here', charge: 0,
+          atoms: [{ el: 'O', x: 0, y: -0.15 }, { el: 'H', x: -0.94, y: 0.5 }, { el: 'H', x: 0.94, y: 0.5 }],
+          bonds: [[0, 1], [0, 2]],
+          target: { o: [1, 1], nb: [4, 0, 0] },
+          note: 'Budget 8 e⁻. Four go into the two O–H bonds; the other four stay on oxygen as two lone pairs.',
+          right: '8 electrons: 4 in bonds, 4 as lone pairs on oxygen. Nothing invented, nothing left over.'
+        },
+        {
+          id: 'NH3', typed: 'NH3', label: 'NH₃', name: 'Ammonia', group: 'Start here', charge: 0,
+          atoms: [{ el: 'N', x: 0, y: 0 }, { el: 'H', x: -1, y: 0.15 }, { el: 'H', x: 1, y: 0.15 }, { el: 'H', x: 0, y: 1 }],
+          bonds: [[0, 1], [0, 2], [0, 3]],
+          target: { o: [1, 1, 1], nb: [2, 0, 0, 0] },
+          note: 'Budget 8 e⁻. Six pay for three N–H bonds. The last two are the lone pair that makes ammonia a base.',
+          right: '8 electrons: 6 in the three N–H bonds, 2 as the lone pair nitrogen uses to grab a proton.'
+        },
+        {
+          id: 'CH4', typed: 'CH4', label: 'CH₄', name: 'Methane', group: 'Start here', charge: 0,
+          atoms: [{ el: 'C', x: 0, y: 0 }, { el: 'H', x: 0, y: -1 }, { el: 'H', x: 0, y: 1 }, { el: 'H', x: -1, y: 0 }, { el: 'H', x: 1, y: 0 }],
+          bonds: [[0, 1], [0, 2], [0, 3], [0, 4]],
+          target: { o: [1, 1, 1, 1], nb: [0, 0, 0, 0, 0] },
+          note: 'Budget 8 e⁻ and four bonds to pay for. Every electron ends up in a bond; there are none spare for lone pairs.',
+          right: 'All 8 electrons are spent on bonds — methane has no lone pairs anywhere.'
+        },
+        {
+          id: 'CO2', typed: 'CO2', label: 'CO₂', name: 'Carbon dioxide', group: 'Multiple bonds', charge: 0,
+          atoms: [{ el: 'C', x: 0, y: 0 }, { el: 'O', x: -1, y: 0 }, { el: 'O', x: 1, y: 0 }],
+          bonds: [[0, 1], [0, 2]],
+          target: { o: [2, 2], nb: [0, 4, 4] },
+          note: 'Budget 16 e⁻. Try single bonds and three lone pairs per oxygen first — you will run out with carbon short.',
+          right: '16 electrons. Single bonds plus full lone pairs left carbon at 4; the fix was not to add electrons but to move two oxygen lone pairs into second bonds.',
+          alts: [{
+            o: [3, 1], nb: [0, 2, 6],
+            msg: 'That uses all 16 and gives every atom an octet — it is a genuine resonance contributor. But it puts +1 on one oxygen and −1 on the other. Symmetric O=C=O gives every atom a formal charge of 0, so it is the better single structure.'
+          }]
+        },
+        {
+          id: 'O2', typed: 'O2', label: 'O₂', name: 'Oxygen', group: 'Multiple bonds', charge: 0,
+          atoms: [{ el: 'O', x: -0.8, y: 0 }, { el: 'O', x: 0.8, y: 0 }],
+          bonds: [[0, 1]],
+          target: { o: [2], nb: [4, 4] },
+          note: 'Budget 12 e⁻. Two oxygens, six each. Watch what the count forces you to do.',
+          right: '12 electrons, a double bond, two lone pairs each — right by every rule in this unit. Honest caveat: this drawing says every electron in O₂ is paired, yet liquid oxygen is pulled onto a magnet, which only happens with unpaired electrons. Lewis structures get O₂ wrong; molecular orbital theory gets it right.'
+        },
+        {
+          id: 'N2', typed: 'N2', label: 'N₂', name: 'Nitrogen', group: 'Multiple bonds', charge: 0,
+          atoms: [{ el: 'N', x: -0.8, y: 0 }, { el: 'N', x: 0.8, y: 0 }],
+          bonds: [[0, 1]],
+          target: { o: [3], nb: [2, 2] },
+          note: 'Budget 10 e⁻. Ten electrons will not stretch to two octets unless you share hard.',
+          right: '10 electrons: 6 in a triple bond, 2 lone pairs. Breaking that triple bond costs about 945 kJ/mol, which is why the air you are breathing is 78% unreactive N₂.'
+        },
+        {
+          id: 'CH2O', typed: 'CH2O', label: 'CH₂O', name: 'Formaldehyde', group: 'Multiple bonds', charge: 0,
+          atoms: [{ el: 'C', x: 0, y: 0.15 }, { el: 'O', x: 0, y: -0.95 }, { el: 'H', x: -0.95, y: 0.75 }, { el: 'H', x: 0.95, y: 0.75 }],
+          bonds: [[0, 1], [0, 2], [0, 3]],
+          target: { o: [2, 1, 1], nb: [0, 4, 0, 0] },
+          note: 'Budget 12 e⁻. Carbon is the centre; hydrogen never goes in the middle because it can only make one bond.',
+          right: '12 electrons. Carbon needed a second bond to oxygen, and the pair for it came from oxygen — there was never a spare pair to invent.'
+        },
+        {
+          id: 'BF3', typed: 'BF3', label: 'BF₃', name: 'Boron trifluoride', group: 'Where the octet rule breaks', charge: 0,
+          atoms: [{ el: 'B', x: 0, y: 0 }, { el: 'F', x: 0, y: -1 }, { el: 'F', x: -0.87, y: 0.5 }, { el: 'F', x: 0.87, y: 0.5 }],
+          bonds: [[0, 1], [0, 2], [0, 3]],
+          target: { o: [1, 1, 1], nb: [0, 6, 6, 6] },
+          note: 'Budget 24 e⁻. Boron brings only 3. See whether you can give it an octet without breaking something else.',
+          right: 'Boron is left with just 6 electrons, and that is the accepted answer. You can move an F lone pair in to make an octet, but then fluorine carries +1 and boron −1, and fluorine is the most electronegative element there is. So chemists accept electron-deficient boron. That deficiency is exactly why BF₃ attacks anything with a lone pair.',
+          alts: [{
+            o: [2, 1, 1], nb: [0, 4, 6, 6],
+            msg: 'The count is right and boron now has an octet — but look at the formal charges: boron −1 and the double-bonded fluorine +1. Fluorine does not carry a positive charge. The accepted answer leaves boron at 6 electrons. The octet rule is a pattern, not a law.'
+          }]
+        },
+        {
+          id: 'PCl5', typed: 'PCl5', label: 'PCl₅', name: 'Phosphorus pentachloride', group: 'Where the octet rule breaks', charge: 0,
+          atoms: [
+            { el: 'P', x: 0, y: 0 },
+            { el: 'Cl', x: 0, y: -1 }, { el: 'Cl', x: -0.95, y: -0.31 }, { el: 'Cl', x: -0.59, y: 0.81 },
+            { el: 'Cl', x: 0.59, y: 0.81 }, { el: 'Cl', x: 0.95, y: -0.31 }
+          ],
+          bonds: [[0, 1], [0, 2], [0, 3], [0, 4], [0, 5]],
+          target: { o: [1, 1, 1, 1, 1], nb: [0, 6, 6, 6, 6, 6] },
+          note: 'Budget 40 e⁻. Five bonds to chlorine is already 10 electrons around phosphorus — and the budget allows it.',
+          right: '40 electrons, and phosphorus ends up with 10. Phosphorus is in period 3, whose valence shell is bigger and can hold more than eight in a Lewis structure. (Older books credit d-orbitals; modern calculations say the real reason is subtler.) The counting rule that never bends: period-2 atoms — C, N, O, F — never exceed 8.'
+        },
+        {
+          id: 'SF6', typed: 'SF6', label: 'SF₆', name: 'Sulfur hexafluoride', group: 'Where the octet rule breaks', charge: 0,
+          atoms: [
+            { el: 'S', x: 0, y: 0 },
+            { el: 'F', x: 1, y: 0 }, { el: 'F', x: 0.5, y: -0.87 }, { el: 'F', x: -0.5, y: -0.87 },
+            { el: 'F', x: -1, y: 0 }, { el: 'F', x: -0.5, y: 0.87 }, { el: 'F', x: 0.5, y: 0.87 }
+          ],
+          bonds: [[0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6]],
+          target: { o: [1, 1, 1, 1, 1, 1], nb: [0, 6, 6, 6, 6, 6, 6] },
+          note: 'Budget 48 e⁻. Six S–F bonds put 12 electrons around sulfur. The budget covers it exactly.',
+          right: '48 electrons: 12 in bonds, 36 as lone pairs on the fluorines. Sulfur holds 12 — period 3 can, period 2 cannot.'
+        },
+        {
+          id: 'NO', typed: 'NO', label: 'NO', name: 'Nitric oxide', group: 'Where the octet rule breaks', charge: 0, oddHint: true,
+          atoms: [{ el: 'N', x: -0.8, y: 0 }, { el: 'O', x: 0.8, y: 0 }],
+          bonds: [[0, 1]],
+          target: { o: [2], nb: [3, 4] },
+          note: 'Budget 11 e⁻ — an odd number. No arrangement of pairs can total 11, so one electron has to stay alone. Single-electron mode is switched on for you.',
+          right: '11 electrons: a double bond, two lone pairs on oxygen, one lone pair plus one unpaired electron on nitrogen. Nitrogen ends up with 7, not 8, and both formal charges are 0. A triple bond cannot rescue it — that would use 6 electrons in the bond and leave 5 to split between two atoms, so one of them would end up with 9, which period 2 can never hold. NO is a stable radical, and your endothelial cells make it deliberately to relax blood vessels.',
+          alts: [{
+            o: [2], nb: [4, 3],
+            msg: 'Also exactly 11 electrons, and nitrogen even gets a full octet this way. But check the formal charges: nitrogen −1 and oxygen +1. Oxygen is the more electronegative of the two, so that is backwards. The accepted drawing keeps both formal charges at 0 and leaves the unpaired electron on nitrogen — which is where experiments find it.'
+          }]
+        },
+        {
+          id: 'NO3-', typed: 'NO3-', label: 'NO₃⁻', name: 'Nitrate ion', group: 'Ions change the budget', charge: -1,
+          atoms: [{ el: 'N', x: 0, y: 0 }, { el: 'O', x: 0, y: -1 }, { el: 'O', x: -0.87, y: 0.5 }, { el: 'O', x: 0.87, y: 0.5 }],
+          bonds: [[0, 1], [0, 2], [0, 3]],
+          target: { o: [2, 1, 1], nb: [0, 4, 6, 6] },
+          note: 'N 5 + three O 18 = 23, then ADD one electron for the 1− charge: budget 24 e⁻. The extra electron is the charge.',
+          right: '5 + 18 + 1 = 24. The double bond can sit on any of the three oxygens — all three drawings are equally good, and the real ion is the average of them (resonance), with three identical N–O bonds about 1.25 Å long. Formal charges: N is +1, two oxygens are −1, one is 0. They add to −1, the charge of the ion.'
+        },
+        {
+          id: 'NH4+', typed: 'NH4+', label: 'NH₄⁺', name: 'Ammonium ion', group: 'Ions change the budget', charge: 1,
+          atoms: [{ el: 'N', x: 0, y: 0 }, { el: 'H', x: 0, y: -1 }, { el: 'H', x: 0, y: 1 }, { el: 'H', x: -1, y: 0 }, { el: 'H', x: 1, y: 0 }],
+          bonds: [[0, 1], [0, 2], [0, 3], [0, 4]],
+          target: { o: [1, 1, 1, 1], nb: [0, 0, 0, 0, 0] },
+          note: 'N 5 + four H 4 = 9, then SUBTRACT one electron for the 1+ charge: budget 8 e⁻. Ammonia\'s lone pair is now a bond.',
+          right: '5 + 4 − 1 = 8, and all 8 go into bonds. Nitrogen\'s formal charge is +1 and every hydrogen is 0 — the charge belongs to the ion as a whole, not to one hydrogen.'
+        }
+      ];
+
+      /* ================= state ================= */
+      var SP = SPECIES[0];
+      var st = {
+        o: SP.bonds.map(function () { return 0; }),
+        nb: SP.atoms.map(function () { return 0; })
+      };
+      var hist = [];
+      var hover = null;
+      var msgEl = document.getElementById('msg');
+      var showFC = false, oddMode = false;
+
+      function budgetOf(sp) {
+        var t = 0;
+        for (var i = 0; i < sp.atoms.length; i++) t += VAL[sp.atoms[i].el];
+        return t - sp.charge;              // anion: charge<0 -> ADD; cation: charge>0 -> SUBTRACT
+      }
+      function bondingAt(i) {
+        var s = 0;
+        for (var b = 0; b < SP.bonds.length; b++) if (SP.bonds[b][0] === i || SP.bonds[b][1] === i) s += st.o[b];
+        return s;                           // number of bonds (orders), not electrons
+      }
+      function shell(i) { return 2 * bondingAt(i) + st.nb[i]; }
+      function fcOf(i) { return VAL[SP.atoms[i].el] - st.nb[i] - bondingAt(i); }
+      function spent() {
+        var s = 0, b;
+        for (b = 0; b < st.o.length; b++) s += 2 * st.o[b];
+        for (b = 0; b < st.nb.length; b++) s += st.nb[b];
+        return s;
+      }
+      function budget() { return budgetOf(SP); }
+      function left() { return budget() - spent(); }
+      function maxNB(el) { return (el === 'H' || el === 'He') ? 2 : 6; }
+      function targetShell(el) { return (el === 'H' || el === 'He') ? 2 : 8; }
+
+      function statusOf(i) {
+        var el = SP.atoms[i].el, sh = shell(i), tg = targetShell(el);
+        if (sh === tg) return { t: tg === 2 ? 'duet' : 'octet', k: 'ok' };
+        if (sh < tg) return { t: 'short ' + (tg - sh), k: 'mid' };
+        if (PER[el] >= 3) return { t: 'expanded, ' + sh, k: 'acc' };
+        return { t: 'impossible', k: 'bad' };
+      }
+
+      /* ================= formula parsing ================= */
+      function normalize(s) {
+        s = String(s);
+        s = s.replace(/[₀-₉]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0x2080 + 48); });
+        var sup = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9', '⁺': '+', '⁻': '-' };
+        s = s.replace(/[⁰¹²³⁴-⁹⁺⁻]/g, function (c) { return sup[c]; });
+        return s.replace(/−/g, '-').trim();
+      }
+      function parseBody(s, i, out) {
+        while (i < s.length) {
+          var ch = s.charAt(i);
+          if (ch === '(') {
+            var sub = {}, r = parseBody(s, i + 1, sub);
+            if (r.err) return r;
+            i = r.i;
+            var n1 = ''; while (i < s.length && /\d/.test(s.charAt(i))) n1 += s.charAt(i++);
+            var k1 = n1 === '' ? 1 : parseInt(n1, 10);
+            for (var e in sub) out[e] = (out[e] || 0) + sub[e] * k1;
+          } else if (ch === ')') {
+            return { i: i + 1 };
+          } else if (/[A-Z]/.test(ch)) {
+            var el = ch; i++;
+            while (i < s.length && /[a-z]/.test(s.charAt(i))) el += s.charAt(i++);
+            var n2 = ''; while (i < s.length && /\d/.test(s.charAt(i))) n2 += s.charAt(i++);
+            if (!VAL[el]) {
+              return { err: '“' + el + '” is not a main-group element. Counting valence electrons this way only works for the main group — d-block metals do not play by it.' };
+            }
+            out[el] = (out[el] || 0) + (n2 === '' ? 1 : parseInt(n2, 10));
+          } else {
+            return { err: 'Cannot read “' + ch + '”.' };
+          }
+        }
+        return { i: i };
+      }
+      function parseFormula(raw) {
+        var s = normalize(raw);
+        if (!s) return { err: 'Type a formula.' };
+        var charge = 0, m;
+        if ((m = s.match(/\(\s*(\d*)\s*([+-])\s*\)$/))) {
+          charge = (m[2] === '+' ? 1 : -1) * (m[1] === '' ? 1 : parseInt(m[1], 10));
+          s = s.slice(0, s.length - m[0].length);
+        } else if ((m = s.match(/\^\s*(\d*)\s*([+-])$/))) {
+          charge = (m[2] === '+' ? 1 : -1) * (m[1] === '' ? 1 : parseInt(m[1], 10));
+          s = s.slice(0, s.length - m[0].length);
+        } else if ((m = s.match(/\s+(\d*)\s*([+-])$/))) {
+          charge = (m[2] === '+' ? 1 : -1) * (m[1] === '' ? 1 : parseInt(m[1], 10));
+          s = s.slice(0, s.length - m[0].length);
+        } else if ((m = s.match(/([+-])(\d+)$/))) {
+          charge = (m[1] === '+' ? 1 : -1) * parseInt(m[2], 10);
+          s = s.slice(0, s.length - m[0].length);
+        } else if ((m = s.match(/([+-]+)$/))) {
+          charge = (m[1].charAt(0) === '+' ? 1 : -1) * m[1].length;
+          s = s.slice(0, s.length - m[0].length);
+        }
+        s = s.replace(/\s+/g, '');
+        if (!s) return { err: 'Type a formula.' };
+        var counts = {}, r = parseBody(s, 0, counts);
+        if (r.err) return { err: r.err };
+        var any = false; for (var k in counts) { any = true; break; }
+        if (!any) return { err: 'Type a formula.' };
+        return { counts: counts, charge: charge };
+      }
+      function pretty(counts, charge) {
+        var subs = '₀₁₂₃₄₅₆₇₈₉';
+        var out = '';
+        for (var el in counts) {
+          out += el;
+          if (counts[el] > 1) out += String(counts[el]).split('').map(function (d) { return subs.charAt(+d); }).join('');
+        }
+        if (charge) {
+          var n = Math.abs(charge);
+          out += (n > 1 ? String(n).split('').map(function (d) { return '⁰¹²³⁴⁵⁶⁷⁸⁹'.charAt(+d); }).join('') : '')
+            + (charge > 0 ? '⁺' : '⁻');
+        }
+        return out;
+      }
+      function keyOf(counts, charge) {
+        var els = Object.keys(counts).sort();
+        return els.map(function (e) { return e + counts[e]; }).join('') + '|' + charge;
+      }
+      var SPKEY = {};
+      SPECIES.forEach(function (sp) {
+        var c = {};
+        sp.atoms.forEach(function (a) { c[a.el] = (c[a.el] || 0) + 1; });
+        SPKEY[keyOf(c, sp.charge)] = sp;
+      });
+
+      /* ================= lone-pair slot geometry ================= */
+      function slotAngles(bondAngles, k) {
+        if (k <= 0) return [];
+        var A, i;
+        if (bondAngles.length === 0) {
+          var base = [-Math.PI / 2, Math.PI / 2, 0, Math.PI];
+          return base.slice(0, k);
+        }
+        var rx = 0, ry = 0;
+        for (i = 0; i < bondAngles.length; i++) { rx += Math.cos(bondAngles[i]); ry += Math.sin(bondAngles[i]); }
+        if (Math.sqrt(rx * rx + ry * ry) < 0.05) A = bondAngles[0] + Math.PI / 2;
+        else A = Math.atan2(ry, rx) + Math.PI;          // point away from the bonds
+        var spread = { 1: [0], 2: [-0.87, 0.87], 3: [-1.5708, 0, 1.5708], 4: [-2.36, -0.79, 0.79, 2.36] };
+        var off = spread[k] || spread[4];
+        return off.map(function (d) { return A + d; });
+      }
+
+      /* ================= geometry (shared by drawing and hit testing) ================= */
+      function geom(w, h) {
+        var i, mnx = Infinity, mxx = -Infinity, mny = Infinity, mxy = -Infinity;
+        for (i = 0; i < SP.atoms.length; i++) {
+          mnx = Math.min(mnx, SP.atoms[i].x); mxx = Math.max(mxx, SP.atoms[i].x);
+          mny = Math.min(mny, SP.atoms[i].y); mxy = Math.max(mxy, SP.atoms[i].y);
+        }
+        // fit the structure's own bounding box; the slack leaves room for atom
+        // circles, lone-pair dots, and — for ions — the brackets and charge label
+        var slackX = SP.charge !== 0 ? 1.95 : 1.6;
+        var slackY = SP.charge !== 0 ? 1.6 : 1.45;
+        var R = Math.min(
+          w / ((mxx - mnx) + slackX),
+          h / ((mxy - mny) + slackY),
+          Math.min(w, h) * 0.42
+        );
+        var ar = Demo.clamp(R * 0.19, 13, 26);
+        var cx = w / 2 - (mnx + mxx) / 2 * R;
+        var cy = h / 2 - (mny + mxy) / 2 * R;
+        return {
+          R: R, ar: ar,
+          P: SP.atoms.map(function (a) { return { x: cx + a.x * R, y: cy + a.y * R }; })
+        };
+      }
+
+      /* ================= canvas ================= */
+      var board = Demo.canvas('#board', function (ctx, w, h, c) {
+        var G = geom(w, h), R = G.R, ar = G.ar, P = G.P;
+        var i, b;
+
+        // ---- ion brackets ----
+        if (SP.charge !== 0) {
+          var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+          for (i = 0; i < P.length; i++) {
+            minX = Math.min(minX, P[i].x); maxX = Math.max(maxX, P[i].x);
+            minY = Math.min(minY, P[i].y); maxY = Math.max(maxY, P[i].y);
+          }
+          var pad = ar + 20, tick = 9;
+          var bx0 = minX - pad, bx1 = maxX + pad, by0 = minY - pad, by1 = maxY + pad;
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(bx0 + tick, by0); ctx.lineTo(bx0, by0); ctx.lineTo(bx0, by1); ctx.lineTo(bx0 + tick, by1);
+          ctx.moveTo(bx1 - tick, by0); ctx.lineTo(bx1, by0); ctx.lineTo(bx1, by1); ctx.lineTo(bx1 - tick, by1);
+          ctx.stroke();
+          ctx.fillStyle = c.text;
+          ctx.font = '600 ' + Math.round(ar * 0.85) + 'px Poppins, system-ui, sans-serif';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          var cs = (Math.abs(SP.charge) > 1 ? Math.abs(SP.charge) : '') + (SP.charge > 0 ? '+' : '−');
+          ctx.fillText(cs, bx1 + 5, by0 + 6);
+        }
+
+        // ---- bonds ----
+        for (b = 0; b < SP.bonds.length; b++) {
+          var a0 = P[SP.bonds[b][0]], a1 = P[SP.bonds[b][1]];
+          var dx = a1.x - a0.x, dy = a1.y - a0.y, L = Math.hypot(dx, dy);
+          var ux = dx / L, uy = dy / L, px = -uy, py = ux;
+          var trim = ar + 3;
+          var sx = a0.x + ux * trim, sy = a0.y + uy * trim;
+          var ex = a1.x - ux * trim, ey = a1.y - uy * trim;
+
+          if (hover && hover.kind === 'bond' && hover.i === b) {
+            ctx.strokeStyle = c.accentSoft; ctx.lineWidth = 18; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.lineCap = 'butt';
+          }
+
+          var ord = st.o[b];
+          if (ord === 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 2; ctx.setLineDash([4, 5]);
+            ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+            ctx.setLineDash([]);
+          } else {
+            var sep = Math.max(3, ar * 0.24);
+            var offs = ord === 1 ? [0] : ord === 2 ? [-sep, sep] : [-sep * 1.7, 0, sep * 1.7];
+            ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.4;
+            for (i = 0; i < offs.length; i++) {
+              ctx.beginPath();
+              ctx.moveTo(sx + px * offs[i], sy + py * offs[i]);
+              ctx.lineTo(ex + px * offs[i], ey + py * offs[i]);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // ---- atoms + non-bonding electrons ----
+        var dotR = Math.max(1.9, ar * 0.135);
+        for (i = 0; i < P.length; i++) {
+          var el = SP.atoms[i].el, sOf = statusOf(i);
+          var ring = sOf.k === 'ok' ? c.ok : sOf.k === 'acc' ? c.accentStrong : sOf.k === 'bad' ? c.bad : c.line;
+
+          if (hover && hover.kind === 'atom' && hover.i === i) {
+            ctx.fillStyle = c.accentSoft;
+            ctx.beginPath(); ctx.arc(P[i].x, P[i].y, ar * 1.45, 0, 6.2832); ctx.fill();
+          }
+
+          ctx.fillStyle = c.surface;
+          ctx.beginPath(); ctx.arc(P[i].x, P[i].y, ar, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = ring; ctx.lineWidth = 1.8;
+          ctx.beginPath(); ctx.arc(P[i].x, P[i].y, ar, 0, 6.2832); ctx.stroke();
+
+          ctx.fillStyle = c.text;
+          ctx.font = '600 ' + Math.round(ar * 1.0) + 'px Poppins, system-ui, sans-serif';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(el, P[i].x, P[i].y + 0.5);
+
+          // slots for lone pairs / single electrons
+          var ba = [];
+          for (b = 0; b < SP.bonds.length; b++) {
+            var pr = SP.bonds[b];
+            var j = pr[0] === i ? pr[1] : pr[1] === i ? pr[0] : -1;
+            if (j >= 0) ba.push(Math.atan2(P[j].y - P[i].y, P[j].x - P[i].x));
+          }
+          var nb = st.nb[i];
+          var nPairs = Math.floor(nb / 2), nSingle = nb % 2;
+          var slots = slotAngles(ba, nPairs + nSingle);
+          var rr = ar + dotR + Math.max(4, ar * 0.28);
+          ctx.fillStyle = c.series[2];
+          for (var s = 0; s < slots.length; s++) {
+            var th = slots[s];
+            var bx = P[i].x + Math.cos(th) * rr, by = P[i].y + Math.sin(th) * rr;
+            var qx = -Math.sin(th), qy = Math.cos(th);
+            if (s < nPairs) {
+              var d = dotR * 1.75;
+              ctx.beginPath(); ctx.arc(bx + qx * d, by + qy * d, dotR, 0, 6.2832); ctx.fill();
+              ctx.beginPath(); ctx.arc(bx - qx * d, by - qy * d, dotR, 0, 6.2832); ctx.fill();
+            } else {
+              ctx.beginPath(); ctx.arc(bx, by, dotR, 0, 6.2832); ctx.fill();
+            }
+          }
+
+          // formal charge badge
+          if (showFC) {
+            var fc = fcOf(i);
+            if (fc !== 0) {
+              var lx = P[i].x + ar * 0.95, ly = P[i].y - ar * 0.95;
+              ctx.fillStyle = c.surface;
+              ctx.beginPath(); ctx.arc(lx, ly, ar * 0.52, 0, 6.2832); ctx.fill();
+              ctx.strokeStyle = fc > 0 ? c.warn : c.series[3];
+              ctx.lineWidth = 1.2;
+              ctx.beginPath(); ctx.arc(lx, ly, ar * 0.52, 0, 6.2832); ctx.stroke();
+              ctx.fillStyle = fc > 0 ? c.warn : c.series[3];
+              ctx.font = '600 ' + Math.round(ar * 0.6) + 'px Poppins, system-ui, sans-serif';
+              ctx.fillText((fc > 0 ? '+' : '−') + Math.abs(fc), lx, ly + 0.5);
+            }
+          }
+        }
+      }, { aspect: 0.74, minHeight: 300, maxHeight: 400 });
+
+      /* ================= hit testing ================= */
+      function hitTest(mx, my) {
+        var L = geom(board.width, board.height), i, b;
+        for (i = 0; i < L.P.length; i++) {
+          if (Math.hypot(mx - L.P[i].x, my - L.P[i].y) < L.ar * 1.4) return { kind: 'atom', i: i };
+        }
+        var best = null, bd = 15;
+        for (b = 0; b < SP.bonds.length; b++) {
+          var a0 = L.P[SP.bonds[b][0]], a1 = L.P[SP.bonds[b][1]];
+          var vx = a1.x - a0.x, vy = a1.y - a0.y, L2 = vx * vx + vy * vy;
+          var t = ((mx - a0.x) * vx + (my - a0.y) * vy) / L2;
+          if (t < 0.18 || t > 0.82) continue;
+          var d = Math.hypot(mx - (a0.x + vx * t), my - (a0.y + vy * t));
+          if (d < bd) { bd = d; best = { kind: 'bond', i: b }; }
+        }
+        return best;
+      }
+
+      /* ================= edits ================= */
+      function snap() {
+        hist.push({ o: st.o.slice(), nb: st.nb.slice() });
+        if (hist.length > 80) hist.shift();
+      }
+      function say(text, kind) {
+        msgEl.className = 'note' + (kind ? ' ' + kind : '');
+        msgEl.innerHTML = text;
+      }
+      function apply(target, dir) {
+        var step = oddMode ? 1 : 2;
+        if (target.kind === 'bond') {
+          var o = st.o[target.i];
+          if (dir < 0) { if (o === 0) return; snap(); st.o[target.i] = o - 1; }
+          else {
+            if (o >= 3) { snap(); st.o[target.i] = 0; }
+            else if (left() < 2) { return overspend(2); }
+            else { snap(); st.o[target.i] = o + 1; }
+          }
+        } else {
+          var el = SP.atoms[target.i].el, mx = maxNB(el), n = st.nb[target.i];
+          if (dir < 0) { if (n === 0) return; snap(); st.nb[target.i] = Math.max(0, n - step); }
+          else {
+            if (n + step > mx) { snap(); st.nb[target.i] = 0; }
+            else if (left() < step) { return overspend(step); }
+            else { snap(); st.nb[target.i] = n + step; }
+          }
+        }
+        refresh();
+      }
+      function overspend(need) {
+        say('<strong>No electrons left.</strong> The budget is ' + budget() + ' e⁻ and you have spent all of them. ' +
+          'You cannot invent ' + (need === 1 ? 'an electron' : 'a pair') + ' — if an atom is still short, the move is to ' +
+          '<em>take a lone pair off a neighbour</em> and spend it as a second bond.', 'warn');
+        board.redraw();
+      }
+
+      /* ================= rendering the panels ================= */
+      function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+      function fcTxt(fc) { return fc === 0 ? '0' : (fc > 0 ? '+' : '−') + Math.abs(fc); }
+
+      function renderEquation(counts, charge, label) {
+        var tb = document.querySelector('#eq tbody'), rows = '', total = 0;
+        var els = Object.keys(counts);
+        els.forEach(function (el) {
+          var n = counts[el], v = VAL[el], sub = n * v;
+          total += sub;
+          rows += '<tr><td>' + n + ' × ' + esc(el) + '</td><td>' + v + '</td><td>' + sub + '</td></tr>';
+        });
+        if (charge !== 0) {
+          var d = -charge;
+          rows += '<tr><td>charge ' + Math.abs(charge) + (charge > 0 ? '+' : '−') +
+            ' <span class="muted small">(' + (charge < 0 ? 'add' : 'subtract') + ' 1 per ' +
+            (charge < 0 ? 'negative' : 'positive') + ')</span></td><td>' +
+            (d > 0 ? '+1' : '−1') + '</td><td>' + (d > 0 ? '+' : '−') + Math.abs(d) + '</td></tr>';
+          total += d;
+        }
+        var pairs = Math.floor(total / 2), odd = total % 2;
+        rows += '<tr class="eq-total"><td>Budget</td><td></td><td>' + total + '</td></tr>';
+        tb.innerHTML = rows;
+        document.getElementById('eqFor').innerHTML = 'for ' + label + ' — ' + total + ' e⁻ = ' + pairs + ' pair' +
+          (pairs === 1 ? '' : 's') + (odd ? ' <strong>+ 1 left over</strong>' : '');
+        return total;
+      }
+
+      function renderAtoms() {
+        var tb = document.querySelector('#atoms tbody'), rows = '', i;
+        var seen = [];
+        for (i = 0; i < SP.atoms.length; i++) {
+          var el = SP.atoms[i].el, sh = shell(i), fc = fcOf(i), so = statusOf(i);
+          var key = (i === 0 ? 'c' : 't') + el + '|' + sh + '|' + fc + '|' + so.t;
+          var found = null;
+          for (var j = 0; j < seen.length; j++) if (seen[j].key === key) { found = seen[j]; break; }
+          if (found) found.n++;
+          else seen.push({ key: key, n: 1, el: el, sh: sh, fc: fc, so: so, central: i === 0 });
+        }
+        seen.forEach(function (r) {
+          rows += '<tr><td>' + (r.n > 1 ? r.n + ' × ' : '') + esc(r.el) +
+            (r.central ? ' <span class="muted small">(centre)</span>' : '') + '</td>' +
+            '<td>' + r.sh + '</td><td>' + fcTxt(r.fc) + '</td>' +
+            '<td class="st-' + r.so.k + '">' + r.so.t + '</td></tr>';
+        });
+        tb.innerHTML = rows;
+
+        var sum = 0;
+        for (i = 0; i < SP.atoms.length; i++) sum += fcOf(i);
+        var done = left() === 0;
+        document.getElementById('fcSum').innerHTML =
+          'Formal charges add to <strong class="' + (done ? 'st-ok' : 'st-mid') + '">' + fcTxt(sum) + '</strong>. ' +
+          '<span class="muted">The ion charge is ' + fcTxt(SP.charge) + '. These two must match — and they do, ' +
+          'automatically, the instant the budget is spent exactly (' + (done ? 'now' : 'not yet: ' + left() + ' e⁻ unspent') + ').</span>';
+      }
+
+      function refresh() {
+        var tot = budget(), sp = spent(), lf = tot - sp;
+        var bondE = 0; for (var b = 0; b < st.o.length; b++) bondE += 2 * st.o[b];
+        var loneE = sp - bondE;
+
+        document.getElementById('mTotal').textContent = tot;
+        document.getElementById('mSpent').textContent = sp;
+        document.getElementById('mLeft').textContent = lf;
+        document.getElementById('rTotal').innerHTML = tot + '<span class="r-unit">e⁻</span>';
+        document.getElementById('rSpent').innerHTML = sp + '<span class="r-unit">e⁻</span>';
+        document.getElementById('rLeft').innerHTML = lf + '<span class="r-unit">e⁻</span>';
+        document.getElementById('leftBox').className = 'readout' + (lf === 0 ? ' is-ok' : '');
+        document.getElementById('segBond').style.width = (100 * bondE / tot) + '%';
+        document.getElementById('segLone').style.width = (100 * loneE / tot) + '%';
+
+        renderAtoms();
+        autoMessage();
+        board.el.setAttribute('aria-label',
+          'Lewis structure workspace for ' + SP.label + '. Budget ' + tot + ' electrons, ' + sp + ' placed, ' + lf + ' left.');
+        board.redraw();
+      }
+
+      function shortList() {
+        var out = [], i;
+        for (i = 0; i < SP.atoms.length; i++) {
+          var el = SP.atoms[i].el;
+          if (shell(i) < targetShell(el)) out.push({ i: i, el: el, sh: shell(i) });
+        }
+        return out;
+      }
+
+      function autoMessage() {
+        var lf = left(), i;
+        var unbonded = 0;
+        for (i = 0; i < st.o.length; i++) if (st.o[i] === 0) unbonded++;
+        if (unbonded > 0 && lf > 0) {
+          say('Start by joining every atom to the centre with one bond — each one costs 2 e⁻. ' +
+            '<strong>' + lf + ' e⁻</strong> still unspent.');
+          return;
+        }
+        if (lf > 0) {
+          say('<strong>' + lf + ' e⁻</strong> left to place. Give the outer atoms their lone pairs, then see who is still short.');
+          return;
+        }
+        var sh = shortList();
+        if (sh.length === 0) {
+          say('Budget spent exactly, and every atom is satisfied. Press <strong>Check</strong>.', 'ok');
+        } else {
+          var names = sh.map(function (a) { return a.el + ' has ' + a.sh + ' e⁻'; }).join(', ');
+          say('<strong>Budget spent — and ' + names + '.</strong> You cannot add electrons; the total was fixed ' +
+            'by the formula. The usual move is to turn a neighbour\'s lone pair into a second bond. ' +
+            '(Sometimes the honest answer is that the atom simply does not get an octet.)', 'warn');
+        }
+      }
+
+      /* ================= checking ================= */
+      function sigOf(o, nb) {
+        var terms = [];
+        for (var b = 0; b < SP.bonds.length; b++) {
+          var t = SP.bonds[b][0] === 0 ? SP.bonds[b][1] : SP.bonds[b][0];
+          terms.push(SP.atoms[t].el + '|' + o[b] + '|' + nb[t]);
+        }
+        terms.sort();
+        return SP.atoms[0].el + ':' + nb[0] + '::' + terms.join(',');
+      }
+      function absFC(o, nb) {
+        var save = { o: st.o, nb: st.nb };
+        st.o = o; st.nb = nb;
+        var s = 0; for (var i = 0; i < SP.atoms.length; i++) s += Math.abs(fcOf(i));
+        st.o = save.o; st.nb = save.nb;
+        return s;
+      }
+      function doCheck() {
+        var lf = left();
+        if (lf > 0) {
+          say('Not finished: <strong>' + lf + ' e⁻</strong> of the ' + budget() + ' are still unspent. ' +
+            'Every one of them has to end up somewhere.', 'warn');
+          board.redraw(); return;
+        }
+        var unbonded = [];
+        for (var b = 0; b < st.o.length; b++) if (st.o[b] === 0) unbonded.push(b);
+        if (unbonded.length) {
+          say('The count is right, but ' + unbonded.length + ' pair' + (unbonded.length > 1 ? 's' : '') +
+            ' of atoms are not joined at all. Every atom has to be connected.', 'bad');
+          board.redraw(); return;
+        }
+        var mine = sigOf(st.o, st.nb);
+        if (mine === sigOf(SP.target.o, SP.target.nb)) {
+          say('<strong>Correct.</strong> ' + SP.right, 'ok');
+          board.redraw(); return;
+        }
+        if (SP.alts) {
+          for (var a = 0; a < SP.alts.length; a++) {
+            if (mine === sigOf(SP.alts[a].o, SP.alts[a].nb)) {
+              say('<strong>Close — worth thinking about.</strong> ' + SP.alts[a].msg, 'warn');
+              board.redraw(); return;
+            }
+          }
+        }
+        var bad = [], i;
+        for (i = 0; i < SP.atoms.length; i++) {
+          var s = statusOf(i);
+          if (s.k === 'bad') bad.push(SP.atoms[i].el + ' has ' + shell(i) + ' e⁻, and period-2 atoms can never hold more than 8');
+        }
+        if (bad.length) { say('<strong>Not yet.</strong> ' + bad.join('; ') + '.', 'bad'); board.redraw(); return; }
+        var sh = shortList();
+        if (sh.length) {
+          say('<strong>Not yet.</strong> The count is right but ' +
+            sh.map(function (x) { return x.el + ' has only ' + x.sh + ' e⁻'; }).join(' and ') +
+            '. Move a lone pair from a neighbour into another bond — that costs nothing extra.', 'warn');
+          board.redraw(); return;
+        }
+        say('<strong>Not the accepted answer.</strong> Your count is right and every atom is satisfied, but the ' +
+          'formal charges are worse than they need to be: yours total ' + absFC(st.o, st.nb) +
+          ' in size, the accepted structure totals ' + absFC(SP.target.o, SP.target.nb) +
+          '. The best Lewis structure keeps formal charges as close to zero as possible, with any negative charge ' +
+          'on the most electronegative atom.', 'warn');
+        board.redraw();
+      }
+
+      /* ================= loading ================= */
+      function load(sp, quiet) {
+        SP = sp;
+        st = { o: SP.bonds.map(function () { return 0; }), nb: SP.atoms.map(function () { return 0; }) };
+        hist = [];
+        document.getElementById('species-note').innerHTML = '<strong>' + SP.label + ' — ' + SP.name + '.</strong> ' + SP.note;
+        document.getElementById('pick').value = SP.id;
+        var oddCb = document.getElementById('odd');
+        oddCb.checked = !!SP.oddHint;
+        oddMode = oddCb.checked;
+        if (!quiet) document.getElementById('formula').value = SP.typed;
+        syncFormula();
+        refresh();
+      }
+
+      function syncFormula() {
+        var raw = document.getElementById('formula').value;
+        var r = parseFormula(raw);
+        var hint = document.getElementById('fhint');
+        var inp = document.getElementById('formula');
+        var btn = document.getElementById('draw');
+        if (r.err) {
+          inp.classList.add('is-bad');
+          btn.disabled = true;
+          hint.innerHTML = '<span class="st-bad">' + esc(r.err) + '</span>';
+          // fall back to showing the board molecule's arithmetic
+          var c0 = {}; SP.atoms.forEach(function (a) { c0[a.el] = (c0[a.el] || 0) + 1; });
+          renderEquation(c0, SP.charge, SP.label);
+          return;
+        }
+        inp.classList.remove('is-bad');
+        var match = SPKEY[keyOf(r.counts, r.charge)];
+        renderEquation(r.counts, r.charge, pretty(r.counts, r.charge));
+        if (match && match.id === SP.id) {
+          btn.disabled = true;
+          hint.innerHTML = 'That is the molecule on the board. Charges: <span class="num">NO3-</span>, ' +
+            '<span class="num">NH4+</span>, <span class="num">SO4^2-</span>.';
+        } else if (match) {
+          btn.disabled = false;
+          hint.innerHTML = 'I have a skeleton for that one — press <strong>Draw</strong>.';
+        } else {
+          btn.disabled = true;
+          hint.innerHTML = 'Budget counted. I do not have a skeleton for ' + pretty(r.counts, r.charge) +
+            ', so the board still shows ' + SP.label + '. Choosing which atom sits in the middle takes chemistry ' +
+            'this demo does not try to guess.';
+        }
+      }
+
+      /* ================= wiring ================= */
+      (function buildPicker() {
+        var sel = document.getElementById('pick'), groups = [], html = '';
+        SPECIES.forEach(function (s) { if (groups.indexOf(s.group) < 0) groups.push(s.group); });
+        groups.forEach(function (g) {
+          html += '<optgroup label="' + g + '">';
+          SPECIES.forEach(function (s) {
+            if (s.group === g) html += '<option value="' + s.id + '">' + s.label + ' — ' + s.name + '</option>';
+          });
+          html += '</optgroup>';
+        });
+        sel.innerHTML = html;
+        sel.addEventListener('change', function () {
+          for (var i = 0; i < SPECIES.length; i++) if (SPECIES[i].id === sel.value) { load(SPECIES[i]); return; }
+        });
+      })();
+
+      document.getElementById('formula').addEventListener('input', syncFormula);
+      document.getElementById('formula').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('draw').click(); }
+      });
+      document.getElementById('draw').addEventListener('click', function () {
+        var r = parseFormula(document.getElementById('formula').value);
+        if (r.err) return;
+        var m = SPKEY[keyOf(r.counts, r.charge)];
+        if (m) load(m, true);
+      });
+
+      document.getElementById('showFC').addEventListener('change', function () {
+        showFC = this.checked; board.redraw();
+      });
+      document.getElementById('odd').addEventListener('change', function () { oddMode = this.checked; });
+
+      document.getElementById('check').addEventListener('click', doCheck);
+      document.getElementById('undo').addEventListener('click', function () {
+        if (!hist.length) { say('Nothing to undo.'); return; }
+        var p = hist.pop(); st.o = p.o; st.nb = p.nb; refresh();
+      });
+      document.getElementById('clear').addEventListener('click', function () {
+        snap();
+        st.o = SP.bonds.map(function () { return 0; });
+        st.nb = SP.atoms.map(function () { return 0; });
+        refresh();
+      });
+      document.getElementById('solve').addEventListener('click', function () {
+        snap();
+        st.o = SP.target.o.slice(); st.nb = SP.target.nb.slice();
+        refresh();
+        say('<strong>Accepted structure.</strong> ' + SP.right, 'ok');
+      });
+
+      /* ---- pointer input on the canvas ---- */
+      var cv = board.el, holdTimer = null, held = false;
+      function pos(e) {
+        var r = cv.getBoundingClientRect();
+        return { x: e.clientX - r.left, y: e.clientY - r.top };
+      }
+      cv.addEventListener('pointermove', function (e) {
+        var p = pos(e), t = hitTest(p.x, p.y);
+        var same = (t === null && hover === null) || (t && hover && t.kind === hover.kind && t.i === hover.i);
+        if (!same) { hover = t; cv.style.cursor = t ? 'pointer' : 'default'; board.redraw(); }
+      });
+      cv.addEventListener('pointerleave', function () {
+        if (hover) { hover = null; board.redraw(); }
+      });
+      cv.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;                 // right-click is handled by contextmenu
+        var p = pos(e), t = hitTest(p.x, p.y);
+        if (!t) return;
+        held = false;
+        clearTimeout(holdTimer);
+        holdTimer = setTimeout(function () { held = true; apply(t, -1); }, 500);
+      });
+      cv.addEventListener('pointerup', function (e) {
+        if (e.button !== 0) return;
+        clearTimeout(holdTimer);
+        if (held) { held = false; return; }
+        var p = pos(e), t = hitTest(p.x, p.y);
+        if (t) apply(t, +1);
+      });
+      cv.addEventListener('pointercancel', function () { clearTimeout(holdTimer); held = false; });
+      cv.addEventListener('contextmenu', function (e) {
+        var p = pos(e), t = hitTest(p.x, p.y);
+        if (t) { e.preventDefault(); apply(t, -1); }
+      });
+
+      load(SPECIES[0]);
+    })();
+  </script>
+</body>
+
+</html>

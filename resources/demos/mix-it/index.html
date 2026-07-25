@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Mix It | Dr. Andres Barboza</title>
+  <meta name="description" content="Predict which pairing is insoluble, then pour two solutions together and watch the precipitate form while the spectator ions keep swimming. Molecular, complete ionic and net ionic equations build in sync.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the ion legend, the answer options, the equation lines. */
+
+    .legend { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+    .lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 3px 10px 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--surface-2);
+      color: var(--text);
+      max-width: 100%;
+    }
+    .lg .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+    .lg .role { color: var(--muted); font-size: 11px; }
+    .s1 { background: var(--series-1); }
+    .s2 { background: var(--series-2); }
+    .s3 { background: var(--series-3); }
+    .s4 { background: var(--series-4); }
+
+    .opt {
+      width: 100%;
+      text-align: left;
+      line-height: 1.45;
+      padding: 9px 12px;
+    }
+    .opt .oname { color: var(--muted); font-size: 12px; }
+    .opt.is-right { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+    .opt.is-right .oname { color: var(--ok); }
+    .opt.is-wrong { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+    .opt.is-wrong .oname { color: var(--bad); }
+    .opt:disabled { opacity: 1; cursor: default; }
+    .opt.is-dim:disabled { opacity: 0.5; }
+
+    /* equations */
+    .eq + .eq { margin-top: 12px; }
+    .eq-name {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+    .eq-body {
+      font-size: 15.5px;
+      color: var(--text);
+      line-height: 2.0;
+      word-break: normal;
+    }
+    .eq-body.pending { font-size: 13px; color: var(--muted); font-style: italic; line-height: 1.6; }
+    .term { display: inline-block; white-space: nowrap; }
+    .op { color: var(--muted); padding: 0 0.16em; }
+    .eq-body sub, .eq-body sup { font-size: 0.66em; line-height: 0; }
+    .st { color: var(--muted); font-size: 0.78em; }
+    .st.solid { color: var(--warn); font-weight: 700; }
+    .spec {
+      text-decoration: line-through;
+      text-decoration-thickness: 2px;
+      text-decoration-color: var(--bad);
+      color: var(--muted);
+    }
+    .plain { color: var(--muted); font-style: italic; font-size: 0.86em; }
+
+    .tbl.lft th, .tbl.lft td { text-align: left; }
+    .tbl.lft td { color: var(--text-2); }
+    .tbl.lft td:nth-child(2) { color: var(--text); white-space: nowrap; }
+
+    .two-col { display: grid; grid-template-columns: 1fr; gap: 14px; margin-top: 18px; }
+    @media (min-width: 881px) { .two-col.split { grid-template-columns: 1fr 1fr; } }
+    .two-col > * { min-width: 0; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Mix It</h1>
+        <p class="demo-sub">Call the precipitate before you pour. Then watch which two ions leave, and which two never do.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Net ionic equations</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <canvas id="beaker" role="img" aria-label="A beaker divided into two solutions, each holding its dissolved ions"></canvas>
+        <div class="legend" id="legend"></div>
+        <p class="stage-caption" id="caption">Two beakers of ions, still separate. Predict first, then pour.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">1 &middot; Pick two solutions</div>
+          <div class="stack">
+            <select id="pairSel" aria-label="Choose the two solutions to mix"></select>
+            <div class="btn-row">
+              <button class="btn" id="randomBtn">Random pair</button>
+              <button class="btn" id="resetBtn">Reset beaker</button>
+            </div>
+            <p class="ctrl-hint" id="stockNote">Both stock solutions are soluble, so every ion starts dissolved and free.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">2 &middot; Predict, then pour</div>
+          <div class="stack">
+            <p class="small" style="color:var(--text)">Pour them together and the ions can re-pair two new ways.
+              <strong id="qLead">Which new pairing is insoluble?</strong>
+            </p>
+            <div class="stack-s" id="opts"></div>
+            <div id="feedback"></div>
+            <button class="btn primary" id="pourBtn" disabled>Pour them together</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Score &amp; count</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Predictions right</div>
+              <div class="r-value" id="score">0 / 0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Ions still dissolved</div>
+              <div class="r-value" id="freeCount">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Ions in the solid</div>
+              <div class="r-value" id="solidCount">0</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note small" id="ksNote">
+            The beaker draws about two dozen ions. A real 100 mL beaker holds roughly 10<sup>22</sup> of them &mdash;
+            the count here is a cartoon, the pairing rules are not.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- equations ---------------- -->
+    <div class="panel" style="margin-top:18px">
+      <div class="panel-title">3 &middot; The three equations</div>
+
+      <div class="eq">
+        <div class="eq-name">Molecular (what you weighed out)</div>
+        <div class="eq-body pending" id="eqMol">Pour the solutions to build this line.</div>
+      </div>
+
+      <div class="eq">
+        <div class="eq-name">Complete ionic (what is actually floating in the beaker) &mdash; <span class="muted">spectators struck out</span></div>
+        <div class="eq-body pending" id="eqIon">Pour the solutions to build this line.</div>
+      </div>
+
+      <div class="eq">
+        <div class="eq-name">Net ionic (the chemistry that actually happened)</div>
+        <div class="eq-body pending" id="eqNet">Pour the solutions to build this line.</div>
+      </div>
+
+      <hr class="sep" style="margin:14px 0">
+
+      <p class="note warn small">
+        <strong>Split only what is genuinely dissolved and genuinely a strong electrolyte.</strong>
+        The precipitate is a solid sitting on the bottom &mdash; it never separates into ions, so it keeps its whole
+        formula in the complete ionic line. The same holds for gases, for liquid water, and for weak acids and weak
+        bases such as HC<sub>2</sub>H<sub>3</sub>O<sub>2</sub> or NH<sub>3</sub>, which stay mostly intact molecules
+        in solution. Only strong electrolytes labelled (aq) get pulled apart.
+      </p>
+    </div>
+
+    <div class="two-col split">
+
+      <div class="panel">
+        <div class="panel-title">Solubility rules used here</div>
+        <div class="table-scroll">
+          <table class="tbl lft">
+            <thead>
+              <tr><th>Ion</th><th>Rule</th><th>Exceptions</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Li<sup>+</sup>, Na<sup>+</sup>, K<sup>+</sup>, NH<sub>4</sub><sup>+</sup></td><td>soluble</td><td>none</td></tr>
+              <tr><td>NO<sub>3</sub><sup>&minus;</sup>, C<sub>2</sub>H<sub>3</sub>O<sub>2</sub><sup>&minus;</sup></td><td>soluble</td><td>none</td></tr>
+              <tr><td>Cl<sup>&minus;</sup>, Br<sup>&minus;</sup>, I<sup>&minus;</sup></td><td>soluble</td><td>Ag<sup>+</sup>, Pb<sup>2+</sup>, Hg<sub>2</sub><sup>2+</sup></td></tr>
+              <tr><td>SO<sub>4</sub><sup>2&minus;</sup></td><td>soluble</td><td>Ba<sup>2+</sup>, Pb<sup>2+</sup>, Sr<sup>2+</sup>; Ca<sup>2+</sup> and Ag<sup>+</sup> slightly</td></tr>
+              <tr><td>CO<sub>3</sub><sup>2&minus;</sup>, PO<sub>4</sub><sup>3&minus;</sup>, S<sup>2&minus;</sup></td><td>insoluble</td><td>Group 1, NH<sub>4</sub><sup>+</sup></td></tr>
+              <tr><td>OH<sup>&minus;</sup></td><td>insoluble</td><td>Group 1, NH<sub>4</sub><sup>+</sup>, Ba<sup>2+</sup>; Ca<sup>2+</sup> and Sr<sup>2+</sup> slightly</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="ctrl-hint" style="margin-top:10px">
+          Read top to bottom and stop at the first rule that applies &mdash; that is why K<sub>2</sub>CO<sub>3</sub>
+          is soluble even though carbonates are listed as insoluble.
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">How insoluble is &ldquo;insoluble&rdquo;?</div>
+        <div class="readouts">
+          <div class="readout">
+            <div class="r-label">Solid formed</div>
+            <div class="r-value" id="solidName" style="font-size:17px">&mdash;</div>
+          </div>
+          <div class="readout is-accent">
+            <div class="r-label">K<sub>sp</sub> at 25 &deg;C</div>
+            <div class="r-value" id="kspOut" style="font-size:15px">&mdash;</div>
+          </div>
+          <div class="readout">
+            <div class="r-label">Molar solubility</div>
+            <div class="r-value" id="solOut" style="font-size:15px">&mdash;</div>
+          </div>
+        </div>
+        <p class="note small" id="kspNote" style="margin-top:12px">
+          Pour a pair that precipitates and this fills in. &ldquo;Insoluble&rdquo; never means zero &mdash; it means
+          so little dissolves that we ignore it.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> two things students get wrong here, and both are about the middle line.
+        First, most students think that pouring any two solutions together must produce a reaction &mdash; so they
+        invent a precipitate that is not there. Second, when they write the complete ionic equation they split
+        <em>everything</em>, including the solid they just made. Once the precipitate is broken into ions on paper,
+        those ions cancel with the ones on the left, and the net ionic equation comes out empty or nonsense.
+      </p>
+      <p>
+        <strong>What to notice:</strong> watch the beaker after the solid drops. The spectator ions did not vanish,
+        react, or leave &mdash; they are still swimming, in the same numbers and with the same charges as before you
+        poured. That is the entire definition of a spectator ion: present, dissolved, unchanged. It is why they get
+        struck out of the complete ionic equation, not because they are unimportant, but because they appear
+        identically on both sides. Meanwhile the two ions that formed the solid are locked together in one block
+        &mdash; that block is a single formula unit with an (s) label, and it stays whole in every equation line.
+      </p>
+      <p>
+        <strong>Where the model stops:</strong> the beaker draws about two dozen ions instead of 10<sup>22</sup>, and
+        it pours exactly matched amounts so nothing is left over &mdash; a real lab needs a limiting-reactant check
+        first. &ldquo;Insoluble&rdquo; is also an approximation: the K<sub>sp</sub> panel shows that a tiny amount of
+        every precipitate really does stay dissolved. And carbonates and hydroxides are strongly pH-sensitive, so
+        adding acid can redissolve a solid that this demo shows as permanent.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =========================================================
+         DATA — nine curated pairs. Both stock solutions in every
+         pair are soluble by the shipped rules, so all four ions
+         start dissolved. Every equation below is balanced in
+         atoms AND in charge (checked by hand).
+         Ion counts are chosen so the two reagents are poured in
+         exactly stoichiometric amounts: nothing is limiting.
+         ========================================================= */
+
+      var PAIRS = [
+        {
+          id: 'pbi2',
+          a: { f: 'Pb(NO3)2', n: 'lead(II) nitrate' },
+          b: { f: 'KI', n: 'potassium iodide' },
+          ions: {
+            ac: { f: 'Pb{2+}', n: 3 }, aa: { f: 'NO3{-}', n: 6 },
+            bc: { f: 'K{+}', n: 6 }, ba: { f: 'I{-}', n: 6 }
+          },
+          opts: [
+            { f: 'PbI2', n: 'lead(II) iodide' },
+            { f: 'KNO3', n: 'potassium nitrate' }
+          ],
+          answer: 0,
+          solid: { f: 'PbI2', cat: 'ac', an: 'ba', catN: 1, anN: 2, units: 3, ksp: 9.8e-9, form: 'AB2' },
+          why: 'PbI₂. Iodides are soluble except with Ag⁺, Pb²⁺ and Hg₂²⁺, and Pb²⁺ is on that short list. KNO₃ is soluble twice over: potassium is Group 1 and every nitrate is soluble.',
+          mol: 'Pb(NO3)2|aq + 2 KI|aq => PbI2|s + 2 KNO3|aq',
+          ion: 'Pb{2+}|aq + 2 NO3{-}|aq* + 2 K{+}|aq* + 2 I{-}|aq => PbI2|s + 2 K{+}|aq* + 2 NO3{-}|aq*',
+          net: 'Pb{2+}|aq + 2 I{-}|aq => PbI2|s'
+        },
+        {
+          id: 'agcl',
+          a: { f: 'NaCl', n: 'sodium chloride' },
+          b: { f: 'AgNO3', n: 'silver nitrate' },
+          ions: {
+            ac: { f: 'Na{+}', n: 6 }, aa: { f: 'Cl{-}', n: 6 },
+            bc: { f: 'Ag{+}', n: 6 }, ba: { f: 'NO3{-}', n: 6 }
+          },
+          opts: [
+            { f: 'NaNO3', n: 'sodium nitrate' },
+            { f: 'AgCl', n: 'silver chloride' }
+          ],
+          answer: 1,
+          solid: { f: 'AgCl', cat: 'bc', an: 'aa', catN: 1, anN: 1, units: 6, ksp: 1.8e-10, form: 'AB' },
+          why: 'AgCl. Chlorides are soluble except with Ag⁺, Pb²⁺ and Hg₂²⁺. NaNO₃ is soluble twice over: sodium is Group 1 and nitrates are always soluble.',
+          mol: 'NaCl|aq + AgNO3|aq => AgCl|s + NaNO3|aq',
+          ion: 'Na{+}|aq* + Cl{-}|aq + Ag{+}|aq + NO3{-}|aq* => AgCl|s + Na{+}|aq* + NO3{-}|aq*',
+          net: 'Ag{+}|aq + Cl{-}|aq => AgCl|s'
+        },
+        {
+          id: 'baso4',
+          a: { f: 'BaCl2', n: 'barium chloride' },
+          b: { f: 'Na2SO4', n: 'sodium sulfate' },
+          ions: {
+            ac: { f: 'Ba{2+}', n: 4 }, aa: { f: 'Cl{-}', n: 8 },
+            bc: { f: 'Na{+}', n: 8 }, ba: { f: 'SO4{2-}', n: 4 }
+          },
+          opts: [
+            { f: 'BaSO4', n: 'barium sulfate' },
+            { f: 'NaCl', n: 'sodium chloride' }
+          ],
+          answer: 0,
+          solid: { f: 'BaSO4', cat: 'ac', an: 'ba', catN: 1, anN: 1, units: 4, ksp: 1.1e-10, form: 'AB' },
+          why: 'BaSO₄. Sulfates are soluble except with Ba²⁺, Pb²⁺ and Sr²⁺. NaCl is a Group 1 salt, so it stays dissolved.',
+          mol: 'BaCl2|aq + Na2SO4|aq => BaSO4|s + 2 NaCl|aq',
+          ion: 'Ba{2+}|aq + 2 Cl{-}|aq* + 2 Na{+}|aq* + SO4{2-}|aq => BaSO4|s + 2 Na{+}|aq* + 2 Cl{-}|aq*',
+          net: 'Ba{2+}|aq + SO4{2-}|aq => BaSO4|s'
+        },
+        {
+          id: 'baso4b',
+          a: { f: '(NH4)2SO4', n: 'ammonium sulfate' },
+          b: { f: 'Ba(NO3)2', n: 'barium nitrate' },
+          ions: {
+            ac: { f: 'NH4{+}', n: 8 }, aa: { f: 'SO4{2-}', n: 4 },
+            bc: { f: 'Ba{2+}', n: 4 }, ba: { f: 'NO3{-}', n: 8 }
+          },
+          opts: [
+            { f: 'NH4NO3', n: 'ammonium nitrate' },
+            { f: 'BaSO4', n: 'barium sulfate' }
+          ],
+          answer: 1,
+          solid: { f: 'BaSO4', cat: 'bc', an: 'aa', catN: 1, anN: 1, units: 4, ksp: 1.1e-10, form: 'AB' },
+          why: 'BaSO₄ again — different bottles, identical net ionic equation to barium chloride + sodium sulfate. NH₄NO₃ is soluble twice over: ammonium salts and nitrates are both always soluble.',
+          mol: '(NH4)2SO4|aq + Ba(NO3)2|aq => BaSO4|s + 2 NH4NO3|aq',
+          ion: '2 NH4{+}|aq* + SO4{2-}|aq + Ba{2+}|aq + 2 NO3{-}|aq* => BaSO4|s + 2 NH4{+}|aq* + 2 NO3{-}|aq*',
+          net: 'Ba{2+}|aq + SO4{2-}|aq => BaSO4|s'
+        },
+        {
+          id: 'caco3',
+          a: { f: 'Na2CO3', n: 'sodium carbonate' },
+          b: { f: 'CaCl2', n: 'calcium chloride' },
+          ions: {
+            ac: { f: 'Na{+}', n: 8 }, aa: { f: 'CO3{2-}', n: 4 },
+            bc: { f: 'Ca{2+}', n: 4 }, ba: { f: 'Cl{-}', n: 8 }
+          },
+          opts: [
+            { f: 'NaCl', n: 'sodium chloride' },
+            { f: 'CaCO3', n: 'calcium carbonate' }
+          ],
+          answer: 1,
+          solid: { f: 'CaCO3', cat: 'bc', an: 'aa', catN: 1, anN: 1, units: 4, ksp: 3.4e-9, form: 'AB' },
+          why: 'CaCO₃. Carbonates are insoluble unless the cation is Group 1 or NH₄⁺, and Ca²⁺ is neither. NaCl is a Group 1 salt: soluble.',
+          mol: 'Na2CO3|aq + CaCl2|aq => CaCO3|s + 2 NaCl|aq',
+          ion: '2 Na{+}|aq* + CO3{2-}|aq + Ca{2+}|aq + 2 Cl{-}|aq* => CaCO3|s + 2 Na{+}|aq* + 2 Cl{-}|aq*',
+          net: 'Ca{2+}|aq + CO3{2-}|aq => CaCO3|s'
+        },
+        {
+          id: 'mgoh2',
+          a: { f: 'NaOH', n: 'sodium hydroxide' },
+          b: { f: 'Mg(NO3)2', n: 'magnesium nitrate' },
+          ions: {
+            ac: { f: 'Na{+}', n: 6 }, aa: { f: 'OH{-}', n: 6 },
+            bc: { f: 'Mg{2+}', n: 3 }, ba: { f: 'NO3{-}', n: 6 }
+          },
+          opts: [
+            { f: 'NaNO3', n: 'sodium nitrate' },
+            { f: 'Mg(OH)2', n: 'magnesium hydroxide' }
+          ],
+          answer: 1,
+          solid: { f: 'Mg(OH)2', cat: 'bc', an: 'aa', catN: 1, anN: 2, units: 3, ksp: 5.6e-12, form: 'AB2' },
+          why: 'Mg(OH)₂. Hydroxides are insoluble except with Group 1 cations, NH₄⁺ and Ba²⁺ — Mg²⁺ is not on the exception list. NaNO₃ is soluble twice over.',
+          mol: '2 NaOH|aq + Mg(NO3)2|aq => Mg(OH)2|s + 2 NaNO3|aq',
+          ion: '2 Na{+}|aq* + 2 OH{-}|aq + Mg{2+}|aq + 2 NO3{-}|aq* => Mg(OH)2|s + 2 Na{+}|aq* + 2 NO3{-}|aq*',
+          net: 'Mg{2+}|aq + 2 OH{-}|aq => Mg(OH)2|s'
+        },
+        {
+          id: 'nr1',
+          a: { f: 'NaCl', n: 'sodium chloride' },
+          b: { f: 'KNO3', n: 'potassium nitrate' },
+          ions: {
+            ac: { f: 'Na{+}', n: 6 }, aa: { f: 'Cl{-}', n: 6 },
+            bc: { f: 'K{+}', n: 6 }, ba: { f: 'NO3{-}', n: 6 }
+          },
+          opts: [
+            { f: 'NaNO3', n: 'sodium nitrate' },
+            { f: 'KCl', n: 'potassium chloride' }
+          ],
+          answer: 2,
+          solid: null,
+          why: 'Neither. NaNO₃ and KCl are both soluble — Group 1 cations, plus a nitrate. Four ions go in, four ions swim around, four ions come out. Mixing is not the same as reacting.',
+          mol: 'NaCl|aq + KNO3|aq => @no reaction',
+          ion: 'Na{+}|aq* + Cl{-}|aq* + K{+}|aq* + NO3{-}|aq* => Na{+}|aq* + Cl{-}|aq* + K{+}|aq* + NO3{-}|aq*',
+          net: '@No net ionic equation — every ion is a spectator, so everything cancels.'
+        },
+        {
+          id: 'nr2',
+          a: { f: 'Na2CO3', n: 'sodium carbonate' },
+          b: { f: 'KCl', n: 'potassium chloride' },
+          ions: {
+            ac: { f: 'Na{+}', n: 6 }, aa: { f: 'CO3{2-}', n: 3 },
+            bc: { f: 'K{+}', n: 6 }, ba: { f: 'Cl{-}', n: 6 }
+          },
+          opts: [
+            { f: 'NaCl', n: 'sodium chloride' },
+            { f: 'K2CO3', n: 'potassium carbonate' }
+          ],
+          answer: 2,
+          solid: null,
+          why: 'Neither — and the carbonate is the trap. Carbonates are insoluble EXCEPT with Group 1 cations, and K₂CO₃ is a potassium salt. NaCl is soluble too, so nothing drops out.',
+          mol: 'Na2CO3|aq + KCl|aq => @no reaction',
+          ion: '2 Na{+}|aq* + CO3{2-}|aq* + K{+}|aq* + Cl{-}|aq* => 2 Na{+}|aq* + CO3{2-}|aq* + K{+}|aq* + Cl{-}|aq*',
+          net: '@No net ionic equation — every ion is a spectator, so everything cancels.'
+        },
+        {
+          id: 'nr3',
+          a: { f: 'Mg(NO3)2', n: 'magnesium nitrate' },
+          b: { f: 'KI', n: 'potassium iodide' },
+          ions: {
+            ac: { f: 'Mg{2+}', n: 3 }, aa: { f: 'NO3{-}', n: 6 },
+            bc: { f: 'K{+}', n: 6 }, ba: { f: 'I{-}', n: 6 }
+          },
+          opts: [
+            { f: 'MgI2', n: 'magnesium iodide' },
+            { f: 'KNO3', n: 'potassium nitrate' }
+          ],
+          answer: 2,
+          solid: null,
+          why: 'Neither. MgI₂ is an iodide whose cation is not Ag⁺, Pb²⁺ or Hg₂²⁺, so it is soluble; KNO₃ is soluble twice over. Compare this with sodium hydroxide + magnesium nitrate: same Mg²⁺, different partner, completely different outcome.',
+          mol: 'Mg(NO3)2|aq + KI|aq => @no reaction',
+          ion: 'Mg{2+}|aq* + 2 NO3{-}|aq* + K{+}|aq* + I{-}|aq* => Mg{2+}|aq* + 2 NO3{-}|aq* + K{+}|aq* + I{-}|aq*',
+          net: '@No net ionic equation — every ion is a spectator, so everything cancels.'
+        }
+      ];
+
+      /* =========================================================
+         Chemical formula rendering
+         'Pb(NO3)2'  -> Pb(NO3)2 with subscripts
+         'NO3{-}'    -> NO3 with subscript 3 and superscript minus
+         ========================================================= */
+
+      function parseChem(f) {
+        var segs = [], i = 0, buf = '';
+        function flush() { if (buf) { segs.push({ k: 'n', s: buf }); buf = ''; } }
+        while (i < f.length) {
+          var ch = f.charAt(i);
+          if (ch === '{') {
+            var j = f.indexOf('}', i);
+            flush();
+            segs.push({ k: 'sup', s: f.slice(i + 1, j).replace(/-/g, '−') });
+            i = j + 1;
+            continue;
+          }
+          if (ch >= '0' && ch <= '9') {
+            var prev = i > 0 ? f.charAt(i - 1) : '';
+            if (/[A-Za-z)]/.test(prev)) {
+              var d = '';
+              while (i < f.length && f.charAt(i) >= '0' && f.charAt(i) <= '9') { d += f.charAt(i); i++; }
+              flush();
+              segs.push({ k: 'sub', s: d });
+              continue;
+            }
+          }
+          buf += ch; i++;
+        }
+        flush();
+        return segs;
+      }
+
+      function chemHTML(f) {
+        return parseChem(f).map(function (s) {
+          if (s.k === 'sub') return '<sub>' + s.s + '</sub>';
+          if (s.k === 'sup') return '<sup>' + s.s + '</sup>';
+          return s.s;
+        }).join('');
+      }
+
+      /* =========================================================
+         Equation strings -> HTML
+         term format:  "2 NO3{-}|aq*"   coefficient / formula / state / spectator
+                       "@free text"
+         ========================================================= */
+
+      function termHTML(t) {
+        t = t.trim();
+        if (t.charAt(0) === '@') return '<span class="plain">' + t.slice(1) + '</span>';
+        var bar = t.indexOf('|');
+        var head = bar < 0 ? t : t.slice(0, bar);
+        var tail = bar < 0 ? '' : t.slice(bar + 1);
+        var spec = tail.indexOf('*') >= 0;
+        var state = tail.replace('*', '');
+        var coef = '';
+        var m = head.match(/^(\d+)\s+/);
+        if (m) { coef = m[1] + ' '; head = head.slice(m[0].length); }
+        var body = coef + chemHTML(head);
+        if (state) {
+          body += '<span class="st' + (state === 's' ? ' solid' : '') + '">(' + state + ')</span>';
+        }
+        return '<span class="term' + (spec ? ' spec' : '') + '">' + body + '</span>';
+      }
+
+      function eqHTML(str) {
+        var sides = str.split('=>');
+        function side(s) {
+          return s.split(' + ').map(termHTML).join('<span class="op">+</span>');
+        }
+        if (sides.length < 2) return side(sides[0]);
+        return side(sides[0]) + '<span class="op">⟶</span>' + side(sides[1]);
+      }
+
+      /* =========================================================
+         Canvas chemistry text (unicode-safe: plain digits, + and −)
+         ========================================================= */
+
+      function chemWidth(ctx, segs, size) {
+        var w = 0;
+        for (var i = 0; i < segs.length; i++) {
+          ctx.font = (segs[i].k === 'n' ? size : size * 0.72).toFixed(1) + 'px Poppins, system-ui, sans-serif';
+          w += ctx.measureText(segs[i].s).width;
+        }
+        return w;
+      }
+
+      function drawChem(ctx, f, cx, y, size, color, maxW) {
+        var segs = parseChem(f);
+        var w = chemWidth(ctx, segs, size);
+        if (maxW && w > maxW) { size = size * (maxW / w); w = chemWidth(ctx, segs, size); }
+        var x = cx - w / 2;
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        for (var i = 0; i < segs.length; i++) {
+          var s = segs[i];
+          var fs = s.k === 'n' ? size : size * 0.72;
+          ctx.font = fs.toFixed(1) + 'px Poppins, system-ui, sans-serif';
+          var dy = s.k === 'sub' ? size * 0.22 : (s.k === 'sup' ? -size * 0.36 : 0);
+          ctx.fillText(s.s, x, y + dy);
+          x += ctx.measureText(s.s).width;
+        }
+      }
+
+      /* =========================================================
+         State
+         ========================================================= */
+
+      var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var MIX_T = REDUCED ? 0.2 : 1.1;
+      var TRAVEL = REDUCED ? 0.2 : 0.95;
+      var STAGGER = REDUCED ? 0.02 : 0.16;
+
+      var KEYS = ['ac', 'aa', 'bc', 'ba'];
+      var SERIES = { ac: 0, aa: 1, bc: 2, ba: 3 };
+
+      var S = {
+        pair: PAIRS[0],
+        phase: 'split',       // split | mixing | reacting | settled
+        answered: false,
+        choice: -1,
+        right: 0,
+        tried: 0,
+        t: 0,
+        ions: [],
+        units: [],
+        geoW: 0, geoH: 0,
+        seed: 7
+      };
+
+      /* ---------- geometry ---------- */
+
+      function geom(w, h) {
+        var bx = 10, bw = w - 20;
+        var by = 26, bh = h - by - 12;
+        var lx = bx + 3, lw = bw - 6;
+        var ly = by + 24, lh = (by + bh - 3) - ly;
+        return { bx: bx, by: by, bw: bw, bh: bh, lx: lx, ly: ly, lw: lw, lh: lh };
+      }
+
+      function ionRadius(g, n) {
+        var r = Math.sqrt(g.lw * g.lh * 0.20 / (n * Math.PI));
+        return Demo.clamp(r, 9, 16);
+      }
+
+      function pileGeom(g, units) {
+        var perRow = Math.min(units, Math.max(2, Math.floor(g.lw / 76)));
+        var cellW = (g.lw - 10) / perRow;
+        var bw = cellW - 6;
+        var bh = 24;
+        var rows = Math.ceil(units / perRow);
+        return {
+          perRow: perRow, cellW: cellW, bw: bw, bh: bh, rows: rows,
+          top: g.ly + g.lh - 6 - rows * (bh + 4) + 4
+        };
+      }
+
+      function brickBox(g, p, i, total) {
+        var row = Math.floor(i / p.perRow);
+        var col = i % p.perRow;
+        var inRow = Math.min(p.perRow, (total - row * p.perRow));
+        var offset = (g.lw - 10 - inRow * p.cellW) / 2;
+        return {
+          x: g.lx + 5 + offset + col * p.cellW + 3,
+          y: g.ly + g.lh - 6 - (row + 1) * (p.bh + 4) + 4,
+          w: p.bw, h: p.bh
+        };
+      }
+
+      /* ---------- scene ---------- */
+
+      function buildScene() {
+        var g = geom(plot.width, plot.height);
+        S.geoW = g.lw; S.geoH = g.lh;
+        var pair = S.pair;
+        var total = 0;
+        KEYS.forEach(function (k) { total += pair.ions[k].n; });
+        var r = ionRadius(g, total);
+        var rand = Demo.rng(S.seed);
+        var ions = [];
+
+        KEYS.forEach(function (k) {
+          var spec = pair.ions[k];
+          var left = (k === 'ac' || k === 'aa');
+          for (var i = 0; i < spec.n; i++) {
+            var halfX = left ? g.lx + r + 2 : g.lx + g.lw / 2 + r + 2;
+            var halfW = g.lw / 2 - 2 * r - 6;
+            var ang = rand() * Math.PI * 2;
+            var sp = 16 + rand() * 16;
+            ions.push({
+              key: k, f: spec.f, r: r,
+              x: halfX + rand() * Math.max(4, halfW),
+              y: g.ly + r + 4 + rand() * Math.max(6, g.lh - 2 * r - 8),
+              vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp,
+              unit: -1, p: 0, x0: 0, y0: 0, tx: 0, ty: 0, delay: 0
+            });
+          }
+        });
+
+        S.ions = ions;
+        S.units = [];
+      }
+
+      function assignUnits() {
+        var sd = S.pair.solid;
+        if (!sd) return;
+        var g = geom(plot.width, plot.height);
+        var cats = S.ions.filter(function (o) { return o.key === sd.cat; });
+        var ans = S.ions.filter(function (o) { return o.key === sd.an; });
+        var p = pileGeom(g, sd.units);
+        S.units = [];
+        for (var u = 0; u < sd.units; u++) {
+          var box = brickBox(g, p, u, sd.units);
+          var cxm = box.x + box.w / 2, cym = box.y + box.h / 2;
+          var members = [];
+          for (var i = 0; i < sd.catN; i++) members.push(cats[u * sd.catN + i]);
+          for (var j = 0; j < sd.anN; j++) members.push(ans[u * sd.anN + j]);
+          for (var m = 0; m < members.length; m++) {
+            var o = members[m];
+            if (!o) continue;
+            o.unit = u;
+            o.x0 = o.x; o.y0 = o.y;
+            o.tx = cxm + (m - (members.length - 1) / 2) * (box.w * 0.26);
+            o.ty = cym;
+            o.p = 0;
+            o.delay = u * STAGGER;
+          }
+          S.units.push({ i: u, formed: false, members: members });
+        }
+      }
+
+      function syncGeo(g) {
+        if (!S.geoW || !S.geoH) { S.geoW = g.lw; S.geoH = g.lh; return; }
+        if (Math.abs(g.lw - S.geoW) < 0.5 && Math.abs(g.lh - S.geoH) < 0.5) return;
+        var sx = g.lw / S.geoW, sy = g.lh / S.geoH;
+        var oldX = g.lx, oldY = g.ly;
+        for (var i = 0; i < S.ions.length; i++) {
+          var o = S.ions[i];
+          o.x = oldX + (o.x - oldX) * sx;
+          o.y = oldY + (o.y - oldY) * sy;
+          o.x0 = oldX + (o.x0 - oldX) * sx;
+          o.y0 = oldY + (o.y0 - oldY) * sy;
+        }
+        S.geoW = g.lw; S.geoH = g.lh;
+        if (S.units.length) {
+          var p = pileGeom(g, S.units.length);
+          for (var u = 0; u < S.units.length; u++) {
+            var box = brickBox(g, p, u, S.units.length);
+            var mem = S.units[u].members;
+            for (var m = 0; m < mem.length; m++) {
+              if (!mem[m]) continue;
+              mem[m].tx = box.x + box.w / 2 + (m - (mem.length - 1) / 2) * (box.w * 0.26);
+              mem[m].ty = box.y + box.h / 2;
+            }
+          }
+        }
+      }
+
+      /* =========================================================
+         Canvas
+         ========================================================= */
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      var plot = Demo.canvas('#beaker', function (ctx, w, h, c) {
+        var g = geom(w, h);
+        syncGeo(g);
+
+        // reagent labels above the beaker
+        drawChem(ctx, S.pair.a.f, g.lx + g.lw * 0.25, g.by - 9, 12.5, c.series[0], g.lw * 0.45);
+        drawChem(ctx, S.pair.b.f, g.lx + g.lw * 0.75, g.by - 9, 12.5, c.series[2], g.lw * 0.45);
+
+        // liquid
+        ctx.fillStyle = c.surface2;
+        roundRect(ctx, g.lx, g.ly, g.lw, g.lh, 8);
+        ctx.fill();
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(g.lx, g.ly + 0.5); ctx.lineTo(g.lx + g.lw, g.ly + 0.5);
+        ctx.stroke();
+
+        // beaker walls (open top)
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 3;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(g.bx, g.by);
+        ctx.lineTo(g.bx, g.by + g.bh - 12);
+        ctx.quadraticCurveTo(g.bx, g.by + g.bh, g.bx + 12, g.by + g.bh);
+        ctx.lineTo(g.bx + g.bw - 12, g.by + g.bh);
+        ctx.quadraticCurveTo(g.bx + g.bw, g.by + g.bh, g.bx + g.bw, g.by + g.bh - 12);
+        ctx.lineTo(g.bx + g.bw, g.by);
+        ctx.stroke();
+
+        // divider, only while unmixed
+        if (S.phase === 'split') {
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(g.lx + g.lw / 2, g.ly + 2);
+          ctx.lineTo(g.lx + g.lw / 2, g.ly + g.lh - 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // settled solid
+        if (S.units.length) {
+          var p = pileGeom(g, S.units.length);
+          for (var u = 0; u < S.units.length; u++) {
+            if (!S.units[u].formed) continue;
+            var box = brickBox(g, p, u, S.units.length);
+            var sd = S.pair.solid;
+            ctx.save();
+            roundRect(ctx, box.x, box.y, box.w, box.h, 5);
+            ctx.clip();
+            ctx.globalAlpha = 0.30;
+            ctx.fillStyle = c.series[SERIES[sd.cat]];
+            ctx.fillRect(box.x, box.y, box.w / 2, box.h);
+            ctx.fillStyle = c.series[SERIES[sd.an]];
+            ctx.fillRect(box.x + box.w / 2, box.y, box.w / 2, box.h);
+            ctx.restore();
+            roundRect(ctx, box.x, box.y, box.w, box.h, 5);
+            ctx.strokeStyle = c.text2;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            drawChem(ctx, sd.f, box.x + box.w / 2, box.y + box.h / 2 + 4, 12, c.text, box.w - 8);
+          }
+        }
+
+        // ions
+        for (var i = 0; i < S.ions.length; i++) {
+          var o = S.ions[i];
+          if (o.unit >= 0 && S.units[o.unit] && S.units[o.unit].formed) continue;
+          var col = c.series[SERIES[o.key]];
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+          ctx.fillStyle = c.surface;
+          ctx.fill();
+          ctx.globalAlpha = 0.22;
+          ctx.fillStyle = col;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = col;
+          ctx.stroke();
+          drawChem(ctx, o.f, o.x, o.y + o.r * 0.28, o.r * 0.80, c.text, o.r * 1.72);
+        }
+      }, { aspect: 0.66, minHeight: 300, maxHeight: 460 });
+
+      /* =========================================================
+         Physics
+         ========================================================= */
+
+      function stepIons(dt, g) {
+        var rand = Math.random;
+        var left, right;
+        for (var i = 0; i < S.ions.length; i++) {
+          var o = S.ions[i];
+          if (o.unit >= 0 && S.phase !== 'split' && S.phase !== 'mixing') continue;
+
+          o.vx += (rand() - 0.5) * 60 * dt;
+          o.vy += (rand() - 0.5) * 60 * dt;
+          var sp = Math.hypot(o.vx, o.vy) || 1;
+          var want = Demo.clamp(sp, 12, 34);
+          o.vx = o.vx / sp * want; o.vy = o.vy / sp * want;
+
+          o.x += o.vx * dt;
+          o.y += o.vy * dt;
+
+          if (S.phase === 'split') {
+            var isA = (o.key === 'ac' || o.key === 'aa');
+            left = isA ? g.lx + o.r + 2 : g.lx + g.lw / 2 + o.r + 2;
+            right = isA ? g.lx + g.lw / 2 - o.r - 2 : g.lx + g.lw - o.r - 2;
+          } else {
+            left = g.lx + o.r + 2;
+            right = g.lx + g.lw - o.r - 2;
+          }
+          if (o.x < left) { o.x = left; o.vx = Math.abs(o.vx); }
+          if (o.x > right) { o.x = right; o.vx = -Math.abs(o.vx); }
+
+          var top = g.ly + o.r + 3;
+          var bot = g.ly + g.lh - o.r - 3;
+          if (S.units.length && S.phase === 'settled') {
+            var p = pileGeom(g, S.units.length);
+            bot = Math.min(bot, p.top - o.r - 2);
+          }
+          if (o.y < top) { o.y = top; o.vy = Math.abs(o.vy); }
+          if (o.y > bot) { o.y = bot; o.vy = -Math.abs(o.vy); }
+        }
+
+        // cheap separation so the labels stay readable
+        for (var a = 0; a < S.ions.length; a++) {
+          var A = S.ions[a];
+          if (A.unit >= 0 && S.phase !== 'split' && S.phase !== 'mixing') continue;
+          for (var b = a + 1; b < S.ions.length; b++) {
+            var B = S.ions[b];
+            if (B.unit >= 0 && S.phase !== 'split' && S.phase !== 'mixing') continue;
+            var dx = B.x - A.x, dy = B.y - A.y;
+            var d2 = dx * dx + dy * dy;
+            var md = A.r + B.r + 2;
+            if (d2 > 0.01 && d2 < md * md) {
+              var d = Math.sqrt(d2);
+              var push = (md - d) / 2;
+              var ux = dx / d, uy = dy / d;
+              A.x -= ux * push; A.y -= uy * push;
+              B.x += ux * push; B.y += uy * push;
+            }
+          }
+        }
+      }
+
+      function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+      var anim = Demo.loop(function (dt) {
+        var g = geom(plot.width, plot.height);
+        syncGeo(g);
+        S.t += dt;
+
+        if (S.phase === 'mixing' && S.t >= MIX_T) {
+          S.phase = 'reacting';
+          S.t = 0;
+          revealIonic();
+          if (S.pair.solid) assignUnits();
+        }
+
+        if (S.phase === 'reacting') {
+          if (!S.pair.solid) {
+            if (S.t >= 0.6) { S.phase = 'settled'; revealNet(); }
+          } else {
+            var allDone = true;
+            for (var u = 0; u < S.units.length; u++) {
+              var unit = S.units[u];
+              if (unit.formed) continue;
+              allDone = false;
+              var mem = unit.members, done = true;
+              for (var m = 0; m < mem.length; m++) {
+                var o = mem[m];
+                if (!o) continue;
+                var lt = Demo.clamp((S.t - o.delay) / TRAVEL, 0, 1);
+                o.p = lt;
+                var e = ease(lt);
+                o.x = Demo.lerp(o.x0, o.tx, e);
+                o.y = Demo.lerp(o.y0, o.ty, e);
+                if (lt < 1) done = false;
+              }
+              if (done) { unit.formed = true; updateCounts(); }
+            }
+            if (allDone) { S.phase = 'settled'; revealNet(); }
+          }
+        }
+
+        stepIons(dt, g);
+        plot.paint();
+
+        if (REDUCED && S.phase === 'settled') anim.stop();
+      });
+
+      /* =========================================================
+         DOM
+         ========================================================= */
+
+      var $ = function (id) { return document.getElementById(id); };
+
+      function ionLabel(f) { return chemHTML(f); }
+
+      function renderSelect() {
+        var sel = $('pairSel');
+        sel.innerHTML = '';
+        PAIRS.forEach(function (p, i) {
+          var o = document.createElement('option');
+          o.value = String(i);
+          o.textContent = p.a.n + ' + ' + p.b.n;
+          sel.appendChild(o);
+        });
+        sel.value = String(PAIRS.indexOf(S.pair));
+      }
+
+      function renderOptions() {
+        var box = $('opts');
+        box.innerHTML = '';
+        var p = S.pair;
+        var labels = [
+          '<span>' + chemHTML(p.opts[0].f) + '</span> <span class="oname">' + p.opts[0].n + '</span>',
+          '<span>' + chemHTML(p.opts[1].f) + '</span> <span class="oname">' + p.opts[1].n + '</span>',
+          '<span>Neither</span> <span class="oname">nothing precipitates</span>'
+        ];
+        for (var i = 0; i < 3; i++) {
+          (function (i) {
+            var b = document.createElement('button');
+            b.className = 'btn opt';
+            b.innerHTML = labels[i];
+            b.addEventListener('click', function () { answer(i); });
+            box.appendChild(b);
+          })(i);
+        }
+      }
+
+      function renderLegend() {
+        var box = $('legend');
+        box.innerHTML = '';
+        var sd = S.pair.solid;
+        KEYS.forEach(function (k) {
+          var ion = S.pair.ions[k];
+          var role;
+          if (S.phase === 'split') {
+            role = (k === 'ac' || k === 'aa') ? 'solution A' : 'solution B';
+          } else if (sd && (k === sd.cat || k === sd.an)) {
+            role = S.phase === 'settled' ? 'left solution as ' + sd.f.replace(/[0-9]/g, function (d) {
+              return '₀₁₂₃₄₅₆₇₈₉'.charAt(+d);
+            }) : 'pairing up';
+          } else {
+            role = 'spectator — still dissolved';
+          }
+          var el = document.createElement('span');
+          el.className = 'lg';
+          el.innerHTML = '<span class="dot s' + (SERIES[k] + 1) + '"></span>' +
+            '<span>' + ionLabel(ion.f) + '</span>' +
+            '<span class="role">×' + ion.n + ' · ' + role + '</span>';
+          box.appendChild(el);
+        });
+      }
+
+      function setPending(id, msg) {
+        var el = $(id);
+        el.className = 'eq-body pending';
+        el.textContent = msg;
+      }
+
+      function revealMolecular() {
+        var el = $('eqMol');
+        el.className = 'eq-body';
+        el.innerHTML = eqHTML(S.pair.mol);
+      }
+
+      function revealIonic() {
+        var el = $('eqIon');
+        el.className = 'eq-body';
+        el.innerHTML = eqHTML(S.pair.ion);
+      }
+
+      function revealNet() {
+        var el = $('eqNet');
+        el.className = 'eq-body';
+        el.innerHTML = eqHTML(S.pair.net);
+        renderLegend();
+        updateCounts();
+        $('caption').textContent = S.pair.solid
+          ? 'The solid holds its formula — it is one block, not free ions. The other two species are exactly where they were before you poured.'
+          : 'Nothing precipitated. All four ions are still dissolved and unchanged, so every one of them is a spectator.';
+        plot.el.setAttribute('aria-label', S.pair.solid
+          ? 'Beaker with a solid layer of ' + S.pair.solid.f + ' on the bottom and two ion species still moving in solution'
+          : 'Beaker with all four ion species still moving in solution; no solid formed');
+      }
+
+      function updateCounts() {
+        var bound = 0;
+        for (var u = 0; u < S.units.length; u++) {
+          if (S.units[u].formed) bound += S.units[u].members.filter(Boolean).length;
+        }
+        $('solidCount').textContent = String(bound);
+        $('freeCount').textContent = String(S.ions.length - bound);
+      }
+
+      function updateKsp() {
+        var sd = S.pair.solid;
+        if (!sd || !S.answered) {
+          $('solidName').innerHTML = '&mdash;';
+          $('kspOut').innerHTML = '&mdash;';
+          $('solOut').innerHTML = '&mdash;';
+          $('kspNote').className = 'note small';
+          $('kspNote').innerHTML = S.answered && !sd
+            ? 'No solid formed, so there is no K<sub>sp</sub> to quote. Every one of the four ions stays dissolved.'
+            : 'Pour a pair that precipitates and this fills in. “Insoluble” never means zero — it means so little dissolves that we ignore it.';
+          return;
+        }
+        var s = sd.form === 'AB' ? Math.sqrt(sd.ksp) : Math.pow(sd.ksp / 4, 1 / 3);
+        $('solidName').innerHTML = chemHTML(sd.f) + '<span class="r-unit">(s)</span>';
+        $('kspOut').innerHTML = Demo.fmt.sci(sd.ksp, 1);
+        $('solOut').innerHTML = Demo.fmt.sci(s, 1) + '<span class="r-unit">M</span>';
+        var extra = (sd.f === 'CaCO3' || sd.f === 'Mg(OH)2')
+          ? ' This one is also pH-sensitive: add acid and the solid redissolves, because H<sub>3</sub>O<sup>+</sup> pulls the anion out of the equilibrium.'
+          : '';
+        $('kspNote').className = 'note small';
+        $('kspNote').innerHTML = 'A saturated solution of ' + chemHTML(sd.f) +
+          ' still holds about ' + Demo.fmt.sci(s, 1) + ' mol/L of dissolved ' + chemHTML(sd.f) +
+          ' — tiny, but not zero, which is why chemists say &ldquo;insoluble&rdquo; and mean &ldquo;very slightly soluble.&rdquo;' +
+          ' K<sub>sp</sub> values are standard 25 &deg;C table values; the solubility assumes pure water and ideal behaviour.' + extra;
+      }
+
+      function answer(i) {
+        if (S.answered) return;
+        S.answered = true;
+        S.choice = i;
+        S.tried++;
+        var correct = (i === S.pair.answer);
+        if (correct) S.right++;
+        $('score').textContent = S.right + ' / ' + S.tried;
+
+        var btns = $('opts').querySelectorAll('button');
+        for (var k = 0; k < btns.length; k++) {
+          btns[k].disabled = true;
+          if (k === S.pair.answer) btns[k].classList.add('is-right');
+          else if (k === i) btns[k].classList.add('is-wrong');
+          else btns[k].classList.add('is-dim');
+        }
+
+        var fb = document.createElement('p');
+        fb.className = 'note small ' + (correct ? '' : 'bad');
+        fb.innerHTML = '<strong>' + (correct ? 'Right.' : 'Not this time.') + '</strong> ' + S.pair.why;
+        $('feedback').innerHTML = '';
+        $('feedback').appendChild(fb);
+
+        $('pourBtn').disabled = false;
+        updateKsp();
+      }
+
+      function pour() {
+        if (!S.answered || S.phase !== 'split') return;
+        S.phase = 'mixing';
+        S.t = 0;
+        revealMolecular();
+        setPending('eqIon', 'Building — the ions are still finding each other.');
+        setPending('eqNet', 'Building — wait until the beaker stops changing.');
+        renderLegend();
+        $('pourBtn').disabled = true;
+        $('caption').textContent = S.pair.solid
+          ? 'Poured. Watch which two ion species find each other — and which two do not.'
+          : 'Poured. Four ion species, all still dissolved. Keep watching: nothing is going to happen.';
+        plot.el.setAttribute('aria-label', 'Beaker after pouring: four ion species mixing in one solution');
+        anim.start();
+      }
+
+      function loadPair(idx, keepScore) {
+        S.pair = PAIRS[idx];
+        S.phase = 'split';
+        S.answered = false;
+        S.choice = -1;
+        S.t = 0;
+        S.seed = 7 + idx * 13;
+        S.units = [];
+        buildScene();
+        renderOptions();
+        renderLegend();
+        updateCounts();
+        updateKsp();
+        setPending('eqMol', 'Pour the solutions to build this line.');
+        setPending('eqIon', 'Pour the solutions to build this line.');
+        setPending('eqNet', 'Pour the solutions to build this line.');
+        $('feedback').innerHTML = '';
+        $('pourBtn').disabled = true;
+        $('pairSel').value = String(idx);
+        $('stockNote').innerHTML = chemHTML(S.pair.a.f) + ' and ' + chemHTML(S.pair.b.f) +
+          ' are both soluble, so all four ions start dissolved and free. Amounts are matched exactly — neither solution is limiting.';
+        $('caption').textContent = 'Two solutions, still separate. Predict first, then pour.';
+        plot.el.setAttribute('aria-label', 'A beaker divided into two solutions, each holding its dissolved ions');
+        if (!keepScore) { S.right = 0; S.tried = 0; $('score').textContent = '0 / 0'; }
+        plot.redraw();
+        anim.start();
+      }
+
+      /* ---------- wiring ---------- */
+
+      renderSelect();
+
+      $('pairSel').addEventListener('change', function () {
+        loadPair(parseInt(this.value, 10), true);
+      });
+
+      $('randomBtn').addEventListener('click', function () {
+        var i = Math.floor(Math.random() * PAIRS.length);
+        if (PAIRS[i] === S.pair) i = (i + 1) % PAIRS.length;
+        loadPair(i, true);
+      });
+
+      $('resetBtn').addEventListener('click', function () {
+        loadPair(PAIRS.indexOf(S.pair), true);
+      });
+
+      $('pourBtn').addEventListener('click', pour);
+
+      Demo.onTheme(function () { plot.redraw(); });
+
+      Demo.ready(function () {
+        plot.resize();
+        loadPair(0, false);
+      });
+    })();
+  </script>
+</body>
+
+</html>

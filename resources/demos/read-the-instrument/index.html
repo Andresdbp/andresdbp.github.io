@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Read the Instrument | Dr. Andres Barboza</title>
+  <meta name="description" content="Read a real graduated cylinder, burette or ruler off the glass: every certain digit plus one estimated digit. Change the graduation spacing and the number of digits you are allowed changes with it.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* Demo-specific only: the answer box, the feedback block, the fact rows. */
+    .ans {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 34px;
+      align-items: center;
+      gap: 8px;
+    }
+    .ans input {
+      font-size: 19px;
+      font-weight: 600;
+      text-align: right;
+      padding: 9px 11px;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.01em;
+    }
+    .ans .a-unit { font-size: 13px; font-weight: 600; color: var(--muted); }
+
+    .fb-head { font-weight: 600; color: var(--text); display: block; margin-bottom: 4px; }
+    .fb-sub { display: block; margin-top: 6px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .fact {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .fact + .fact { margin-top: 5px; }
+    .fact b { font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums; text-align: right; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Read the Instrument</h1>
+        <p class="demo-sub">Read the level off the glass and type it. The marks give you the certain digits; the last one is yours.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Measurement &amp; Density</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label" id="stageLabel">100 mL graduated cylinder</p>
+        <canvas id="instr" role="img"
+                aria-label="A close-up of a graduated instrument scale with a liquid level to be read by eye"></canvas>
+        <p class="stage-caption" id="caption">
+          The thin bar on the far left is the whole instrument; the box on it marks the slice you are looking at.
+        </p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Your reading</div>
+          <div class="stack">
+            <div class="ans">
+              <input type="text" id="answer" inputmode="decimal" autocomplete="off" autocapitalize="off"
+                     spellcheck="false" aria-label="Type the reading" placeholder="read it off the scale">
+              <span class="a-unit" id="ansUnit">mL</span>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="check">Check</button>
+              <button class="btn" id="next">New reading</button>
+            </div>
+
+            <div id="fbWrap" style="display:none">
+              <div class="note" id="fb" aria-live="polite"></div>
+            </div>
+
+            <p class="note warn" style="font-size:12.5px">
+              <strong>The rule.</strong> Write down every graduation you can count with certainty, then
+              estimate <em>one</em> more digit between the marks. That last digit is uncertain — and it still
+              belongs in the answer.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Instrument</div>
+          <div class="stack">
+
+            <div class="seg" id="instrSeg" role="tablist" aria-label="Instrument">
+              <button role="tab" aria-selected="true" data-instr="cylinder">Cylinder</button>
+              <button role="tab" aria-selected="false" data-instr="burette">Burette</button>
+              <button role="tab" aria-selected="false" data-instr="ruler">Ruler</button>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="grad">Graduation spacing</label>
+                <span class="ctrl-value" id="gradOut">1 mL</span>
+              </div>
+              <input type="range" id="grad" min="0" max="2" step="1" value="1">
+              <p class="ctrl-hint" id="gradHint">Finer marks are a different piece of glassware — and one more digit you are entitled to.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mag">Magnification</label>
+                <span class="ctrl-value" id="magOut">14 marks in view</span>
+              </div>
+              <input type="range" id="mag" min="0" max="100" step="1" value="45">
+              <p class="ctrl-hint">View only. Blowing up the picture does not add a mark, so it does not add a
+                digit. Only the graduation spacing does that.</p>
+            </div>
+
+            <p class="ctrl-hint" id="vessel" style="margin-top:0"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Facts</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Marks every</div>
+              <div class="r-value" id="rGrad">1<span class="r-unit">mL</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">In view</div>
+              <div class="r-value" id="rSpan">14<span class="r-unit">mL</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Scored</div>
+              <div class="r-value" id="rScore">0 / 0</div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:12px 0">
+
+          <div class="fact"><span>Instrument range</span><b id="fRange">0 – 100 mL</b></div>
+          <div class="fact" id="fSagRow"><span>Bottom-to-top of the curve</span><b id="fSag">0.70 mL</b></div>
+
+          <hr class="sep" style="margin:12px 0">
+
+          <p class="note" id="nMeniscus" style="font-size:12.5px">
+            <strong>Water wets glass</strong>, so its surface is pulled up at the walls and dips in the middle.
+            Read the <strong>bottom</strong> of the curve, with your eye level with it. Mercury does the
+            opposite — it bulges upward and you read the <strong>top</strong>.
+          </p>
+          <p class="note" id="nRuler" style="font-size:12.5px; display:none">
+            The rod's lower end is set exactly on the <strong>0.0</strong> mark, so only the upper end has to be
+            estimated. In a careful measurement both ends carry uncertainty and the two combine.
+          </p>
+          <p class="small muted" style="margin-top:9px">
+            The drawing is schematic: the <em>vertical</em> scale and the depth of the curve are drawn to scale
+            with the marks, the tube width is not. Real glassware also carries a calibration tolerance
+            (a class-A 100 mL cylinder is ±0.5 mL) and a temperature rating; this demonstration ignores both.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students think a measurement is a number the instrument hands you,
+        and that the last digit is either printed on the glass or a mistake. On a worksheet every reading
+        arrives already written — <span class="num">24.7 mL</span> — so the only thing left to practise is
+        arithmetic. Then, at the bench, they write <span class="num">25 mL</span> and throw away a digit they
+        were entitled to, or write <span class="num">24.73 mL</span> and claim a digit no mark on that tube
+        could support.
+      </p>
+      <p>
+        <strong>What to notice:</strong> nothing on this tube says <span class="num">.7</span>. The marks give
+        you the <span class="num">24</span>; the <span class="num">7</span> is <em>you</em>, judging where the
+        bottom of the meniscus sits between two lines — and it is exactly the digit that carries the
+        uncertainty. Now move the graduation slider. The liquid has not moved, but the number of digits you
+        may write changes with the marks: every 1 mL means read to 0.1 mL, every 0.1 mL means read to 0.01 mL.
+        Then move the magnification slider and watch nothing change: a bigger picture of the same marks is
+        still the same marks.
+      </p>
+      <p>
+        <strong>Where this stops being true:</strong> the model assumes you read the bottom of the curve with
+        your eye at its level (looking down adds a parallax error the demonstration does not simulate), and it
+        only uses graduations that are powers of ten. Glassware marked every 2 or every 5 units is real, and
+        there the "one estimated digit" rule takes more care.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // Instruments.
+      //
+      //   k          graduation spacing d = 10^k, in the instrument's unit
+      //   cap        full range of the instrument
+      //   sag        vertical drop, IN INSTRUMENT UNITS, from where the liquid
+      //              touches the wall to the bottom of the meniscus. It is a
+      //              property of the bore, not of the marks, so it does not
+      //              change when you magnify.
+      //   dir        +1 the scale counts upward, -1 it counts downward
+      //
+      // Meniscus gaps are order-of-magnitude estimates for water in glass:
+      // the surface deviation dies away over about one capillary length
+      // (2.7 mm for water at 20 degrees C), so a narrow bore gives a deep
+      // dip worth more than one graduation, a wide bore a shallow one.
+      // =====================================================================
+      var INSTR = {
+        cylinder: {
+          name: 'Graduated cylinder', unit: 'mL', liquid: true, dir: 1,
+          lo: 0.07, hi: 0.93, def: 1,
+          grads: [
+            { k: 1, cap: 1000, sag: 2.00, label: '1 L graduated cylinder, bore about 60 mm, marked every 10 mL.' },
+            { k: 0, cap: 100, sag: 0.70, label: '100 mL graduated cylinder, bore about 26 mm, marked every 1 mL.' },
+            { k: -1, cap: 10, sag: 0.12, label: '10 mL graduated cylinder, bore about 10.5 mm, marked every 0.1 mL.' }
+          ]
+        },
+        burette: {
+          name: 'Burette', unit: 'mL', liquid: true, dir: -1,
+          lo: 0.04, hi: 0.90, def: 1,
+          grads: [
+            { k: 0, cap: 50, sag: 0.13, label: 'A 50 mL burette with its marks coarsened to 1 mL. No real burette is this crude — it is here so you can see what a decade of marks is worth.' },
+            { k: -1, cap: 50, sag: 0.13, label: '50 mL class-A burette, bore about 11 mm, marked every 0.1 mL. Zero is at the TOP: the number tells you how much has been delivered.' }
+          ]
+        },
+        ruler: {
+          name: 'Ruler', unit: 'cm', liquid: false, dir: 1,
+          lo: 0.15, hi: 0.95, def: 1,
+          grads: [
+            { k: 0, cap: 30, sag: 0, label: 'A 30 cm scale marked in whole centimetres only.' },
+            { k: -1, cap: 30, sag: 0, label: 'An ordinary 30 cm ruler: marks every 0.1 cm, which is 1 mm.' }
+          ]
+        }
+      };
+
+      var state = {
+        instr: 'cylinder',
+        gradIdx: 1,
+        mag: 45,
+        trueVal: 42.63,
+        off: 0.12,
+        result: null,
+        attempts: 0, correct: 0, scored: false
+      };
+
+      var rand = Demo.rng(4242);
+
+      function I() { return INSTR[state.instr]; }
+      function G() { return I().grads[state.gradIdx]; }
+      function dOf() { return Math.pow(10, G().k); }          // graduation spacing
+      function uOf() { return Math.pow(10, G().k - 1); }      // the estimated place
+      function reqDec() { return Math.max(0, 1 - G().k); }    // decimals the reading must carry
+      function gradDec() { return Math.max(0, -G().k); }      // decimals to print a graduation label
+
+      // How many graduations the close-up shows. Never below 10.5, so a
+      // numbered mark (every 10th graduation) is always somewhere in view.
+      function spanTicks() { return Demo.lerp(17, 10.5, state.mag / 100); }
+      function spanOf() { return dOf() * spanTicks(); }
+
+      function placeName(x) {
+        var k = Math.round(Math.log10(x));
+        var m = {
+          '3': 'thousands place', '2': 'hundreds place', '1': 'tens place', '0': 'ones place',
+          '-1': 'tenths place', '-2': 'hundredths place', '-3': 'thousandths place',
+          '-4': 'ten-thousandths place', '-5': 'hundred-thousandths place',
+          '-6': 'millionths place'
+        };
+        return m[String(k)] || (Math.abs(k) + ' places out');
+      }
+
+      function refVal() { return Math.round(state.trueVal / uOf()) * uOf(); }
+      function refStr() { return Demo.fmt.dec(refVal(), reqDec()); }
+
+      function sigCount(s) {
+        s = String(s).replace('-', '').replace('.', '').replace(/^0+/, '');
+        return s.length || 1;
+      }
+
+      // ---------------------------------------------------------------- level
+      function setLevelFrac(frac) {
+        var g = G(), step = dOf() / 100;
+        var maxN = Math.round(g.cap / step);
+        var N = Math.round(Demo.clamp(frac, I().lo, I().hi) * maxN);
+        if (N % 10 === 5) N += 1;               // never sit exactly halfway between two estimated digits
+        state.trueVal = N * step;
+      }
+
+      function newReading() {
+        setLevelFrac(I().lo + rand() * (I().hi - I().lo));
+        state.off = (rand() - 0.5) * 0.62;      // keep the level off dead-centre
+        state.scored = false;
+        clearAnswer();
+      }
+
+      function clearAnswer() {
+        state.result = null;
+        document.getElementById('answer').value = '';
+        document.getElementById('answer').classList.remove('is-bad');
+        document.getElementById('fbWrap').style.display = 'none';
+      }
+
+      // =====================================================================
+      // Drawing
+      // =====================================================================
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      var view = Demo.canvas('#instr', function (ctx, w, h, c) {
+        var ins = I(), g = G(), d = dOf();
+        var padT = 14, padB = 14;
+        var y0 = padT, y1 = h - padB, drawH = y1 - y0, yMid = (y0 + y1) / 2;
+
+        // --- window on the scale -------------------------------------------
+        var span = spanOf();                      // instrument units in view
+        var pxPerUnit = drawH / span;
+
+        var center = g.cap <= span
+          ? g.cap / 2
+          : Demo.clamp(state.trueVal + state.off * span, span / 2, g.cap - span / 2);
+
+        function yOf(v) { return yMid - ins.dir * (v - center) * pxPerUnit; }
+        function physY(v) { var f = ins.dir > 0 ? v / g.cap : 1 - v / g.cap; return y1 - f * drawH; }
+
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'butt';
+
+        // --- horizontal layout: mini strip | numbers | instrument | notes ---
+        var tubeW = Math.min(150, Math.max(70, w * 0.30));
+        var bodyW = ins.liquid ? tubeW : (tubeW * 0.44 + 4 + tubeW * 0.52);
+        var groupW = 13 + 8 + 50 + 9 + bodyW + 10 + 150;
+        var ox = Math.max(0, (w - groupW) / 2);
+
+        // --- the whole instrument, in miniature ----------------------------
+        var miniX = 4 + ox, miniW = 13;
+        ctx.fillStyle = c.surface2;
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        rr(ctx, miniX, y0, miniW, drawH, 5);
+        ctx.fill(); ctx.stroke();
+
+        var yFill = physY(state.trueVal);
+        ctx.save();
+        rr(ctx, miniX, y0, miniW, drawH, 5); ctx.clip();
+        ctx.globalAlpha = 0.38;
+        ctx.fillStyle = ins.liquid ? c.accent : c.series[1];
+        ctx.fillRect(miniX, yFill, miniW, y1 - yFill);
+        ctx.globalAlpha = 1;
+        ctx.restore();
+
+        var ya = physY(center - span / 2), yb = physY(center + span / 2);
+        var wy0 = Math.min(ya, yb), wy1 = Math.max(ya, yb);
+        ctx.strokeStyle = c.accentStrong;
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(miniX - 2.5, wy0, miniW + 5, Math.max(3.5, wy1 - wy0));
+
+        // --- layout of the close-up ----------------------------------------
+        var labR = miniX + miniW + 8 + 50;              // right edge of the number column
+        var tubeX = labR + 9;
+        var scaleX, scaleW, tickDir, contentR, tk;
+
+        if (ins.liquid) {
+          scaleX = tubeX; scaleW = tubeW; tickDir = 1;  // ticks grow rightward off the left wall
+          tk = [0.58, 0.36, 0.21];
+          contentR = tubeX + tubeW;
+        } else {
+          scaleW = tubeW * 0.44;
+          scaleX = tubeX + scaleW;                      // measuring edge on the right
+          tickDir = -1;
+          tk = [0.86, 0.55, 0.32];
+          contentR = tubeX + scaleW + 4 + tubeW * 0.52;
+        }
+
+        // --- body of the instrument ----------------------------------------
+        ctx.save();
+        if (ins.liquid) {
+          ctx.fillStyle = c.surface2;
+          ctx.fillRect(tubeX, y0, tubeW, drawH);
+          ctx.beginPath(); ctx.rect(tubeX, y0, tubeW, drawH); ctx.clip();
+
+          // liquid, with the meniscus curving down to the reading
+          var yBot = yOf(state.trueVal);                 // bottom of the curve = the reading
+          var sagPx = g.sag * pxPerUnit;
+          var yWall = yBot - sagPx;
+          ctx.beginPath();
+          ctx.moveTo(tubeX, y1 + 4);
+          ctx.lineTo(tubeX, yWall);
+          meniscus(ctx, tubeX, tubeX + tubeW, yWall, sagPx);
+          ctx.lineTo(tubeX + tubeW, y1 + 4);
+          ctx.closePath();
+          ctx.globalAlpha = 0.30;
+          ctx.fillStyle = c.accent;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+
+          ctx.beginPath();
+          ctx.moveTo(tubeX, yWall);
+          meniscus(ctx, tubeX, tubeX + tubeW, yWall, sagPx);
+          ctx.strokeStyle = c.accentStrong;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          // ruler body
+          ctx.fillStyle = c.surface2;
+          ctx.fillRect(tubeX, y0, scaleW, drawH);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.strokeRect(tubeX + 0.5, y0, scaleW - 1, drawH);
+          // the rod being measured, standing on the zero mark
+          var rodX = tubeX + scaleW + 4, rodW = tubeW * 0.52;
+          var yTop = yOf(state.trueVal);
+          ctx.beginPath(); ctx.rect(tubeX, y0, contentR - tubeX, drawH); ctx.clip();
+          ctx.globalAlpha = 0.45;
+          ctx.fillStyle = c.series[1];
+          ctx.fillRect(rodX, yTop, rodW, y1 + 4 - yTop);
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = c.series[1]; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(rodX, yTop); ctx.lineTo(rodX + rodW, yTop); ctx.stroke();
+          ctx.restore();
+        }
+
+        // --- graduations ----------------------------------------------------
+        ctx.save();
+        ctx.beginPath(); ctx.rect(0, y0 - 1, w, drawH + 2); ctx.clip();
+
+        var nLo = Math.max(0, Math.ceil((center - span / 2) / d - 1e-9));
+        var nHi = Math.min(Math.round(g.cap / d), Math.floor((center + span / 2) / d + 1e-9));
+        if (nHi - nLo > 400) nHi = nLo + 400;
+
+        ctx.font = '600 11.5px Poppins, system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+
+        for (var n = nLo; n <= nHi; n++) {
+          var v = n * d, y = yOf(v);
+          var major = n % 10 === 0, med = n % 5 === 0;
+          var len = (major ? tk[0] : med ? tk[1] : tk[2]) * scaleW;
+          ctx.strokeStyle = major ? c.text : med ? c.text2 : c.muted;
+          ctx.lineWidth = major ? 1.6 : med ? 1.2 : 1;
+          ctx.beginPath();
+          ctx.moveTo(scaleX, y);
+          ctx.lineTo(scaleX + tickDir * len, y);
+          ctx.stroke();
+          if (major) {
+            ctx.fillStyle = c.text;
+            ctx.textAlign = 'right';
+            ctx.fillText(Demo.fmt.dec(v, gradDec()), labR, y);
+          }
+        }
+        ctx.restore();
+
+        // --- glass walls ----------------------------------------------------
+        if (ins.liquid) {
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(tubeX + 1, y0); ctx.lineTo(tubeX + 1, y1);
+          ctx.moveTo(tubeX + tubeW - 1, y0); ctx.lineTo(tubeX + tubeW - 1, y1);
+          ctx.stroke();
+        }
+
+        // --- after a check: where the answer was, and where it should be ----
+        var res = state.result;
+        if (res && res.marks) {
+          var annX = Math.min(contentR + 10, w - 6);
+          var lineA = tubeX - 6;
+          var yT = yOf(refVal());
+          var hasA = res.val != null && isFinite(res.val);
+          var yA = hasA ? Demo.clamp(yOf(res.val), y0 - 60, y1 + 60) : null;
+          // whichever mark is higher gets its caption above, so the two never collide
+          var sideA = (hasA && yA <= yT) ? -1 : 1;
+          if (hasA) {
+            drawMark(ctx, yOf(res.val), lineA, annX, y0, y1,
+              res.ok ? c.ok : c.bad, res.top ? 'you read the wall' : 'your reading',
+              Demo.fmt.dec(res.val, res.dec) + ' ' + ins.unit, sideA);
+          }
+          drawMark(ctx, yT, lineA, annX, y0, y1,
+            c.ok, 'correct reading', refStr() + ' ' + ins.unit, hasA ? -sideA : -1);
+        }
+      }, { aspect: 1.12, minHeight: 440, maxHeight: 600 });
+
+      function meniscus(ctx, xa, xb, yWall, sagPx) {
+        var steps = 26, xc = (xa + xb) / 2, half = (xb - xa) / 2;
+        for (var i = 1; i <= steps; i++) {
+          var x = xa + (xb - xa) * i / steps;
+          var t = (x - xc) / half;
+          var f = Math.pow(Math.max(0, 1 - t * t), 0.62);
+          ctx.lineTo(x, yWall + sagPx * f);
+        }
+      }
+
+      function drawMark(ctx, y, xa, xb, y0, y1, col, label, value, side) {
+        var clipped = y < y0 || y > y1;
+        var yy = Demo.clamp(y, y0 + 2, y1 - 2);
+        ctx.save();
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(xa, yy); ctx.lineTo(xb - 4, yy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = col;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = '600 10.5px Poppins, system-ui, sans-serif';
+        var labY = yy + (side < 0 ? -20 : 8);
+        var valY = yy + (side < 0 ? -8 : 20);
+        ctx.fillText(clipped ? (label + (y > y1 ? ' (below)' : ' (above)')) : label, xb, labY);
+        if (value) {
+          ctx.font = '600 12px Poppins, system-ui, sans-serif';
+          ctx.fillText(value, xb, valY);
+        }
+        ctx.restore();
+      }
+
+      // =====================================================================
+      // Grading — every threshold below is derived from the CURRENT
+      // graduation spacing d. Nothing here is a hard-coded digit count.
+      // =====================================================================
+      function derivation() {
+        var d = dOf(), u = uOf(), unit = I().unit, rd = reqDec();
+        return 'Marks every ' + Demo.fmt.dec(d, gradDec()) + ' ' + unit + ': certain to the ' +
+          placeName(d) + ', estimate the ' + placeName(u) + ' — so ' + rd +
+          (rd === 1 ? ' digit' : ' digits') + ' after the decimal point.';
+      }
+
+      function grade(raw) {
+        var ins = I(), g = G(), d = dOf(), u = uOf(), rd = reqDec(), unit = ins.unit;
+        var t = String(raw).replace(/[\s,]/g, '').replace(/(ml|l|cm|mm)$/i, '');
+
+        if (!t) return { cls: 'bad', head: 'Nothing typed.', body: 'Read the level off the scale and type the number.' };
+        if (!/^\d+(\.\d*)?$|^\.\d+$/.test(t))
+          return { cls: 'bad', head: 'That is not a plain number.', body: 'Type it as an ordinary decimal, for example ' + refStr() + ' — no units, no scientific notation.' };
+
+        var dot = t.indexOf('.');
+        var dec = dot < 0 ? 0 : t.length - dot - 1;
+        var val = parseFloat(t);
+        var marks = { marks: true, val: val, dec: dec };
+
+        if (val > g.cap + d)
+          return merge(marks, { cls: 'bad', head: 'That is off the instrument.', body: 'This one only runs from 0 to ' + Demo.fmt.dec(g.cap, gradDec()) + ' ' + unit + '.' });
+
+        // ---- failure mode 1: too few digits -------------------------------
+        if (dec < rd) {
+          var onMark = Math.abs(val / d - Math.round(val / d)) < 1e-9;
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'Too few digits — you threw information away.',
+            body: 'You wrote ' + t + ', which stops at the ' + placeName(Math.pow(10, -dec)) +
+              '. ' + (onMark
+                ? 'You rounded to the nearest mark. The level is not on a mark: the whole job is judging how far between two marks it sits.'
+                : 'The marks entitle you to one more digit than that, and leaving it off makes your measurement look worse than the instrument you used.') +
+              ' It should read ' + refStr() + ' ' + unit + '.'
+          });
+        }
+
+        // ---- failure mode 2: too many digits ------------------------------
+        if (dec > rd) {
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'Too many digits — invented precision.',
+            body: 'You wrote ' + t + ', which claims the ' + placeName(Math.pow(10, -dec)) +
+              '. Nothing on this scale can tell you that: you would be reporting a measurement you did not make. It should read ' +
+              refStr() + ' ' + unit + '.'
+          });
+        }
+
+        // ---- value ---------------------------------------------------------
+        var diffU = Math.round(val / u) - Math.round(state.trueVal / u);
+        var err = val - refVal();
+
+        if (diffU === 0) {
+          return merge(marks, {
+            cls: 'ok', ok: true,
+            head: 'Correct — ' + refStr() + ' ' + unit + '.',
+            body: 'That is ' + sigCount(refStr()) + ' significant figures, and the last one (' +
+              refStr().replace(/[^0-9]/g, '').slice(-1) + ') is the digit you estimated. It is uncertain by about ±' +
+              Demo.fmt.dec(u, rd) + ' ' + unit + ' — which is exactly why it is the last one you may write.' +
+              (rd === 0 && /0$/.test(refStr())
+                ? ' Careful: a written zero at the end of a whole number is ambiguous. Write ' +
+                  Demo.fmt.sci(refVal(), sigCount(refStr()) - 1) + ' ' + unit +
+                  ' and nobody has to guess how many digits you meant.'
+                : '')
+          });
+        }
+
+        if (Math.abs(diffU) <= 1) {
+          return merge(marks, {
+            cls: 'ok', ok: true,
+            head: 'Accepted — you wrote ' + t + ', I drew ' + refStr() + ' ' + unit + '.',
+            body: 'Your estimated digit is one step off mine. That is not an error: the last digit is the uncertain one, so ±1 in that place is the honest spread of two careful people reading the same glassware.'
+          });
+        }
+
+        // ---- failure mode 3: right digits, wrong graduation ---------------
+        var topVal = state.trueVal + ins.dir * g.sag;
+        if (ins.liquid && g.sag > 0 && Math.abs(val - topVal) <= u) {
+          return merge(marks, {
+            cls: 'bad', ok: false, top: true,
+            head: 'You read the top of the curve.',
+            body: 'Water is pulled up the glass at the walls, so its surface dips in the middle. The wall contact sits at about ' +
+              Demo.fmt.dec(topVal, rd) + ' ' + unit + ', the bottom of the dip at ' + refStr() + ' ' + unit +
+              ' — a gap of ' + Demo.fmt.dec(g.sag, Math.max(2, rd)) + ' ' + unit + ', about ' +
+              Demo.fmt.dec(g.sag / d, 1) + ' of a graduation on this instrument. For water, always read the bottom.'
+          });
+        }
+
+        if (ins.dir < 0 && Math.abs(val - (g.cap - state.trueVal)) <= u) {
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'You read the burette upside down.',
+            body: 'A burette is numbered from the top: 0.00 ' + unit + ' is at the tap-closed starting line and the numbers grow downward, because the reading tells you how much has been <em>delivered</em>. It reads ' +
+              refStr() + ' ' + unit + ', not ' + t + '.'
+          });
+        }
+
+        if (Math.abs(Math.abs(err) - d) <= u) {
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'Off by exactly one graduation.',
+            body: 'Your estimate of the fraction between marks was fine — you started counting from the wrong line. Find the nearest numbered mark and count the small marks from there. It reads ' +
+              refStr() + ' ' + unit + '.'
+          });
+        }
+
+        if (Math.abs(err) < d) {
+          var below = Math.floor(state.trueVal / d) * d;
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'Right pair of marks, poor estimate.',
+            body: 'You counted the graduations correctly — the level is between ' +
+              Demo.fmt.dec(below, gradDec()) + ' and ' + Demo.fmt.dec(below + d, gradDec()) + ' ' + unit +
+              ' — but your judgement of the fraction between them is off by ' +
+              Demo.fmt.dec(Math.abs(err) / u, 0) + ' tenths of a graduation. Get your eye level with the surface and split the gap into ten. It reads ' +
+              refStr() + ' ' + unit + '.'
+          });
+        }
+
+        if (Math.abs(Math.abs(err) - 10 * d) <= d) {
+          return merge(marks, {
+            cls: 'bad', ok: false,
+            head: 'Off by one numbered interval.',
+            body: 'You are a whole labelled block away. Check which number you read off the scale' +
+              (ins.dir < 0 ? ' — on a burette they increase downward.' : '.') + ' It reads ' +
+              refStr() + ' ' + unit + '.'
+          });
+        }
+
+        return merge(marks, {
+          cls: 'bad', ok: false,
+          head: 'Wrong graduation.',
+          body: 'You wrote ' + t + '; it reads ' + refStr() + ' ' + unit + ' — a gap of ' +
+            Demo.fmt.dec(Math.abs(err), rd) + ' ' + unit + ', about ' + Demo.fmt.dec(Math.abs(err) / d, 1) +
+            ' graduations. The digits were the right shape; the line you counted from was not.'
+        });
+      }
+
+      function merge(a, b) { for (var k in b) a[k] = b[k]; return a; }
+
+      // =====================================================================
+      // Wiring
+      // =====================================================================
+      var $ = function (id) { return document.getElementById(id); };
+
+      function refresh() {
+        var ins = I(), g = G(), d = dOf(), span = spanOf();
+        $('ansUnit').textContent = ins.unit;
+        $('gradOut').textContent = Demo.fmt.dec(d, gradDec()) + ' ' + ins.unit;
+        $('rGrad').innerHTML = Demo.fmt.dec(d, gradDec()) + '<span class="r-unit">' + ins.unit + '</span>';
+        $('rSpan').innerHTML = Demo.fmt.sig(span, 2) + '<span class="r-unit">' + ins.unit + '</span>';
+        $('magOut').textContent = Math.round(spanTicks()) + ' marks in view';
+        $('rScore').textContent = state.correct + ' / ' + state.attempts;
+        $('vessel').textContent = g.label;
+        $('fRange').textContent = '0 – ' + Demo.fmt.dec(g.cap, gradDec()) + ' ' + ins.unit;
+        $('fSagRow').style.display = ins.liquid ? '' : 'none';
+        $('fSag').textContent = Demo.fmt.dec(g.sag, 2) + ' ' + ins.unit +
+          ' (' + Demo.fmt.dec(g.sag / d, 1) + ' graduation' + (Math.abs(g.sag / d - 1) < 0.05 ? '' : 's') + ')';
+        $('nMeniscus').style.display = ins.liquid ? '' : 'none';
+        $('nRuler').style.display = ins.liquid ? 'none' : '';
+        $('stageLabel').textContent = ins.name + ' — marks every ' + Demo.fmt.dec(d, gradDec()) + ' ' + ins.unit;
+        $('caption').textContent = ins.liquid
+          ? 'Read the bottom of the curved surface. The thin bar on the far left is the whole instrument; the box marks the slice you are looking at.'
+          : 'Read the upper end of the rod; its lower end is exactly on the 0.0 cm mark. The thin bar on the far left is the whole ruler.';
+        view.redraw();
+      }
+
+      function showFeedback(res) {
+        var box = $('fb');
+        box.className = 'note' + (res.cls === 'ok' ? '' : ' bad');
+        box.innerHTML = '<span class="fb-head">' + res.head + '</span>' + res.body +
+          '<span class="fb-sub">' + derivation() + '</span>';
+        $('fbWrap').style.display = '';
+        $('answer').classList.toggle('is-bad', res.cls !== 'ok');
+      }
+
+      function doCheck() {
+        var res = grade($('answer').value);
+        state.result = res;
+        if (res.marks && !state.scored) {
+          state.scored = true;
+          state.attempts += 1;
+          if (res.ok) state.correct += 1;
+        }
+        showFeedback(res);
+        refresh();
+      }
+
+      $('check').addEventListener('click', doCheck);
+      $('answer').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); doCheck(); }
+      });
+      $('next').addEventListener('click', function () {
+        newReading();
+        refresh();
+        $('answer').focus();
+      });
+
+      // instrument
+      document.querySelectorAll('#instrSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#instrSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          state.instr = b.dataset.instr;
+          var gs = $('grad');
+          gs.max = String(I().grads.length - 1);
+          state.gradIdx = I().def;
+          gs.value = String(state.gradIdx);
+          $('gradHint').textContent = hintFor();
+          newReading();
+          refresh();
+        });
+      });
+
+      function hintFor() {
+        return I().liquid
+          ? 'Each step is a different piece of glassware. Finer marks mean one more digit you are entitled to write.'
+          : 'Each step is a different scale. Finer marks mean one more digit you are entitled to write.';
+      }
+
+      Demo.range('#grad', function (v) {
+        var idx = Demo.clamp(Math.round(v), 0, I().grads.length - 1);
+        if (idx === state.gradIdx) { refresh(); return; }
+        var frac = state.trueVal / G().cap;     // keep the physical level, re-round to the new marks
+        state.gradIdx = idx;
+        setLevelFrac(frac);
+        state.scored = false;
+        clearAnswer();
+        refresh();
+      });
+
+      Demo.range('#mag', function (v) {
+        state.mag = v;
+        refresh();
+      });
+
+      // first reading
+      newReading();
+      $('gradHint').textContent = hintFor();
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

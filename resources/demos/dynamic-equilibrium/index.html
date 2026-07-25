@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Dynamic Equilibrium | Dr. Andres Barboza</title>
+  <meta name="description" content="Watch a box of particles reach equilibrium: the forward and reverse rates become equal while the amounts of reactant and product stay stubbornly unequal.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: canvas captions, the A/B legend, the mix bar labels */
+    .viz-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 14px 0 8px;
+    }
+    .viz-label:first-of-type { margin-top: 0; }
+    .viz-label span { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 14px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 9px;
+    }
+    .legend i {
+      width: 16px;
+      height: 7px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .legend i.dashed {
+      background: none;
+      border-radius: 0;
+      height: 3px;
+    }
+
+    .mix-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .mix-labels b { font-weight: 600; }
+
+    .seg.tabs { margin-bottom: 14px; }
+    .rq { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .eqn {
+      font-size: 15px;
+      color: var(--text);
+      text-align: center;
+      letter-spacing: 0.02em;
+      padding: 2px 0 4px;
+    }
+    .eqn small { font-size: 11.5px; color: var(--muted); display: block; letter-spacing: 0; }
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Dynamic Equilibrium</h1>
+        <p class="demo-sub">Let the box run until the numbers stop changing. Then count the conversions. They never reach zero.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Equilibrium</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg tabs" id="tabs" role="tablist" aria-label="View">
+          <button role="tab" aria-selected="true" data-tab="particles" id="tabBtnP">Particles</button>
+          <button role="tab" aria-selected="false" data-tab="rates" id="tabBtnR">Two Rates, One Line</button>
+        </div>
+
+        <!-- ===== TAB 1 ===== -->
+        <div id="paneParticles">
+          <div class="viz-label">400 particles in one box <span>&mdash; every particle gets a coin flip each step</span></div>
+          <canvas id="box" role="img" aria-label="A box of particles, blue for A and orange for B, converting back and forth"></canvas>
+
+          <div class="bar" role="img" aria-label="Share of particles that are A versus B" style="margin-top:10px">
+            <span id="barA" style="background:var(--series-1); width:100%"></span>
+            <span id="barB" style="background:var(--series-2); width:0%"></span>
+          </div>
+          <div class="mix-labels">
+            <span><b id="lblA">A: 400</b> &nbsp;(<span id="lblApct">100%</span>)</span>
+            <span>(<span id="lblBpct">0%</span>)&nbsp; <b id="lblB">B: 0</b></span>
+          </div>
+
+          <div class="viz-label">Conversions per step <span>&mdash; how many particles actually flipped</span></div>
+          <canvas id="conv" role="img" aria-label="Plot of A to B and B to A conversions per step over time"></canvas>
+          <div class="legend">
+            <span><i style="background:var(--series-1)"></i>A &rarr; B this step</span>
+            <span><i style="background:var(--series-2)"></i>B &rarr; A this step</span>
+            <span><i class="dashed" id="lgPred"></i>predicted rate at equilibrium</span>
+          </div>
+
+          <p class="stage-caption">
+            Each step, every A particle gets one coin flip with a <em>k</em><sub>f</sub> chance of becoming B,
+            and every B gets one with a <em>k</em><sub>r</sub> chance of becoming A. A flash ring marks a
+            particle that just converted. Positions are only there to show the particles moving &mdash; in this
+            simplified model, where a particle sits does not change its chance of flipping.
+          </p>
+        </div>
+
+        <!-- ===== TAB 2 ===== -->
+        <div id="paneRates" hidden>
+          <div class="viz-label">Rate <span>&mdash; mol L&#8315;&#185; per step</span></div>
+          <canvas id="rate" role="img" aria-label="Plot of forward and reverse reaction rate against time, converging on one value"></canvas>
+
+          <div class="viz-label">Concentration <span>&mdash; mol L&#8315;&#185;</span></div>
+          <canvas id="conc" role="img" aria-label="Plot of concentration of A and B against time, plateauing at unequal values"></canvas>
+
+          <div class="legend">
+            <span><i style="background:var(--series-1)"></i>the A side: forward rate above, [A] below</span>
+            <span><i style="background:var(--series-2)"></i>the B side: reverse rate above, [B] below</span>
+            <span><i class="dashed" id="lgSolid"></i>solid = started from pure A</span>
+            <span><i class="dashed" id="lgDash"></i>dashed = started from pure B</span>
+          </div>
+
+          <p class="stage-caption" id="rateCap">
+            Same rule as the particle box, but averaged over so many molecules that the randomness disappears.
+            Total concentration is held at 1.00 mol L&#8315;&#185;. Watch the top plot collapse onto a single
+            line while the bottom plot settles at two different heights.
+          </p>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">The reaction</div>
+          <p class="eqn">A &#8652; B
+            <small>one particle in, one particle out &mdash; the simplest reversible reaction</small>
+          </p>
+          <hr class="sep" style="margin:10px 0 12px">
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="kf"><em>k</em><sub>f</sub> &nbsp;forward, A &rarr; B</label>
+                <span class="ctrl-value" id="kfOut">0.060</span>
+              </div>
+              <input type="range" id="kf" min="0.01" max="0.1" step="0.005" value="0.06">
+              <p class="ctrl-hint">Chance that any one A flips to B in a single step (units: per step).</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="kr"><em>k</em><sub>r</sub> &nbsp;reverse, B &rarr; A</label>
+                <span class="ctrl-value" id="krOut">0.020</span>
+              </div>
+              <input type="range" id="kr" min="0.01" max="0.1" step="0.005" value="0.02">
+              <p class="ctrl-hint">Chance that any one B flips back to A in a single step.</p>
+            </div>
+
+            <div class="readouts">
+              <div class="readout is-accent">
+                <div class="r-label">K = k<sub>f</sub> / k<sub>r</sub></div>
+                <div class="r-value" id="rK">3.00</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">[A] at eq.</div>
+                <div class="r-value" id="rAeq">0.250<span class="r-unit">M</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">[B] at eq.</div>
+                <div class="r-value" id="rBeq">0.750<span class="r-unit">M</span></div>
+              </div>
+            </div>
+            <p class="note warn" id="kOneNote" style="display:none">
+              <strong>You have set K = 1.</strong> This is the one special case where the amounts really do
+              come out equal. Move either slider so K is not 1 and the amounts separate again.
+            </p>
+          </div>
+        </div>
+
+        <!-- particle-tab controls -->
+        <div class="panel pane-p">
+          <div class="panel-title">The box</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="run">Pause</button>
+              <button class="btn" id="reset">Restart</button>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row"><span class="ctrl-label">Restart the box with</span></div>
+              <div class="seg" id="startSeg" role="tablist" aria-label="Starting mixture">
+                <button role="tab" aria-selected="true" data-start="A">All A</button>
+                <button role="tab" aria-selected="false" data-start="B">All B</button>
+                <button role="tab" aria-selected="false" data-start="H">Half each</button>
+              </div>
+              <p class="ctrl-hint">Whichever you pick, the box drifts to the same final ratio.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel pane-p">
+          <div class="panel-title">Live count</div>
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Step</div>
+              <div class="r-value" id="rStep">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">A particles</div>
+              <div class="r-value" id="rNA">400</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">B particles</div>
+              <div class="r-value" id="rNB">0</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">A &rarr; B / step</div>
+              <div class="r-value" id="rFwd">0.0</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">B &rarr; A / step</div>
+              <div class="r-value" id="rRev">0.0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Measured [B]/[A]</div>
+              <div class="r-value" id="rKobs">&mdash;</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" id="instHint">Conversion numbers are averaged over the last 40 steps.</p>
+          <hr class="sep" style="margin:11px 0">
+          <p class="note" id="pNote">Right now the forward count is far bigger than the reverse count, so the
+            amounts are still changing. That is <strong>not</strong> equilibrium yet.</p>
+        </div>
+
+        <!-- rates-tab controls -->
+        <div class="panel pane-r" hidden>
+          <div class="panel-title">Where the reaction starts</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn" id="fromA">Start from pure A</button>
+              <button class="btn" id="fromB">Start from pure B</button>
+            </div>
+            <button class="btn primary" id="fromBoth">Show both at once</button>
+            <p class="ctrl-hint">Pure A means 1.00 mol L&#8315;&#185; of reactant and no product. Pure B is the
+              exact opposite. Nothing else changes.</p>
+          </div>
+        </div>
+
+        <div class="panel pane-r" hidden>
+          <div class="panel-title">Where they end up</div>
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">K from pure A</div>
+              <div class="r-value" id="rKA">3.00</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">K from pure B</div>
+              <div class="r-value" id="rKB">3.00</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">k<sub>f</sub> / k<sub>r</sub></div>
+              <div class="r-value" id="rK2">3.00</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Rate at eq.</div>
+              <div class="r-value" id="rREq">0.0150</div>
+            </div>
+          </div>
+          <p class="ctrl-hint">Rate at equilibrium is the single value both rates land on, in
+            mol L&#8315;&#185; per step. Forward and reverse are equal to every digit shown.</p>
+          <hr class="sep" style="margin:11px 0">
+          <p class="note" id="proofNote"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>This is the easy case.</strong> A &#8652; B is one particle in, one particle out, and both
+            directions happen in a single step, so K = <em>k</em><sub>f</sub>/<em>k</em><sub>r</sub> exactly.
+            For a real reaction like N<sub>2</sub> + 3H<sub>2</sub> &#8652; 2NH<sub>3</sub>, the coefficients
+            become exponents in K and the rate laws are not that simple. What does carry over to every
+            reaction: at equilibrium the forward and reverse rates are equal, and the amounts usually are not.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear "the reaction has reached equilibrium" and conclude
+        one of two wrong things. Either the reaction has stopped, or there must now be equal amounts of
+        reactant and product. Both are false, and they are false for the same reason: equilibrium is a
+        statement about <strong>rates</strong>, not about amounts.
+      </p>
+      <p>
+        <strong>What to notice:</strong> with the default settings, the box settles at about 100 A and 300 B
+        &mdash; nowhere near equal. But the two conversion counters both sit near <strong>6 conversions per
+        step</strong>. Six A particles become B and six B particles become A during the same step, so the
+        totals do not move even though roughly a dozen molecules changed identity. That is what "dynamic"
+        means. Look at the box: particles are still flashing as they convert, forever.
+      </p>
+      <p>
+        <strong>Why the amounts are unequal:</strong> A flips three times as eagerly as B flips back
+        (<em>k</em><sub>f</sub> = 0.060, <em>k</em><sub>r</sub> = 0.020). The only way for a lazy reverse
+        reaction to keep up with an eager forward one is to have far more B molecules doing it. Equal rates,
+        unequal amounts &mdash; and the ratio it settles at is K = <em>k</em><sub>f</sub>/<em>k</em><sub>r</sub> = 3.
+      </p>
+      <p>
+        <strong>The second tab is the proof:</strong> start from pure reactant and start from pure product.
+        The concentration curves come from opposite directions and land on the same two heights, so both runs
+        report the same K. K belongs to the reaction, not to where you started it. Only the
+        <em>k</em> sliders can change K &mdash; and in the lab, only temperature changes those.
+      </p>
+      <p>
+        <strong>Where the model stops being true:</strong> the box holds 400 particles, so the counts jitter by
+        a few percent even at equilibrium; a real beaker holds around 10<sup>21</sup> molecules and the jitter
+        is invisible. Particle positions here are decoration &mdash; this model gives every particle the same
+        chance of flipping regardless of where it is or what it bumps into.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------------------------------------------------------
+      // MODEL
+      //   Discrete-time reversible first-order reaction  A <-> B.
+      //   Each step, every A converts with probability kf, every B with kr.
+      //   Mean-field update (exactly the expectation of the particle rule):
+      //     [A]t+1 = [A]t (1 - kf) + [B]t kr
+      //     [B]t+1 = [B]t (1 - kr) + [A]t kf
+      //   Steady state: kf[A] = kr[B]  =>  K = [B]/[A] = kf/kr
+      //     [A]eq = TOTAL * kr/(kf+kr),  [B]eq = TOTAL * kf/(kf+kr)
+      //     rate at eq = kf[A]eq = kr[B]eq = TOTAL * kf*kr/(kf+kr)
+      //   Relaxation: deviation decays by (1 - kf - kr) per step.
+      // ---------------------------------------------------------------
+      var N = 400;                 // particles in the box
+      var TOTAL = 1.00;            // mol/L represented by those N particles
+      var STEP_MS = 120;           // real milliseconds per simulation step
+      var SEED = 20260724;         // fixed seed -> reproducible runs
+      var WINDOW = 200;            // steps kept in the conversion plot
+      var AVG = 40;                // steps in the rolling conversion average
+
+      var S = {
+        kf: 0.06, kr: 0.02,
+        tab: 'particles',
+        mode: 'both',              // 'A' | 'B' | 'both' on tab 2
+        start: 'A',
+        step: 0, nA: N,
+        reveal: 0, revealing: false,
+        T: 150
+      };
+
+      var P = new Array(N);
+      var rand = Demo.rng(SEED);
+      var histF = [], histR = [], histA = [], hist0 = 0;
+      var acc = 0;
+      var runA = null, runB = null;
+
+      // ---------- derived quantities ----------
+      function Aeq() { return TOTAL * S.kr / (S.kf + S.kr); }
+      function Beq() { return TOTAL * S.kf / (S.kf + S.kr); }
+      function rEq() { return TOTAL * S.kf * S.kr / (S.kf + S.kr); }
+      function Kth() { return S.kf / S.kr; }
+
+      // ---------- particle box ----------
+      function resetSim(mode) {
+        rand = Demo.rng(SEED);
+        S.step = 0; S.nA = 0;
+        histF.length = 0; histR.length = 0; histA.length = 0; hist0 = 0; acc = 0;
+        for (var i = 0; i < N; i++) {
+          var sp = mode === 'A' ? 0 : mode === 'B' ? 1 : (i % 2);
+          var ang = rand() * Math.PI * 2;
+          var v = 0.055 + rand() * 0.05;          // box-widths per second
+          P[i] = { x: rand(), y: rand(), vx: Math.cos(ang) * v, vy: Math.sin(ang) * v, s: sp, f: 0 };
+          if (sp === 0) S.nA++;
+        }
+        histF.push(0); histR.push(0); histA.push(S.nA);
+      }
+
+      function stepOnce() {
+        var f = 0, r = 0;
+        for (var i = 0; i < N; i++) {
+          var p = P[i], u = rand();
+          if (p.s === 0) { if (u < S.kf) { p.s = 1; p.f = 1; f++; S.nA--; } }
+          else { if (u < S.kr) { p.s = 0; p.f = 1; r++; S.nA++; } }
+        }
+        S.step++;
+        histF.push(f); histR.push(r); histA.push(S.nA);
+        if (histF.length > WINDOW) { histF.shift(); histR.shift(); histA.shift(); hist0++; }
+      }
+
+      function move(dt, aspect) {
+        for (var i = 0; i < N; i++) {
+          var p = P[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt * aspect;
+          if (p.x < 0) { p.x = -p.x; p.vx = -p.vx; }
+          else if (p.x > 1) { p.x = 2 - p.x; p.vx = -p.vx; }
+          if (p.y < 0) { p.y = -p.y; p.vy = -p.vy; }
+          else if (p.y > 1) { p.y = 2 - p.y; p.vy = -p.vy; }
+          if (p.f > 0) p.f = Math.max(0, p.f - dt * 2.2);
+        }
+      }
+
+      // ---------- deterministic runs for tab 2 ----------
+      function computeRuns() {
+        // long enough that both starting points have converged to ~1e-6 of K
+        S.T = Demo.clamp(Math.round(14 / (S.kf + S.kr)), 70, 1400);
+        runA = integrate(TOTAL);
+        runB = integrate(0);
+      }
+
+      function integrate(a0) {
+        var A = a0, B = TOTAL - a0;
+        var o = { A: [], B: [], rf: [], rr: [] };
+        for (var t = 0; t <= S.T; t++) {
+          o.A.push(A); o.B.push(B);
+          o.rf.push(S.kf * A); o.rr.push(S.kr * B);
+          var na = A * (1 - S.kf) + B * S.kr;
+          var nb = B * (1 - S.kr) + A * S.kf;
+          A = na; B = nb;
+        }
+        return o;
+      }
+
+      // ---------- small drawing helpers ----------
+      function rrect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      // round up to a value that divides into 4 whole-ish ticks
+      function niceCeil4(v) {
+        return 4 * Math.max(1, Math.ceil(v / 4));
+      }
+
+      var FONT = 'px Poppins, system-ui, sans-serif';
+
+      // Draws the frame + gridlines; returns the plotting rectangle.
+      function axes(ctx, w, h, c, o) {
+        var fs = w < 380 ? 10 : 10.5;
+        var padL = w < 380 ? 40 : 46, padR = 12, padT = 12, padB = 22;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var i = 0; i <= o.yTicks; i++) {
+          var frac = i / o.yTicks;
+          var py = y0 - (y0 - y1) * frac;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted;
+          ctx.fillText(o.fmtY(o.yMax * frac), x0 - 5, py);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.fillStyle = c.muted; ctx.textBaseline = 'top';
+        ctx.textAlign = 'left'; ctx.fillText(String(o.xMin), x0, y0 + 5);
+        ctx.textAlign = 'right'; ctx.fillText(String(o.xMax), x1, y0 + 5);
+        ctx.textAlign = 'center'; ctx.fillText('time (steps)', (x0 + x1) / 2, y0 + 5);
+
+        return {
+          x0: x0, x1: x1, y0: y0, y1: y1, fs: fs,
+          X: function (t) { return x0 + (x1 - x0) * (t - o.xMin) / Math.max(1e-9, o.xMax - o.xMin); },
+          Y: function (v) { return y0 - (y0 - y1) * Demo.clamp(v / o.yMax, 0, 1); }
+        };
+      }
+
+      // dashed reference line — drawn under the data
+      function guideLine(ctx, a, c, v) {
+        var py = a.Y(v);
+        ctx.save();
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(a.x0, py); ctx.lineTo(a.x1, py); ctx.stroke();
+        ctx.restore();
+      }
+
+      // its label — drawn last, on an opaque chip so it survives on top of the curves
+      function guideLabel(ctx, a, c, v, label, above) {
+        var py = a.Y(v), ty = py + (above ? -3 : 3);
+        ctx.font = a.fs + FONT;
+        var tw = ctx.measureText(label).width;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(a.x1 - tw - 5, ty - (above ? a.fs + 2 : 1), tw + 7, a.fs + 3);
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = above ? 'bottom' : 'top';
+        ctx.fillText(label, a.x1 - 2, ty);
+      }
+
+      function poly(ctx, a, vals, i0, i1, color, dash, lw) {
+        if (i1 <= i0) return;
+        ctx.save();
+        ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
+        ctx.lineJoin = 'round';
+        ctx.setLineDash(dash || []);
+        ctx.beginPath();
+        for (var i = i0; i <= i1; i++) {
+          var px = a.X(i), py = a.Y(vals[i]);
+          i === i0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ---------- canvas: particle box ----------
+      var boxCv = Demo.canvas('#box', function (ctx, w, h, c) {
+        rrect(ctx, 0.5, 0.5, w - 1, h - 1, 10);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+
+        var r = Demo.clamp(w / 105, 2.4, 4.4);
+        var pad = r + 4;
+        var iw = w - 2 * pad, ih = h - 2 * pad;
+
+        for (var sp = 0; sp < 2; sp++) {
+          ctx.fillStyle = c.series[sp];
+          ctx.beginPath();
+          for (var i = 0; i < N; i++) {
+            var p = P[i];
+            if (p.s !== sp) continue;
+            var px = pad + p.x * iw, py = pad + p.y * ih;
+            ctx.moveTo(px + r, py);
+            ctx.arc(px, py, r, 0, 6.2832);
+          }
+          ctx.fill();
+        }
+
+        // flash ring on anything that just converted
+        ctx.strokeStyle = c.text; ctx.lineWidth = 1.3;
+        for (var j = 0; j < N; j++) {
+          var q = P[j];
+          if (q.f <= 0) continue;
+          ctx.globalAlpha = q.f * 0.8;
+          ctx.beginPath();
+          ctx.arc(pad + q.x * iw, pad + q.y * ih, r + 2 + (1 - q.f) * 4, 0, 6.2832);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }, { aspect: 0.58, minHeight: 200, maxHeight: 380 });
+
+      // ---------- canvas: conversions per step ----------
+      var convCv = Demo.canvas('#conv', function (ctx, w, h, c) {
+        var n = histF.length;
+        var span = Demo.clamp(n, 60, WINDOW);
+        var xMin = hist0, xMax = hist0 + span - 1;
+
+        var pred = N * rEq() / TOTAL;   // expected conversions per step at equilibrium
+        var top = pred;
+        for (var i = 0; i < n; i++) { if (histF[i] > top) top = histF[i]; if (histR[i] > top) top = histR[i]; }
+        var yMax = niceCeil4(top * 1.15);
+
+        var a = axes(ctx, w, h, c, {
+          xMin: xMin, xMax: xMax, yMax: yMax, yTicks: 4,
+          fmtY: function (v) { return Demo.fmt.dec(v, 0); }
+        });
+
+        guideLine(ctx, a, c, pred);
+
+        // histF[i] is the count for step hist0 + i
+        function trace(vals, color) {
+          ctx.save();
+          ctx.strokeStyle = color; ctx.lineWidth = 1.7; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (var i = 0; i < n; i++) {
+            var px = a.X(hist0 + i), py = a.Y(vals[i]);
+            i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+        trace(histF, c.series[0]);
+        trace(histR, c.series[1]);
+        guideLabel(ctx, a, c, pred, Demo.fmt.dec(pred, 1) + ' / step predicted', true);
+      }, { aspect: 0.30, minHeight: 120, maxHeight: 190 });
+
+      // ---------- canvas: rate plot ----------
+      var rateCv = Demo.canvas('#rate', function (ctx, w, h, c) {
+        // the largest rate that ever occurs is k * TOTAL at t = 0, so use it as the axis top
+        var yMax = Math.max(S.kf, S.kr) * TOTAL;
+        var a = axes(ctx, w, h, c, {
+          xMin: 0, xMax: S.T, yMax: yMax, yTicks: 4,
+          // small axes need a 4th decimal or the tick labels stop matching the gridlines
+          fmtY: function (v) { return Demo.fmt.dec(v, yMax < 0.03 ? 4 : 3); }
+        });
+        guideLine(ctx, a, c, rEq());
+
+        var i1 = Math.min(S.T, Math.floor(S.reveal));
+        if (S.mode !== 'B') {
+          poly(ctx, a, runA.rf, 0, i1, c.series[0], [], 2.1);
+          poly(ctx, a, runA.rr, 0, i1, c.series[1], [], 2.1);
+        }
+        if (S.mode !== 'A') {
+          poly(ctx, a, runB.rf, 0, i1, c.series[0], [5, 4], 2.1);
+          poly(ctx, a, runB.rr, 0, i1, c.series[1], [5, 4], 2.1);
+        }
+        guideLabel(ctx, a, c, rEq(), 'both rates end here: ' + Demo.fmt.dec(rEq(), 4) + ' M/step', true);
+      }, { aspect: 0.40, minHeight: 165, maxHeight: 260 });
+
+      // ---------- canvas: concentration plot ----------
+      var concCv = Demo.canvas('#conc', function (ctx, w, h, c) {
+        var a = axes(ctx, w, h, c, {
+          xMin: 0, xMax: S.T, yMax: TOTAL, yTicks: 4,
+          fmtY: function (v) { return Demo.fmt.dec(v, 2); }
+        });
+
+        // [A] and [B] are equal ONLY when K is exactly 1. Never round a near-1 K
+        // into "the amounts are equal" — that is the misconception this demo kills.
+        var same = Math.abs(Kth() - 1) < 1e-9;
+        guideLine(ctx, a, c, Aeq());
+        if (!same) guideLine(ctx, a, c, Beq());
+
+        var i1 = Math.min(S.T, Math.floor(S.reveal));
+        if (S.mode !== 'B') {
+          poly(ctx, a, runA.A, 0, i1, c.series[0], [], 2.1);
+          poly(ctx, a, runA.B, 0, i1, c.series[1], [], 2.1);
+        }
+        if (S.mode !== 'A') {
+          poly(ctx, a, runB.A, 0, i1, c.series[0], [5, 4], 2.1);
+          poly(ctx, a, runB.B, 0, i1, c.series[1], [5, 4], 2.1);
+        }
+
+        if (same) {
+          guideLabel(ctx, a, c, Aeq(), '[A] = [B] = ' + Demo.fmt.dec(Aeq(), 3) + ' M', true);
+        } else {
+          // labels go OUTWARD — below the lower line, above the upper one — so they
+          // stay legible even when K is close to 1 and the two lines nearly touch
+          guideLabel(ctx, a, c, Aeq(), '[A] eq = ' + Demo.fmt.dec(Aeq(), 3) + ' M', Aeq() > Beq());
+          guideLabel(ctx, a, c, Beq(), '[B] eq = ' + Demo.fmt.dec(Beq(), 3) + ' M', Beq() > Aeq());
+        }
+      }, { aspect: 0.40, minHeight: 165, maxHeight: 260 });
+
+      // ---------- readouts ----------
+      function mean(arr, k) {
+        var n = Math.min(k, arr.length), s = 0;
+        if (n === 0) return 0;
+        for (var i = arr.length - n; i < arr.length; i++) s += arr[i];
+        return s / n;
+      }
+
+      function updateParticleReadouts() {
+        var nB = N - S.nA;
+        var f = mean(histF, AVG), r = mean(histR, AVG);
+        document.getElementById('rStep').textContent = Demo.fmt.comma(S.step);
+        document.getElementById('rNA').textContent = S.nA;
+        document.getElementById('rNB').textContent = nB;
+        document.getElementById('rFwd').textContent = Demo.fmt.dec(f, 1);
+        document.getElementById('rRev').textContent = Demo.fmt.dec(r, 1);
+        var mA = mean(histA, 100);
+        document.getElementById('rKobs').textContent = mA > 0.5 ? Demo.fmt.dec((N - mA) / mA, 2) : '—';
+
+        var pa = S.nA / N;
+        document.getElementById('barA').style.width = (pa * 100) + '%';
+        document.getElementById('barB').style.width = ((1 - pa) * 100) + '%';
+        document.getElementById('lblA').textContent = 'A: ' + S.nA;
+        document.getElementById('lblB').textContent = 'B: ' + nB;
+        var pctA = Math.round(pa * 100);   // force the two to sum to 100
+        document.getElementById('lblApct').textContent = pctA + '%';
+        document.getElementById('lblBpct').textContent = (100 - pctA) + '%';
+
+        var last = histF.length - 1;
+        document.getElementById('instHint').textContent =
+          'Conversion counts are averaged over the last ' + AVG + ' steps, and [B]/[A] over the last 100. ' +
+          'This step alone: ' + (histF[last] | 0) + ' A→B, ' + (histR[last] | 0) + ' B→A.';
+
+        var note = document.getElementById('pNote');
+        if (S.step < 12) {
+          note.className = 'note';
+          note.innerHTML = 'Right now the forward count is far bigger than the reverse count, so the amounts ' +
+            'are still changing. That is <strong>not</strong> equilibrium yet.';
+        } else if (Math.abs(f - r) <= Math.max(1.0, 0.22 * Math.max(f, r))) {
+          note.className = 'note';
+          note.innerHTML = 'Equilibrium: about <strong>' + Demo.fmt.dec((f + r) / 2, 1) +
+            ' conversions each way per step</strong>, and they cancel. The counts of A and B hold steady at ' +
+            '<strong>unequal</strong> values &mdash; and the particles never stop converting. The two ' +
+            'conversion numbers still wobble by a few tenths because the box holds only ' + N + ' particles.';
+        } else {
+          note.className = 'note';
+          note.innerHTML = 'Still approaching equilibrium: the two conversion counts are not yet equal, ' +
+            'so the amounts are still shifting.';
+        }
+      }
+
+      function updateShared() {
+        var K = Kth();
+        document.getElementById('rK').textContent = Demo.fmt.dec(K, 2);
+        document.getElementById('rK2').textContent = Demo.fmt.dec(K, 2);
+        document.getElementById('rAeq').innerHTML = Demo.fmt.dec(Aeq(), 3) + '<span class="r-unit">M</span>';
+        document.getElementById('rBeq').innerHTML = Demo.fmt.dec(Beq(), 3) + '<span class="r-unit">M</span>';
+        document.getElementById('kOneNote').style.display = Math.abs(K - 1) < 1e-9 ? '' : 'none';
+
+        var KA = runA.B[S.T] / runA.A[S.T];
+        var KB = runB.B[S.T] / runB.A[S.T];
+        document.getElementById('rKA').textContent = Demo.fmt.dec(KA, 2);
+        document.getElementById('rKB').textContent = Demo.fmt.dec(KB, 2);
+        document.getElementById('rREq').textContent = Demo.fmt.dec(rEq(), 4);
+
+        // numerical self-check, reported on screen
+        var digits = -Math.log10(Math.max(Math.abs(KA - KB) / K, 1e-12));
+        document.getElementById('proofNote').innerHTML =
+          'Two opposite starting points, <strong>same K = ' + Demo.fmt.dec(K, 2) + '</strong> ' +
+          '(the two runs agree to ' + Math.floor(Demo.clamp(digits, 1, 9)) + ' significant figures). ' +
+          'K is fixed by <em>k</em><sub>f</sub>/<em>k</em><sub>r</sub> alone &mdash; move a slider and it moves; ' +
+          'change the starting mixture and it does not.';
+      }
+
+      // ---------- controls ----------
+      Demo.range('#kf', function (v) {
+        S.kf = v;
+        document.getElementById('kfOut').textContent = Demo.fmt.dec(v, 3);
+        onRates();
+      });
+      Demo.range('#kr', function (v) {
+        S.kr = v;
+        document.getElementById('krOut').textContent = Demo.fmt.dec(v, 3);
+        onRates();
+      });
+
+      function onRates() {
+        computeRuns();
+        S.reveal = S.T;          // sliders should feel instant; buttons animate
+        S.revealing = false;
+        updateShared();
+        if (S.tab === 'rates') { rateCv.redraw(); concCv.redraw(); }
+        else convCv.redraw();   // the predicted-rate guide line moves with the sliders
+      }
+
+      var runBtn = document.getElementById('run');
+      var sim = { running: true };
+      runBtn.addEventListener('click', function () {
+        sim.running = !sim.running;
+        runBtn.textContent = sim.running ? 'Pause' : 'Resume';
+      });
+
+      document.getElementById('reset').addEventListener('click', function () {
+        resetSim(S.start);
+        sim.running = true;
+        runBtn.textContent = 'Pause';
+        updateParticleReadouts();
+      });
+
+      document.querySelectorAll('#startSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#startSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          S.start = b.dataset.start;
+          resetSim(S.start);
+          sim.running = true;
+          runBtn.textContent = 'Pause';
+          updateParticleReadouts();
+        });
+      });
+
+      function playFrom(mode) {
+        S.mode = mode;
+        S.reveal = 0;
+        S.revealing = true;
+        document.getElementById('rateCap').innerHTML = mode === 'A'
+          ? 'Starting from <strong>pure A</strong>: the forward rate begins high and falls, the reverse rate begins at zero and climbs. They meet.'
+          : mode === 'B'
+            ? 'Starting from <strong>pure B</strong>: everything runs backwards at first &mdash; and still lands on exactly the same two concentrations.'
+            : 'Both runs together. <strong>Solid</strong> started as pure A, <strong>dashed</strong> as pure B. All four rate curves end on the same line &mdash; two of them happen to lie exactly on top of each other the whole way. Meanwhile the concentrations settle at two clearly different heights.';
+      }
+      document.getElementById('fromA').addEventListener('click', function () { playFrom('A'); });
+      document.getElementById('fromB').addEventListener('click', function () { playFrom('B'); });
+      document.getElementById('fromBoth').addEventListener('click', function () { playFrom('both'); });
+
+      // ---------- tabs ----------
+      function showTab(name) {
+        S.tab = name;
+        document.querySelectorAll('#tabs button').forEach(function (b) {
+          b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false');
+        });
+        document.getElementById('paneParticles').hidden = name !== 'particles';
+        document.getElementById('paneRates').hidden = name !== 'rates';
+        document.querySelectorAll('.pane-p').forEach(function (e) { e.hidden = name !== 'particles'; });
+        document.querySelectorAll('.pane-r').forEach(function (e) { e.hidden = name !== 'rates'; });
+        if (name === 'particles') { boxCv.resize(); convCv.resize(); }
+        else { rateCv.resize(); concCv.resize(); playFrom(S.mode); }
+      }
+      document.querySelectorAll('#tabs button').forEach(function (b) {
+        b.addEventListener('click', function () { showTab(b.dataset.tab); });
+      });
+
+      // ---------- main loop ----------
+      // Only the view that is actually changing gets repainted; a paused box or a
+      // finished reveal simply keeps its last frame.
+      Demo.loop(function (dt) {
+        if (S.tab === 'particles') {
+          if (!sim.running) return;
+          acc += dt * 1000;
+          var guard = 0, did = false;
+          while (acc >= STEP_MS && guard++ < 6) { acc -= STEP_MS; stepOnce(); did = true; }
+          if (did) updateParticleReadouts();
+          move(dt, boxCv.width / Math.max(1, boxCv.height));
+          boxCv.paint();
+          convCv.paint();
+        } else if (S.revealing) {
+          S.reveal += dt * (S.T / 4);
+          if (S.reveal >= S.T) { S.reveal = S.T; S.revealing = false; }
+          rateCv.paint();
+          concCv.paint();
+        }
+      }).start();
+
+      // ---------- legend line swatches (dashed vs solid) ----------
+      document.getElementById('lgSolid').style.background = 'var(--text-2)';
+      document.getElementById('lgDash').style.background =
+        'repeating-linear-gradient(90deg, var(--text-2) 0 5px, transparent 5px 9px)';
+      document.getElementById('lgPred').style.background =
+        'repeating-linear-gradient(90deg, var(--muted) 0 3px, transparent 3px 7px)';
+
+      // ---------- boot ----------
+      resetSim('A');
+      computeRuns();
+      S.reveal = S.T;
+      updateShared();
+      updateParticleReadouts();
+    })();
+  </script>
+</body>
+
+</html>

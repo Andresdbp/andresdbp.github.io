@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Allele Machine | Dr. Andres Barboza</title>
+  <meta name="description" content="Hardy-Weinberg as a null model and genetic drift as an ensemble: an infinite population where p never moves, and two hundred finite ones where every path is unpredictable but the average is not.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: tab strip, proportion legends, nested condition blocks */
+    .tabs { margin-bottom: 16px; }
+    .hide { display: none !important; }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.9em;
+      color: var(--text);
+    }
+    sub, sup { font-size: 0.72em; line-height: 0; }
+    sup { vertical-align: super; }
+    sub { vertical-align: sub; }
+
+    .bar-title {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .lg { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+    .lg-row {
+      display: grid;
+      grid-template-columns: 12px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12.5px;
+    }
+    .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+    .lg-name { color: var(--text-2); min-width: 0; }
+    .lg-val { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+    /* the slider that appears once a condition is switched off */
+    .sub {
+      margin-top: 9px;
+      margin-left: 3px;
+      padding-left: 11px;
+      border-left: 2px solid var(--accent-line);
+    }
+    .sub .ctrl + .ctrl { margin-top: 9px; }
+
+    .cond + .cond { margin-top: 12px; }
+    .fitline {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .kv { font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+    .kv strong { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Allele Machine</h1>
+        <p class="demo-sub">
+          Make the allele fully dominant, then make it rare. Watch how little the gene pool cares.
+        </p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 7: Natural Selection</span>
+          <span class="tag is-accent">Hardy&ndash;Weinberg &amp; drift</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="seg tabs" role="tablist" aria-label="Which model">
+      <button role="tab" id="tabBtnHW" aria-selected="true" aria-controls="tabHW" data-tab="hw">
+        Hardy&ndash;Weinberg
+      </button>
+      <button role="tab" id="tabBtnDr" aria-selected="false" aria-controls="tabDrift" data-tab="drift">
+        Genetic drift
+      </button>
+    </div>
+
+    <!-- =========================================================
+         TAB 1 — HARDY-WEINBERG (infinite, deterministic)
+         ========================================================= -->
+    <div class="demo-grid wide-controls" id="tabHW" role="tabpanel" aria-labelledby="tabBtnHW">
+
+      <div class="stage">
+        <canvas id="hwPlot" role="img"
+          aria-label="Top: allele frequency across generations. Bottom: stacked genotype frequencies."></canvas>
+        <p class="stage-caption" id="hwCap">Loading.</p>
+      </div>
+
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">One locus, two alleles</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="hwP">Starting frequency of A (p)</label>
+                <span class="ctrl-value" id="hwPOut">0.30</span>
+              </div>
+              <input type="range" id="hwP" min="0.01" max="0.99" step="0.01" value="0.30">
+              <p class="ctrl-hint">q, the frequency of a, is whatever is left over.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="hwH">Dominance of A (h)</label>
+                <span class="ctrl-value" id="hwHOut">1.00</span>
+              </div>
+              <input type="range" id="hwH" min="0" max="1" step="0.05" value="1">
+              <p class="ctrl-hint" id="hwHNote"></p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="hwG">Generations</label>
+                <span class="ctrl-value" id="hwGOut">60</span>
+              </div>
+              <input type="range" id="hwG" min="10" max="200" step="10" value="60">
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="hwPreRare">Rare dominant allele</button>
+              <button class="btn" id="hwPreCommon">Common recessive allele</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="hwBrokenTitle">Break a condition &mdash; 0 of 5 broken</div>
+          <div class="stack">
+
+            <!-- 1. selection -->
+            <div class="cond">
+              <label class="check"><input type="checkbox" id="cSel"> Natural selection</label>
+              <div class="sub hide" id="subSel">
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwS">Selection coefficient s</label>
+                    <span class="ctrl-value" id="hwSOut">0.20</span>
+                  </div>
+                  <input type="range" id="hwS" min="-1" max="1" step="0.05" value="0.20">
+                  <p class="fitline" id="hwFit"></p>
+                  <p class="ctrl-hint">
+                    Fitness is relative (the best genotype = 1.00) and dimensionless. Dominance decides
+                    where the heterozygote sits between the two homozygotes.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. mutation -->
+            <div class="cond">
+              <label class="check"><input type="checkbox" id="cMut"> Mutation</label>
+              <div class="sub hide" id="subMut">
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwMu">A &rarr; a rate &mu;</label>
+                    <span class="ctrl-value" id="hwMuOut">1.0 &times; 10&#8315;&#179;</span>
+                  </div>
+                  <input type="range" id="hwMu" min="0" max="0.01" step="0.0002" value="0.001">
+                  <p class="ctrl-hint">
+                    Per copy per generation. Real per-locus rates are roughly 10&#8315;&#8312; to 10&#8315;&#8309;;
+                    this slider runs far above that so the effect is visible at all on this timescale.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. migration -->
+            <div class="cond">
+              <label class="check"><input type="checkbox" id="cMig"> Migration (gene flow)</label>
+              <div class="sub hide" id="subMig">
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwM">Migrant fraction m</label>
+                    <span class="ctrl-value" id="hwMOut">0.10</span>
+                  </div>
+                  <input type="range" id="hwM" min="0" max="0.5" step="0.01" value="0.10">
+                </div>
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwPm">Frequency of A in the source</label>
+                    <span class="ctrl-value" id="hwPmOut">0.90</span>
+                  </div>
+                  <input type="range" id="hwPm" min="0" max="1" step="0.05" value="0.90">
+                  <p class="ctrl-hint">
+                    Each generation a fraction m of the gene copies is replaced by copies arriving from a
+                    large mainland population.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. non-random mating -->
+            <div class="cond">
+              <label class="check"><input type="checkbox" id="cMate"> Non-random mating</label>
+              <div class="sub hide" id="subMate">
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwF">Inbreeding coefficient F</label>
+                    <span class="ctrl-value" id="hwFOut">0.50</span>
+                  </div>
+                  <input type="range" id="hwF" min="0" max="1" step="0.05" value="0.50">
+                  <p class="ctrl-hint">
+                    0 = random mating, 1 = complete self-fertilisation. Heterozygotes shrink by a factor
+                    (1 &minus; F) and the missing ones are split evenly between the two homozygotes.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. finite population -->
+            <div class="cond">
+              <label class="check"><input type="checkbox" id="cFin"> Finite population size</label>
+              <div class="sub hide" id="subFin">
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="hwN">Population size N</label>
+                    <span class="ctrl-value" id="hwNOut">50</span>
+                  </div>
+                  <input type="range" id="hwN" min="0" max="26" step="1" value="13">
+                  <p class="ctrl-hint">
+                    N is the number of diploid individuals. The next generation is now a random draw of 2N
+                    gene copies from the gene pool &mdash; the only one of the five whose violation makes p
+                    wander with no direction at all. The draw treats gametes as uniting at random, so with
+                    strong inbreeding switched on as well this understates how fast p really wanders.
+                  </p>
+                </div>
+                <div class="btn-row" style="margin-top:9px">
+                  <button class="btn" id="hwResample">Draw again</button>
+                </div>
+              </div>
+            </div>
+
+            <hr class="sep" style="margin:4px 0">
+            <div class="btn-row">
+              <button class="btn primary" id="hwRestore">Restore all five conditions</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="hwOutTitle">After 60 generations</div>
+
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">p (freq. of A)</div>
+              <div class="r-value" id="roP">0.3000</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">q (freq. of a)</div>
+              <div class="r-value" id="roQ">0.7000</div>
+            </div>
+            <div class="readout is-ok" id="roDpBox">
+              <div class="r-label">Change in p</div>
+              <div class="r-value" id="roDp">0.0000</div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="bar-title">Genotype frequencies</div>
+          <div class="bar" id="genoBar">
+            <span style="background:var(--series-1)"></span>
+            <span style="background:var(--series-4)"></span>
+            <span style="background:var(--series-2)"></span>
+          </div>
+          <div class="lg" id="genoLg"></div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="bar-title">What you would actually see</div>
+          <div class="bar" id="phenoBar"></div>
+          <div class="lg" id="phenoLg"></div>
+
+          <hr class="sep" style="margin:13px 0">
+          <p class="note" id="hwNote"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =========================================================
+         TAB 2 — GENETIC DRIFT (200 finite replicates)
+         ========================================================= -->
+    <div class="demo-grid wide-controls hide" id="tabDrift" role="tabpanel" aria-labelledby="tabBtnDr">
+
+      <div class="stage">
+        <canvas id="drPlot" role="img"
+          aria-label="Top: 200 replicate allele-frequency trajectories. Bottom: mean heterozygosity against its predicted decay."></canvas>
+        <p class="stage-caption" id="drCap">Loading.</p>
+      </div>
+
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">200 identical populations, started together</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="drN">Population size N (each)</label>
+                <span class="ctrl-value" id="drNOut">25</span>
+              </div>
+              <input type="range" id="drN" min="0" max="26" step="1" value="10">
+              <p class="ctrl-hint" id="drNHint"></p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="drG">Generations</label>
+                <span class="ctrl-value" id="drGOut">120</span>
+              </div>
+              <input type="range" id="drG" min="20" max="500" step="20" value="120">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="drP">Starting frequency of A</label>
+                <span class="ctrl-value" id="drPOut">0.50</span>
+              </div>
+              <input type="range" id="drP" min="0.05" max="0.95" step="0.05" value="0.5">
+              <p class="ctrl-hint" id="drPHint"></p>
+            </div>
+
+            <label class="check"><input type="checkbox" id="drFollow" checked> Follow one population</label>
+
+            <div class="btn-row">
+              <button class="btn primary" id="drRun">Replay</button>
+              <button class="btn" id="drNew">New replicates</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title" id="drOutTitle">Where they ended up</div>
+          <div class="readouts">
+            <div class="readout is-ok">
+              <div class="r-label">Fixed at 1</div>
+              <div class="r-value" id="roFix">0</div>
+            </div>
+            <div class="readout is-bad">
+              <div class="r-label">Lost at 0</div>
+              <div class="r-value" id="roLost">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Still segregating</div>
+              <div class="r-value" id="roSeg">200</div>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+          <p class="kv" id="drFixLine"></p>
+
+          <hr class="sep" style="margin:13px 0">
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Mean heterozygosity</div>
+              <div class="r-value" id="roH">0.500</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Predicted</div>
+              <div class="r-value" id="roHp">0.500</div>
+            </div>
+          </div>
+          <p class="kv" style="margin-top:9px" id="drHLine"></p>
+
+          <hr class="sep" style="margin:13px 0">
+          <div class="readouts">
+            <div class="readout">
+              <div class="r-label">Mean p, all 200</div>
+              <div class="r-value" id="roMeanP">0.500</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Seed</div>
+              <div class="r-value" id="roSeed">1</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:8px">
+            Same seed, same 200 populations &mdash; every run here is reproducible.
+          </p>
+
+          <hr class="sep" style="margin:13px 0">
+          <p class="note" id="drNote"></p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception, part one:</strong> "dominant" gets stored as <em>stronger</em>, and
+        stronger gets stored as <em>should take over</em>. Press <strong>Rare dominant allele</strong>: A is
+        completely dominant and sits at 2%. Run it for two hundred generations. It is still at exactly 2%.
+        Now drag the dominance slider from top to bottom and watch what moves: the genotype bar does not
+        change by a thousandth, and the p line does not so much as flicker. The only thing that changes is
+        the bottom bar &mdash; who is <em>indistinguishable</em> from whom. Dominance is a statement about
+        the phenotype of a heterozygote. It says nothing about how many copies of the allele exist. The
+        Huntington's allele is dominant and rare; the allele that produces blue eyes is recessive and, in
+        much of northern Europe, the most common one at its locus.
+      </p>
+      <p>
+        <strong>The misconception, part two:</strong> students describe Hardy&ndash;Weinberg as something
+        populations <em>do</em> &mdash; "the population went into Hardy&ndash;Weinberg equilibrium." No
+        population does this. Hardy&ndash;Weinberg is the prediction of what happens when <em>nothing</em>
+        happens: it is a null model, deliberately built to be wrong, so that the size of its failure tells
+        you which force is at work. That is why this tab is an infinite population with exact arithmetic
+        rather than a simulation. Nothing here is noisy, so any movement in p is a force you switched on,
+        not a fluke.
+      </p>
+      <p>
+        <strong>Worth noticing in tab one:</strong> switch on <em>non-random mating</em> by itself. The
+        genotype frequencies leave Hardy&ndash;Weinberg immediately &mdash; heterozygotes collapse &mdash;
+        and yet the change in p stays exactly 0.0000. Choosing who mates with whom reshuffles the alleles
+        into different bodies; it does not add or remove copies from the gene pool. Four of the five broken
+        conditions change allele frequencies. That one, on its own, does not.
+      </p>
+      <p>
+        <strong>The misconception, part three:</strong> "drift is random, so anything can happen and nothing
+        is predictable" &mdash; and its partner, "drift only matters in tiny populations." Both are backwards.
+        Follow one population on the drift tab: its path really is unpredictable, and no amount of biology
+        will tell you where it ends. Then look at all two hundred at once. The fraction that ends up fixed at
+        1 lands on the starting frequency, give or take the few percent you would expect from counting only
+        two hundred of them &mdash; press <strong>New replicates</strong> a few times and watch it hover
+        there rather than wander off. The average heterozygosity falls along
+        H<sub>t</sub> = H<sub>0</sub>(1 &minus; 1/2N)<sup>t</sup> almost exactly. The individual is random;
+        the ensemble is a formula. And set N to 1000: heterozygosity still decays, just 1/2000 of it per
+        generation instead of 1/50. Big populations are not exempt from drift &mdash; they are slow.
+      </p>
+      <p>
+        <strong>Where this model stops being true:</strong> one locus, two alleles, separate non-overlapping
+        generations, a constant N, and only one force at a time on the Hardy&ndash;Weinberg tab. Real
+        populations run selection, drift, mutation and migration simultaneously at thousands of linked loci,
+        and the N that governs drift is the <em>effective</em> population size, which is usually a good deal
+        smaller than the number of individuals you could count &mdash; unequal family sizes, skewed sex
+        ratios and past bottlenecks all shrink it. Use these numbers for the shape of the relationships, not
+        as a prediction about a particular species.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var $ = function (id) { return document.getElementById(id); };
+
+      /* =========================================================
+         Random numbers: an exact binomial sampler
+         ---------------------------------------------------------
+         Wright-Fisher needs Binomial(2N, p) every generation. A
+         normal approximation would get the variance wrong exactly
+         where it matters (near 0 and 1, where fixation happens),
+         so this is exact:
+           small n*p  -> geometric-skip inversion, O(n*p)
+           large n*p  -> beta-splitting recursion (Devroye), O(log n)
+         Verified against the exact Wright-Fisher transition matrix.
+         ========================================================= */
+      function gammaSample(rand, k) {           // Marsaglia-Tsang, shape k >= 1
+        var d = k - 1 / 3, c = 1 / Math.sqrt(9 * d);
+        for (; ;) {
+          var x, v;
+          do { x = Demo.gauss(rand); v = 1 + c * x; } while (v <= 0);
+          v = v * v * v;
+          var u = rand();
+          if (u < 1 - 0.0331 * x * x * x * x) return d * v;
+          if (Math.log(u) < 0.5 * x * x + d * (1 - v + Math.log(v))) return d * v;
+        }
+      }
+      function betaSample(rand, a, b) {
+        var x = gammaSample(rand, a), y = gammaSample(rand, b);
+        return x / (x + y);
+      }
+      function binomial(rand, n, p) {
+        if (n <= 0 || p <= 0) return 0;
+        if (p >= 1) return n;
+        if (p > 0.5) return n - binomial(rand, n, 1 - p);
+        if (n * p < 30) {
+          var x = 0, k = 0, lq = Math.log(1 - p);
+          for (; ;) {
+            var g = Math.floor(Math.log(rand()) / lq);   // failures before next success
+            k += g + 1;
+            if (k > n) return x;
+            x++;
+          }
+        }
+        var a = 1 + (n >> 1), b = n - a + 1;
+        var X = betaSample(rand, a, b);
+        if (X >= p) return binomial(rand, a - 1, p / X);
+        return a + binomial(rand, b - 1, (p - X) / (1 - X));
+      }
+      function seedRand(s) { return Demo.rng(((s * 2654435761) >>> 0) || 1); }
+
+      /* round population sizes to numbers a student can say out loud */
+      var NLIST = [5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 25, 30, 40, 50, 60, 80, 100,
+                   125, 150, 200, 250, 300, 400, 500, 650, 800, 1000];
+
+      var C = Demo.colors();
+      Demo.onTheme(function () { C = Demo.colors(); });
+
+      /* =========================================================
+         TAB 1 — HARDY-WEINBERG
+         An INFINITE population: every step is exact arithmetic.
+         With all five conditions met the update returns p itself,
+         bit for bit, so the line is flat by construction.
+         ========================================================= */
+      var hw = {
+        p0: 0.30, h: 1, G: 60,
+        sel: false, s: 0.20,
+        mut: false, mu: 0.001,
+        mig: false, m: 0.10, pm: 0.90,
+        mate: false, F: 0.50,
+        fin: false, nIdx: 13, seed: 1,
+        P: null, AA: null, Aa: null, aa: null
+      };
+
+      function fitness(h, s) {
+        // relative fitness; the phenotype scale runs aa = 0, Aa = h, AA = 1
+        if (s >= 0) return { AA: 1, Aa: 1 - s * (1 - h), aa: 1 - s };   // selection against a
+        var g = -s;
+        return { AA: 1 - g, Aa: 1 - g * h, aa: 1 };                     // selection against A
+      }
+
+      function hwGenotypes(p) {
+        var q = 1 - p, F = hw.mate ? hw.F : 0;
+        return {
+          AA: p * p + F * p * q,
+          Aa: 2 * p * q * (1 - F),
+          aa: q * q + F * p * q
+        };
+      }
+
+      function hwCompute() {
+        var G = hw.G, N = NLIST[hw.nIdx];
+        var P = new Float64Array(G + 1),
+            AA = new Float64Array(G + 1),
+            Aa = new Float64Array(G + 1),
+            aa = new Float64Array(G + 1);
+        var rand = seedRand(hw.seed);
+        var p = hw.p0;
+
+        for (var t = 0; t <= G; t++) {
+          var g = hwGenotypes(p);
+          P[t] = p; AA[t] = g.AA; Aa[t] = g.Aa; aa[t] = g.aa;
+          if (t === G) break;
+
+          var pn = p;
+
+          // 1. selection on the zygotes just formed
+          if (hw.sel && hw.s !== 0) {
+            var w = fitness(hw.h, hw.s);
+            var sAA = g.AA * w.AA, sAa = g.Aa * w.Aa, saa = g.aa * w.aa;
+            var wbar = sAA + sAa + saa;
+            pn = wbar > 0 ? (sAA + sAa / 2) / wbar : pn;
+          }
+          // 2. mutation A -> a
+          if (hw.mut && hw.mu > 0) pn = pn * (1 - hw.mu);
+          // 3. migration from a large source population
+          if (hw.mig && hw.m > 0) pn = (1 - hw.m) * pn + hw.m * hw.pm;
+          // 4. finite sampling of 2N gene copies
+          if (hw.fin) pn = binomial(rand, 2 * N, pn) / (2 * N);
+
+          p = pn;
+        }
+        hw.P = P; hw.AA = AA; hw.Aa = Aa; hw.aa = aa;
+      }
+
+      /* A ticked checkbox whose slider is parked at the neutral value (s = 0,
+         mu = 0, m = 0, F = 0) is not actually breaking anything, so the counter
+         and every sentence below key off these EFFECTIVE flags, not the boxes. */
+      function hwBroken() {
+        var e = {
+          sel: hw.sel && hw.s !== 0,
+          mut: hw.mut && hw.mu > 0,
+          mig: hw.mig && hw.m > 0,
+          mate: hw.mate && hw.F > 0,
+          fin: hw.fin
+        };
+        e.n = (e.sel ? 1 : 0) + (e.mut ? 1 : 0) + (e.mig ? 1 : 0) +
+              (e.mate ? 1 : 0) + (e.fin ? 1 : 0);
+        return e;
+      }
+
+      /* ---------- drawing ---------- */
+      function hwGeom(w, h) {
+        var padL = 40, padR = 12, padT = 18, padB = 24, gap = 28;
+        var inner = h - padT - padB - gap;
+        var aH = inner * 0.56, bH = inner - aH;
+        return {
+          x0: padL, x1: w - padR,
+          aTop: padT, aBot: padT + aH,
+          bTop: padT + aH + gap, bBot: padT + aH + gap + bH
+        };
+      }
+
+      var hwPlot = Demo.canvas('#hwPlot', function (ctx, w, h, c) {
+        if (!hw.P) return;
+        var G = hw.G, g = hwGeom(w, h);
+        var X = function (t) { return g.x0 + (g.x1 - g.x0) * (t / G); };
+        var YA = function (v) { return g.aBot - v * (g.aBot - g.aTop); };
+        var YB = function (v) { return g.bBot - v * (g.bBot - g.bTop); };
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+        ctx.lineJoin = 'round';
+
+        // ---- gridlines + y labels for both panels ----
+        var ticks = [0, 0.25, 0.5, 0.75, 1];
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var i = 0; i < ticks.length; i++) {
+          var v = ticks[i], show = (v === 0 || v === 0.5 || v === 1);
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(g.x0, YA(v)); ctx.lineTo(g.x1, YA(v)); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(g.x0, YB(v)); ctx.lineTo(g.x1, YB(v)); ctx.stroke();
+          if (show) {
+            ctx.fillStyle = c.muted;
+            ctx.fillText(v.toFixed(1), g.x0 - 6, YA(v));
+            ctx.fillText(v.toFixed(1), g.x0 - 6, YB(v));
+          }
+        }
+
+        // ---- panel B: stacked genotype frequencies ----
+        var bands = [
+          { arr: hw.AA, col: c.series[0], key: 'AA' },
+          { arr: hw.Aa, col: c.series[3], key: 'Aa' },
+          { arr: hw.aa, col: c.series[1], key: 'aa' }
+        ];
+        var lower = new Float64Array(G + 1);
+        ctx.globalAlpha = 0.72;
+        for (var b = 0; b < 3; b++) {
+          var arr = bands[b].arr;
+          ctx.fillStyle = bands[b].col;
+          ctx.beginPath();
+          ctx.moveTo(X(0), YB(lower[0]));
+          for (var t = 0; t <= G; t++) ctx.lineTo(X(t), YB(lower[t] + arr[t]));
+          for (var t2 = G; t2 >= 0; t2--) ctx.lineTo(X(t2), YB(lower[t2]));
+          ctx.closePath(); ctx.fill();
+          for (var t3 = 0; t3 <= G; t3++) lower[t3] += arr[t3];
+        }
+        ctx.globalAlpha = 1;
+
+        // band labels, only where the band is thick enough to hold text
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        var run = 0;
+        for (var b2 = 0; b2 < 3; b2++) {
+          var v0 = run, v1 = run + bands[b2].arr[G];
+          run = v1;
+          if ((v1 - v0) * (g.bBot - g.bTop) > 15) {
+            ctx.fillStyle = c.text;
+            ctx.fillText(bands[b2].key, g.x1 - 5, YB((v0 + v1) / 2));
+          }
+        }
+
+        // ---- panel A: p and q over time ----
+        ctx.strokeStyle = c.muted; ctx.globalAlpha = 0.55; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(g.x0, YA(hw.P[0])); ctx.lineTo(g.x1, YA(hw.P[0])); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+        function line(fn, col, wd) {
+          ctx.strokeStyle = col; ctx.lineWidth = wd;
+          ctx.beginPath();
+          for (var t = 0; t <= G; t++) {
+            var px = X(t), py = YA(fn(t));
+            t === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        line(function (t) { return 1 - hw.P[t]; }, c.series[1], 1.8);
+        line(function (t) { return hw.P[t]; }, c.accentStrong, 2.4);
+
+        // ---- axis lines ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(g.x0, g.aTop); ctx.lineTo(g.x0, g.aBot); ctx.lineTo(g.x1, g.aBot);
+        ctx.moveTo(g.x0, g.bTop); ctx.lineTo(g.x0, g.bBot); ctx.lineTo(g.x1, g.bBot);
+        ctx.stroke();
+
+        // ---- titles + legend ----
+        ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('Allele frequency', g.x0, g.aTop - 5);
+        ctx.fillText('Genotype frequencies (always sum to 1)', g.x0, g.bTop - 5);
+
+        var lx = g.x1, ly = g.aTop - 5;
+        ctx.textAlign = 'right';
+        ctx.fillStyle = c.series[1]; ctx.fillText('q (a)', lx, ly);
+        var qw = ctx.measureText('q (a)').width;
+        ctx.fillStyle = c.accentStrong; ctx.fillText('p (A)', lx - qw - 10, ly);
+
+        // ---- x axis ----
+        ctx.fillStyle = c.muted; ctx.textBaseline = 'top';
+        ctx.textAlign = 'left'; ctx.fillText('0', g.x0, g.bBot + 6);
+        ctx.textAlign = 'right'; ctx.fillText(String(G), g.x1, g.bBot + 6);
+        ctx.textAlign = 'center';
+        ctx.fillText('generation', (g.x0 + g.x1) / 2, g.bBot + 6);
+      }, { aspect: 0.6, minHeight: 300, maxHeight: 430 });
+
+      /* ---------- readouts ---------- */
+      function swatch(col) { return '<span class="sw" style="background:' + col + '"></span>'; }
+      function lgRow(col, name, val) {
+        return '<div class="lg-row">' + swatch(col) +
+          '<span class="lg-name">' + name + '</span>' +
+          '<span class="lg-val">' + val + '</span></div>';
+      }
+
+      function domWord(h) {
+        if (h === 1) return 'A completely dominant &mdash; Aa looks exactly like AA';
+        if (h === 0) return 'A completely recessive &mdash; Aa looks exactly like aa';
+        if (h === 0.5) return 'no dominance &mdash; Aa sits halfway between the homozygotes';
+        if (h > 0.5) return 'A partly dominant &mdash; Aa leans towards AA';
+        return 'A partly recessive &mdash; Aa leans towards aa';
+      }
+
+      function hwRender() {
+        var G = hw.G, pEnd = hw.P[G], dp = pEnd - hw.P[0];
+        var gEnd = { AA: hw.AA[G], Aa: hw.Aa[G], aa: hw.aa[G] };
+
+        $('hwOutTitle').textContent = 'After ' + G + ' generation' + (G === 1 ? '' : 's');
+        $('roP').textContent = Demo.fmt.dec(pEnd, 4);
+        $('roQ').textContent = Demo.fmt.dec(1 - pEnd, 4);
+        $('roDp').textContent = (dp > 0 ? '+' : dp < 0 ? '−' : '') + Demo.fmt.dec(Math.abs(dp), 4);
+        $('roDpBox').className = 'readout ' + (Math.abs(dp) < 5e-5 ? 'is-ok' : 'is-bad');
+
+        // genotype bar
+        var bar = $('genoBar').children;
+        bar[0].style.width = (gEnd.AA * 100) + '%';
+        bar[1].style.width = (gEnd.Aa * 100) + '%';
+        bar[2].style.width = (gEnd.aa * 100) + '%';
+        // CSS variables, so the swatches re-colour themselves when the theme flips
+        var s1 = 'var(--series-1)', s2 = 'var(--series-2)', s4 = 'var(--series-4)';
+        $('genoLg').innerHTML =
+          lgRow(s1, 'AA', Demo.fmt.pct(gEnd.AA, 2)) +
+          lgRow(s4, 'Aa', Demo.fmt.pct(gEnd.Aa, 2)) +
+          lgRow(s2, 'aa', Demo.fmt.pct(gEnd.aa, 2));
+
+        // phenotype bar — the only thing dominance touches
+        var classes;
+        if (hw.h === 1) {
+          classes = [
+            { c: s1, n: 'A trait (AA and Aa together)', v: gEnd.AA + gEnd.Aa },
+            { c: s2, n: 'a trait (aa only)', v: gEnd.aa }
+          ];
+        } else if (hw.h === 0) {
+          classes = [
+            { c: s1, n: 'A trait (AA only)', v: gEnd.AA },
+            { c: s2, n: 'a trait (Aa and aa together)', v: gEnd.Aa + gEnd.aa }
+          ];
+        } else {
+          classes = [
+            { c: s1, n: 'AA type', v: gEnd.AA },
+            { c: s4, n: 'intermediate (Aa)', v: gEnd.Aa },
+            { c: s2, n: 'aa type', v: gEnd.aa }
+          ];
+        }
+        var pb = '', pl = '';
+        for (var i = 0; i < classes.length; i++) {
+          pb += '<span style="background:' + classes[i].c + ';width:' + (classes[i].v * 100) + '%"></span>';
+          pl += lgRow(classes[i].c, classes[i].n, Demo.fmt.pct(classes[i].v, 2));
+        }
+        $('phenoBar').innerHTML = pb;
+        $('phenoLg').innerHTML = pl;
+
+        // fitness line
+        if (hw.sel) {
+          var w = fitness(hw.h, hw.s);
+          $('hwFit').innerHTML = 'Relative fitness &mdash; AA ' + Demo.fmt.dec(w.AA, 2) +
+            ' &middot; Aa ' + Demo.fmt.dec(w.Aa, 2) + ' &middot; aa ' + Demo.fmt.dec(w.aa, 2);
+        }
+
+        // dominance hint — honest about the one place h does more than looks
+        $('hwHNote').innerHTML = domWord(hw.h) + '. ' + (hw.sel && hw.s !== 0
+          ? 'With selection switched on it also sets the heterozygote&rsquo;s fitness, which is why a ' +
+            'recessive allele is so hard to remove. On its own it still changes nothing about the gene pool.'
+          : 'This changes how heterozygotes look, and nothing else: p, q and all three genotype ' +
+            'frequencies are identical at every setting.');
+
+        // panel title + note
+        var e = hwBroken(), nb = e.n;
+        $('hwBrokenTitle').innerHTML = 'Break a condition &mdash; ' + nb + ' of 5 broken';
+
+        var note;
+        if (nb === 0) {
+          note = '<strong>All five conditions hold, so nothing can change the gene pool.</strong> ' +
+            'p is the same in generation ' + G + ' as in generation 0, to every decimal place the ' +
+            'arithmetic has. Move the dominance slider anywhere you like: the top line and the genotype ' +
+            'bands do not move, only the bottom bar does.';
+        } else if (nb === 1 && e.mate) {
+          note = '<strong>Non-random mating broke the genotype frequencies but not the allele ' +
+            'frequencies.</strong> Heterozygotes fell to ' + Demo.fmt.pct(gEnd.Aa, 1) + ' instead of the ' +
+            Demo.fmt.pct(2 * pEnd * (1 - pEnd), 1) + ' Hardy&ndash;Weinberg predicts &mdash; and yet the ' +
+            'change in p is exactly zero. Choosing partners moves alleles into different bodies; it does ' +
+            'not create or destroy copies.';
+        } else if (nb === 1 && e.fin) {
+          note = '<strong>A finite population wanders with no direction.</strong> Press ' +
+            '<em>Draw again</em>: same starting p, same N, a different path every time. Nothing is ' +
+            'pushing it &mdash; this is sampling error, generation after generation. The drift tab runs ' +
+            '200 of these at once.';
+        } else if (nb === 1 && e.sel) {
+          var against = hw.s > 0 ? 'a' : 'A';
+          note = '<strong>Selection is the only force acting, and it is acting against ' + against +
+            '.</strong> Notice that how fast it works depends on dominance: a fully recessive allele hides ' +
+            'inside heterozygotes where selection cannot see it, so the last few percent take an ' +
+            'enormous number of generations.';
+        } else if (nb === 1 && e.mut) {
+          note = '<strong>Mutation alone is astonishingly slow.</strong> Even at &mu; = ' +
+            Demo.fmt.sci(hw.mu, 1) + ', far above any real per-locus rate, p moved by only ' +
+            Demo.fmt.dec(Math.abs(dp), 4) + ' in ' + G + ' generations. Mutation supplies the variation ' +
+            'everything else acts on; it almost never drives frequency change by itself.';
+        } else if (nb === 1 && e.mig) {
+          note = '<strong>Gene flow drags p towards the source population</strong> at frequency ' +
+            Demo.fmt.dec(hw.pm, 2) + '. Whatever gap is left shrinks to ' + Demo.fmt.dec(1 - hw.m, 2) +
+            ' of itself every generation, so it is the fastest of the five at homogenising two populations.';
+        } else {
+          note = '<strong>' + nb + ' conditions broken.</strong> p moved from ' +
+            Demo.fmt.dec(hw.P[0], 4) + ' to ' + Demo.fmt.dec(pEnd, 4) + '. The point of the null model ' +
+            'is exactly this: the size of the departure tells you how hard the forces are pushing.';
+        }
+        $('hwNote').innerHTML = note;
+
+        $('hwCap').innerHTML = 'Infinite population, exact arithmetic &mdash; no sampling noise anywhere ' +
+          'unless you switch on <em>finite population size</em>. Dashed line marks the starting p.';
+
+        hwPlot.redraw();
+      }
+
+      function hwRefresh() { hwCompute(); hwRender(); }
+
+      /* ---------- tab 1 wiring ---------- */
+      var booting = true;
+      function poke() { if (!booting) hwRefresh(); }
+
+      Demo.range('#hwP', function (v) {
+        hw.p0 = v; $('hwPOut').textContent = Demo.fmt.dec(v, 2); poke();
+      });
+      Demo.range('#hwH', function (v) {
+        hw.h = v; $('hwHOut').textContent = Demo.fmt.dec(v, 2);
+        poke();   // hwRender() writes #hwHNote — it depends on the selection state too
+      });
+      Demo.range('#hwG', function (v) { hw.G = v; $('hwGOut').textContent = String(v); poke(); });
+      Demo.range('#hwS', function (v) {
+        hw.s = v;
+        $('hwSOut').innerHTML = v === 0 ? 'none'
+          : Demo.fmt.dec(Math.abs(v), 2) + ' against ' + (v > 0 ? 'a' : 'A');
+        poke();
+      });
+      Demo.range('#hwMu', function (v) {
+        hw.mu = v;
+        $('hwMuOut').innerHTML = v === 0 ? '0' : Demo.fmt.sci(v, 1);
+        poke();
+      });
+      Demo.range('#hwM', function (v) { hw.m = v; $('hwMOut').textContent = Demo.fmt.dec(v, 2); poke(); });
+      Demo.range('#hwPm', function (v) { hw.pm = v; $('hwPmOut').textContent = Demo.fmt.dec(v, 2); poke(); });
+      Demo.range('#hwF', function (v) { hw.F = v; $('hwFOut').textContent = Demo.fmt.dec(v, 2); poke(); });
+      Demo.range('#hwN', function (v) {
+        hw.nIdx = Math.round(v);
+        $('hwNOut').textContent = Demo.fmt.comma(NLIST[hw.nIdx]);
+        poke();
+      });
+
+      function condition(boxId, subId, key) {
+        var box = $(boxId);
+        box.addEventListener('change', function () {
+          hw[key] = box.checked;
+          $(subId).classList.toggle('hide', !box.checked);
+          poke();
+        });
+      }
+      condition('cSel', 'subSel', 'sel');
+      condition('cMut', 'subMut', 'mut');
+      condition('cMig', 'subMig', 'mig');
+      condition('cMate', 'subMate', 'mate');
+      condition('cFin', 'subFin', 'fin');
+
+      $('hwResample').addEventListener('click', function () { hw.seed++; hwRefresh(); });
+
+      $('hwRestore').addEventListener('click', function () {
+        ['cSel', 'cMut', 'cMig', 'cMate', 'cFin'].forEach(function (id) { $(id).checked = false; });
+        ['subSel', 'subMut', 'subMig', 'subMate', 'subFin'].forEach(function (id) {
+          $(id).classList.add('hide');
+        });
+        hw.sel = hw.mut = hw.mig = hw.mate = hw.fin = false;
+        hwRefresh();
+      });
+
+      $('hwPreRare').addEventListener('click', function () {
+        $('hwRestore').click();
+        $('hwP').value = 0.02; $('hwP').dispatchEvent(new Event('input'));
+        $('hwH').value = 1; $('hwH').dispatchEvent(new Event('input'));
+      });
+      $('hwPreCommon').addEventListener('click', function () {
+        $('hwRestore').click();
+        $('hwP').value = 0.90; $('hwP').dispatchEvent(new Event('input'));
+        $('hwH').value = 0; $('hwH').dispatchEvent(new Event('input'));
+      });
+
+      /* =========================================================
+         TAB 2 — GENETIC DRIFT
+         200 replicate Wright-Fisher populations, exact binomial
+         sampling of 2N gene copies every generation.
+         ========================================================= */
+      var R = 200;
+      var dr = {
+        nIdx: 10, G: 120, p0: 0.5, seed: 1, follow: true,
+        traj: null, H: null, meanP: null, nFix: null, nLost: null,
+        shown: 0, fate: true, pStart: 0.5, k0: 0
+      };
+
+      function drCompute() {
+        var N = NLIST[dr.nIdx], G = dr.G, twoN = 2 * N;
+        // a finite population cannot start at an arbitrary frequency: the
+        // starting number of copies has to be a whole number, and at least one
+        // copy of each allele has to be present for there to be anything to lose.
+        dr.k0 = Demo.clamp(Math.round(dr.p0 * twoN), 1, twoN - 1);
+        dr.pStart = dr.k0 / twoN;
+
+        var rand = seedRand(dr.seed);
+        var traj = new Float32Array(R * (G + 1));
+        var H = new Float64Array(G + 1), mp = new Float64Array(G + 1);
+        var nF = new Int32Array(G + 1), nL = new Int32Array(G + 1);
+
+        for (var r = 0; r < R; r++) {
+          var base = r * (G + 1), p = dr.pStart;
+          for (var t = 0; t <= G; t++) {
+            if (t > 0) {
+              if (p > 0 && p < 1) p = binomial(rand, twoN, p) / twoN;
+            }
+            traj[base + t] = p;
+            H[t] += 2 * p * (1 - p);
+            mp[t] += p;
+            if (p >= 1) nF[t]++; else if (p <= 0) nL[t]++;
+          }
+        }
+        for (var t2 = 0; t2 <= G; t2++) { H[t2] /= R; mp[t2] /= R; }
+
+        dr.traj = traj; dr.H = H; dr.meanP = mp; dr.nFix = nF; dr.nLost = nL;
+        drStatic();
+      }
+
+      function drGeom(w, h) {
+        var padL = 40, padR = 12, padT = 18, padB = 24, gap = 28;
+        var inner = h - padT - padB - gap;
+        var aH = inner * 0.63, bH = inner - aH;
+        return {
+          x0: padL, x1: w - padR,
+          aTop: padT, aBot: padT + aH,
+          bTop: padT + aH + gap, bBot: padT + aH + gap + bH
+        };
+      }
+
+      // one point per pixel column at most — keeps 200 lines cheap to draw
+      function drStep(g) {
+        return Math.max(1, Math.ceil(dr.G / Math.max(40, (g.x1 - g.x0))));
+      }
+
+      function drChrome(ctx, w, h, c) {
+        var G = dr.G, N = NLIST[dr.nIdx], g = drGeom(w, h);
+        var X = function (t) { return g.x0 + (g.x1 - g.x0) * (t / G); };
+        var YA = function (v) { return g.aBot - v * (g.aBot - g.aTop); };
+        var YB = function (v) { return g.bBot - v * (g.bBot - g.bTop) / 0.5; };
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+        ctx.lineJoin = 'round';
+
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(g.x0, YA(v)); ctx.lineTo(g.x1, YA(v)); ctx.stroke();
+          if (v === 0 || v === 0.5 || v === 1) {
+            ctx.fillStyle = c.muted; ctx.fillText(v.toFixed(1), g.x0 - 6, YA(v));
+          }
+        });
+        [0, 0.25, 0.5].forEach(function (v) {
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(g.x0, YB(v)); ctx.lineTo(g.x1, YB(v)); ctx.stroke();
+          ctx.fillStyle = c.muted; ctx.fillText(v.toFixed(2), g.x0 - 6, YB(v));
+        });
+
+        // starting frequency
+        ctx.strokeStyle = c.muted; ctx.globalAlpha = 0.55; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(g.x0, YA(dr.pStart)); ctx.lineTo(g.x1, YA(dr.pStart)); ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+        // predicted heterozygosity decay, drawn in full from the start
+        var H0 = 2 * dr.pStart * (1 - dr.pStart), decay = 1 - 1 / (2 * N);
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        for (var t = 0; t <= G; t++) {
+          var py = YB(H0 * Math.pow(decay, t));
+          t === 0 ? ctx.moveTo(X(t), py) : ctx.lineTo(X(t), py);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(g.x0, g.aTop); ctx.lineTo(g.x0, g.aBot); ctx.lineTo(g.x1, g.aBot);
+        ctx.moveTo(g.x0, g.bTop); ctx.lineTo(g.x0, g.bBot); ctx.lineTo(g.x1, g.bBot);
+        ctx.stroke();
+
+        ctx.textBaseline = 'bottom'; ctx.textAlign = 'left';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('Frequency of A in each of 200 populations', g.x0, g.aTop - 5);
+        var lTxt = 'Mean heterozygosity 2pq';
+        ctx.fillText(lTxt, g.x0, g.bTop - 5);
+        // only claim the space on the right if the long label genuinely fits
+        var room = (g.x1 - g.x0) - ctx.measureText(lTxt).width - 14;
+        var rTxt = 'predicted H₀(1 − 1/2N)ᵗ';
+        if (ctx.measureText(rTxt).width > room) rTxt = 'predicted';
+        if (ctx.measureText(rTxt).width <= room) {
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.warn;
+          ctx.fillText(rTxt, g.x1, g.bTop - 5);
+        }
+
+        ctx.fillStyle = c.muted; ctx.textBaseline = 'top';
+        ctx.textAlign = 'left'; ctx.fillText('0', g.x0, g.bBot + 6);
+        ctx.textAlign = 'right'; ctx.fillText(String(G), g.x1, g.bBot + 6);
+        ctx.textAlign = 'center'; ctx.fillText('generation', (g.x0 + g.x1) / 2, g.bBot + 6);
+        return g;
+      }
+
+      // colour a replicate by where it ended up, once the run is over
+      function fateColor(r, c) {
+        if (!dr.fate) return c.series[0];
+        var p = dr.traj[r * (dr.G + 1) + dr.G];
+        if (p >= 1) return c.ok;
+        if (p <= 0) return c.bad;
+        return c.series[0];
+      }
+
+      // Draws the segments between generation `a` and generation `b` only, starting
+      // the path at `a` (already on screen) so nothing is ever stroked twice — that
+      // is what lets the animation extend the lines without clearing the canvas.
+      function drLines(ctx, g, c, a, b) {
+        if (b <= a) return;
+        var G = dr.G, span = G + 1, step = drStep(g);
+        var X = function (t) { return g.x0 + (g.x1 - g.x0) * (t / G); };
+        var YA = function (v) { return g.aBot - v * (g.aBot - g.aTop); };
+        var YB = function (v) { return g.bBot - v * (g.bBot - g.bTop) / 0.5; };
+
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = 0.22;
+        for (var r = 0; r < R; r++) {
+          ctx.strokeStyle = fateColor(r, c);
+          ctx.beginPath();
+          ctx.moveTo(X(a), YA(dr.traj[r * span + a]));
+          for (var t = a + step; t < b; t += step) ctx.lineTo(X(t), YA(dr.traj[r * span + t]));
+          ctx.lineTo(X(b), YA(dr.traj[r * span + b]));
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        function trace(get, col, wd) {
+          ctx.strokeStyle = col; ctx.lineWidth = wd;
+          ctx.beginPath();
+          ctx.moveTo(X(a), get(a));
+          for (var t = a + 1; t <= b; t++) ctx.lineTo(X(t), get(t));
+          ctx.stroke();
+        }
+
+        // the single population a student is asked to follow (replicate 0)
+        if (dr.follow) trace(function (t) { return YA(dr.traj[t]); }, c.series[3], 2);
+        // mean p across all 200 — flat, at the starting frequency
+        trace(function (t) { return YA(dr.meanP[t]); }, c.text, 2);
+        // observed mean heterozygosity, against the dashed prediction
+        trace(function (t) { return YB(dr.H[t]); }, c.accentStrong, 2.2);
+      }
+
+      var drPlot = Demo.canvas('#drPlot', function (ctx, w, h, c) {
+        if (!dr.traj) return;
+        var g = drChrome(ctx, w, h, c);
+        drLines(ctx, g, c, 0, Math.floor(dr.shown));
+      }, { aspect: 0.72, minHeight: 340, maxHeight: 500 });
+
+      function drRender() {
+        var N = NLIST[dr.nIdx], G = dr.G, t = Math.floor(dr.shown);
+        var H0 = 2 * dr.pStart * (1 - dr.pStart);
+        var pred = H0 * Math.pow(1 - 1 / (2 * N), t);
+        var nf = dr.nFix[t], nl = dr.nLost[t], ns = R - nf - nl;
+
+        $('drOutTitle').textContent = 'After ' + t + ' generation' + (t === 1 ? '' : 's');
+        $('roFix').textContent = String(nf);
+        $('roLost').textContent = String(nl);
+        $('roSeg').textContent = String(ns);
+        $('roH').textContent = Demo.fmt.dec(dr.H[t], 3);
+        $('roHp').textContent = Demo.fmt.dec(pred, 3);
+        $('roMeanP').textContent = Demo.fmt.dec(dr.meanP[t], 3);
+
+        var resolved = nf + nl;
+        $('drFixLine').innerHTML = resolved === 0
+          ? 'No population has hit 0 or 1 yet. Every allele that is still segregating will eventually do one or the other &mdash; the probability of ending at 1 is its current frequency.'
+          : 'Of the <strong>' + resolved + '</strong> populations that have already resolved, <strong>' +
+            Demo.fmt.pct(nf / resolved, 1) + '</strong> fixed for A. The long-run prediction is the ' +
+            'starting frequency itself, <strong>' + Demo.fmt.pct(dr.pStart, 1) + '</strong>.';
+      }
+
+      /* Everything that depends only on N, G, p0 and the seed — not on how far
+         the animation has got. Rewriting these every frame is what would make
+         the run stutter on a phone, so they are set once per new run instead. */
+      function drStatic() {
+        var N = NLIST[dr.nIdx], G = dr.G;
+        var H0 = 2 * dr.pStart * (1 - dr.pStart);
+
+        $('roSeed').textContent = String(dr.seed);
+
+        $('drHLine').innerHTML = 'Heterozygosity loses the fraction 1/2N = <strong>' +
+          Demo.fmt.sig(1 / (2 * N), 3) + '</strong> of itself every generation, so ' +
+          'H<sub>t</sub> = ' + Demo.fmt.dec(H0, 3) + ' &times; ' + Demo.fmt.dec(1 - 1 / (2 * N), 4) +
+          '<sup>t</sup>. Observed and predicted agree to within the sampling error of 200 replicates.';
+
+        var enough = G >= 4 * N;
+        $('drNote').className = 'note' + (enough ? '' : ' warn');
+        $('drNote').innerHTML = enough
+          ? '<strong>Every path here is unpredictable; the summary is not.</strong> You cannot say where ' +
+            'the followed population will go. You can say, in advance, roughly what fraction of the 200 ' +
+            'will fix and how fast the average heterozygosity will fall.'
+          : '<strong>Most populations have not finished yet.</strong> It takes roughly 4N = ' +
+            Demo.fmt.comma(4 * N) + ' generations for the bulk of them to reach 0 or 1, and you are ' +
+            'running ' + G + '. Push the generations slider up, or N down, to see the split settle near ' +
+            Demo.fmt.pct(dr.pStart, 0) + '.';
+
+        $('drCap').innerHTML = 'Each faint line is one population of N = ' + Demo.fmt.comma(N) +
+          ' individuals. The bold purple line is one population to follow; the bold neutral line is the ' +
+          'mean of all 200. When a run finishes the faint lines are recoloured by fate &mdash; green fixed ' +
+          'at 1, red lost at 0, blue still segregating.';
+
+        $('drNHint').innerHTML = '2N = ' + Demo.fmt.comma(2 * N) + ' gene copies are drawn at random ' +
+          'each generation. Expect most populations to resolve in about 4N = ' + Demo.fmt.comma(4 * N) +
+          ' generations.';
+        $('drPHint').innerHTML = 'A finite population needs a whole number of copies: this is ' +
+          Demo.fmt.comma(dr.k0) + ' of ' + Demo.fmt.comma(2 * N) + ' copies, so p₀ = ' +
+          Demo.fmt.dec(dr.pStart, 4) + '.';
+      }
+
+      var drAnim = Demo.loop(function (dt) {
+        var prev = dr.shown;
+        var perSec = dr.G / 3.0;
+        dr.shown = Math.min(dr.G, dr.shown + dt * perSec);
+        var a = Math.floor(prev), b = Math.floor(dr.shown);
+        if (b > a) {
+          var g = drGeom(drPlot.width, drPlot.height);
+          drLines(drPlot.ctx, g, C, a, b);
+        }
+        drRender();
+        if (dr.shown >= dr.G) {
+          drAnim.stop();
+          dr.fate = true;
+          $('drRun').textContent = 'Replay';
+          drPlot.redraw();
+        }
+      });
+
+      function drShowAll() {
+        drAnim.stop();
+        $('drRun').textContent = 'Replay';
+        dr.shown = dr.G; dr.fate = true;
+        drRender();
+        drPlot.redraw();
+      }
+      function drRefresh() { drCompute(); drShowAll(); }
+
+      function drPlay() {
+        drAnim.stop();
+        dr.shown = 0; dr.fate = false;
+        drRender();
+        drPlot.redraw();
+        // let the fresh chrome land before the incremental lines start
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            $('drRun').textContent = 'Running';
+            drAnim.start();
+          });
+        });
+      }
+
+      // the biggest run (N = 1000, 500 generations, 200 replicates) is ~200 ms of
+      // binomial sampling, so coalesce slider drags instead of recomputing per event
+      var drTimer = null;
+      function drQueue() {
+        if (booting) return;
+        clearTimeout(drTimer);
+        drTimer = setTimeout(drRefresh, 110);
+      }
+
+      Demo.range('#drN', function (v) {
+        dr.nIdx = Math.round(v);
+        $('drNOut').textContent = Demo.fmt.comma(NLIST[dr.nIdx]);
+        drQueue();
+      });
+      Demo.range('#drG', function (v) {
+        dr.G = v; $('drGOut').textContent = String(v);
+        drQueue();
+      });
+      Demo.range('#drP', function (v) {
+        dr.p0 = v; $('drPOut').textContent = Demo.fmt.dec(v, 2);
+        drQueue();
+      });
+      $('drFollow').addEventListener('change', function () {
+        dr.follow = this.checked; drShowAll();
+      });
+      $('drRun').addEventListener('click', function () {
+        if (drAnim.running) { drAnim.stop(); drShowAll(); } else { drPlay(); }
+      });
+      $('drNew').addEventListener('click', function () {
+        dr.seed++; drCompute(); drPlay();
+      });
+
+      /* =========================================================
+         Tabs
+         ========================================================= */
+      var tabBtns = document.querySelectorAll('.tabs button');
+      tabBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          tabBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          var hwOn = b.dataset.tab === 'hw';
+          $('tabHW').classList.toggle('hide', !hwOn);
+          $('tabDrift').classList.toggle('hide', hwOn);
+          // a half-finished animation should not be what greets you on the way back
+          if (hwOn) { drAnim.stop(); $('drRun').textContent = 'Replay'; hwPlot.resize(); }
+          else { drShowAll(); drPlot.resize(); }
+        });
+      });
+
+      /* =========================================================
+         Boot
+         ========================================================= */
+      booting = false;
+      hwRefresh();
+      drCompute();
+      drShowAll();
+    })();
+  </script>
+</body>
+
+</html>

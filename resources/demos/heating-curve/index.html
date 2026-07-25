@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Heating Curve | Dr. Andres Barboza</title>
+  <meta name="description" content="Heat water from ice to steam and watch the temperature stall twice. A synced particle view shows that average particle speed does not change during a phase change.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=2" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=2"></script>
+
+  <style>
+    /* demo-specific only: the left column stacks the curve above the particle box,
+       and the particle box needs a legend + a speed meter with a reference tick. */
+    .stage-col { display: flex; flex-direction: column; gap: 14px; }
+
+    /* dragging the marker must not scroll the page sideways; vertical scroll stays */
+    #curve { touch-action: pan-y; cursor: ew-resize; }
+
+    .stage-tools { margin-top: 12px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+    .legend i.k-sol { background: var(--series-1); }
+    .legend i.k-liq { background: var(--series-3); }
+    .legend i.k-gas { background: var(--series-4); }
+    .legend i.k-ramp { background: var(--series-1); border-radius: 2px; }
+    .legend i.k-flat { background: var(--series-2); border-radius: 2px; }
+
+    /* average-speed meter, with a tick showing the speed at the start of this step */
+    .meter { margin-top: 12px; }
+    .meter-wrap { position: relative; margin-top: 6px; }
+    .meter-wrap .bar > span { background: var(--accent); }
+    .meter-mark {
+      position: absolute; top: -3px; bottom: -3px; width: 2px;
+      background: var(--text); border-radius: 1px; transform: translateX(-1px);
+    }
+
+    .r-value.txt { font-size: 14.5px; line-height: 1.45; }
+    .eqn { font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+    .eqn .work { display: block; margin-top: 5px; color: var(--text-2); font-variant-numeric: tabular-nums; }
+    .tbl tr.is-now td { background: var(--accent-soft); }
+    .tbl tr.is-now td:first-child { color: var(--text); font-weight: 600; }
+    .split { display: flex; gap: 4px 12px; flex-wrap: wrap; margin-top: 7px; font-size: 11.5px; color: var(--muted); }
+    .split b { color: var(--text); font-weight: 600; }
+    .bar.split-bar > span.s-sens { background: var(--series-1); }
+    .bar.split-bar > span.s-lat { background: var(--series-2); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Heating Curve</h1>
+        <p class="demo-sub">Press <em>Heat it</em> and keep your eye on the particles while the temperature is stuck.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Thermochemistry</span>
+          <span class="tag is-accent">States of matter</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- left column: curve + particle view ---------------- -->
+      <div class="stage-col">
+
+        <div class="stage">
+          <div class="panel-title">Heating water at a steady rate</div>
+          <canvas id="curve" role="img"
+            aria-label="Heating curve for water: temperature versus energy added, from minus 25 degrees Celsius ice to 125 degrees Celsius steam."></canvas>
+
+          <div class="stage-tools">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="prog">Energy added</label>
+                <span class="ctrl-value" id="progOut">0.00 kJ</span>
+              </div>
+              <input type="range" id="prog" min="0" max="1" step="0.001" value="0">
+              <p class="ctrl-hint">Drag the dot on the curve, or use this slider with the arrow keys.</p>
+            </div>
+          </div>
+
+          <div class="legend">
+            <span><i class="k-ramp"></i>temperature rising &mdash; q = mc&Delta;T</span>
+            <span><i class="k-flat"></i>phase change &mdash; q = m&Delta;H</span>
+          </div>
+          <p class="stage-caption">
+            The horizontal width of each segment is the real energy that step costs. Boiling is that wide
+            because it really is that expensive.
+          </p>
+        </div>
+
+        <div class="stage">
+          <div class="panel-title">Particle view &mdash; the same instant</div>
+          <canvas id="parts" role="img"
+            aria-label="Particle box showing the arrangement and motion of water particles at the selected point on the curve."></canvas>
+
+          <div class="legend">
+            <span><i class="k-sol"></i>solid (fixed positions)</span>
+            <span><i class="k-liq"></i>liquid (touching, free to slide)</span>
+            <span><i class="k-gas"></i>gas (far apart, flying)</span>
+          </div>
+
+          <div class="meter">
+            <div class="ctrl-row">
+              <span class="ctrl-label">Average particle speed</span>
+              <span class="ctrl-value" id="spdOut">1.000</span>
+            </div>
+            <div class="meter-wrap">
+              <div class="bar"><span id="spdFill" style="width:82.8%"></span></div>
+              <div class="meter-mark" id="spdMark" style="left:82.8%"></div>
+            </div>
+            <p class="ctrl-hint">
+              Scale runs from zero up to the speed at 125&nbsp;&deg;C. The black tick is the speed at the
+              <em>start</em> of the step you are in &mdash; on a flat part the bar never leaves the tick.
+            </p>
+          </div>
+
+          <p class="stage-caption">
+            Speed is set only by temperature (average speed scales with &radic;T in kelvin). Spacing and
+            arrangement are schematic: a real gas is roughly a thousand times less dense than the liquid,
+            far more spread out than a box this size can show.
+          </p>
+          <p class="sr-only" id="live" aria-live="polite"></p>
+        </div>
+
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls sticky">
+
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mass">Mass of water</label>
+                <span class="ctrl-value" id="massOut">20 g</span>
+              </div>
+              <input type="range" id="mass" min="1" max="100" step="1" value="20">
+              <p class="ctrl-hint">Every step scales with mass, so the shape of the curve never changes &mdash; only the numbers on the energy axis.</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="run">Heat it</button>
+              <button class="btn" id="reset">Reset</button>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="anim" checked>
+              Animate the particles
+            </label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Right now</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Temperature</div>
+              <div class="r-value" id="tOut">&minus;25<span class="r-unit">&deg;C</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">State</div>
+              <div class="r-value txt" id="stOut">Ice</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Total in</div>
+              <div class="r-value" id="qOut">0.00<span class="r-unit">kJ</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">This step</div>
+              <div class="r-value" id="stepOut">0.00<span class="r-unit">kJ</span></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="note eqn" id="eqn"></p>
+          <hr class="sep" style="margin:12px 0">
+          <div class="row-between">
+            <span class="small muted">Time on a 100 W heater</span>
+            <span class="ctrl-value num" id="timeOut">0 s</span>
+          </div>
+          <p class="ctrl-hint">100 J every second, all of it into the water, none lost to the room.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the energy goes</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Step</th><th>Energy</th><th>Share</th></tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="small muted">Of the energy you have added so far:</div>
+          <div class="bar split-bar" style="margin-top:6px">
+            <span class="s-sens" id="barSens" style="width:0%"></span>
+            <span class="s-lat" id="barLat" style="width:0%"></span>
+          </div>
+          <div class="split">
+            <span><b id="pSens">0%</b> raised the temperature</span>
+            <span><b id="pLat">0%</b> broke attractions</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Constants used</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <tbody>
+                <tr><td>c, ice</td><td>2.09 J/g&middot;&deg;C</td></tr>
+                <tr><td>c, liquid water</td><td>4.18 J/g&middot;&deg;C</td></tr>
+                <tr><td>c, steam</td><td>2.01 J/g&middot;&deg;C</td></tr>
+                <tr><td>&Delta;H<sub>fus</sub> at 0 &deg;C</td><td>334 J/g</td></tr>
+                <tr><td>&Delta;H<sub>vap</sub> at 100 &deg;C</td><td>2260 J/g</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint">
+            Values at 1 atm. Both &Delta;H values are the molar textbook figures divided by 18.02 g/mol
+            (6.01 kJ/mol and 40.7 kJ/mol).
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students believe that adding heat always makes something hotter,
+        so a flat stretch on this graph reads as &ldquo;somebody turned the burner off.&rdquo; The burner is
+        never off here. Energy pours in at exactly the same rate the whole way across, and for long stretches
+        the thermometer does not move at all.
+      </p>
+      <p>
+        <strong>What to notice:</strong> temperature is a measure of how fast particles are moving on average.
+        Watch the speed meter under the particle box while you cross a flat part &mdash; the bar sits exactly
+        on the black tick and does not budge, even though the picture above it changes completely. The energy
+        is going somewhere real: it is pulling particles away from each other against the attractions holding
+        them together. Positions change; speeds do not. On the sloped parts the opposite happens &mdash; the
+        arrangement stays put and the speeds climb.
+      </p>
+      <p>
+        <strong>Read the widths, not just the shape:</strong> boiling is the widest segment on purpose. For
+        water it takes <strong>2260 J/g</strong> to boil but only <strong>334 J/g</strong> to melt and
+        <strong>418 J/g</strong> to go from ice-cold liquid all the way to 100 &deg;C. Boiling costs about
+        6.8&times; melting and 5.4&times; the entire liquid ramp, so it eats about 73% of the horizontal axis.
+        Textbook drawings that show two equal-width plateaus are teaching a false sense of scale. Across the
+        whole trip only about <strong>17%</strong> of the energy went into raising the temperature; the other
+        <strong>83%</strong> went into the two phase changes.
+      </p>
+      <p>
+        <strong>Where the model stops being true:</strong> this assumes 1 atm, a pure sample, and a perfectly
+        even heater with no energy lost to the room, so the whole sample changes phase at once. Real beakers
+        boil unevenly and lose heat to the air. The specific heats also drift a little with temperature; the
+        three values here are the standard constants. And the particle box is schematic &mdash; it shows 60
+        particles instead of 10<sup>23</sup>, and it cannot honestly show how much emptier a real gas is than
+        a liquid.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------------- physical constants (1 atm, water) ----------------
+      var C = { ice: 2.09, liq: 4.18, steam: 2.01 };   // J / (g . degC)
+      var HF = 334, HV = 2260;                          // J / g
+      var T_LO = -25, T_HI = 125;                       // degC endpoints of the curve
+      var HEATER_W = 100;                               // W, for the wall-clock readout
+      var RUN_SECONDS = 40;                             // screen time for a full sweep
+      var N = 60;                                       // particles in the box
+
+      var state = { m: 20, u: 0, heating: false, animate: true };
+
+      // ---------------- the model ----------------
+      var cache = null;
+      function model() {
+        if (cache && cache.m === state.m) return cache;
+        var m = state.m;
+        var seg = [
+          { key: 'ice',   plateau: false, E: m * C.ice * 25,   t0: T_LO, t1: 0,    label: 'ice',          row: 'Warm ice &minus;25 → 0 &deg;C',  phase: 'Ice' },
+          { key: 'fus',   plateau: true,  E: m * HF,           t0: 0,    t1: 0,    label: 'melting',      row: 'Melt at 0 &deg;C',                             phase: 'Ice + water, melting' },
+          { key: 'liq',   plateau: false, E: m * C.liq * 100,  t0: 0,    t1: 100,  label: 'liquid water', row: 'Warm water 0 → 100 &deg;C',      phase: 'Liquid water' },
+          { key: 'vap',   plateau: true,  E: m * HV,           t0: 100,  t1: 100,  label: 'boiling',      row: 'Boil at 100 &deg;C',                           phase: 'Water + steam, boiling' },
+          { key: 'steam', plateau: false, E: m * C.steam * 25, t0: 100,  t1: T_HI, label: 'steam',        row: 'Warm steam 100 → 125 &deg;C',    phase: 'Steam' }
+        ];
+        var acc = 0;
+        for (var i = 0; i < seg.length; i++) { seg[i].start = acc; acc += seg[i].E; seg[i].end = acc; }
+        cache = { m: m, seg: seg, total: acc };
+        return cache;
+      }
+
+      // Everything the rest of the page needs about one point on the curve.
+      function evalAt(u) {
+        var S = model(), q = u * S.total, i = 0;
+        while (i < S.seg.length - 1 && q > S.seg[i].end) i++;
+        var g = S.seg[i];
+        var f = g.E > 0 ? Demo.clamp((q - g.start) / g.E, 0, 1) : 1;
+        var T = g.plateau ? g.t0 : g.t0 + (g.t1 - g.t0) * f;
+        var fSol = 0, fLiq = 0, fGas = 0;
+        if (g.key === 'ice') fSol = 1;
+        else if (g.key === 'fus') { fLiq = f; fSol = 1 - f; }
+        else if (g.key === 'liq') fLiq = 1;
+        else if (g.key === 'vap') { fGas = f; fLiq = 1 - f; }
+        else fGas = 1;
+        return { q: q, i: i, seg: g, f: f, T: T, fSol: fSol, fLiq: fLiq, fGas: fGas };
+      }
+
+      // average particle speed relative to its value at 0 degC: v ~ sqrt(T in kelvin)
+      function relSpeed(T) { return Math.sqrt((T + 273.15) / 273.15); }
+      var SPD_MAX = relSpeed(T_HI);
+
+      // ---------------- formatting ----------------
+      // Three significant figures, rounded in joules so that 1045 J -> 1.05 kJ
+      // instead of the 1.04 that binary floating point gives you.
+      function eParts(J) {
+        var a = Math.abs(J);
+        if (a < 0.05) return { v: '0', u: 'J' };
+        if (a < 1000) return { v: Demo.fmt.sig(J, 3), u: 'J' };
+        var k = a / 1000, d = k >= 100 ? 0 : k >= 10 ? 1 : 2, f = Math.pow(10, d);
+        return { v: (Math.round(J * f / 1000) / f).toFixed(d), u: 'kJ' };
+      }
+      function eText(J) { var p = eParts(J); return p.v + ' ' + p.u; }
+      function eHtml(J) { var p = eParts(J); return p.v + '<span class="r-unit">' + p.u + '</span>'; }
+      function timeText(sec) {
+        if (sec < 90) return Demo.fmt.dec(sec, 0) + ' s';
+        if (sec < 5400) return Demo.fmt.dec(sec / 60, 1) + ' min';
+        return Demo.fmt.dec(sec / 3600, 2) + ' h';
+      }
+
+      // ---------------- the curve ----------------
+      function niceStep(range, target) {
+        var raw = range / target;
+        var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+        var n = raw / mag;
+        var s = n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10;
+        return s * mag;
+      }
+
+      var curve = Demo.canvas('#curve', function (ctx, w, h, c) {
+        var S = model(), st = evalAt(state.u);
+        var padL = 40, padR = 12, padT = 26, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        if (x1 - x0 < 40 || y0 - y1 < 40) return;
+
+        var X = function (q) { return x0 + (q / S.total) * (x1 - x0); };
+        var Y = function (t) { return y0 - ((t - T_LO) / (T_HI - T_LO)) * (y0 - y1); };
+        var FONT = 'px Poppins, system-ui, sans-serif';
+
+        // ---- segment bands: the width IS the energy ----
+        for (var i = 0; i < S.seg.length; i++) {
+          var g = S.seg[i];
+          ctx.globalAlpha = g.plateau ? 0.11 : 0.045;
+          ctx.fillStyle = g.plateau ? c.series[1] : c.series[0];
+          ctx.fillRect(X(g.start), y1, Math.max(0.6, X(g.end) - X(g.start)), y0 - y1);
+        }
+        ctx.globalAlpha = 1;
+
+        // ---- temperature gridlines ----
+        var temps = [-25, 0, 50, 100, 125];
+        ctx.lineWidth = 1;
+        ctx.font = '10.5' + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var k = 0; k < temps.length; k++) {
+          var t = temps[k], yy = Y(t), key = (t === 0 || t === 100);
+          ctx.strokeStyle = key ? c.line : c.lineSoft;
+          ctx.setLineDash(key ? [4, 4] : []);
+          ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke();
+          ctx.fillStyle = key ? c.text2 : c.muted;
+          ctx.fillText(String(t), x0 - 6, yy);
+        }
+        ctx.setLineDash([]);
+
+        // ---- axes ----
+        ctx.strokeStyle = c.line;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('°C', x0 - 2, y1 - 8);
+
+        // ---- energy ticks ----
+        var totKJ = S.total / 1000;
+        var step = niceStep(totKJ, (x1 - x0) < 320 ? 4 : 6);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (var v = 0; v <= totKJ + 1e-9; v += step) {
+          var xx = X(v * 1000);
+          ctx.strokeStyle = c.lineSoft;
+          ctx.beginPath(); ctx.moveTo(xx, y0); ctx.lineTo(xx, y0 + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(Demo.fmt.sig(v, 3), xx, y0 + 5);
+        }
+        ctx.fillStyle = c.text2;
+        ctx.font = '11' + FONT;
+        ctx.fillText('Energy added (kJ)', (x0 + x1) / 2, y0 + 19);
+
+        // ---- band labels, only where they fit ----
+        ctx.font = '10' + FONT;
+        ctx.fillStyle = c.muted;
+        for (i = 0; i < S.seg.length; i++) {
+          var s2 = S.seg[i], bx0 = X(s2.start), bx1 = X(s2.end), bw = bx1 - bx0, cx = (bx0 + bx1) / 2;
+          var tw = ctx.measureText(s2.label).width;
+          if (bw >= tw + 10) {
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillText(s2.label, cx, y1 + 3);
+          } else if (bw >= 13 && (y0 - y1) > tw + 14) {
+            ctx.save();
+            ctx.translate(cx, y1 + 5);
+            ctx.rotate(Math.PI / 2);
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillText(s2.label, 0, 0);
+            ctx.restore();
+          }
+        }
+
+        // ---- the path not yet travelled ----
+        ctx.strokeStyle = c.muted;
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(X(0), Y(T_LO));
+        for (i = 0; i < S.seg.length; i++) ctx.lineTo(X(S.seg[i].end), Y(S.seg[i].t1));
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // ---- the path already travelled, coloured by what is happening ----
+        ctx.lineWidth = 3;
+        for (i = 0; i < S.seg.length; i++) {
+          var sg = S.seg[i];
+          if (st.q <= sg.start) break;
+          var qb = Math.min(st.q, sg.end);
+          var fb = sg.E > 0 ? (qb - sg.start) / sg.E : 1;
+          var tb = sg.plateau ? sg.t0 : sg.t0 + (sg.t1 - sg.t0) * fb;
+          ctx.strokeStyle = sg.plateau ? c.series[1] : c.series[0];
+          ctx.beginPath();
+          ctx.moveTo(X(sg.start), Y(sg.t0));
+          ctx.lineTo(X(qb), Y(tb));
+          ctx.stroke();
+        }
+
+        // ---- marker ----
+        var mx = X(st.q), my = Y(st.T);
+        ctx.strokeStyle = c.lineSoft;
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, my); ctx.lineTo(mx, my);
+        ctx.moveTo(mx, y0); ctx.lineTo(mx, my);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(mx, my, 6.5, 0, Math.PI * 2);
+        ctx.fillStyle = c.surface; ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = st.seg.plateau ? c.series[1] : c.series[0];
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(mx, my, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = c.accentStrong; ctx.fill();
+      }, { aspect: 0.6, minHeight: 250, maxHeight: 330 });
+
+      // ---------------- particle box ----------------
+      var rand = Demo.rng(20260724);
+
+      function shuffled(n) {
+        var a = [], i, j, t;
+        for (i = 0; i < n; i++) a.push(i);
+        for (i = n - 1; i > 0; i--) { j = Math.floor(rand() * (i + 1)); t = a[i]; a[i] = a[j]; a[j] = t; }
+        return a;
+      }
+
+      // Simulation lives in "box widths": x in [0,1], y in [0,aspect], y down.
+      // That keeps it resolution independent and isotropic.
+      var sim = { p: [], aspect: 0.7, cols: 12, cellH: 0.07, step: 0.07, r: 0.028, order: [] };
+
+      (function initSim() {
+        var mr = shuffled(N), br = shuffled(N), i;
+        for (i = 0; i < N; i++) {
+          sim.p.push({
+            x: 0.1 + rand() * 0.8, y: 0.5, ang: rand() * Math.PI * 2,
+            mul: 0.78 + rand() * 0.44,     // per-particle spread, mean 1.00
+            mr: mr[i], br: br[i], ph: 's', prev: 's'
+          });
+        }
+        sim.order = sim.p.map(function (p, ix) { return ix; })
+          .sort(function (a, b) { return sim.p[b].mr - sim.p[a].mr; });  // melts last -> sits lowest
+      })();
+
+      function setGeom(aspect) {
+        sim.aspect = aspect;
+        var condFull = 0.42 * aspect;                       // height of the fully condensed sample
+        var cols = Math.max(6, Math.round(Math.sqrt(0.92 * N / condFull)));
+        sim.cols = cols;
+        sim.cellH = condFull / (N / cols);
+        sim.r = 0.40 / cols;
+        sim.step = (1 - 2 * sim.r) / (cols - 0.5);
+      }
+
+      function regions(st) {
+        var nGas = st.fGas > 0 ? Math.round(st.fGas * N) : 0;
+        var nSol = nGas > 0 ? 0 : Math.round(st.fSol * N);
+        var nLiq = N - nGas - nSol;
+        var floorY = sim.aspect - 0.012;
+        var solidTop = floorY - (nSol / sim.cols) * sim.cellH;
+        // the last few drops still need a band tall enough to hold a particle
+        var band = nLiq > 0 ? Math.max(2.2 * sim.r, (nLiq / sim.cols) * sim.cellH) : 0;
+        var liqTop = solidTop - band;
+        return { nGas: nGas, nSol: nSol, nLiq: nLiq, floorY: floorY, solidTop: solidTop, liqTop: liqTop };
+      }
+
+      function confine(p, lo, hi, loY, hiY) {
+        if (hi < lo) { lo = hi = (lo + hi) / 2; }
+        if (hiY < loY) { loY = hiY = (loY + hiY) / 2; }
+        if (p.x < lo) { p.x = lo + (lo - p.x); p.ang = Math.PI - p.ang; }
+        if (p.x > hi) { p.x = hi - (p.x - hi); p.ang = Math.PI - p.ang; }
+        if (p.y < loY) { p.y = loY + (loY - p.y); p.ang = -p.ang; }
+        if (p.y > hiY) { p.y = hiY - (p.y - hiY); p.ang = -p.ang; }
+        p.x = Demo.clamp(p.x, lo, hi);
+        p.y = Demo.clamp(p.y, loY, hiY);
+      }
+
+      function stepSim(dt, st) {
+        var R = regions(st);
+        var v0 = 0.24 * relSpeed(st.T);      // box widths per second
+        var r = sim.r, i, p;
+
+        // phase assignment is a pure function of the fractions, so dragging is reversible
+        var solidSet = {};
+        for (i = 0; i < R.nSol; i++) solidSet[sim.order[i]] = i;   // value = lattice slot
+
+        for (i = 0; i < N; i++) {
+          p = sim.p[i];
+          p.prev = p.ph;
+          if (R.nGas > 0) p.ph = (p.br < R.nGas) ? 'g' : 'l';
+          else p.ph = (solidSet[i] === undefined) ? 'l' : 's';
+
+          if (p.prev !== 'g' && p.ph === 'g') {
+            // leaving the liquid: escape upward
+            p.ang = -Math.PI / 2 + (rand() - 0.5) * 1.5;
+          } else if (p.prev === 'g' && p.ph !== 'g') {
+            // condensing back: drop into the liquid
+            p.x = r + rand() * (1 - 2 * r);
+            p.y = R.liqTop + rand() * Math.max(0.001, R.solidTop - R.liqTop);
+            p.ang = rand() * Math.PI * 2;
+          } else if (p.prev === 's' && p.ph === 'l') {
+            p.ang = rand() * Math.PI * 2;
+          }
+
+          var v = v0 * p.mul;
+          if (p.ph === 'l') p.ang += (rand() - 0.5) * 2.4 * dt;   // jostling in a crowd
+          p.x += Math.cos(p.ang) * v * dt;
+          p.y += Math.sin(p.ang) * v * dt;
+
+          if (p.ph === 's') {
+            var slot = solidSet[i];
+            var row = Math.floor(slot / sim.cols), col = slot % sim.cols;
+            var sx = r + (col + (row % 2) * 0.5) * sim.step;
+            var sy = R.floorY - (row + 0.5) * sim.cellH;
+            var cage = 0.30 * sim.step;
+            confine(p, sx - cage, sx + cage, sy - cage, sy + cage);
+          } else if (p.ph === 'l') {
+            confine(p, r, 1 - r, R.liqTop + r, R.solidTop - r);
+          } else {
+            confine(p, r, 1 - r, r, R.liqTop - r);
+          }
+        }
+
+        // crowding in the condensed phase: separate, but never change a speed
+        var d = 2 * r;
+        for (i = 0; i < N; i++) {
+          var a = sim.p[i];
+          if (a.ph === 'g') continue;
+          for (var j = i + 1; j < N; j++) {
+            var b = sim.p[j];
+            if (b.ph === 'g') continue;
+            var dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy;
+            if (d2 >= d * d || d2 < 1e-9) continue;
+            var dist = Math.sqrt(d2), nx = dx / dist, ny = dy / dist, over = d - dist;
+            if (a.ph === 'l' && b.ph === 'l') {
+              a.x -= nx * over / 2; a.y -= ny * over / 2;
+              b.x += nx * over / 2; b.y += ny * over / 2;
+            } else if (a.ph === 'l') { a.x -= nx * over; a.y -= ny * over; }
+            else if (b.ph === 'l') { b.x += nx * over; b.y += ny * over; }
+            var ax = Math.cos(a.ang), ay = Math.sin(a.ang), da = ax * nx + ay * ny;
+            if (da > 0) a.ang = Math.atan2(ay - 2 * da * ny, ax - 2 * da * nx);
+            var bx = Math.cos(b.ang), by = Math.sin(b.ang), db = -(bx * nx + by * ny);
+            if (db > 0) b.ang = Math.atan2(by + 2 * db * ny, bx + 2 * db * nx);
+          }
+        }
+      }
+
+      var parts = Demo.canvas('#parts', function (ctx, w, h, c) {
+        var pad = 8, bx = pad, by = pad, bw = w - 2 * pad, bh = h - 2 * pad;
+        if (bw < 40 || bh < 40) return;
+        var aspect = bh / bw;
+        if (Math.abs(aspect - sim.aspect) > 1e-4) setGeom(aspect);
+
+        var st = evalAt(state.u);
+
+        // container
+        ctx.fillStyle = c.bg;
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        var rad = 10;
+        ctx.beginPath();
+        ctx.moveTo(bx + rad, by);
+        ctx.arcTo(bx + bw, by, bx + bw, by + bh, rad);
+        ctx.arcTo(bx + bw, by + bh, bx, by + bh, rad);
+        ctx.arcTo(bx, by + bh, bx, by, rad);
+        ctx.arcTo(bx, by, bx + bw, by, rad);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        var rpx = sim.r * bw;
+        var v0 = 0.24 * relSpeed(st.T);
+        for (var i = 0; i < N; i++) {
+          var p = sim.p[i];
+          var px = bx + p.x * bw, py = by + p.y * bw;
+          var col = p.ph === 's' ? c.series[0] : p.ph === 'l' ? c.series[2] : c.series[3];
+          var tail = v0 * p.mul * bw * 0.10;          // tail length is literally the speed
+
+          ctx.strokeStyle = col;
+          ctx.globalAlpha = 0.38;
+          ctx.lineWidth = Math.max(1.4, rpx * 0.8);
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px - Math.cos(p.ang) * tail, py - Math.sin(p.ang) * tail);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          ctx.beginPath();
+          ctx.arc(px, py, rpx, 0, Math.PI * 2);
+          ctx.fillStyle = col; ctx.fill();
+        }
+
+        // caption inside the box
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(st.seg.phase, bx + 10, by + 8);
+      }, { aspect: 0.62, minHeight: 230, maxHeight: 320 });
+
+      // ---------------- readouts ----------------
+      var $ = function (id) { return document.getElementById(id); };
+
+      function split(q) {
+        var S = model(), s = 0, l = 0;
+        for (var i = 0; i < S.seg.length; i++) {
+          var g = S.seg[i], part = Demo.clamp(q - g.start, 0, g.E);
+          if (g.plateau) l += part; else s += part;
+        }
+        return { sens: s, lat: l };
+      }
+
+      function equationHtml(st) {
+        var m = state.m, g = st.seg;
+        var head, work;
+        if (g.plateau) {
+          var hh = g.key === 'fus' ? HF : HV;
+          var sub = g.key === 'fus' ? 'fus' : 'vap';
+          var verb = g.key === 'fus' ? 'melted' : 'boiled';
+          head = '<strong>q = m &middot; &Delta;H<sub>' + sub + '</sub></strong> &mdash; temperature is not in this equation at all.';
+          work = 'q = (' + Demo.fmt.dec(st.f * m, 2) + ' g ' + verb + ')(' + hh + ' J/g) = ' + eText(st.f * m * hh);
+        } else {
+          var cc = g.key === 'ice' ? C.ice : g.key === 'liq' ? C.liq : C.steam;
+          var dT = Math.abs(st.T - g.t0);
+          head = '<strong>q = m &middot; c &middot; &Delta;T</strong> &mdash; the temperature is climbing, so c is what matters.';
+          work = 'q = (' + m + ' g)(' + cc + ' J/g&middot;&deg;C)(' + Demo.fmt.dec(dT, 1) + ' &deg;C) = ' + eText(m * cc * dT);
+        }
+        return head + '<span class="work">' + work + '</span>';
+      }
+
+      var tblKey = '';
+
+      function refresh() {
+        var S = model(), st = evalAt(state.u);
+
+        $('progOut').textContent = eText(st.q);
+        $('tOut').innerHTML = (st.T < 0 ? '−' : '') + Demo.fmt.dec(Math.abs(st.T), 1) +
+          '<span class="r-unit">°C</span>';
+        $('stOut').innerHTML = st.seg.phase;
+        $('qOut').innerHTML = eHtml(st.q);
+        $('stepOut').innerHTML = eHtml(st.q - st.seg.start);
+        $('eqn').innerHTML = equationHtml(st);
+        $('timeOut').textContent = timeText(st.q / HEATER_W);
+
+        // average speed meter, with a tick at the speed this step started from
+        var rel = relSpeed(st.T), rel0 = relSpeed(st.seg.t0);
+        $('spdOut').textContent = Demo.fmt.dec(rel, 3);
+        $('spdFill').style.width = (100 * rel / SPD_MAX) + '%';
+        $('spdMark').style.left = (100 * rel0 / SPD_MAX) + '%';
+
+        // energy budget table — only touch the DOM when it can actually have changed
+        if (tblKey !== S.m + '/' + st.i) {
+          tblKey = S.m + '/' + st.i;
+          var rows = '';
+          for (var i = 0; i < S.seg.length; i++) {
+            var g = S.seg[i];
+            rows += '<tr class="' + (i === st.i ? 'is-now' : '') + '"><td>' + g.row + '</td><td>' +
+              eText(g.E) + '</td><td>' + Demo.fmt.dec(100 * g.E / S.total, 1) + '%</td></tr>';
+          }
+          $('tbody').innerHTML = rows;
+        }
+
+        // split of what has been added so far
+        var sp = split(st.q), tot = sp.sens + sp.lat;
+        var fs = tot > 0 ? sp.sens / tot : 0, fl = tot > 0 ? sp.lat / tot : 0;
+        $('barSens').style.width = (100 * fs) + '%';
+        $('barLat').style.width = (100 * fl) + '%';
+        $('pSens').textContent = Demo.fmt.dec(100 * fs, 0) + '%';
+        $('pLat').textContent = Demo.fmt.dec(100 * fl, 0) + '%';
+
+        curve.redraw();
+        if (!(anim && anim.running)) parts.redraw();   // anim is wired below; guard the first call
+      }
+
+      function announce() {
+        var st = evalAt(state.u);
+        $('live').textContent = st.seg.phase + ' at ' + Demo.fmt.dec(st.T, 1) +
+          ' degrees Celsius. ' + eText(st.q) + ' added of ' + eText(model().total) + ' total.';
+      }
+
+      // ---------------- controls ----------------
+      var prog = $('prog');
+
+      Demo.range('#mass', function (v) {
+        state.m = Math.round(v);
+        $('massOut').textContent = state.m + ' g';
+        refresh();
+      });
+
+      Demo.range('#prog', function (v) {
+        state.u = Demo.clamp(v, 0, 1);
+        refresh();
+      });
+
+      function setU(u) {
+        state.u = Demo.clamp(u, 0, 1);
+        prog.value = state.u;
+        refresh();
+      }
+
+      // drag the marker directly on the curve
+      var curveEl = curve.el, dragging = false;
+      function fromEvent(ev) {
+        var rect = curveEl.getBoundingClientRect();
+        var padL = 40, padR = 12;
+        var x0 = rect.left + padL, x1 = rect.right - padR;
+        if (x1 <= x0) return;
+        setU((ev.clientX - x0) / (x1 - x0));
+      }
+      curveEl.addEventListener('pointerdown', function (ev) {
+        dragging = true;
+        curveEl.setPointerCapture(ev.pointerId);
+        fromEvent(ev);
+      });
+      curveEl.addEventListener('pointermove', function (ev) { if (dragging) fromEvent(ev); });
+      curveEl.addEventListener('pointerup', function (ev) {
+        dragging = false;
+        try { curveEl.releasePointerCapture(ev.pointerId); } catch (e) { }
+        announce();
+      });
+      curveEl.addEventListener('pointercancel', function () { dragging = false; });
+
+      prog.addEventListener('change', announce);
+      $('mass').addEventListener('change', announce);
+
+      // ---------------- animation ----------------
+      var runBtn = $('run');
+
+      var anim = Demo.loop(function (dt) {
+        if (state.heating) {
+          state.u += dt / RUN_SECONDS;
+          if (state.u >= 1) { state.u = 1; state.heating = false; runBtn.textContent = 'Heat it'; announce(); }
+          prog.value = state.u;
+          refresh();
+        }
+        if (state.animate) {
+          stepSim(dt, evalAt(state.u));
+          parts.paint();
+        }
+      });
+
+      function sync() {
+        if (state.animate || state.heating) anim.start(); else anim.stop();
+      }
+
+      runBtn.addEventListener('click', function () {
+        if (state.heating) { state.heating = false; runBtn.textContent = 'Heat it'; }
+        else {
+          if (state.u >= 0.999) setU(0);
+          state.heating = true; runBtn.textContent = 'Pause';
+        }
+        sync();
+      });
+
+      $('reset').addEventListener('click', function () {
+        state.heating = false;
+        runBtn.textContent = 'Heat it';
+        setU(0);
+        sync();
+        announce();
+      });
+
+      $('anim').addEventListener('change', function () {
+        state.animate = this.checked;
+        sync();
+        if (!state.animate) parts.redraw();
+      });
+
+      // respect a reduced-motion preference: start still, let the student opt in
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        state.animate = false;
+        $('anim').checked = false;
+      }
+
+      setGeom(0.7);
+      refresh();
+      announce();
+      sync();
+    })();
+  </script>
+</body>
+
+</html>
