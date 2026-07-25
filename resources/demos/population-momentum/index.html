@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Population Momentum | Dr. Andres Barboza</title>
+  <meta name="description" content="Drop fertility to replacement level on a young age pyramid and the population keeps growing for another 60 to 70 years. A cohort-component projection showing that the shape of an age pyramid is stored future growth.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend, wrapping readout labels */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 25px; }
+
+    /* These tiles carry real units and full sentences, which are longer than
+       the shell's single-line label default. Let them wrap instead of ellipsing. */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 16px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dash i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+    .legend .lg.box i { height: 11px; width: 11px; border-radius: 3px; }
+
+    .scrub { margin-top: 12px; }
+    .scrub .btn-row { margin-top: 8px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Population Momentum</h1>
+        <p class="demo-sub">Start with the expansive pyramid, drop fertility straight to replacement (2.1 children per woman), and press Play. Watch the total population climb for another sixty years <em>after</em> fertility has already stopped being high.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Ecology &mdash; age structure</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Total population <span>&mdash; the fertility change is marked with a vertical line</span></p>
+        <canvas id="popPlot" role="img"
+                aria-label="Total population plotted against year. Fertility falls to replacement level at the marked year, but the curve keeps climbing for decades afterwards before flattening."></canvas>
+        <div class="legend">
+          <span class="lg"><i id="lgPop"></i>projected population</span>
+          <span class="lg dash"><i></i>if fertility had never changed</span>
+          <span class="lg box"><i id="lgBand"></i>growth still arriving after the change</span>
+        </div>
+        <p class="stage-caption" id="popCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <div class="seg" role="tablist" aria-label="Pyramid units" id="pyrSeg">
+          <button role="tab" aria-selected="true" data-mode="pct">Share of population (%)</button>
+          <button role="tab" aria-selected="false" data-mode="abs">People (millions)</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="pyrLabel">Age structure at year 0</p>
+        <canvas id="pyramid" role="img"
+                aria-label="Age structure pyramid by five-year age group, males on the left and females on the right, with the reproductive ages fifteen to forty-nine shaded."></canvas>
+        <p class="stage-caption" id="pyrCap">&nbsp;</p>
+
+        <div class="scrub">
+          <div class="ctrl-row">
+            <label class="ctrl-label" for="yearRange">Year of the projection</label>
+            <span class="ctrl-value" id="yearOut">0</span>
+          </div>
+          <input type="range" id="yearRange" min="0" max="120" step="5" value="0">
+          <div class="btn-row">
+            <button class="btn primary" id="btnPlay">Play</button>
+            <button class="btn" id="btnRewind">Back to year 0</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">1 &mdash; The pyramid you start with</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="shapeRange">Shape</label>
+                <span class="ctrl-value" id="shapeOut">TFR 3.91</span>
+              </div>
+              <input type="range" id="shapeRange" min="-8" max="32" step="1" value="22">
+              <p class="ctrl-hint" id="shapeHint">&nbsp;</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn" data-shape="22" id="btnExp">Expansive</button>
+              <button class="btn" data-shape="0" id="btnStable">Stable</button>
+              <button class="btn" data-shape="-6" id="btnCon">Contracting</button>
+            </div>
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Fertility that built it</div>
+                <div class="r-value" id="rTfr0">3.91</div>
+                <div class="r-sub">children per woman</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Under age 15</div>
+                <div class="r-value" id="rU15">34.2%</div>
+                <div class="r-sub">of everyone alive</div>
+              </div>
+            </div>
+            <p class="ctrl-hint">
+              Each shape here is a genuine <strong>stable age structure</strong> &mdash; the pyramid a population
+              settles into if it holds one fertility level and one survival schedule for a long time. So the pyramid
+              and the starting fertility always agree with each other before you change anything.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">2 &mdash; The fertility change</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tfrRange">New fertility (TFR)</label>
+                <span class="ctrl-value" id="tfrOut">2.10</span>
+              </div>
+              <input type="range" id="tfrRange" min="0" max="8" step="0.05" value="2.1">
+              <p class="ctrl-hint">
+                Children per woman over a whole lifetime. <strong>Replacement is 2.09 in this life table</strong>
+                &mdash; the familiar &ldquo;about 2.1&rdquo;. It is above 2.0 because a few girls die before they
+                finish their own reproductive years, and because slightly more boys are born than girls
+                (105 : 100).
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnRepl">Set to replacement (2.1)</button>
+            </div>
+
+            <hr class="sep">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="changeRange">Change happens at year</label>
+                <span class="ctrl-value" id="changeOut">0</span>
+              </div>
+              <input type="range" id="changeRange" min="0" max="50" step="5" value="0">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="rampRange">Phase-in time</label>
+                <span class="ctrl-value" id="rampOut">instant</span>
+              </div>
+              <input type="range" id="rampRange" min="0" max="40" step="5" value="0">
+              <p class="ctrl-hint">
+                Real fertility declines take decades, not an instant. Drag this up and the stored growth gets
+                <em>larger</em>, because more big birth cohorts are added before the decline finishes.
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="btnReset">Reset everything</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">3 &mdash; What the pyramid had stored</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Growth still to come after fertility reaches its new level</div>
+              <div class="r-value big" id="rStored">+59.5%</div>
+              <div class="r-sub" id="rStoredSub">100.0 &rarr; 159.5 million</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">95% of it arrives within</div>
+              <div class="r-value" id="rLag">60<span class="r-unit">yr</span></div>
+              <div class="r-sub">after the change</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Growth under 0.1%/yr at</div>
+              <div class="r-value" id="rLevel">70<span class="r-unit">yr</span></div>
+              <div class="r-sub">after the change</div>
+            </div>
+          </div>
+          <p class="note" id="resultNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">4 &mdash; At the year on the scrubber</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Population</div>
+              <div class="r-value" id="rYearPop">100.0<span class="r-unit">M</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Growth rate</div>
+              <div class="r-value" id="rYearGrowth">0.99<span class="r-unit">%/yr</span></div>
+              <div class="r-sub">over the next 5 years</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Women aged 15&ndash;49</div>
+              <div class="r-value" id="rYearWomen">22.6<span class="r-unit">M</span></div>
+              <div class="r-sub" id="rYearWomenSub">the pool that produces births</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Median age</div>
+              <div class="r-value" id="rYearMedian">24.1<span class="r-unit">yr</span></div>
+            </div>
+          </div>
+          <p class="note warn" style="margin-top:11px">
+            <strong>This is the whole mechanism.</strong> Fertility is the number of children <em>per woman</em>.
+            Total births are that number multiplied by <strong>how many women there are</strong>. On a young
+            pyramid the huge cohorts of children have not reached age 15 yet, so the pool of women aged 15&ndash;49
+            keeps growing for decades even while fertility is falling. Watch that tile: it keeps climbing long
+            after the change.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">How this model works, and what it leaves out</div>
+          <p class="ctrl-hint">
+            This is a <strong>simplified cohort-component projection</strong>. Eighteen five-year age groups
+            (0&ndash;4 up to 85+) are stepped forward five years at a time. In each step every group ages into the
+            next one and loses a fixed share to death; births are produced <em>only</em> by women in the seven
+            groups from 15&ndash;19 to 45&ndash;49, spread across those ages in a fixed schedule with a mean age of
+            childbearing of 29.1 years; the newborns become the new 0&ndash;4 group.
+          </p>
+          <p class="note bad" style="margin-top:10px">
+            <strong>There is no migration in this model.</strong> Nobody enters or leaves the population &mdash;
+            every change on screen comes from births and deaths alone. For many real countries migration is the
+            largest single term, so treat these curves as showing what age structure does <em>by itself</em>, not
+            as a forecast for any actual country.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            Also simplified: one survival schedule is used for both sexes and it never improves over time, so
+            rising life expectancy is not modelled; the shape of the fertility schedule is fixed, and only its
+            total moves when you drag the slider; the population is treated as one uniform group with no regions,
+            wealth differences, or randomness; and time moves in five-year jumps, so every reading is a snapshot of
+            a projection step rather than a continuous curve. Population is scaled to start at 100 million so that
+            percentages read directly off the numbers &mdash; the units are arbitrary and only the ratios matter.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear that replacement fertility is about 2.1 children per
+        woman and conclude that a country hitting 2.1 has stopped growing. It has not. Fertility is a rate
+        <em>per woman</em>, and the population still contains an enormous cohort of children who have not yet
+        become women. Growth does not stop when fertility falls &mdash; it stops roughly one human lifetime later,
+        once that bulge has finished passing through the childbearing ages. Two smaller mistakes travel with it:
+        that replacement is exactly 2.0 (it is about 2.1, because some girls die before finishing their own
+        reproductive years and about 105 boys are born for every 100 girls), and that an age pyramid is just a
+        picture of the present. It is not. It is a forecast.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Load the page as it opens: an expansive pyramid, built by a fertility of
+        3.91 children per woman, 34.2% of everyone under age 15, growing at 2.2% per year. Now the fertility slider
+        is <em>already</em> at 2.1 &mdash; replacement &mdash; from year 0. Fertility is not high any more. Press
+        Play. The population goes from 100.0 million to <strong>159.5 million</strong>. It is still climbing at
+        year 40. It is still climbing at year 60. Ninety-five percent of that extra 59.5% arrives in the first
+        <strong>60 years</strong>, and growth only drops below a tenth of a percent per year at year
+        <strong>70</strong>. Nothing was added to make that happen. No fertility spike, no immigration &mdash;
+        migration is switched off entirely. Every one of those 59.5 million extra people was already visible in the
+        pyramid on the first frame, standing in the bottom three rows waiting to grow up.
+      </p>
+      <p>
+        <strong>Why it happens &mdash; watch the &ldquo;Women aged 15&ndash;49&rdquo; tile.</strong> Births equal
+        fertility per woman multiplied by the number of women. At year 0 there are 22.6 million women of
+        reproductive age. By year 40 there are 33.7 million, an increase of about half, because the children in
+        the wide base of the pyramid have simply grown up. So even with every woman having only 2.1 children, the
+        country produces far more births than deaths for decades, purely because there are far more potential
+        mothers than there are old people dying. That gap is the momentum. It closes only when the bulge reaches
+        the top of the pyramid and starts dying, which takes the better part of a century.
+      </p>
+      <p>
+        <strong>Push it to the point of absurdity.</strong> Drag the new fertility all the way down to
+        <strong>1.6</strong> &mdash; far below replacement, a level associated with shrinking countries. The
+        population <em>still</em> grows, to 123.9 million, and keeps growing for 40 years before it turns over.
+        You have to go down near <strong>1.0</strong> child per woman, less than half of replacement, before growth
+        stops within a couple of decades &mdash; and even then the population rises to 105.4 million first. Now
+        drag the phase-in slider to 40 years, which is what an actual fertility decline looks like: the stored
+        growth more than doubles, to +154%. Then press Contracting and try the same experiments. On an old pyramid
+        the momentum runs the other way: the population keeps <em>shrinking</em> even when fertility is lifted back
+        to replacement, because the large cohorts are now in the ages that die rather than the ages that give
+        birth.
+      </p>
+      <p>
+        <strong>Where this model stops being true.</strong> It has no migration at all, which for many real
+        countries is the biggest term of the three. Survival never improves, so it understates growth wherever life
+        expectancy is still rising. And it assumes fertility changes as a clean step or ramp that applies to every
+        age at once. The lesson that survives all of those simplifications is the structural one: a population is
+        not a single number, it is a set of cohorts of different sizes, and the sizes of those cohorts commit the
+        future decades in advance. That is why demographers can project a country's population to 2070 with far
+        more confidence than they can predict next year's birth rate &mdash; most of the people who will be alive
+        in 2070 are already born.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — simplified female-dominant cohort-component projection
+      //
+      //   18 age groups i = 0..17  (0-4, 5-9, ... , 80-84, 85+)
+      //   Step length = 5 years, equal to the group width (standard).
+      //
+      //   AGEING + DEATH
+      //     P'[i] = P[i-1] * S[i-1]                 i = 1..17
+      //     P'[17] += P[17] * S[17]                 open-ended top group
+      //     S[i] = L[i+1] / L[i]                    survivorship ratios from
+      //                                             the life table below
+      //
+      //   BIRTHS — only from women aged 15-49, i.e. groups 3..9. This is the
+      //   whole demonstration: if births were drawn from the total population
+      //   the lag would vanish, because the total has no memory of age.
+      //     B = TFR * SUM_k p[k] * FF * (P[i] + P'[i]) / 2      i = 3 + k
+      //   p[k] is the share of lifetime fertility falling in group k, FF is
+      //   the female share, and the (start + end)/2 average is the standard
+      //   person-years-at-risk approximation over the five-year interval.
+      //     P'[0] = B * Sb          Sb = L[0]/5, survival birth -> group 0-4
+      //
+      //   REPLACEMENT FERTILITY falls out of this rather than being asserted:
+      //   it is the TFR whose Leslie matrix has dominant eigenvalue exactly 1,
+      //   found numerically below as REPL = 2.0926 — "about 2.1", not 2.0.
+      //
+      //   STARTING PYRAMID is the dominant eigenvector at the chosen growth
+      //   rate, i.e. a true stable age structure, so a population left alone
+      //   holds its growth rate exactly and nothing drifts.
+      //
+      //   The projection is recomputed from the initial pyramid on every
+      //   input change — no state accumulates across renders. The Play button
+      //   only moves a display index along an array that already exists.
+      //   Checked at the extremes: TFR = 0 decays monotonically to zero and
+      //   stays there (1e-35 of the start by year 600); total population at
+      //   every horizon is monotonically increasing in TFR for every pyramid.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var N = 18;                 // age groups
+      var FIRST = 3, LAST = 9;    // reproductive groups: 15-19 .. 45-49
+      var FF = 0.4878;            // female share of births (105 boys : 100 girls)
+      var STEP = 5;               // years per projection step
+      var HORIZON = 240;          // years projected
+      var START_POP = 100;        // millions, arbitrary scale
+
+      // l(x): survivors to exact age 5j out of 1 birth. A moderate-mortality
+      // schedule; life expectancy at birth works out near 77 years.
+      var LX_SURV = [1.0000, 0.9900, 0.9890, 0.9880, 0.9865, 0.9835, 0.9800,
+                     0.9755, 0.9700, 0.9625, 0.9515, 0.9355, 0.9125, 0.8800,
+                     0.8330, 0.7640, 0.6650, 0.5250, 0.3400];
+
+      // share of lifetime fertility by group 15-19 .. 45-49; mean age 29.1 yr
+      var FSHARE = [0.09, 0.22, 0.26, 0.22, 0.14, 0.06, 0.01];
+
+      var L = [], S = [], MID = [], i;
+      for (i = 0; i < N - 1; i++) L.push(5 * (LX_SURV[i] + LX_SURV[i + 1]) / 2);
+      L.push(5 * LX_SURV[18] * 0.9);              // 85+ open group person-years
+      for (i = 0; i < N - 1; i++) S.push(L[i + 1] / L[i]);
+      S.push(0.45);                                // 5-yr survival within 85+
+      var SB = L[0] / 5;                           // birth -> group 0-4
+      for (i = 0; i < N; i++) MID.push(5 * i + 2.5);
+
+      var GROUP_LABEL = [];
+      for (i = 0; i < N - 1; i++) GROUP_LABEL.push((5 * i) + '–' + (5 * i + 4));
+      GROUP_LABEL.push('85+');
+
+      function total(P) {
+        var s = 0;
+        for (var k = 0; k < N; k++) s += P[k];
+        return s;
+      }
+
+      // ---- one five-year projection step ----
+      function stepPop(P, tfr) {
+        var n = new Array(N), k;
+        for (k = 0; k < N; k++) n[k] = 0;
+        for (k = 1; k < N; k++) n[k] = P[k - 1] * S[k - 1];
+        n[N - 1] += P[N - 1] * S[N - 1];
+        var B = 0;
+        for (k = 0; k < FSHARE.length; k++) {
+          var g = FIRST + k;
+          B += tfr * FSHARE[k] * (P[g] + n[g]) * FF / 2;   // women only, ages 15-49
+        }
+        n[0] = B * SB;
+        return n;
+      }
+
+      // ---- dominant eigenvalue + stable age structure, by power iteration ----
+      var stableCache = {};
+      function stable(tfr) {
+        var key = tfr.toFixed(6);
+        if (stableCache[key]) return stableCache[key];
+        var P = new Array(N), k;
+        for (k = 0; k < N; k++) P[k] = 1 / N;
+        var lam = 1, prev = 0;
+        for (k = 0; k < 600; k++) {
+          var n = stepPop(P, tfr);
+          lam = total(n);
+          if (lam <= 0) { P = n; break; }
+          var j;
+          for (j = 0; j < N; j++) n[j] /= lam;
+          P = n;
+          if (k > 40 && Math.abs(lam - prev) < 1e-13) break;
+          prev = lam;
+        }
+        var out = { lam: lam, P: P };
+        stableCache[key] = out;
+        return out;
+      }
+
+      // TFR whose five-year growth ratio equals `ratio` (bisection)
+      var tfrCache = {};
+      function tfrForRatio(ratio) {
+        var key = ratio.toFixed(9);
+        if (tfrCache[key] != null) return tfrCache[key];
+        var lo = 0, hi = 25;
+        for (var k = 0; k < 60; k++) {
+          var m = (lo + hi) / 2;
+          if (stable(m).lam < ratio) lo = m; else hi = m;
+        }
+        var v = (lo + hi) / 2;
+        tfrCache[key] = v;
+        return v;
+      }
+
+      var REPL = tfrForRatio(1);          // 2.0926 — "about 2.1"
+
+      // ==================================================================
+      // STATE + PROJECTION
+      // ==================================================================
+      var St = {
+        rPct: 2.2,        // annual growth rate of the starting stable pyramid, %
+        tfr: 2.1,         // the new fertility level
+        change: 0,        // year the change begins
+        ramp: 0,          // years the change takes to complete
+        year: 0,          // scrubber position
+        mode: 'pct'       // pyramid units
+      };
+
+      var RES = null;
+
+      function fertilityAt(midYear, tfr0) {
+        if (midYear <= St.change) return tfr0;
+        if (St.ramp <= 0 || midYear >= St.change + St.ramp) return St.tfr;
+        return tfr0 + (St.tfr - tfr0) * (midYear - St.change) / St.ramp;
+      }
+
+      function compute() {
+        var r = St.rPct / 100;
+        var tfr0 = tfrForRatio(Math.exp(STEP * r));
+        var P = stable(tfr0).P.slice();
+        var k, sum = total(P);
+        for (k = 0; k < N; k++) P[k] = P[k] / sum * START_POP;
+
+        var years = [0], tot = [START_POP], pops = [P.slice()];
+        for (var t = 0; t < HORIZON; t += STEP) {
+          P = stepPop(P, fertilityAt(t + STEP / 2, tfr0));
+          years.push(t + STEP);
+          tot.push(total(P));
+          pops.push(P.slice());
+        }
+
+        // long-run growth rate implied by the NEW fertility alone
+        var rLong = St.tfr > 0 ? Math.log(stable(St.tfr).lam) / STEP : -Infinity;
+        var permanent = rLong >= 0.001;   // still growing  >0.1%/yr forever
+        var declining = rLong <= -0.001;  // still shrinking >0.1%/yr forever
+
+        var baseIdx = Math.round(St.change / STEP);
+        var base = tot[baseIdx];
+
+        // level-off = first step after the change with growth < 0.1 %/yr
+        var levelIdx = null;
+        if (!permanent) {
+          for (k = baseIdx + 1; k < tot.length; k++) {
+            var g = Math.pow(tot[k] / tot[k - 1], 1 / STEP) - 1;
+            if (g < 0.001) { levelIdx = k; break; }
+          }
+          if (levelIdx === null) levelIdx = tot.length - 1;
+        }
+
+        var peak = null, gain = null, lag95 = null, levelYr = null;
+        if (levelIdx !== null) {
+          peak = tot[levelIdx];
+          gain = peak - base;
+          levelYr = years[levelIdx] - St.change;
+          lag95 = levelYr;
+          if (gain > 0.001) {
+            for (k = baseIdx; k <= levelIdx; k++) {
+              if (tot[k] - base >= 0.95 * gain) { lag95 = years[k] - St.change; break; }
+            }
+          }
+        }
+
+        // counterfactual: fertility never changes
+        var Q = stable(tfr0).P.slice();
+        sum = total(Q);
+        for (k = 0; k < N; k++) Q[k] = Q[k] / sum * START_POP;
+        var never = [START_POP];
+        for (t = 0; t < HORIZON; t += STEP) { Q = stepPop(Q, tfr0); never.push(total(Q)); }
+
+        // frame the plot around where the action actually is
+        var xmax = 20 * Math.ceil((St.change + (levelYr == null ? 100 : levelYr) + 40) / 20);
+        xmax = Demo.clamp(xmax, 120, HORIZON);
+
+        // Pyramid axis maxima, held FIXED across every year of this scenario
+        // so the bars stay comparable frame to frame while Play runs.
+        var maxPct = 0, maxAbs = 0;
+        var lastIdx = Math.round(xmax / STEP);
+        for (k = 0; k <= lastIdx && k < pops.length; k++) {
+          var tt = tot[k];
+          for (var j = 0; j < N; j++) {
+            if (tt > 0 && pops[k][j] / tt > maxPct) maxPct = pops[k][j] / tt;
+            if (pops[k][j] > maxAbs) maxAbs = pops[k][j];
+          }
+        }
+
+        return {
+          tfr0: tfr0, r: r, years: years, tot: tot, pops: pops, never: never,
+          rLong: rLong, permanent: permanent, declining: declining,
+          baseIdx: baseIdx, base: base,
+          levelIdx: levelIdx, peak: peak, gain: gain, lag95: lag95, levelYr: levelYr,
+          xmax: xmax, maxPct: axisTop(maxPct / 2), maxAbs: axisTop(maxAbs / 2)
+        };
+      }
+
+      // ---- derived quantities at one projection index ----
+      function idxOf(year) { return Demo.clamp(Math.round(year / STEP), 0, RES.pops.length - 1); }
+
+      function womenRepro(P) {
+        var w = 0;
+        for (var k = FIRST; k <= LAST; k++) w += P[k] * FF;
+        return w;
+      }
+      function shareUnder15(P) {
+        return (P[0] + P[1] + P[2]) / total(P);
+      }
+      function medianAge(P) {
+        var t = total(P), half = t / 2, cum = 0;
+        for (var k = 0; k < N; k++) {
+          if (cum + P[k] >= half) {
+            if (P[k] <= 0) return 5 * k;
+            return 5 * k + 5 * (half - cum) / P[k];
+          }
+          cum += P[k];
+        }
+        return 85;
+      }
+      // growth over the five years FOLLOWING the displayed year, so the
+      // scrubber reads "what happens next" rather than "what already happened"
+      function growthAt(k) {
+        var a = Demo.clamp(k, 0, RES.tot.length - 2);
+        return Math.pow(RES.tot[a + 1] / RES.tot[a], 1 / STEP) - 1;
+      }
+
+      RES = compute();
+
+      // ==================================================================
+      // CANVAS HELPERS
+      // ==================================================================
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+
+      function niceTop(v) {
+        if (!(v > 0)) return 1;
+        var e = Math.pow(10, Math.floor(Math.log10(v)));
+        var m = v / e;
+        var step = m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10;
+        return step * e;
+      }
+
+      // Axis top for the pyramid: a round-ish value a little above the tallest
+      // bar, so nothing touches the edge of the canvas and the half-way tick
+      // still reads cleanly.
+      function axisTop(v) {
+        if (!(v > 0)) return 1;
+        var unit = niceTop(v) / 10;
+        return Math.ceil(v * 1.06 / unit) * unit;
+      }
+
+      // ==================================================================
+      // POPULATION-OVER-TIME PLOT
+      // ==================================================================
+      var popCv = Demo.canvas('#popPlot', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var padL = narrow ? 34 : 42, padR = narrow ? 10 : 14, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.2 : 10.4;
+        var k, px;
+
+        var xmax = RES.xmax;
+        var top = niceTop(Math.max.apply(null, RES.tot.slice(0, Math.round(xmax / STEP) + 1)) * 1.12);
+
+        function X(yr) { return x0 + (x1 - x0) * Demo.clamp(yr, 0, xmax) / xmax; }
+        function Y(p) { return y0 - (y0 - y1) * Demo.clamp(p, 0, top) / top; }
+        // Unclamped: the counterfactual must be allowed to leave the top of the
+        // frame. Clamping it would draw a flat line along the ceiling and imply
+        // that unchanged fertility also levels off, which is the exact opposite
+        // of the point. The clip rect cuts it instead.
+        function Yraw(p) { return y0 - (y0 - y1) * p / top; }
+
+        // gridlines + y labels (millions)
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (k = 0; k <= 4; k++) {
+          var gy = y0 - (y0 - y1) * k / 4;
+          if (k > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(top * k / 4, 0), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('millions of people', 1, 2);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center';
+        var tickStep = xmax <= 120 ? 20 : xmax <= 200 ? 40 : 60;
+        for (var yr = 0; yr <= xmax; yr += tickStep) {
+          px = X(yr);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(yr), px, y0 + 6);
+        }
+        ctx.fillText('years from now', (x0 + x1) / 2, y0 + 20);
+
+        // the momentum band: change year -> level-off year
+        if (RES.levelYr != null && RES.gain > 0.05) {
+          ctx.save();
+          ctx.globalAlpha = 0.13;
+          ctx.fillStyle = c.accent;
+          ctx.fillRect(X(St.change), y1, X(St.change + RES.levelYr) - X(St.change), y0 - y1);
+          ctx.restore();
+        }
+
+        // baseline population at the moment of the change
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Y(RES.base)); ctx.lineTo(x1, Y(RES.base)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // counterfactual — fertility never changes; it leaves the top fast
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        for (k = 0; k < RES.never.length && RES.years[k] <= xmax; k++) {
+          var ny = Yraw(RES.never[k]);
+          if (k === 0) ctx.moveTo(X(RES.years[k]), ny); else ctx.lineTo(X(RES.years[k]), ny);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+
+        // the projection itself
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.6; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (k = 0; k < RES.tot.length && RES.years[k] <= xmax; k++) {
+          var py = Y(RES.tot[k]);
+          if (k === 0) ctx.moveTo(X(RES.years[k]), py); else ctx.lineTo(X(RES.years[k]), py);
+        }
+        ctx.stroke();
+
+        // ---- marker lines ----
+        var cx = X(St.change);
+        ctx.strokeStyle = c.bad; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(cx, y1); ctx.lineTo(cx, y0); ctx.stroke();
+
+        var ex = null;
+        if (St.ramp > 0) {
+          ex = X(St.change + St.ramp);
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1.2;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(ex, y1); ctx.lineTo(ex, y0); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        var showLevel = RES.levelYr != null && RES.gain > 0.05;
+        if (showLevel) {
+          var lx = X(St.change + RES.levelYr);
+          ctx.strokeStyle = c.ok; ctx.lineWidth = 1.6;
+          ctx.setLineDash([4, 3]);
+          ctx.beginPath(); ctx.moveTo(lx, y1); ctx.lineTo(lx, y0); ctx.stroke();
+          ctx.setLineDash([]);
+          dot(ctx, c, lx, Y(RES.peak), 4.5, c.ok);
+        }
+
+        // ---- marker labels, in fixed horizontal lanes so that they can never
+        //      land on top of one another; the least important ones are dropped
+        //      rather than crowded once the canvas gets narrow ----
+        if (showLevel) {
+          chip(ctx, c, X(St.change + RES.levelYr) - 4, y1 + 11,
+            narrow ? 'stops +' + RES.levelYr + ' yr' : 'growth stops — ' + RES.levelYr + ' yr later',
+            fs, c.ok, w, 'right', x0 + 1);
+        }
+        chip(ctx, c, cx + 4, y1 + 25,
+          narrow
+            ? 'TFR ' + F.dec(St.tfr, 2)
+            : (St.ramp > 0 ? 'fertility starts falling to ' : 'fertility → ') + F.dec(St.tfr, 2),
+          fs, c.bad, w, 'left', x0 + 1);
+        if (ex !== null && !narrow) {
+          chip(ctx, c, ex + 4, y1 + 39, 'decline complete', fs, c.bad, w, 'left', x0 + 1);
+        }
+
+        // the scrubber position
+        var si = idxOf(St.year);
+        var sx = X(RES.years[si]), sy = Y(RES.tot[si]);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(sx, y1); ctx.lineTo(sx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+        dot(ctx, c, sx, sy, 5.5, c.accentStrong);
+        // The peak marker labels ABOVE its dot. When the scrubber is high in the
+        // frame it is near that marker, so label below instead of colliding.
+        var below = sy < (y1 + y0) / 2;
+        chip(ctx, c, sx, below ? sy + 20 : sy - 11,
+          F.dec(RES.tot[si], 1) + ' M', fs + 0.5, c.accentStrong, w, 'center', x0 + 1);
+      }, { aspect: 0.54, minHeight: 210, maxHeight: 290 });
+
+      // ==================================================================
+      // AGE PYRAMID
+      // ==================================================================
+      var pyrCv = Demo.canvas('#pyramid', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var padL = 4, padR = 4, padT = 26, padB = 32;
+        var gutter = narrow ? 26 : 30;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 8.6 : 9.4;
+        var half = (x1 - x0 - gutter) / 2;
+        var cxm = x0 + half;                 // inner edge, male side
+        var cxf = cxm + gutter;              // inner edge, female side
+        var rowH = (y0 - y1) / N;
+        var k;
+
+        var P = RES.pops[idxOf(St.year)];
+        var tot = total(P);
+        var pct = St.mode === 'pct';
+        var axMax = pct ? RES.maxPct : RES.maxAbs;
+        if (!(axMax > 0)) axMax = 1;
+
+        function val(j) { return pct ? (tot > 0 ? P[j] / tot / 2 : 0) : P[j] / 2; }
+        function barW(v) { return Demo.clamp(v / axMax, 0, 1) * half; }
+
+        // reproductive-age band, drawn behind the bars
+        var bTop = y0 - (LAST + 1) * rowH, bBot = y0 - FIRST * rowH;
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = c.accent;
+        ctx.fillRect(x0, bTop, x1 - x0, bBot - bTop);
+        ctx.restore();
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x0, bTop); ctx.lineTo(x1, bTop);
+        ctx.moveTo(x0, bBot); ctx.lineTo(x1, bBot);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // headers
+        ctx.textBaseline = 'top';
+        ctx.font = '600 ' + (fs + 1.4) + FONT;
+        ctx.fillStyle = c.series[0];
+        ctx.textAlign = 'left';
+        ctx.fillText('male', x0 + 1, 1);
+        ctx.fillStyle = c.series[1];
+        ctx.textAlign = 'right';
+        ctx.fillText('female', x1 - 1, 1);
+        ctx.fillStyle = c.muted;
+        ctx.font = (fs - 0.4) + FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText('age', (cxm + cxf) / 2, 1);
+
+        ctx.fillStyle = c.accentStrong;
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText('ages 15–49 — the only ages that make births', w / 2, 13);
+
+        // bars
+        for (k = 0; k < N; k++) {
+          var yb = y0 - k * rowH;
+          var bh = Math.max(1.5, rowH - 1.8);
+          var v = val(k), bw = barW(v);
+          var repro = k >= FIRST && k <= LAST;
+          ctx.globalAlpha = repro ? 1 : 0.62;
+          ctx.fillStyle = c.series[0];
+          ctx.fillRect(cxm - bw, yb - rowH + (rowH - bh) / 2, bw, bh);
+          ctx.fillStyle = c.series[1];
+          ctx.fillRect(cxf, yb - rowH + (rowH - bh) / 2, bw, bh);
+          ctx.globalAlpha = 1;
+
+          // age label in the centre gutter
+          ctx.fillStyle = repro ? c.accentStrong : c.muted;
+          ctx.font = (repro ? '600 ' : '') + (fs - 0.8) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(k === N - 1 ? '85+' : String(5 * k), (cxm + cxf) / 2, yb - rowH / 2);
+          ctx.textBaseline = 'top';
+        }
+
+        // centre axis
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(cxm, y1); ctx.lineTo(cxm, y0);
+        ctx.moveTo(cxf, y1); ctx.lineTo(cxf, y0);
+        ctx.moveTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.stroke();
+
+        // x scale. The outermost tick sits on the canvas edge, so it is
+        // aligned inwards rather than centred or it would be clipped.
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        function tickLabel(v) { return pct ? F.dec(v * 100, 1) + '%' : F.dec(v, 1); }
+
+        ctx.textAlign = 'center';
+        ctx.fillText('0', (cxm + cxf) / 2, y0 + 4);
+        ctx.fillText(tickLabel(axMax / 2), cxm - half / 2, y0 + 4);
+        ctx.fillText(tickLabel(axMax / 2), cxf + half / 2, y0 + 4);
+        ctx.textAlign = 'left';
+        ctx.fillText(tickLabel(axMax), cxm - half, y0 + 4);
+        ctx.textAlign = 'right';
+        ctx.fillText(tickLabel(axMax), cxf + half, y0 + 4);
+
+        ctx.textAlign = 'center';
+        ctx.fillText(pct
+          ? 'share of the whole population, per five-year group'
+          : 'millions of people per five-year group', w / 2, y0 + 17);
+      }, { aspect: 0.82, minHeight: 260, maxHeight: 360 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        shapeRange: document.getElementById('shapeRange'),
+        shapeOut: document.getElementById('shapeOut'),
+        shapeHint: document.getElementById('shapeHint'),
+        tfrRange: document.getElementById('tfrRange'),
+        tfrOut: document.getElementById('tfrOut'),
+        changeRange: document.getElementById('changeRange'),
+        changeOut: document.getElementById('changeOut'),
+        rampRange: document.getElementById('rampRange'),
+        rampOut: document.getElementById('rampOut'),
+        yearRange: document.getElementById('yearRange'),
+        yearOut: document.getElementById('yearOut'),
+        btnPlay: document.getElementById('btnPlay'),
+        btnRewind: document.getElementById('btnRewind'),
+        btnRepl: document.getElementById('btnRepl'),
+        btnReset: document.getElementById('btnReset'),
+        rTfr0: document.getElementById('rTfr0'),
+        rU15: document.getElementById('rU15'),
+        rStored: document.getElementById('rStored'),
+        rStoredSub: document.getElementById('rStoredSub'),
+        rLag: document.getElementById('rLag'),
+        rLevel: document.getElementById('rLevel'),
+        resultNote: document.getElementById('resultNote'),
+        rYearPop: document.getElementById('rYearPop'),
+        rYearGrowth: document.getElementById('rYearGrowth'),
+        rYearWomen: document.getElementById('rYearWomen'),
+        rYearWomenSub: document.getElementById('rYearWomenSub'),
+        rYearMedian: document.getElementById('rYearMedian'),
+        popCap: document.getElementById('popCap'),
+        pyrCap: document.getElementById('pyrCap'),
+        pyrLabel: document.getElementById('pyrLabel'),
+        lgPop: document.getElementById('lgPop'),
+        lgBand: document.getElementById('lgBand')
+      };
+
+      el.lgPop.style.background = 'var(--series-1)';
+      el.lgBand.style.background = 'var(--accent)';
+      el.lgBand.style.opacity = '0.35';
+
+      function shapeWord(rPct) {
+        if (rPct >= 1.2) return 'Expansive';
+        if (rPct >= 0.35) return 'Slowly growing';
+        if (rPct > -0.35) return 'Stable, near-column';
+        return 'Contracting';
+      }
+
+      // ==================================================================
+      // RENDER — everything is recomputed from the starting pyramid,
+      // so nothing can drift between updates.
+      // ==================================================================
+      // `booting` suppresses the redundant recomputes that Demo.range fires
+      // while the sliders are being wired; one full pass runs at the end.
+      var booting = true;
+
+      function recompute() {
+        if (booting) return;
+        RES = compute();
+        el.yearRange.max = String(RES.xmax);
+        if (St.year > RES.xmax) { St.year = RES.xmax; el.yearRange.value = String(St.year); }
+        render();
+      }
+
+      function render() {
+        var si = idxOf(St.year);
+        var P = RES.pops[si];
+        var P0 = RES.pops[0];
+
+        // --- slider readouts ---
+        el.shapeOut.textContent = 'TFR ' + F.dec(RES.tfr0, 2);
+        el.shapeHint.innerHTML = '<strong>' + shapeWord(St.rPct) + '.</strong> Built by a fertility of '
+          + F.dec(RES.tfr0, 2) + ' children per woman held steady, which makes the population '
+          + (St.rPct >= 0.02 ? 'grow ' : St.rPct <= -0.02 ? 'shrink ' : 'hold steady at ')
+          + (Math.abs(St.rPct) >= 0.02 ? F.dec(Math.abs(St.rPct), 1) + '% per year' : '0% per year')
+          + '. ' + F.dec(shareUnder15(P0) * 100, 1) + '% of these people are under 15.';
+        el.tfrOut.textContent = F.dec(St.tfr, 2);
+        el.changeOut.textContent = String(St.change);
+        el.rampOut.textContent = St.ramp === 0 ? 'instant' : St.ramp + ' yr';
+        el.yearOut.textContent = String(St.year);
+
+        el.rTfr0.textContent = F.dec(RES.tfr0, 2);
+        el.rU15.textContent = F.dec(shareUnder15(P0) * 100, 1) + '%';
+
+        // --- headline result ---
+        if (RES.permanent) {
+          el.rStored.textContent = 'no limit';
+          el.rStoredSub.innerHTML = 'growth never stops';
+          el.rLag.innerHTML = '—';
+          el.rLevel.innerHTML = '—';
+          el.resultNote.className = 'note bad';
+          el.resultNote.innerHTML = '<strong>' + F.dec(St.tfr, 2) + ' is above replacement ('
+            + F.dec(REPL, 2) + ').</strong> This population settles into permanent exponential growth at '
+            + F.dec(RES.rLong * 100, 2) + '% per year and never levels off, so there is no stored-growth figure '
+            + 'to report. Bring fertility down to 2.1 to see the momentum effect on its own.';
+        } else if (RES.declining && RES.gain / RES.base * 100 <= 5) {
+          // Fertility is far enough below replacement that the population
+          // shrinks for ever. There is no level to settle at, so reporting a
+          // single "stored growth" figure from the first declining step would
+          // badly understate what is happening.
+          el.rStored.textContent = 'no floor';
+          el.rStoredSub.innerHTML = 'the decline never stops';
+          el.rLag.innerHTML = '—';
+          el.rLevel.innerHTML = '—';
+          el.resultNote.className = 'note bad';
+          el.resultNote.innerHTML = '<strong>' + F.dec(St.tfr, 2) + ' is below replacement ('
+            + F.dec(REPL, 2) + ') and this pyramid has no youth bulge left to cash in.</strong> The '
+            + 'population falls immediately and keeps falling at ' + F.dec(Math.abs(RES.rLong) * 100, 2)
+            + '% per year with no floor, so there is no settling level to report. Momentum only shows up '
+            + 'as a <em>delay</em> when a bulge is still queueing to reach reproductive age.';
+        } else {
+          var pctGain = RES.gain / RES.base * 100;
+          el.rStored.textContent = (pctGain >= 0 ? '+' : '−') + F.dec(Math.abs(pctGain), 1) + '%';
+          el.rStoredSub.innerHTML = F.dec(RES.base, 1) + ' → ' + F.dec(RES.peak, 1) + ' million';
+          el.rLag.innerHTML = RES.lag95 + '<span class="r-unit">yr</span>';
+          el.rLevel.innerHTML = RES.levelYr + '<span class="r-unit">yr</span>';
+
+          if (pctGain > 5) {
+            el.resultNote.className = 'note';
+            el.resultNote.innerHTML = '<strong>The pyramid was holding '
+              + F.dec(pctGain, 1) + '% more growth.</strong> Fertility reaches '
+              + F.dec(St.tfr, 2) + ' at year ' + (St.change + St.ramp)
+              + ', yet the population goes on rising to ' + F.dec(RES.peak, 1)
+              + ' million and does not stop until year ' + (St.change + RES.levelYr) + ' — '
+              + RES.levelYr + ' years later. Nothing was added: those people were already in the '
+              + 'bottom rows of the pyramid at the start, waiting to reach childbearing age.'
+              + (RES.declining
+                ? ' After that it turns over and declines steadily, because ' + F.dec(St.tfr, 2)
+                  + ' is below replacement — but notice that the decline had to wait '
+                  + RES.levelYr + ' years to begin.'
+                : '');
+          } else if (pctGain >= -0.5) {
+            el.resultNote.className = 'note';
+            el.resultNote.innerHTML = '<strong>Almost nothing stored.</strong> This pyramid is close to its '
+              + 'stationary shape already, so there is no youth bulge queueing to reach reproductive age and '
+              + 'changing fertility acts almost immediately. Press <em>Expansive</em> to see the contrast.';
+          } else {
+            el.resultNote.className = 'note warn';
+            el.resultNote.innerHTML = '<strong>Negative momentum.</strong> This population keeps <em>shrinking</em> '
+              + 'by ' + F.dec(Math.abs(pctGain), 1) + '% even at a fertility of ' + F.dec(St.tfr, 2)
+              + '. Its big cohorts are now in the ages that die rather than the ages that give birth, so momentum '
+              + 'runs downhill. It works in both directions.';
+          }
+        }
+
+        // --- the scrubbed year ---
+        var g = growthAt(si);
+        el.rYearPop.innerHTML = F.dec(RES.tot[si], 1) + '<span class="r-unit">M</span>';
+        el.rYearGrowth.innerHTML = (g >= 0 ? '' : '−') + F.dec(Math.abs(g) * 100, 2)
+          + '<span class="r-unit">%/yr</span>';
+        el.rYearWomen.innerHTML = F.dec(womenRepro(P), 1) + '<span class="r-unit">M</span>';
+        var w0 = womenRepro(P0), wn = womenRepro(P);
+        el.rYearWomenSub.textContent = si === 0
+          ? 'the pool that produces births'
+          : (wn >= w0 ? '+' : '−') + F.dec(Math.abs(wn - w0) / w0 * 100, 0) + '% vs year 0';
+        el.rYearMedian.innerHTML = F.dec(medianAge(P), 1) + '<span class="r-unit">yr</span>';
+
+        // --- captions ---
+        el.pyrLabel.textContent = 'Age structure at year ' + St.year;
+        el.pyrCap.textContent = 'Year ' + St.year + ': ' + F.dec(RES.tot[si], 1)
+          + ' million people, median age ' + F.dec(medianAge(P), 1)
+          + ' years, ' + F.dec(shareUnder15(P) * 100, 1) + '% under age 15, '
+          + F.dec(womenRepro(P), 1) + ' million women aged 15–49.';
+
+        if (RES.permanent) {
+          el.popCap.textContent = 'Fertility of ' + F.dec(St.tfr, 2)
+            + ' is above replacement (' + F.dec(REPL, 2) + '), so this curve grows without limit.';
+        } else if (RES.declining && RES.gain / RES.base * 100 <= 5) {
+          el.popCap.textContent = 'Fertility of ' + F.dec(St.tfr, 2)
+            + ' is below replacement (' + F.dec(REPL, 2) + ') and there is no youth bulge to offset it, '
+            + 'so this population shrinks from the start and never levels off.';
+        } else if (RES.gain / RES.base * 100 > 5) {
+          el.popCap.textContent = 'Fertility falls to ' + F.dec(St.tfr, 2) + ' at year ' + St.change
+            + ', but the population keeps growing until year ' + (St.change + RES.levelYr)
+            + ' and ends ' + F.dec(RES.gain / RES.base * 100, 1) + '% larger than it was at the change.';
+        } else {
+          el.popCap.textContent = 'This pyramid has little or no stored growth, so the population responds to '
+            + 'the fertility change almost at once.';
+        }
+
+        popCv.redraw();
+        pyrCv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#shapeRange', function (v) { St.rPct = v / 10; recompute(); });
+      Demo.range('#tfrRange', function (v) { St.tfr = v; recompute(); });
+      Demo.range('#changeRange', function (v) { St.change = v; recompute(); });
+      Demo.range('#rampRange', function (v) { St.ramp = v; recompute(); });
+      Demo.range('#yearRange', function (v) { St.year = v; render(); });
+
+      document.querySelectorAll('.btn-row .btn[data-shape]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          el.shapeRange.value = b.dataset.shape;
+          St.rPct = parseFloat(b.dataset.shape) / 10;
+          recompute();
+        });
+      });
+
+      el.btnRepl.addEventListener('click', function () {
+        el.tfrRange.value = '2.1';
+        St.tfr = 2.1;
+        recompute();
+      });
+
+      document.querySelectorAll('#pyrSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#pyrSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          St.mode = b.dataset.mode;
+          pyrCv.redraw();
+        });
+      });
+
+      // --- playback: moves a display index along an array that already
+      //     exists. It integrates nothing, so it cannot drift. ---
+      var acc = 0;
+      var anim = Demo.loop(function (dt) {
+        acc += dt;
+        if (acc < 0.28) return;
+        acc = 0;
+        var next = St.year + STEP;
+        if (next > RES.xmax) { stopPlay(); return; }
+        St.year = next;
+        el.yearRange.value = String(next);
+        render();
+      });
+
+      function stopPlay() { anim.stop(); el.btnPlay.textContent = 'Play'; }
+
+      el.btnPlay.addEventListener('click', function () {
+        if (anim.running) { stopPlay(); return; }
+        if (St.year >= RES.xmax) { St.year = 0; el.yearRange.value = '0'; render(); }
+        acc = 0;
+        anim.start();
+        el.btnPlay.textContent = 'Pause';
+      });
+
+      el.btnRewind.addEventListener('click', function () {
+        stopPlay();
+        St.year = 0;
+        el.yearRange.value = '0';
+        render();
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        stopPlay();
+        St.rPct = 2.2; St.tfr = 2.1; St.change = 0; St.ramp = 0; St.year = 0; St.mode = 'pct';
+        el.shapeRange.value = '22';
+        el.tfrRange.value = '2.1';
+        el.changeRange.value = '0';
+        el.rampRange.value = '0';
+        el.yearRange.value = '0';
+        document.querySelectorAll('#pyrSeg button').forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.mode === 'pct' ? 'true' : 'false');
+        });
+        recompute();
+      });
+
+      booting = false;
+      recompute();
+    })();
+  </script>
+</body>
+
+</html>

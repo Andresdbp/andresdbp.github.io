@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Does 3:1 Ever Look Like 3:1? | Dr. Andres Barboza</title>
+  <meta name="description" content="A true 3:1 monohybrid cross, sampled for real. Count 20 offspring and the ratio bounces everywhere; count 1000 and it settles. Chi-square worked term by term against the 3.841 critical value.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend, the worked chi-square table */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 13px; height: 13px; border-radius: 3px; display: inline-block; flex: none; }
+    .legend .lg.shade i { background: var(--bad); opacity: 0.28; }
+    .legend .lg.line i { width: 15px; height: 0; border-radius: 0; border-top: 2px solid var(--text-2); }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .r-value.big { font-size: 25px; }
+
+    /* the worked table: keep the arithmetic column readable on a phone */
+    .tbl.chi td, .tbl.chi th { padding: 6px 6px; }
+    .tbl.chi tr.total td { border-top: 1px solid var(--line); font-weight: 600; color: var(--text); }
+    .tbl.chi .sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 6px; }
+    .tbl.chi td:first-child { white-space: nowrap; }
+
+    .kv { font-size: 12.5px; color: var(--muted); }
+    .kv strong { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Does 3:1 Ever Look Like 3:1?</h1>
+        <p class="demo-sub">Set n to 20 and press <em>Re-run the cross</em> a dozen times. Watch the ratio stagger from 1.5:1 to 9:1 &mdash; out of a cross that is exactly 3:1 every single time. Then set n to 1000 and do it again.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 5</span>
+          <span class="tag is-accent">Sampling &amp; chi-square</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">One cross <span id="crossLabel">&mdash; Aa &times; Aa, every offspring drawn independently</span></p>
+        <canvas id="cross" role="img"
+                aria-label="A grid of offspring from one simulated cross, each coloured by phenotype, above two bars comparing the observed split with the expected three-to-one split."></canvas>
+        <div class="legend">
+          <span class="lg"><i id="swDom"></i>dominant phenotype (AA or Aa)</span>
+          <span class="lg"><i id="swRec"></i>recessive phenotype (aa)</span>
+        </div>
+        <p class="stage-caption" id="crossCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Many crosses <span>&mdash; the same cross repeated, plotted as a distribution. The axis never changes; the spread does.</span></p>
+        <canvas id="dist" role="img"
+                aria-label="Histogram of the percentage of dominant offspring across many replicate experiments, with the seventy-five percent line and the region that chi-square would reject shaded."></canvas>
+        <div class="legend">
+          <span class="lg line"><i></i>75% = a perfect 3:1</span>
+          <span class="lg shade"><i></i>would be rejected at p &lt; 0.05</span>
+          <span class="lg"><i id="swCur"></i>the experiment shown above</span>
+        </div>
+        <p class="stage-caption" id="distCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The experiment</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <span class="ctrl-label" id="nSegLabel">Offspring counted, n</span>
+                <span class="ctrl-value" id="nOut">40</span>
+              </div>
+              <div class="seg" role="tablist" aria-labelledby="nSegLabel" id="nSeg">
+                <button role="tab" aria-selected="false" data-n="20">20</button>
+                <button role="tab" aria-selected="true" data-n="40">40</button>
+                <button role="tab" aria-selected="false" data-n="100">100</button>
+                <button role="tab" aria-selected="false" data-n="400">400</button>
+                <button role="tab" aria-selected="false" data-n="1000">1000</button>
+              </div>
+              <p class="ctrl-hint">
+                Every offspring is an independent draw with probability <strong>0.75</strong> of the dominant
+                phenotype &mdash; a genuine binomial sample, not 3:1 with noise sprinkled on top. The underlying
+                cross is exactly 3:1 at every setting on this page. Nothing about the biology changes when you
+                move this control; only how many offspring you bothered to count.
+              </p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnRerun">Re-run the cross</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+            <p class="kv">Run <strong id="runNo">1</strong> &nbsp;&middot;&nbsp; seed <strong id="seedNo">20250101</strong> &mdash; seeded, so the same run number always gives the same offspring.</p>
+
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Observed dominant</div>
+                <div class="r-value" id="obsD">30</div>
+                <div class="r-sub" id="obsDsub">expected 30.0</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Observed recessive</div>
+                <div class="r-value" id="obsR">10</div>
+                <div class="r-sub" id="obsRsub">expected 10.0</div>
+              </div>
+              <div class="readout is-accent span2">
+                <div class="r-label">Observed ratio</div>
+                <div class="r-value big" id="obsRatio">3.00 : 1</div>
+                <div class="r-sub" id="obsRatioSub">expected 3.00 : 1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Chi-square, term by term</div>
+          <div class="table-scroll">
+            <table class="tbl chi">
+              <thead>
+                <tr>
+                  <th>Class</th>
+                  <th>O</th>
+                  <th>E</th>
+                  <th>O &minus; E</th>
+                  <th>(O&minus;E)&sup2;/E</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="sw" id="swRowD"></span>Dominant</td>
+                  <td id="cOd">30</td>
+                  <td id="cEd">30.0</td>
+                  <td id="cDd">0.0</td>
+                  <td id="cTd">0.000</td>
+                </tr>
+                <tr>
+                  <td><span class="sw" id="swRowR"></span>Recessive</td>
+                  <td id="cOr">10</td>
+                  <td id="cEr">10.0</td>
+                  <td id="cDr">0.0</td>
+                  <td id="cTr">0.000</td>
+                </tr>
+                <tr class="total">
+                  <td>Total</td>
+                  <td id="cOt">40</td>
+                  <td id="cEt">40.0</td>
+                  <td>0.0</td>
+                  <td id="cChi">0.000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="ctrl-hint" style="margin-top:10px">
+            &chi;&sup2; = &Sigma; (O &minus; E)&sup2; / E, summed over the phenotype classes. The two
+            deviations are always equal and opposite &mdash; if you counted four extra dominants you counted four
+            fewer recessives &mdash; which is exactly why the degrees of freedom is 1 and not 2.
+          </p>
+
+          <div class="readouts two" style="margin-top:12px">
+            <div class="readout is-accent">
+              <div class="r-label">&chi;&sup2;</div>
+              <div class="r-value big" id="chiVal">0.000</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">p-value</div>
+              <div class="r-value big" id="pVal">1.000</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Degrees of freedom</div>
+              <div class="r-value" id="dfVal">1</div>
+              <div class="r-sub">classes &minus; 1 = 2 &minus; 1</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Critical value, &alpha; = 0.05</div>
+              <div class="r-value">3.841</div>
+              <div class="r-sub">df = 1</div>
+            </div>
+          </div>
+
+          <p class="note" id="verdict" style="margin-top:11px">&nbsp;</p>
+          <p class="note warn" id="smallE" hidden style="margin-top:10px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Run the whole experiment again and again</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="repRange">Replicate experiments</label>
+                <span class="ctrl-value" id="repOut">300</span>
+              </div>
+              <input type="range" id="repRange" min="20" max="500" step="10" value="300">
+              <p class="ctrl-hint">
+                Each replicate is a fresh set of n offspring from the same 3:1 cross. Replicate 1 is the one
+                drawn above, so the marker on the histogram is your experiment sitting inside the crowd.
+              </p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Spread of results, observed</div>
+                <div class="r-value" id="sdObs">6.9</div>
+                <div class="r-sub">percentage points, SD</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Spread predicted by theory</div>
+                <div class="r-value" id="sdTh">6.8</div>
+                <div class="r-sub">&radic;(0.75&middot;0.25/n) &times; 100</div>
+              </div>
+              <div class="readout span2">
+                <div class="r-label">Range of observed ratios across the replicates</div>
+                <div class="r-value" id="repRange2">1.86 : 1 &nbsp;to&nbsp; 6.50 : 1</div>
+              </div>
+              <div class="readout is-bad">
+                <div class="r-label">Rejected at p &lt; 0.05, in these replicates</div>
+                <div class="r-value big" id="repRej">5.0%</div>
+                <div class="r-sub" id="repRejSub">&nbsp;</div>
+              </div>
+              <div class="readout is-bad">
+                <div class="r-label">Exact long-run rate at this n</div>
+                <div class="r-value big" id="repExact">5.0%</div>
+                <div class="r-sub">from the binomial itself, no simulation</div>
+              </div>
+            </div>
+
+            <p class="note" id="repNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>Chi-square needs reasonably big expected counts.</strong> The usual rule of thumb is at least
+            about 5 expected in every class. At n = 20 the expected recessive count is exactly 5.0 &mdash; sitting
+            right on the floor &mdash; and the test starts to misbehave there, because the possible outcomes are
+            too chunky. With 20 offspring the recessive count can only be a whole number, so the observed
+            percentage can only land on multiples of 5. A smooth continuous curve is being used to judge a
+            staircase. The p-values at n = 20 on this page are indicative, not exact.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            <strong>What is simplified.</strong> Every offspring is an independent draw at p = 0.75, which assumes
+            complete dominance, no lethal alleles, no linkage to anything, equal survival of all genotypes, and no
+            miscounting. In a real corn ear the kernels are not quite independent and a few are genuinely hard to
+            score. Real deviations from 3:1 <em>do</em> exist and matter &mdash; a homozygous-lethal allele gives
+            2:1, an epistatic interaction can give 9:7, and a scoring bias gives whatever your eyes gave it. This
+            page shows only what pure sampling does, so that when you meet a real 2:1 you can tell it apart from
+            luck. The p-value uses the standard continuous chi-square distribution with 1 degree of freedom, with
+            no continuity correction applied.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students believe a monohybrid cross <em>produces</em> a 3:1 ratio, the
+        way a machine produces parts. So when the corn ear comes back 28 purple : 12 yellow, they write
+        &ldquo;our experiment failed&rdquo; or &ldquo;we must have miscounted.&rdquo; Then, to fix it, they plug
+        the numbers into a chi-square formula they were handed, get a number, compare it to 3.84, and write down
+        a verdict they could not explain to anyone. Both halves of that are the same error: treating a
+        <em>probability</em> as a <em>promise</em>.
+      </p>
+      <p>
+        <strong>What 3:1 actually claims.</strong> Each offspring, on its own, has a 3-in-4 chance of the dominant
+        phenotype. That is the whole claim. It says nothing about what any particular batch of 40 will look like,
+        for the same reason that a fair coin makes no promise about the next 40 flips. 28:12 is not a failed 3:1.
+        It is one of the completely ordinary things a real 3:1 cross does. Press <em>Re-run the cross</em> at
+        n = 20 a dozen times and you will personally watch a perfect 3:1 mechanism hand you 12:8, 17:3, 14:6 and
+        18:2. Nothing changed in the machine between those runs.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Set n = 20 and look at the histogram: the results are smeared from about
+        50% to 100% dominant. Now set n = 1000 &mdash; same cross, same axis &mdash; and the whole cloud collapses
+        into a narrow spike straddling 75%. The individual offspring did not become more obedient. There are
+        simply more of them, and the spread of a percentage shrinks like 1/&radic;n: the standard deviation falls
+        from about 9.7 percentage points at n = 20 to about 1.4 at n = 1000, a factor of &radic;50 &asymp; 7. This
+        is the entire reason your teacher wants you to count the whole ear. A ratio is not a measurement you take
+        once; it is an estimate whose precision you buy with sample size.
+      </p>
+      <p>
+        <strong>What chi-square is actually asking.</strong> Not &ldquo;is my ratio 3:1?&rdquo; It asks: <em>if the
+        true ratio were 3:1, how weird would data this far off be?</em> The (O&minus;E)&sup2;/E terms measure the
+        gap in units of how big a gap you should expect &mdash; that is why you divide by E, and why being 2 off
+        is a scandal when you expected 10 and a rounding error when you expected 750. The p-value is the answer:
+        the fraction of honest 3:1 experiments that would look at least this strange.
+      </p>
+      <p>
+        <strong>The two sentences to get right, and both are on the readouts above.</strong> First: failing to
+        reject does <em>not</em> prove the ratio is 3:1. Your data were merely unsurprising, and unsurprising data
+        are compatible with lots of hypotheses &mdash; a true 0.73 would also have passed. You never prove a null
+        hypothesis; you only fail to knock it over. Second: rejecting does <em>not</em> mean you did the
+        experiment badly. Read the rejection tiles: about <strong>5%</strong> of these replicate experiments get
+        rejected at &alpha; = 0.05 &mdash; roughly 1 in 20 &mdash; even though every single one of them came from
+        a cross that is exactly 3:1. That 5% is not a malfunction. It is the number you chose when you chose
+        &alpha; = 0.05. Setting the bar at &ldquo;the strangest 5% of honest experiments&rdquo; guarantees that
+        5% of honest experiments get convicted. (The exact rate is not a clean 5.00% &mdash; it is 6.52% at
+        n = 20 and 4.23% at n = 40 &mdash; because offspring come in whole numbers and the cut can only fall
+        between two adjacent counts. The tile computes the true value for whichever n you pick.)
+      </p>
+      <p>
+        <strong>And the trap on the other side.</strong> Because the critical value stays at 3.841 while the
+        expected counts grow, a big n can reject a ratio that is off by almost nothing. A real deviation of one
+        percentage point is invisible at n = 40 and damning at n = 100 000. So a significant &chi;&sup2; means
+        &ldquo;this gap is too big to blame on luck&rdquo; &mdash; it does not tell you the gap is
+        <em>large</em>, and it does not tell you what caused it. That part is still your job as a biologist.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      //   Monohybrid Aa x Aa, complete dominance. Each offspring is an
+      //   INDEPENDENT Bernoulli draw with p = 0.75 of the dominant
+      //   phenotype. Nothing here rounds to the expected ratio and adds
+      //   noise — that would give the wrong variance and destroy the whole
+      //   point of the page. n offspring therefore give
+      //     D ~ Binomial(n, 0.75),  R = n - D.
+      //
+      //   Expected counts:  E_D = 0.75 n,  E_R = 0.25 n
+      //   chi^2 = (D - E_D)^2 / E_D + (R - E_R)^2 / E_R
+      //   Because R - E_R = -(D - E_D) = -d, this collapses to
+      //     chi^2 = d^2 (1/(0.75n) + 1/(0.25n)) = 16 d^2 / (3 n)
+      //   which is used only as a cross-check; the table sums the two
+      //   terms explicitly, the way a student would.
+      //
+      //   df = classes - 1 = 1. Critical value at alpha = 0.05 is 3.841.
+      //   p = P(chi^2_1 > x) = erfc( sqrt(x/2) ).
+      //     erfc(sqrt(3.841459/2)) = erfc(1.38590) = 0.0500  <- verified
+      //
+      //   Rejection region as a proportion: 16 d^2/(3n) > 3.841459
+      //     |phat - 0.75| > sqrt(3 * 3.841459 / 16 / n) = sqrt(0.720274/n)
+      //   At n = 100 that is 0.0849, i.e. 1.96 * sqrt(pq/n). Checks out.
+      //
+      //   NOTHING on this page is time-stepped. Every number is recomputed
+      //   from the seed, n and the replicate count on each render.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var P_DOM = 0.75;              // probability of the dominant phenotype
+      var CRIT = 3.841459;           // chi-square critical value, df = 1, alpha = 0.05
+      var SEED0 = 20250101;
+      var SEED_STEP = 7919;
+      var WARMUP = 30;               // discard the first draws of each stream
+
+      // histogram axis — deliberately FIXED so shrinking spread is visible
+      var BLO = 40, BHI = 100, NB = 60;
+
+      var S = {
+        n: 40,
+        nrep: 300,
+        run: 1,
+        grid: [],      // per-offspring outcome of replicate 1: true = dominant
+        reps: [],      // dominant count of every replicate
+        bins: [],
+        below: 0,
+        maxBin: 1
+      };
+
+      // ---------------- statistics ----------------
+
+      // Numerical Recipes erfcc — fractional error < 1.2e-7 everywhere.
+      function erfc(x) {
+        var z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+        var ans = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 +
+          t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 +
+            t * (-0.82215223 + t * 0.17087277)))))))));
+        return x >= 0 ? ans : 2 - ans;
+      }
+
+      // upper tail of the chi-square distribution with 1 degree of freedom
+      function pValue(chi2) {
+        if (!(chi2 > 0)) return 1;
+        return Demo.clamp(erfc(Math.sqrt(chi2 / 2)), 0, 1);
+      }
+
+      function stats(d, n) {
+        var eD = P_DOM * n, eR = (1 - P_DOM) * n;
+        var r = n - d;
+        var tD = (d - eD) * (d - eD) / eD;
+        var tR = (r - eR) * (r - eR) / eR;
+        var chi2 = tD + tR;
+        return {
+          n: n, d: d, r: r, eD: eD, eR: eR, tD: tD, tR: tR,
+          chi2: chi2, p: pValue(chi2), reject: chi2 > CRIT,
+          pct: 100 * d / n
+        };
+      }
+
+      // half-width of the acceptance region, in percentage points
+      function critHalfWidth(n) { return 100 * Math.sqrt(3 * CRIT / 16 / n); }
+
+      // Lanczos log-gamma, so the EXACT binomial probability of rejection can be
+      // summed. The Monte Carlo tile is an estimate; this one is the truth it is
+      // converging to, and the two disagreeing is itself worth seeing.
+      function lgam(x) {
+        var c = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+          -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+        var y = x, t = x + 5.5;
+        t -= (x + 0.5) * Math.log(t);
+        var s = 1.000000000190015;
+        for (var j = 0; j < 6; j++) s += c[j] / ++y;
+        return -t + Math.log(2.5066282746310005 * s / x);
+      }
+
+      function binPmf(k, n, p) {
+        return Math.exp(lgam(n + 1) - lgam(k + 1) - lgam(n - k + 1)
+          + k * Math.log(p) + (n - k) * Math.log(1 - p));
+      }
+
+      // P(chi2 > 3.841) when the cross really is 3:1 — the true size of the test
+      function exactRejectRate(n) {
+        var s = 0;
+        for (var k = 0; k <= n; k++) if (stats(k, n).reject) s += binPmf(k, n, P_DOM);
+        return s;
+      }
+
+      function ratioText(d, r) {
+        if (r === 0) return d === 0 ? 'no offspring' : 'all dominant';
+        return F.dec(d / r, 2) + ' : 1';
+      }
+
+      // ---------------- the sampler ----------------
+      // A real binomial: n independent Bernoulli(0.75) draws, every time.
+      function sample() {
+        var seed = SEED0 + (S.run - 1) * SEED_STEP;
+        var rand = Demo.rng(seed);
+        var i, r, d;
+        for (i = 0; i < WARMUP; i++) rand();
+
+        S.grid = [];
+        S.reps = [];
+        for (r = 0; r < S.nrep; r++) {
+          d = 0;
+          for (i = 0; i < S.n; i++) {
+            var dom = rand() < P_DOM;
+            if (dom) d++;
+            if (r === 0) S.grid.push(dom);
+          }
+          S.reps.push(d);
+        }
+
+        // bin the replicates onto the fixed axis
+        S.bins = new Array(NB);
+        for (i = 0; i < NB; i++) S.bins[i] = 0;
+        S.below = 0;
+        S.maxBin = 1;
+        for (r = 0; r < S.reps.length; r++) {
+          var pct = 100 * S.reps[r] / S.n;
+          if (pct < BLO) S.below++;
+          var k = Demo.clamp(Math.floor((pct - BLO) / (BHI - BLO) * NB), 0, NB - 1);
+          S.bins[k]++;
+          if (S.bins[k] > S.maxBin) S.maxBin = S.bins[k];
+        }
+        return seed;
+      }
+
+      function replicateSummary() {
+        var i, sum = 0, rej = 0, lo = Infinity, hi = -Infinity;
+        var m = S.reps.length;
+        for (i = 0; i < m; i++) {
+          var pct = 100 * S.reps[i] / S.n;
+          sum += pct;
+          if (pct < lo) lo = pct;
+          if (pct > hi) hi = pct;
+          if (stats(S.reps[i], S.n).reject) rej++;
+        }
+        var mean = sum / m, ss = 0;
+        for (i = 0; i < m; i++) {
+          var q = 100 * S.reps[i] / S.n - mean;
+          ss += q * q;
+        }
+        return {
+          mean: mean,
+          sd: m > 1 ? Math.sqrt(ss / (m - 1)) : 0,
+          sdTheory: 100 * Math.sqrt(P_DOM * (1 - P_DOM) / S.n),
+          rej: rej, rejFrac: rej / m,
+          lo: lo, hi: hi,
+          loD: Math.round(lo * S.n / 100), hiD: Math.round(hi * S.n / 100)
+        };
+      }
+
+      // ---------------- canvas helpers ----------------
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      // ==================================================================
+      // CANVAS 1 — one cross: the offspring, then observed vs expected
+      // ==================================================================
+      var crossCv = Demo.canvas('#cross', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var st = stats(S.reps.length ? S.reps[0] : 0, S.n);
+
+        var barsH = 2 * 15 + 2 * 14 + 10;      // two labelled bars
+        var gx0 = 1, gx1 = w - 1;
+        var gy0 = 0, gy1 = h - barsH - 12;
+        var gw = gx1 - gx0, gh = Math.max(30, gy1 - gy0);
+
+        // --- offspring grid, in the order they were drawn ---
+        // Lay the offspring out in a block matching the box aspect, but cap the
+        // cell size: at n = 20 an uncapped cell is 80 px and reads as a mosaic
+        // rather than as a sample of individuals.
+        var cols = Math.max(1, Math.ceil(Math.sqrt(S.n * gw / gh)));
+        var rows = Math.ceil(S.n / cols);
+        var cell = Math.min(gw / cols, gh / rows, 30);
+        var pad = Demo.clamp(cell * 0.08, 0.5, 2.4);
+        var ox = gx0 + (gw - cols * cell) / 2;
+        var oy = gy0 + (gh - rows * cell) / 2;
+
+        for (var i = 0; i < S.n; i++) {
+          var cx = ox + (i % cols) * cell;
+          var cy = oy + Math.floor(i / cols) * cell;
+          ctx.fillStyle = S.grid[i] ? c.series[0] : c.series[1];
+          ctx.fillRect(cx + pad, cy + pad, cell - 2 * pad, cell - 2 * pad);
+        }
+
+        // --- observed vs expected bars ---
+        var by = h - barsH;
+        var bw = w - 2;
+        var bx = 1;
+
+        function labelRow(y, left, right) {
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textBaseline = 'alphabetic';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = c.text2;
+          ctx.fillText(left, bx, y);
+          ctx.font = fs + FONT;
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.muted;
+          ctx.fillText(right, bx + bw, y);
+        }
+
+        function splitBar(y, frac, alpha) {
+          var cut = bx + bw * frac;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = c.series[0];
+          ctx.fillRect(bx, y, cut - bx, 14);
+          ctx.fillStyle = c.series[1];
+          ctx.fillRect(cut, y, bx + bw - cut, 14);
+          ctx.restore();
+          return cut;
+        }
+
+        labelRow(by + 11, 'Observed',
+          st.d + ' : ' + st.r + '  →  ' + ratioText(st.d, st.r));
+        splitBar(by + 15, S.n ? st.d / S.n : 0, 1);
+
+        // the 3:1 line drawn straight across the observed bar
+        var refX = bx + bw * P_DOM;
+        ctx.strokeStyle = c.text;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(refX, by + 12); ctx.lineTo(refX, by + 15 + 14 + 2);
+        ctx.stroke();
+
+        var y2 = by + 15 + 14 + 10;
+        labelRow(y2 + 11, 'Expected if 3:1',
+          F.dec(st.eD, 1) + ' : ' + F.dec(st.eR, 1) + '  →  3.00 : 1');
+        splitBar(y2 + 15, P_DOM, 0.38);
+
+      }, { aspect: 0.5, minHeight: 230, maxHeight: 285 });
+
+      // ==================================================================
+      // CANVAS 2 — distribution of the replicate experiments
+      // ==================================================================
+      var distCv = Demo.canvas('#dist', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 26 : 32, padR = 8, padT = 20, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var i, px;
+
+        function X(pct) { return x0 + (x1 - x0) * (Demo.clamp(pct, BLO, BHI) - BLO) / (BHI - BLO); }
+        function Y(cnt) { return y0 - (y0 - y1) * Demo.clamp(cnt / S.maxBin, 0, 1); }
+
+        // --- rejection region shading ---
+        var hw = critHalfWidth(S.n);
+        var accLo = 100 * P_DOM - hw, accHi = 100 * P_DOM + hw;
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = c.bad;
+        if (accLo > BLO) ctx.fillRect(x0, y1, X(accLo) - x0, y0 - y1);
+        if (accHi < BHI) ctx.fillRect(X(accHi), y1, x1 - X(accHi), y0 - y1);
+        ctx.restore();
+
+        // --- y gridlines ---
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 2; i++) {
+          var gy = y0 - (y0 - y1) * i / 2;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(Math.round(S.maxBin * i / 2)), x0 - 4, gy);
+        }
+
+        // --- axes ---
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('replicate experiments', 1, 2);
+
+        // --- bars ---
+        var bw = (x1 - x0) / NB;
+        for (i = 0; i < NB; i++) {
+          if (!S.bins[i]) continue;
+          var lo = BLO + (BHI - BLO) * i / NB;
+          var inReject = (lo + 0.5) < accLo || (lo + 0.5) > accHi;
+          ctx.fillStyle = inReject ? c.bad : c.accent;
+          var top = Y(S.bins[i]);
+          ctx.fillRect(x0 + i * bw + 0.3, top, Math.max(1, bw - 0.6), y0 - top);
+        }
+
+        // --- the 75% line ---
+        px = X(100 * P_DOM);
+        ctx.strokeStyle = c.text;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(px, y1); ctx.lineTo(px, y0); ctx.stroke();
+
+        // --- the current experiment ---
+        var cur = S.reps.length ? 100 * S.reps[0] / S.n : 100 * P_DOM;
+        var cxp = X(cur);
+        ctx.strokeStyle = c.accentStrong;
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cxp, y1); ctx.lineTo(cxp, y0); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.accentStrong;
+        ctx.beginPath();
+        ctx.moveTo(cxp, y0 - 7); ctx.lineTo(cxp - 5, y0 + 1); ctx.lineTo(cxp + 5, y0 + 1);
+        ctx.closePath(); ctx.fill();
+
+        chip(ctx, c, px, y1 + 11, '75% = 3:1', fs, c.text, w, 'center', x0 + 1);
+        if (Math.abs(cur - 100 * P_DOM) > 3.5) {
+          chip(ctx, c, cxp, y1 + 26, 'this run ' + F.dec(cur, 1) + '%', fs, c.accentStrong, w, 'center', x0 + 1);
+        }
+
+        // --- x ticks ---
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var ticks = narrow ? [40, 60, 80, 100] : [40, 50, 60, 70, 80, 90, 100];
+        for (i = 0; i < ticks.length; i++) {
+          px = X(ticks[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(ticks[i]), px, y0 + 6);
+        }
+        ctx.fillText('% of offspring with the dominant phenotype', (x0 + x1) / 2, y0 + 20);
+      }, { aspect: 0.5, minHeight: 195, maxHeight: 260 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        nOut: document.getElementById('nOut'),
+        runNo: document.getElementById('runNo'),
+        seedNo: document.getElementById('seedNo'),
+        btnRerun: document.getElementById('btnRerun'),
+        btnReset: document.getElementById('btnReset'),
+        obsD: document.getElementById('obsD'),
+        obsR: document.getElementById('obsR'),
+        obsDsub: document.getElementById('obsDsub'),
+        obsRsub: document.getElementById('obsRsub'),
+        obsRatio: document.getElementById('obsRatio'),
+        obsRatioSub: document.getElementById('obsRatioSub'),
+        cOd: document.getElementById('cOd'),
+        cEd: document.getElementById('cEd'),
+        cDd: document.getElementById('cDd'),
+        cTd: document.getElementById('cTd'),
+        cOr: document.getElementById('cOr'),
+        cEr: document.getElementById('cEr'),
+        cDr: document.getElementById('cDr'),
+        cTr: document.getElementById('cTr'),
+        cOt: document.getElementById('cOt'),
+        cEt: document.getElementById('cEt'),
+        cChi: document.getElementById('cChi'),
+        chiVal: document.getElementById('chiVal'),
+        pVal: document.getElementById('pVal'),
+        dfVal: document.getElementById('dfVal'),
+        verdict: document.getElementById('verdict'),
+        smallE: document.getElementById('smallE'),
+        repOut: document.getElementById('repOut'),
+        sdObs: document.getElementById('sdObs'),
+        sdTh: document.getElementById('sdTh'),
+        repRange2: document.getElementById('repRange2'),
+        repRej: document.getElementById('repRej'),
+        repRejSub: document.getElementById('repRejSub'),
+        repExact: document.getElementById('repExact'),
+        repNote: document.getElementById('repNote'),
+        crossCap: document.getElementById('crossCap'),
+        distCap: document.getElementById('distCap'),
+        crossLabel: document.getElementById('crossLabel'),
+        swDom: document.getElementById('swDom'),
+        swRec: document.getElementById('swRec'),
+        swCur: document.getElementById('swCur'),
+        swRowD: document.getElementById('swRowD'),
+        swRowR: document.getElementById('swRowR')
+      };
+
+      el.swDom.style.background = 'var(--series-1)';
+      el.swRec.style.background = 'var(--series-2)';
+      el.swRowD.style.background = 'var(--series-1)';
+      el.swRowR.style.background = 'var(--series-2)';
+      el.swCur.style.background = 'var(--accent-strong)';
+
+      function fmtP(p) {
+        if (p < 0.0001) return '< 0.0001';
+        if (p < 0.001) return F.dec(p, 5);
+        return F.dec(p, 4);
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        var seed = sample();
+        var st = stats(S.reps[0], S.n);
+        var rp = replicateSummary();
+
+        el.nOut.textContent = String(S.n);
+        el.runNo.textContent = String(S.run);
+        el.seedNo.textContent = String(seed);
+        el.repOut.textContent = String(S.nrep);
+
+        // --- the single experiment ---
+        el.obsD.textContent = String(st.d);
+        el.obsR.textContent = String(st.r);
+        el.obsDsub.textContent = 'expected ' + F.dec(st.eD, 1);
+        el.obsRsub.textContent = 'expected ' + F.dec(st.eR, 1);
+        el.obsRatio.textContent = ratioText(st.d, st.r);
+        el.obsRatioSub.innerHTML = 'expected 3.00 : 1 &mdash; off by '
+          + F.dec(Math.abs(st.d - st.eD), 1) + ' offspring in a class of ' + F.dec(st.eD, 1);
+
+        // --- the worked table ---
+        el.cOd.textContent = String(st.d);
+        el.cEd.textContent = F.dec(st.eD, 1);
+        el.cDd.textContent = (st.d - st.eD >= 0 ? '+' : '−') + F.dec(Math.abs(st.d - st.eD), 1);
+        el.cTd.textContent = F.dec(st.tD, 3);
+        el.cOr.textContent = String(st.r);
+        el.cEr.textContent = F.dec(st.eR, 1);
+        el.cDr.textContent = (st.r - st.eR >= 0 ? '+' : '−') + F.dec(Math.abs(st.r - st.eR), 1);
+        el.cTr.textContent = F.dec(st.tR, 3);
+        el.cOt.textContent = String(S.n);
+        el.cEt.textContent = F.dec(S.n, 1);
+        el.cChi.textContent = F.dec(st.chi2, 3);
+
+        el.chiVal.textContent = F.dec(st.chi2, 3);
+        el.pVal.textContent = fmtP(st.p);
+        el.dfVal.textContent = '1';
+
+        // --- the verdict, stated in full ---
+        if (st.reject) {
+          el.verdict.className = 'note bad';
+          el.verdict.innerHTML =
+            '<strong>Reject the null hypothesis.</strong> &chi;&sup2; = ' + F.dec(st.chi2, 3)
+            + ' is greater than 3.841, so p = ' + fmtP(st.p) + ', which is below 0.05. At the 0.05 level '
+            + 'the 3:1 hypothesis does not account for these data. '
+            + '<strong>This does not mean the experiment was done badly</strong> &mdash; the sampler on this '
+            + 'page really is 3:1, and it just handed you this result anyway. Roughly 1 honest experiment in 20 '
+            + 'gets rejected; that is what &alpha; = 0.05 buys. With real data a significant &chi;&sup2; is a '
+            + 'reason to look for a cause (linkage, a lethal allele, scoring bias) <em>or</em> to repeat the '
+            + 'cross &mdash; not a reason to assume you miscounted.';
+        } else {
+          el.verdict.className = 'note';
+          el.verdict.innerHTML =
+            '<strong>Fail to reject the null hypothesis.</strong> &chi;&sup2; = ' + F.dec(st.chi2, 3)
+            + ' is less than 3.841, so p = ' + fmtP(st.p) + ', which is above 0.05. A 3:1 ratio is a perfectly '
+            + 'adequate explanation for ' + st.d + ':' + st.r + '. '
+            + '<strong>This does not prove the ratio is 3:1.</strong> It says the deviation is small enough to '
+            + 'be ordinary sampling. A true ratio of 2.8:1 would usually pass this same test at n = ' + S.n
+            + ' too &mdash; you have failed to knock the hypothesis over, which is not the same as standing it up.';
+        }
+
+        // --- small expected counts ---
+        if (st.eR < 5.5) {
+          el.smallE.hidden = false;
+          el.smallE.innerHTML = '<strong>Careful at this sample size.</strong> The expected recessive count is '
+            + F.dec(st.eR, 1) + ', right at the rule-of-thumb floor of about 5. Below that the chi-square '
+            + 'approximation is not trustworthy: with only ' + S.n + ' offspring the recessive count jumps in '
+            + 'whole numbers, so the observed percentage can only land on multiples of '
+            + F.dec(100 / S.n, 0) + '. Treat this p-value as indicative.';
+        } else {
+          el.smallE.hidden = true;
+        }
+
+        // --- replicates ---
+        el.sdObs.textContent = F.dec(rp.sd, 1);
+        el.sdTh.textContent = F.dec(rp.sdTheory, 1);
+        el.repRange2.innerHTML = ratioText(rp.loD, S.n - rp.loD) + ' &nbsp;to&nbsp; '
+          + ratioText(rp.hiD, S.n - rp.hiD);
+        var exact = exactRejectRate(S.n);
+        el.repRej.textContent = F.pct(rp.rejFrac, 1);
+        el.repRejSub.textContent = rp.rej + ' of ' + S.nrep
+          + ', every one from a true 3:1 cross';
+        el.repExact.textContent = F.pct(exact, 2);
+
+        var hw = critHalfWidth(S.n);
+        var accLoN = Math.ceil(S.n * (75 - hw) / 100);
+        var accHiN = Math.floor(S.n * (75 + hw) / 100);
+        el.repNote.className = 'note';
+        el.repNote.innerHTML =
+          'At n = <strong>' + S.n + '</strong> a chi-square test accepts anything between <strong>'
+          + F.dec(75 - hw, 1) + '%</strong> and <strong>' + F.dec(75 + hw, 1) + '%</strong> dominant &mdash; '
+          + 'the unshaded strip on the histogram &mdash; which in counts is <strong>' + accLoN + ' to '
+          + accHiN + '</strong> dominant out of ' + S.n + '. One more dominant than ' + accHiN + ', or one '
+          + 'fewer than ' + accLoN + ', and the verdict flips. Change n and watch the strip narrow. '
+          + 'The long-run rejection rate stays <em>near</em> 5% at every n, because that is what &alpha; = 0.05 '
+          + 'means &mdash; but it is <strong>' + F.pct(exact, 2) + '</strong> here, not exactly 5%, and the '
+          + 'reason is worth knowing: offspring come in whole numbers, so the test can only put its cut '
+          + 'between two adjacent counts. It lands wherever the nearest count boundary is, which at n = 20 '
+          + 'overshoots to 6.52% and at n = 40 undershoots to 4.23%. The simulated tile beside it is only an '
+          + 'estimate of this number, and with ' + S.nrep + ' replicates it carries about &plusmn;'
+          + F.dec(100 * 1.96 * Math.sqrt(exact * (1 - exact) / S.nrep), 1) + ' points of noise itself.';
+
+        // --- captions ---
+        el.crossLabel.innerHTML = '&mdash; Aa &times; Aa, ' + S.n
+          + ' offspring, each an independent draw at p = 0.75';
+
+        el.crossCap.innerHTML =
+          'Each square is one offspring, in the order it was drawn. This run gave <strong>' + st.d
+          + ' dominant : ' + st.r + ' recessive</strong> = <strong>' + ratioText(st.d, st.r)
+          + '</strong>, against an expectation of ' + F.dec(st.eD, 1) + ' : ' + F.dec(st.eR, 1)
+          + '. The vertical line on the top bar marks where a perfect 3:1 split would fall &mdash; the gap '
+          + 'between that line and the colour change is your entire deviation, '
+          + F.dec(Math.abs(st.d - st.eD), 1) + ' offspring.';
+
+        var spread = rp.hi - rp.lo;
+        el.distCap.innerHTML =
+          '<strong>' + S.nrep + ' replicate experiments</strong>, each one n = ' + S.n
+          + ' offspring from the same exactly-3:1 cross. Observed results ran from <strong>'
+          + F.dec(rp.lo, 1) + '%</strong> to <strong>' + F.dec(rp.hi, 1) + '%</strong> dominant, a spread of '
+          + F.dec(spread, 1) + ' percentage points, with a standard deviation of ' + F.dec(rp.sd, 1)
+          + ' pp against the theoretical &radic;(pq/n) = ' + F.dec(rp.sdTheory, 1) + ' pp. '
+          + '<strong>' + rp.rej + '</strong> of them (' + F.pct(rp.rejFrac, 1) + ') fell in the shaded zone and '
+          + 'would be declared &ldquo;not 3:1&rdquo;, despite being 3:1.'
+          + (S.n === 20
+            ? ' The comb of gaps is real: with 20 offspring only multiples of 5% are possible.'
+            : '')
+          + (S.below ? ' (' + S.below + ' replicate' + (S.below > 1 ? 's' : '')
+            + ' fell below 40% and are stacked in the leftmost bar.)' : '');
+
+        crossCv.redraw();
+        distCv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var nBtns = Array.prototype.slice.call(document.querySelectorAll('#nSeg button'));
+      nBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          nBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.n = parseInt(b.dataset.n, 10);
+          render();
+        });
+      });
+
+      Demo.range('#repRange', function (v) {
+        S.nrep = Math.round(v);
+        render();
+      });
+
+      el.btnRerun.addEventListener('click', function () {
+        S.run += 1;
+        render();
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        S.run = 1;
+        S.n = 40;
+        S.nrep = 300;
+        document.getElementById('repRange').value = 300;
+        nBtns.forEach(function (o) {
+          o.setAttribute('aria-selected', o.dataset.n === '40' ? 'true' : 'false');
+        });
+        render();
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      render();
+    })();
+  </script>
+</body>
+
+</html>

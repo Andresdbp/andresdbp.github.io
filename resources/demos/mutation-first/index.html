@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Did the mutation come first? | Dr. Andres Barboza</title>
+  <meta name="description" content="Replica plating, run by the student. Two hypotheses about where antibiotic resistance comes from are simulated side by side, and only one predicts resistant colonies at the same grid positions on all three replica plates.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend swatches, comparison table */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    /* three labels in one segmented control: let them wrap rather than
+       push the controls column past the viewport on a 375 px phone */
+    #focusSeg button { white-space: normal; padding: 7px 8px; }
+    @media (max-width: 430px) { #focusSeg button { font-size: 11.5px; } }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 11px 14px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i {
+      width: 11px; height: 11px; border-radius: 50%;
+      display: inline-block; flex: none; background: var(--muted);
+    }
+    .legend .lg.obs i { background: var(--accent-strong); }
+    .legend .lg.ind i { background: var(--series-2); }
+    .legend .lg.mut i { background: var(--series-3); }
+    .legend .lg.ring i {
+      background: transparent;
+      border: 1.5px solid var(--text-2);
+      width: 12px; height: 12px;
+    }
+    .legend .lg.ghost i { background: var(--line); width: 7px; height: 7px; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    /* comparison table: three hypotheses/rows against the same four statistics */
+    .tbl.cmp { font-size: 12px; }
+    .tbl.cmp th, .tbl.cmp td { padding: 6px 6px; white-space: nowrap; }
+    .tbl.cmp td:first-child, .tbl.cmp th:first-child { white-space: normal; min-width: 92px; }
+    .tbl.cmp .swatch {
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      margin-right: 6px; vertical-align: middle; background: var(--muted);
+    }
+    .tbl.cmp tr.r-obs .swatch { background: var(--accent-strong); }
+    .tbl.cmp tr.r-ind .swatch { background: var(--series-2); }
+    .tbl.cmp tr.r-mut .swatch { background: var(--series-3); }
+    .tbl.cmp td.agree { font-weight: 600; color: var(--text); }
+    .tbl.cmp tr.r-ind td.agree { color: var(--series-2); }
+    .tbl.cmp tr.r-mut td.agree { color: var(--series-3); }
+    .tbl.cmp tr.r-obs td.agree { color: var(--accent-strong); }
+
+    .seedline {
+      font-size: 11.5px; color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .seedline strong { color: var(--text); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Did the mutation come first?</h1>
+        <p class="demo-sub">Press the velvet, then press <em>New run</em> five or six times. One of the two hypotheses puts the resistant colonies in the same grid positions on all three plates every single time. The other never does.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Natural selection</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Step 1 <span>&mdash; a master plate grown with <strong>no antibiotic</strong>, and the sterile velvet that copies it</span></p>
+        <canvas id="master" role="img"
+                aria-label="A master plate of bacterial colonies grown without antibiotic, and a square of sterile velvet that picks up a copy of every colony in its grid position."></canvas>
+        <p class="stage-caption" id="masterCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Step 2 <span>&mdash; the same velvet is pressed onto <strong>three replica plates that all contain antibiotic</strong></span></p>
+        <canvas id="reps" role="img"
+                aria-label="Three rows of three replica plates. The top row is the observed result, the middle row is what the induced-resistance hypothesis predicts, and the bottom row is what the pre-existing-mutation hypothesis predicts."></canvas>
+
+        <div class="legend">
+          <span class="lg obs"><i></i>observed</span>
+          <span class="lg ind"><i></i>predicted: antibiotic causes it</span>
+          <span class="lg mut"><i></i>predicted: mutation came first</span>
+          <span class="lg ring"><i></i>ring = resistant on all three replicas</span>
+          <span class="lg ghost"><i></i>grid position with no resistant growth</span>
+        </div>
+        <p class="stage-caption" id="repsCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Run the experiment</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="newRun">New run</button>
+              <button class="btn" id="replay">Replay the stamp</button>
+            </div>
+            <div class="seedline">
+              <span>Run seed <strong id="seedOut">1</strong></span>
+              <span><strong id="nColonies">36</strong> colonies on the master plate</span>
+            </div>
+            <label class="check">
+              <input type="checkbox" id="revealChk"> Reveal the master plate genotypes
+            </label>
+            <p class="ctrl-hint">
+              You cannot do this in a real experiment. Without antibiotic, a colony carrying the resistance
+              mutation looks exactly like every other colony &mdash; that is the whole difficulty. Tick this to
+              see which colonies the <em>mutation-first</em> hypothesis says are already resistant. The
+              induced-resistance hypothesis says none of them are, yet.
+            </p>
+
+            <div class="seg" role="tablist" aria-label="Which prediction to highlight" id="focusSeg">
+              <button role="tab" aria-selected="true" data-focus="both">Both</button>
+              <button role="tab" aria-selected="false" data-focus="ind">Antibiotic causes it</button>
+              <button role="tab" aria-selected="false" data-focus="mut">Mutation first</button>
+            </div>
+            <p class="ctrl-hint">Dims one prediction so you can compare the other with the observed plates. Both are always simulated.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What the two hypotheses predict</div>
+          <div class="table-scroll">
+            <table class="tbl cmp">
+              <thead>
+                <tr>
+                  <th>Plates</th>
+                  <th>Resistant colonies<br>#1 / #2 / #3</th>
+                  <th>On all 3</th>
+                  <th>On &ge;1</th>
+                  <th>Agree</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="r-obs">
+                  <td><span class="swatch"></span>Observed</td>
+                  <td id="obsN">&mdash;</td>
+                  <td id="obsAll">&mdash;</td>
+                  <td id="obsAny">&mdash;</td>
+                  <td class="agree" id="obsAgree">&mdash;</td>
+                </tr>
+                <tr class="r-ind">
+                  <td><span class="swatch"></span>Antibiotic causes it</td>
+                  <td id="indN">&mdash;</td>
+                  <td id="indAll">&mdash;</td>
+                  <td id="indAny">&mdash;</td>
+                  <td class="agree" id="indAgree">&mdash;</td>
+                </tr>
+                <tr class="r-mut">
+                  <td><span class="swatch"></span>Mutation came first</td>
+                  <td id="mutN">&mdash;</td>
+                  <td id="mutAll">&mdash;</td>
+                  <td id="mutAny">&mdash;</td>
+                  <td class="agree" id="mutAgree">&mdash;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            <strong>Agree</strong> = grid positions resistant on <em>all three</em> replicas, divided by positions
+            resistant on <em>at least one</em>. Counts are colonies; positions are grid squares. 100% means every
+            resistant colony showed up on every plate, in the same place.
+          </p>
+          <p class="note" id="verdict" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Many runs, not one lucky one</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Antibiotic causes it</div>
+              <div class="r-value" id="tallyInd">&mdash;</div>
+              <div class="r-sub">mean agreement</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Mutation came first</div>
+              <div class="r-value" id="tallyMut">&mdash;</div>
+              <div class="r-sub">mean agreement</div>
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:11px">
+            <button class="btn" id="run25">Run 25 more</button>
+            <button class="btn" id="resetTally">Clear tally</button>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Pooled over <strong id="tallyRuns">1</strong> experiment(s). Observed plates so far:
+            <strong id="tallyObs">&mdash;</strong> agreement. One run could be luck. Twenty-five cannot.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Settings</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="gridRange">Master plate grid</label>
+                <span class="ctrl-value" id="gridOut">8 &times; 6</span>
+              </div>
+              <input type="range" id="gridRange" min="0" max="4" step="1" value="2">
+              <p class="ctrl-hint">Colonies sit on a grid so &ldquo;the same position&rdquo; means something exact. Corner positions fall off the round dish.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pRange">Resistance frequency</label>
+                <span class="ctrl-value" id="pOut">10%</span>
+              </div>
+              <input type="range" id="pRange" min="3" max="25" step="1" value="10">
+              <p class="ctrl-hint">
+                Per colony, in percent. <strong>The same number feeds both hypotheses on purpose</strong>: one reads it
+                as &ldquo;fraction of master colonies that already carry the mutation&rdquo;, the other as
+                &ldquo;fraction that the antibiotic converts on contact&rdquo;. That is why both prediction rows show a
+                similar <em>number</em> of survivors &mdash; counting colonies can never tell them apart.
+              </p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="mRange">Velvet transfer misses</label>
+                <span class="ctrl-value" id="mOut">0%</span>
+              </div>
+              <input type="range" id="mRange" min="0" max="25" step="1" value="0">
+              <p class="ctrl-hint">
+                Real velvet does not pick up every colony every time. Add misses (percent of colonies dropped, per
+                plate) and watch the mutation-first agreement fall below 100% &mdash; and then notice how far above
+                the other prediction it still is.
+              </p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Expected resistant colonies per replica plate</div>
+                <div class="r-value" id="expN">3.6<span class="r-unit">colonies</span></div>
+                <div class="r-sub" id="expNSub">identical under both hypotheses</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Predicted agreement, antibiotic</div>
+                <div class="r-value" id="expInd">0.4%</div>
+              </div>
+              <div class="readout is-ok">
+                <div class="r-label">Predicted agreement, mutation first</div>
+                <div class="r-value" id="expMut">100%</div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="resetAll">Reset everything</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>The frequency is wildly inflated.</strong> On a real plate the mutation to phage or antibiotic
+            resistance turns up in something like one cell in 10<sup>7</sup> to 10<sup>9</sup>, so a real master
+            plate of a few hundred colonies yields one or two resistant ones, not four. The slider starts at 3% so
+            the pattern is visible on a dish you can see. Nothing about the argument depends on the number &mdash;
+            drag the frequency down and the agreement columns barely move.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What else is simplified. Colonies are on a tidy grid; real plates are messy and matching positions takes
+            a marked reference point on the dish. Each colony is treated as either resistant or not, when a real
+            colony is a mixed population and the mutation may have arisen part-way through its growth. Selection is
+            treated as perfect and instant: every resistant colony grows, every sensitive one does not, and no
+            colony grows slowly. The three replicas are independent presses of one velvet. Resistance here is a
+            single mutation with no fitness cost when antibiotic is absent, which is why the mutants are invisible
+            on the master plate; many real resistance mutations do carry a cost.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> almost everyone arrives believing that bacteria <em>become</em> resistant
+        because antibiotic showed up &mdash; that the challenge is what produces the change. Students write that the
+        bacteria &ldquo;adapted&rdquo;, &ldquo;built up resistance&rdquo;, or &ldquo;developed immunity&rdquo; to the
+        drug. That is a real, testable hypothesis, and it is the one this page simulates in the middle row. It is
+        also wrong, and you can find that out in about thirty seconds with a piece of velvet.
+      </p>
+      <p>
+        <strong>Why the experiment works.</strong> The two hypotheses cannot be separated by counting. Set the
+        frequency slider anywhere you like: both rows produce about the same number of resistant colonies per plate,
+        because the same frequency feeds both. What they disagree about is <em>where</em>. If the antibiotic is what
+        creates resistance, then each replica plate is its own separate event, and the positions on plate 1 tell you
+        nothing about plate 2 &mdash; the predicted agreement is a fraction of one percent. If the mutation was
+        already sitting in one colony on the master plate, back when there was no antibiotic anywhere, then the
+        velvet carries that same colony to all three plates and the resistant spots land on top of each other every
+        time. Only one of those pictures matches the observed plates.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Press <em>New run</em> again and again. The middle row scatters differently
+        every time; the bottom row and the observed row keep landing in the same places as each other. Then tick
+        <em>Reveal the master plate genotypes</em>: the colonies that survive were flagged before any antibiotic
+        existed, and on the master plate they look completely ordinary. Then push <em>velvet transfer misses</em> up
+        to 20% &mdash; the agreement drops, because the velvet sometimes fails to carry a colony across, but it lands
+        near 50 to 80%, still hundreds of times higher than the induced-resistance prediction. The conclusion is not
+        fragile.
+      </p>
+      <p>
+        <strong>Say it carefully.</strong> The mutation is <em>undirected</em>. It happened during ordinary growth on
+        a plate with no antibiotic on it, from a copying error, and it was not caused by, aimed at, or produced in
+        response to anything. The bacterium was not trying to survive, and had no way of knowing an antibiotic was
+        coming. The antibiotic does exactly one thing: it kills the cells that lack the mutation. Variation first,
+        by chance; selection afterwards, by consequence. Every time you catch yourself saying a population
+        &ldquo;developed&rdquo; resistance, swap it for &ldquo;the resistant ones were the only ones left&rdquo; and
+        check whether the sentence still means what you wanted.
+      </p>
+      <p>
+        <strong>Where this comes from.</strong> Luria and Delbr&uuml;ck (1943) got at it statistically, from the
+        wild variability in how many resistant cells different cultures contained. Joshua and Esther Lederberg
+        (1952) got at it visually, with sterile velvet and replica plates &mdash; the experiment on this page &mdash;
+        and could then pick a resistant colony off the antibiotic-free master plate, a colony that had never once
+        met the drug.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — replica plating, computed directly from the run seed.
+      //
+      // N colonies at fixed grid positions on a round dish.
+      //   p = resistance frequency per colony
+      //   m = velvet transfer miss rate per colony per plate
+      //   q = p * (1 - m)   effective per-plate probability
+      //
+      // MUTATION-FIRST world: the master plate carries a fixed mutant set M
+      //   (each colony in M with probability p, decided before any antibiotic
+      //   exists). Replica k shows M intersected with what transferred.
+      //     P(position resistant on all 3) = p (1-m)^3
+      //     P(position resistant on >= 1)  = p (1 - m^3)
+      //     agreement A = (1-m)^3 / (1 - m^3)          -> 1 when m = 0
+      //
+      // INDUCED world: no pre-existing mutants at all. A colony must transfer
+      //   AND then be converted by the antibiotic, independently on each plate.
+      //     P(all 3) = q^3        P(>= 1) = 1 - (1-q)^3
+      //     agreement A = q^3 / (1 - (1-q)^3)
+      //
+      // Expected resistant colonies per plate = N q in BOTH worlds. That is
+      // deliberate: the hypotheses are separated by position, never by count.
+      //
+      // Nothing here is time-stepped. Everything is a closed-form function of
+      // (seed, N, p, m); the only animation is a clamped reveal progress that
+      // stops at 1 and touches no state.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var TAU = Math.PI * 2;
+
+      var GRIDS = [[6, 4], [7, 5], [8, 6], [9, 7], [10, 8]];
+      // Fixed starting run so every student opens on the same plates. Chosen
+      // only for legibility: 4 resistant colonies at the default settings, and
+      // a clearly scattered induced row. Press New run to leave it behind.
+      var SEED0 = 2000118;
+
+      var S = {
+        gi: 2,
+        p: 0.10,
+        m: 0.00,
+        seed: SEED0,
+        reveal: false,
+        focus: 'both'
+      };
+
+      var POS = [];        // colony positions, normalised to a unit dish radius
+      var RUN = null;      // current experiment
+      var tally = null;
+      var tallySeed = SEED0;
+      var stamp = 1;       // reveal progress 0..1 for the stamping animation
+      var booted = false;
+
+      // ---------------- grid geometry ----------------
+      function makePositions(cols, rows) {
+        var out = [], i, j, x, y;
+        var dx = cols > 1 ? 1.64 / (cols - 1) : 0;
+        var dy = rows > 1 ? 1.64 / (rows - 1) : 0;
+        for (j = 0; j < rows; j++) {
+          for (i = 0; i < cols; i++) {
+            x = cols > 1 ? -0.82 + i * dx : 0;
+            y = rows > 1 ? -0.82 + j * dy : 0;
+            if (x * x + y * y <= 0.9025 + 1e-9) out.push({ x: x, y: y });
+          }
+        }
+        return out;
+      }
+
+      // ---------------- seeded randomness ----------------
+      function mixSeed(a) {
+        a = a >>> 0;
+        a = ((a ^ 61) ^ (a >>> 16)) >>> 0;
+        a = (a + (a << 3)) >>> 0;
+        a = (a ^ (a >>> 4)) >>> 0;
+        a = Math.imul(a, 0x27d4eb2d) >>> 0;
+        a = (a ^ (a >>> 15)) >>> 0;
+        return a || 1;
+      }
+      function tagSeed(seed, tag) {
+        return mixSeed((Math.imul(seed >>> 0, 97) + tag) >>> 0);
+      }
+      function nextSeed(s) { return (Math.imul(s >>> 0, 1664525) + 1013904223) >>> 0; }
+
+      function drawBits(seed, n, prob) {
+        var r = Demo.rng(seed), out = new Array(n), i;
+        for (i = 0; i < 12; i++) r();          // burn-in: xorshift starts cold
+        for (i = 0; i < n; i++) out[i] = r() < prob;
+        return out;
+      }
+      function bothTrue(a, b) {
+        var out = new Array(a.length), i;
+        for (i = 0; i < a.length; i++) out[i] = a[i] && b[i];
+        return out;
+      }
+
+      // ---------------- statistics for one row of three plates ----------------
+      function rowStats(sets) {
+        var n = sets[0].length, i, k;
+        var counts = [0, 0, 0], all3 = 0, any = 0;
+        for (i = 0; i < n; i++) {
+          var hits = 0;
+          for (k = 0; k < 3; k++) if (sets[k][i]) { hits++; counts[k]++; }
+          if (hits === 3) all3++;
+          if (hits > 0) any++;
+        }
+        var conc = new Array(n);
+        for (i = 0; i < n; i++) conc[i] = sets[0][i] && sets[1][i] && sets[2][i];
+        return {
+          sets: sets, conc: conc, counts: counts,
+          all3: all3, any: any,
+          agree: any > 0 ? all3 / any : null
+        };
+      }
+
+      // ---------------- one whole experiment ----------------
+      function runExperiment(seed) {
+        var n = POS.length, p = S.p, m = S.m, k;
+        var master = drawBits(tagSeed(seed, 11), n, p);
+
+        function transfers(tag) {
+          var t = [];
+          for (var i = 0; i < 3; i++) t.push(drawBits(tagSeed(seed, tag + i * 17), n, 1 - m));
+          return t;
+        }
+
+        var tObs = transfers(200), tInd = transfers(400), tMut = transfers(600);
+        var obs = [], ind = [], mut = [];
+        for (k = 0; k < 3; k++) {
+          // reality: the mutants were already on the master plate
+          obs.push(bothTrue(master, tObs[k]));
+          // induced world: no pre-existing mutants; conversion happens on each
+          // plate independently, but only where a colony actually transferred
+          ind.push(bothTrue(drawBits(tagSeed(seed, 800 + k * 17), n, p), tInd[k]));
+          // mutation-first world: the same master plate, an independent press
+          mut.push(bothTrue(master, tMut[k]));
+        }
+        return {
+          seed: seed, master: master,
+          obs: rowStats(obs), ind: rowStats(ind), mut: rowStats(mut)
+        };
+      }
+
+      // ---------------- closed-form expectations ----------------
+      function expected() {
+        var p = S.p, m = S.m, q = p * (1 - m);
+        return {
+          q: q,
+          perPlate: POS.length * q,
+          aInd: 1 - Math.pow(1 - q, 3) > 0 ? Math.pow(q, 3) / (1 - Math.pow(1 - q, 3)) : 0,
+          aMut: Math.pow(1 - m, 3) / (1 - Math.pow(m, 3))
+        };
+      }
+
+      // ==================================================================
+      // CANVAS HELPERS
+      // ==================================================================
+      function dish(ctx, c, cx, cy, D) {
+        var R = D / 2;
+        ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, Math.max(1, R - 3.5), 0, TAU);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1; ctx.stroke();
+      }
+
+      function colonyR(D) { return Demo.clamp(D * 0.036, 2.0, 6); }
+
+      function ghosts(ctx, c, cx, cy, D) {
+        var R = D / 2, rr = colonyR(D) * 0.5, i;
+        ctx.fillStyle = c.line;
+        for (i = 0; i < POS.length; i++) {
+          ctx.beginPath();
+          ctx.arc(cx + POS[i].x * R, cy + POS[i].y * R, rr, 0, TAU);
+          ctx.fill();
+        }
+      }
+
+      function spots(ctx, c, cx, cy, D, set, conc, col) {
+        var R = D / 2, rr = colonyR(D), i;
+        for (i = 0; i < POS.length; i++) {
+          if (!set[i]) continue;
+          var x = cx + POS[i].x * R, y = cy + POS[i].y * R;
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU);
+          ctx.fillStyle = col; ctx.fill();
+          if (conc && conc[i]) {
+            ctx.beginPath(); ctx.arc(x, y, rr + 3, 0, TAU);
+            ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.stroke();
+          }
+        }
+      }
+
+      // ==================================================================
+      // MASTER PLATE CANVAS
+      // ==================================================================
+      var masterCv = Demo.canvas('#master', function (ctx, w, h, c) {
+        if (!RUN) return;
+        var narrow = w < 430;
+        var fs = narrow ? 9.5 : 10.5;
+        var labelH = 2 * fs + 12;
+        var gapW = Demo.clamp(w * 0.13, 34, 62);
+        var D = Math.min(h - labelH - 12, (w - gapW - 12) / 2, 166);
+        D = Math.max(D, 54);
+        var totalW = D * 2 + gapW;
+        var xL = (w - totalW) / 2;
+        var cy = (h - labelH) / 2 + 2;
+        var R = D / 2;
+        var i;
+
+        // ---- master plate ----
+        var mcx = xL + R;
+        dish(ctx, c, mcx, cy, D);
+        var rr = colonyR(D);
+        for (i = 0; i < POS.length; i++) {
+          var x = mcx + POS[i].x * R, y = cy + POS[i].y * R;
+          var isMut = S.reveal && RUN.master[i];
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, TAU);
+          ctx.fillStyle = isMut ? c.series[2] : c.muted;
+          ctx.fill();
+          if (isMut) {
+            ctx.beginPath(); ctx.arc(x, y, rr + 3, 0, TAU);
+            ctx.strokeStyle = c.series[2]; ctx.lineWidth = 1.4; ctx.stroke();
+          }
+        }
+
+        // ---- arrow ----
+        var ax0 = xL + D + 7, ax1 = xL + D + gapW - 7;
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.moveTo(ax0, cy); ctx.lineTo(ax1 - 5, cy); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ax1, cy); ctx.lineTo(ax1 - 7, cy - 4.5); ctx.lineTo(ax1 - 7, cy + 4.5);
+        ctx.closePath(); ctx.fillStyle = c.line; ctx.fill();
+        ctx.font = (fs - 0.5) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('press', (ax0 + ax1) / 2, cy - 8);
+
+        // ---- velvet ----
+        var vcx = xL + D + gapW + R;
+        var side = D * 0.94, hs = side / 2;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(vcx - hs, cy - hs, side, side, 7);
+        else ctx.rect(vcx - hs, cy - hs, side, side);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.4; ctx.stroke();
+
+        ctx.save();
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(vcx - hs, cy - hs, side, side, 7);
+        else ctx.rect(vcx - hs, cy - hs, side, side);
+        ctx.clip();
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        for (i = -Math.ceil(side / 7); i < Math.ceil(side / 7) * 2; i++) {
+          ctx.beginPath();
+          ctx.moveTo(vcx - hs + i * 7, cy - hs);
+          ctx.lineTo(vcx - hs + i * 7 + side, cy + hs);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // the velvet carries a copy of every colony, in position
+        var vR = R * 0.9;
+        for (i = 0; i < POS.length; i++) {
+          var vx = vcx + POS[i].x * vR, vy = cy + POS[i].y * vR;
+          var vm = S.reveal && RUN.master[i];
+          ctx.beginPath(); ctx.arc(vx, vy, rr * 0.8, 0, TAU);
+          ctx.fillStyle = vm ? c.series[2] : c.muted;
+          ctx.globalAlpha = 0.85; ctx.fill(); ctx.globalAlpha = 1;
+        }
+
+        // ---- labels ----
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var ly = cy + R + 8;
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText('Master plate', mcx, ly);
+        ctx.fillText('Sterile velvet', vcx, ly);
+        ctx.font = (fs - 0.7) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(narrow ? 'no antibiotic' : 'no antibiotic — everything grows', mcx, ly + fs + 3);
+        ctx.fillText(narrow ? 'copies every position' : 'copies every colony, in position', vcx, ly + fs + 3);
+      }, { aspect: 0.36, minHeight: 150, maxHeight: 196 });
+
+      // ==================================================================
+      // REPLICA PLATES CANVAS
+      // ==================================================================
+      var repsCv = Demo.canvas('#reps', function (ctx, w, h, c) {
+        if (!RUN) return;
+        var narrow = w < 430;
+        var fs = narrow ? 9.5 : 10.5;
+        var padX = 2;
+        var headH = narrow ? 17 : 19;
+        var footH = narrow ? 14 : 16;
+        var rowGap = narrow ? 8 : 12;
+        var colW = (w - 2 * padX) / 3;
+        var availH = h - 3 * (headH + footH) - 2 * rowGap;
+        var D = Math.min(colW - (narrow ? 12 : 20), availH / 3, 150);
+        D = Math.max(D, 46);
+
+        var rows = [
+          { st: RUN.obs, col: c.accentStrong, key: 'obs',
+            t: narrow ? 'OBSERVED — your 3 replicas' : 'OBSERVED — your three replica plates' },
+          { st: RUN.ind, col: c.series[1], key: 'ind',
+            t: narrow ? 'IF THE ANTIBIOTIC CAUSED IT' : 'PREDICTED if the antibiotic causes resistance' },
+          { st: RUN.mut, col: c.series[2], key: 'mut',
+            t: narrow ? 'IF THE MUTATION CAME FIRST' : 'PREDICTED if the mutation was already there' }
+        ];
+
+        var y = 0, r, k;
+        for (r = 0; r < rows.length; r++) {
+          var row = rows[r];
+          var dim = (S.focus !== 'both' && row.key !== 'obs' && row.key !== S.focus);
+          ctx.globalAlpha = dim ? 0.26 : 1;
+
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = row.col;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.fillText(row.t, padX + 2, y + 2);
+
+          if (!narrow) {
+            ctx.font = fs + FONT;
+            ctx.fillStyle = c.muted;
+            ctx.textAlign = 'right';
+            ctx.fillText(row.st.agree == null ? 'no growth' : F.pct(row.st.agree, 0) + ' agreement',
+              w - padX - 2, y + 2);
+          }
+
+          var pcy = y + headH + D / 2;
+          for (k = 0; k < 3; k++) {
+            var cx = padX + colW * k + colW / 2;
+            dish(ctx, c, cx, pcy, D);
+            ghosts(ctx, c, cx, pcy, D);
+
+            var a = Demo.clamp(stamp * 3 - k, 0, 1);
+            if (a > 0) {
+              ctx.globalAlpha = (dim ? 0.26 : 1) * a;
+              spots(ctx, c, cx, pcy, D, row.st.sets[k], row.st.conc, row.col);
+              ctx.globalAlpha = dim ? 0.26 : 1;
+            }
+
+            ctx.font = fs + FONT;
+            ctx.fillStyle = c.muted;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            var n = row.st.counts[k];
+            ctx.fillText('#' + (k + 1) + '  ' + (a >= 1 ? n : '·') + (narrow ? '' : ' resistant'),
+              cx, pcy + D / 2 + 4);
+          }
+          y += headH + D + footH + rowGap;
+        }
+        ctx.globalAlpha = 1;
+      }, { aspect: 1.08, minHeight: 380, maxHeight: 505 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        gridRange: document.getElementById('gridRange'),
+        gridOut: document.getElementById('gridOut'),
+        pRange: document.getElementById('pRange'),
+        pOut: document.getElementById('pOut'),
+        mRange: document.getElementById('mRange'),
+        mOut: document.getElementById('mOut'),
+        newRun: document.getElementById('newRun'),
+        replay: document.getElementById('replay'),
+        run25: document.getElementById('run25'),
+        resetTally: document.getElementById('resetTally'),
+        resetAll: document.getElementById('resetAll'),
+        revealChk: document.getElementById('revealChk'),
+        seedOut: document.getElementById('seedOut'),
+        nColonies: document.getElementById('nColonies'),
+        masterCap: document.getElementById('masterCap'),
+        repsCap: document.getElementById('repsCap'),
+        verdict: document.getElementById('verdict'),
+        expN: document.getElementById('expN'),
+        expNSub: document.getElementById('expNSub'),
+        expInd: document.getElementById('expInd'),
+        expMut: document.getElementById('expMut'),
+        tallyRuns: document.getElementById('tallyRuns'),
+        tallyInd: document.getElementById('tallyInd'),
+        tallyMut: document.getElementById('tallyMut'),
+        tallyObs: document.getElementById('tallyObs'),
+        obsN: document.getElementById('obsN'), obsAll: document.getElementById('obsAll'),
+        obsAny: document.getElementById('obsAny'), obsAgree: document.getElementById('obsAgree'),
+        indN: document.getElementById('indN'), indAll: document.getElementById('indAll'),
+        indAny: document.getElementById('indAny'), indAgree: document.getElementById('indAgree'),
+        mutN: document.getElementById('mutN'), mutAll: document.getElementById('mutAll'),
+        mutAny: document.getElementById('mutAny'), mutAgree: document.getElementById('mutAgree')
+      };
+
+      // ==================================================================
+      // TALLY
+      // ==================================================================
+      function blankTally() {
+        return { runs: 0, obsAll: 0, obsAny: 0, indAll: 0, indAny: 0, mutAll: 0, mutAny: 0 };
+      }
+      function addToTally(run) {
+        tally.runs++;
+        tally.obsAll += run.obs.all3; tally.obsAny += run.obs.any;
+        tally.indAll += run.ind.all3; tally.indAny += run.ind.any;
+        tally.mutAll += run.mut.all3; tally.mutAny += run.mut.any;
+      }
+      function pooled(a, b) { return b > 0 ? a / b : null; }
+
+      function resetTally() {
+        tally = blankTally();
+        tallySeed = S.seed;
+        if (RUN) addToTally(RUN);
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function pctOrDash(x, n) { return x == null ? '—' : F.pct(x, n == null ? 1 : n); }
+
+      function fillRow(pre, st) {
+        el[pre + 'N'].textContent = st.counts.join(' / ');
+        el[pre + 'All'].textContent = String(st.all3);
+        el[pre + 'Any'].textContent = String(st.any);
+        el[pre + 'Agree'].textContent = pctOrDash(st.agree, 0);
+      }
+
+      function render(fast) {
+        var E = expected();
+
+        el.gridOut.textContent = GRIDS[S.gi][0] + ' × ' + GRIDS[S.gi][1];
+        el.pOut.textContent = Math.round(S.p * 100) + '%';
+        el.mOut.textContent = Math.round(S.m * 100) + '%';
+        el.seedOut.textContent = String(S.seed);
+        el.nColonies.textContent = String(POS.length);
+
+        el.expN.innerHTML = F.dec(E.perPlate, 1) + '<span class="r-unit">colonies</span>';
+        el.expNSub.textContent = POS.length + ' colonies × ' + Math.round(S.p * 100) + '% × '
+          + Math.round((1 - S.m) * 100) + '% transferred — the same under both hypotheses';
+        el.expInd.textContent = F.pct(E.aInd, 1);
+        el.expMut.textContent = F.pct(E.aMut, 1);
+
+        fillRow('obs', RUN.obs);
+        fillRow('ind', RUN.ind);
+        fillRow('mut', RUN.mut);
+
+        el.tallyRuns.textContent = String(tally.runs);
+        el.tallyInd.textContent = pctOrDash(pooled(tally.indAll, tally.indAny), 1);
+        el.tallyMut.textContent = pctOrDash(pooled(tally.mutAll, tally.mutAny), 1);
+        el.tallyObs.textContent = pctOrDash(pooled(tally.obsAll, tally.obsAny), 1);
+
+        el.masterCap.innerHTML = masterCaption();
+        el.repsCap.innerHTML = repsCaption(E);
+        el.verdict.innerHTML = verdictText(E);
+
+        if (fast) { masterCv.paint(); repsCv.paint(); }
+        else { masterCv.redraw(); repsCv.redraw(); }
+      }
+
+      function masterCaption() {
+        var nMut = 0, i;
+        for (i = 0; i < RUN.master.length; i++) if (RUN.master[i]) nMut++;
+        if (!S.reveal) {
+          return 'All ' + POS.length + ' colonies grew here, because there is no antibiotic on this plate. '
+            + 'Nothing you can see distinguishes a resistant colony from a sensitive one — that is exactly '
+            + 'why the experiment has to be done by transfer. Tick <em>Reveal the master plate genotypes</em> '
+            + 'to cheat.';
+        }
+        return 'Revealed: <strong>' + nMut + ' of ' + POS.length + '</strong> colonies already carry the '
+          + 'resistance mutation, from ordinary copying errors during growth on a plate that has never held '
+          + 'any antibiotic. This is the <em>mutation-first</em> picture of the master plate. The '
+          + '<em>induced-resistance</em> hypothesis says this plate has zero resistant colonies on it and that '
+          + 'resistance is created later, on contact. Those two claims are what the replicas below test.';
+      }
+
+      function repsCaption(E) {
+        var s = 'Every plate below contains antibiotic, so only resistant colonies grow; the faint dots mark the '
+          + POS.length + ' grid positions where a colony would have landed. A ring means that position came up '
+          + 'resistant on <em>all three</em> replicas. ';
+        if (RUN.obs.any === 0 && RUN.ind.any === 0) {
+          s += '<strong>Nothing grew this run.</strong> At ' + Math.round(S.p * 100) + '% the expected yield is '
+            + 'only ' + F.dec(E.perPlate, 1) + ' colonies per plate, so empty plates happen. Press '
+            + '<em>New run</em>, or raise the resistance frequency.';
+          return s;
+        }
+        s += 'Compare the top row with the two below it. The middle row scatters; the bottom row repeats.';
+        return s;
+      }
+
+      function verdictText(E) {
+        var o = RUN.obs;
+        if (o.any === 0) {
+          return '<strong>No resistant colonies this run.</strong> Nothing to compare yet — press '
+            + '<em>New run</em>, or raise the resistance frequency slider.';
+        }
+        var txt = 'Your three replica plates put resistant colonies at <strong>' + o.all3 + '</strong> of the '
+          + '<strong>' + o.any + '</strong> positions that showed any resistance at all, an agreement of '
+          + '<strong>' + F.pct(o.agree, 0) + '</strong>. ';
+        txt += 'If the antibiotic were what creates resistance, each plate would be its own independent event and '
+          + 'the expected agreement would be <strong>' + F.pct(E.aInd, 1) + '</strong>. If the mutation was '
+          + 'already present on the master plate, the expected agreement is <strong>' + F.pct(E.aMut, 1)
+          + '</strong>';
+        txt += S.m > 0
+          ? ' — short of perfect only because the velvet misses ' + Math.round(S.m * 100) + '% of colonies. '
+          : '. ';
+        txt += 'The data sits with <strong>mutation first</strong>. Both rows carry a similar number of colonies, '
+          + 'so the count is not the evidence; the repeated positions are.';
+        return txt;
+      }
+
+      // ==================================================================
+      // ACTIONS
+      // ==================================================================
+      var anim = Demo.loop(function (dt) {
+        stamp = Demo.clamp(stamp + dt / 1.1, 0, 1);
+        repsCv.paint();
+        if (stamp >= 1) anim.stop();
+      });
+
+      function playStamp() {
+        anim.stop();
+        stamp = 0;
+        repsCv.paint();
+        anim.start();
+      }
+
+      function rebuild(keepTally) {
+        POS = makePositions(GRIDS[S.gi][0], GRIDS[S.gi][1]);
+        RUN = runExperiment(S.seed);
+        if (!keepTally) resetTally();
+        render(false);
+      }
+
+      function newRun() {
+        S.seed = nextSeed(S.seed);
+        RUN = runExperiment(S.seed);
+        tallySeed = S.seed;
+        addToTally(RUN);
+        playStamp();
+        render(false);
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#gridRange', function (v) {
+        S.gi = Demo.clamp(Math.round(v), 0, GRIDS.length - 1);
+        if (booted) rebuild(false);
+      });
+      Demo.range('#pRange', function (v) {
+        S.p = v / 100;
+        if (booted) rebuild(false);
+      });
+      Demo.range('#mRange', function (v) {
+        S.m = v / 100;
+        if (booted) rebuild(false);
+      });
+
+      el.revealChk.addEventListener('change', function () {
+        S.reveal = this.checked;
+        render(false);
+      });
+
+      var focusBtns = Array.prototype.slice.call(document.querySelectorAll('#focusSeg button'));
+      focusBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          focusBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.focus = b.dataset.focus;
+          render(false);
+        });
+      });
+
+      el.newRun.addEventListener('click', newRun);
+      el.replay.addEventListener('click', playStamp);
+
+      el.run25.addEventListener('click', function () {
+        for (var i = 0; i < 25; i++) {
+          tallySeed = nextSeed(tallySeed);
+          addToTally(runExperiment(tallySeed));
+        }
+        render(false);
+      });
+
+      el.resetTally.addEventListener('click', function () {
+        resetTally();
+        render(false);
+      });
+
+      el.resetAll.addEventListener('click', function () {
+        anim.stop();
+        S.gi = 2; S.p = 0.10; S.m = 0; S.seed = SEED0; S.reveal = false; S.focus = 'both';
+        el.gridRange.value = 2;
+        el.pRange.value = 10;
+        el.mRange.value = 0;
+        el.revealChk.checked = false;
+        focusBtns.forEach(function (o, i) { o.setAttribute('aria-selected', i === 0 ? 'true' : 'false'); });
+        stamp = 1;
+        rebuild(false);
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      booted = true;
+      POS = makePositions(GRIDS[S.gi][0], GRIDS[S.gi][1]);
+      RUN = runExperiment(S.seed);
+      tally = blankTally();
+      addToTally(RUN);
+      render(false);
+    })();
+  </script>
+</body>
+
+</html>

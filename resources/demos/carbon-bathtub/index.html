@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>The Carbon Bathtub | Dr. Andres Barboza</title>
+  <meta name="description" content="A stock-and-flow bathtub for atmospheric carbon dioxide, and the same engine relabelled for nutrient runoff and an oxygen crash. Cutting a flow is not the same thing as lowering a stock.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 26px; }
+
+    /* These tiles carry real units, which run longer than the shell's
+       single-line label default. Let them wrap instead of ellipsing. */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub, .readout .r-label sup { text-transform: none; }
+    .readout .r-sub {
+      font-size: 10.5px;
+      line-height: 1.4;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .readout .r-sub.up   { color: var(--bad);  font-weight: 600; }
+    .readout .r-sub.flat { color: var(--warn); font-weight: 600; }
+    .readout .r-sub.down { color: var(--ok);   font-weight: 600; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.fill i { height: 10px; border-radius: 3px; opacity: 0.45; }
+
+    .seg.four button { padding: 7px 4px; font-size: 11.5px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">The Carbon Bathtub</h1>
+        <p class="demo-sub">Press Run and leave emissions exactly where they are. The tap never changes &mdash; and the level climbs anyway. Then try cutting emissions in half and watch it climb <em>anyway</em>.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Ecology &mdash; stocks and flows</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Which system" id="modeSeg">
+          <button role="tab" aria-selected="true" data-mode="carbon">Carbon</button>
+          <button role="tab" aria-selected="false" data-mode="runoff">Runoff</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="tubLabel">The bathtub <span>&mdash; tap in, drain out, level in the middle</span></p>
+        <canvas id="tub" role="img"
+                aria-label="A bathtub schematic: a stream of water entering from a tap, a stream leaving through a drain, and a water level that rises whenever the tap stream is wider than the drain stream."></canvas>
+        <p class="stage-caption" id="tubCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:15px 0">
+
+        <div class="seg four" role="tablist" aria-label="Which stock to chart" id="stockSeg" hidden>
+          <button role="tab" aria-selected="false" data-stock="n">Nutrient</button>
+          <button role="tab" aria-selected="false" data-stock="b">Algae</button>
+          <button role="tab" aria-selected="false" data-stock="m">Dead matter</button>
+          <button role="tab" aria-selected="true" data-stock="o">Oxygen</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="chartLabel">Stock on top, flows underneath</p>
+        <canvas id="chart" role="img"
+                aria-label="Two stacked time plots sharing one time axis: the stock above, drawn as a filled level, and the two flows below, drawn as rates, with the gap between them shaded."></canvas>
+
+        <div class="legend">
+          <span class="lg fill"><i id="lgStockSw"></i><span id="lgStockTx">stock (a level)</span></span>
+          <span class="lg"><i id="lgInSw"></i><span id="lgInTx">inflow (a rate)</span></span>
+          <span class="lg"><i id="lgOutSw"></i><span id="lgOutTx">outflow (a rate)</span></span>
+        </div>
+        <p class="stage-caption" id="chartCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Time</div>
+          <div class="stack">
+            <div class="readouts two">
+              <div class="readout is-accent">
+                <div class="r-label" id="clockLabel">Year</div>
+                <div class="r-value" id="clockVal">2025</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Elapsed</div>
+                <div class="r-value" id="elapsedVal">0<span class="r-unit" id="elapsedUnit">yr</span></div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="btnRun">Run</button>
+              <button class="btn" id="btnStep">Skip ahead</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+            <div class="seg" role="tablist" aria-label="Simulation speed" id="speedSeg">
+              <button role="tab" aria-selected="true" data-speed="1">1&times;</button>
+              <button role="tab" aria-selected="false" data-speed="3">3&times;</button>
+            </div>
+            <p class="ctrl-hint" id="speedHint">Sliders work while it runs. Changing a flow mid-run is the interesting thing to do.</p>
+          </div>
+        </div>
+
+        <!-- ===== CARBON ===== -->
+        <div class="panel" id="cPanel">
+          <div class="panel-title">The tap &mdash; global CO<sub>2</sub> emissions</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="eRange">Emissions</label>
+                <span class="ctrl-value" id="eOut">41.0 Gt CO&#8322; yr&#8315;&sup1;</span>
+              </div>
+              <input type="range" id="eRange" min="0" max="60" step="0.1" value="41">
+              <p class="ctrl-hint">A <strong>rate</strong>: gigatonnes of CO<sub>2</sub> added to the air each year. Roughly today&rsquo;s figure, fossil fuels plus land-use change, is 41.</p>
+            </div>
+            <div class="btn-row" id="cPresets">
+              <button class="btn" data-e="41">Today, 41</button>
+              <button class="btn" data-e="28.7">Cut 30%</button>
+              <button class="btn" data-e="20.5">Cut 50%</button>
+              <button class="btn" data-e="0">Net zero</button>
+            </div>
+            <button class="btn primary" id="btnHold">Set emissions to today&rsquo;s uptake</button>
+            <p class="ctrl-hint">That last button is the only one that actually stops the level moving, and it is the one nobody guesses.</p>
+          </div>
+        </div>
+
+        <div class="panel" id="cRead">
+          <div class="panel-title">Stock, and the two flows</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Stock &mdash; atmospheric CO<sub>2</sub></div>
+              <div class="r-value big" id="rConc">424.0<span class="r-unit">ppm</span></div>
+              <div class="r-sub" id="rConcSub">144.0 ppm above pre-industrial (280 ppm)</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Inflow &mdash; emissions</div>
+              <div class="r-value" id="rIn">41.0</div>
+              <div class="r-sub">Gt CO&#8322; yr&#8315;&sup1;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Outflow &mdash; ocean + land uptake</div>
+              <div class="r-value" id="rOut">22.3</div>
+              <div class="r-sub">Gt CO&#8322; yr&#8315;&sup1;</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Level is changing at</div>
+              <div class="r-value" id="rRate">+2.40<span class="r-unit">ppm yr&#8315;&sup1;</span></div>
+              <div class="r-sub up" id="rRateSub">RISING &mdash; inflow beats outflow by 18.7 Gt CO&#8322; yr&#8315;&sup1;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="cTarget">
+          <div class="panel-title">The two numbers that decide it</div>
+          <div class="readouts two">
+            <div class="readout span2">
+              <div class="r-label">Emissions that would hold the level steady right now</div>
+              <div class="r-value" id="rHold">22.3<span class="r-unit">Gt CO&#8322; yr&#8315;&sup1;</span></div>
+              <div class="r-sub" id="rHoldSub">a cut of 45.6% from where the slider is</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Where the level ends up if emissions stay exactly where the slider is</div>
+              <div class="r-value" id="rEq">545<span class="r-unit">ppm</span></div>
+              <div class="r-sub" id="rEqSub">constant emissions do not mean a constant concentration</div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:11px">
+            Uptake is not a fixed number. It grows as the air gets richer in CO<sub>2</sub>, so the level keeps
+            climbing until uptake has risen far enough to match the tap. That is where the second figure comes
+            from: <strong>level settles when outflow finally equals inflow</strong>, not when inflow stops rising.
+          </p>
+        </div>
+
+        <!-- ===== RUNOFF ===== -->
+        <div class="panel" id="rPanel" hidden>
+          <div class="panel-title">The tap &mdash; fertiliser washing into the lake</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="lRange">Phosphorus loading</label>
+                <span class="ctrl-value" id="lOut">1.00 &micro;g P L&#8315;&sup1; d&#8315;&sup1;</span>
+              </div>
+              <input type="range" id="lRange" min="0" max="8" step="0.05" value="1">
+              <p class="ctrl-hint">A <strong>rate</strong>: micrograms of dissolved phosphorus entering each litre of lake water every day. 1.0 is the background the lake sits at; a fertilised watershed after rain pushes it far higher.</p>
+            </div>
+            <div class="btn-row" id="rPresets">
+              <button class="btn" data-l="1">Background, 1.0</button>
+              <button class="btn" data-l="3">Moderate, 3.0</button>
+              <button class="btn" data-l="6">Heavy, 6.0</button>
+              <button class="btn primary" data-l="0">Stop the fertiliser</button>
+            </div>
+            <p class="ctrl-hint">Run it up to heavy, wait for the fish kill, then press <em>Stop the fertiliser</em> and keep running. Watch how long nothing happens.</p>
+          </div>
+        </div>
+
+        <div class="panel" id="rRead" hidden>
+          <div class="panel-title">Four bathtubs in a row</div>
+          <div class="readouts two">
+            <div class="readout span2" id="doBox">
+              <div class="r-label">Dissolved oxygen &mdash; the stock that matters</div>
+              <div class="r-value big" id="rDO">7.63<span class="r-unit">mg O&#8322; L&#8315;&sup1;</span></div>
+              <div class="r-sub down" id="rDOSub">healthy &mdash; above 6 mg L&#8315;&sup1;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Dissolved phosphorus</div>
+              <div class="r-value" id="rN">5.0</div>
+              <div class="r-sub">&micro;g P L&#8315;&sup1;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Living algae</div>
+              <div class="r-value" id="rB">410</div>
+              <div class="r-sub">&micro;g C L&#8315;&sup1;</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Dead organic matter waiting to be decomposed</div>
+              <div class="r-value" id="rM">1.37<span class="r-unit">mg C L&#8315;&sup1;</span></div>
+              <div class="r-sub" id="rMSub">this is the stock that causes the lag</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">O&#8322; in from the air</div>
+              <div class="r-value" id="rAer">0.109</div>
+              <div class="r-sub">mg O&#8322; L&#8315;&sup1; d&#8315;&sup1;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">O&#8322; out to decomposers</div>
+              <div class="r-value" id="rResp">0.109</div>
+              <div class="r-sub">mg O&#8322; L&#8315;&sup1; d&#8315;&sup1;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="rLag" hidden>
+          <div class="panel-title">The lag &mdash; the whole point of this mode</div>
+          <div class="readouts two">
+            <div class="readout span2" id="lagBox">
+              <div class="r-label">If you cut fertiliser to zero this instant, oxygen climbs back above 5.0 mg L&#8315;&sup1; in</div>
+              <div class="r-value big" id="rLagVal">already there</div>
+              <div class="r-sub" id="rLagSub">the fertiliser stops the moment you release the slider; the dead matter does not</div>
+            </div>
+          </div>
+          <p class="note warn" style="margin-top:11px">
+            Stopping the tap empties the <em>nutrient</em> tub in about a week. But the algae that already grew
+            still have to die, and the dead matter already on the bottom still has to be decomposed &mdash; and
+            decomposers keep breathing the whole time. Oxygen cannot recover until that third tub has drained.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note bad">
+            <strong>These are illustrative models, not predictions.</strong> The carbon side is a single
+            well-mixed reservoir losing CO<sub>2</sub> to one combined sink at a rate proportional to the excess
+            over 280 ppm. The real carbon cycle has several sinks on very different clocks, and a stubborn tail:
+            even at true net zero a large fraction of the added CO<sub>2</sub> stays in the air for centuries to
+            millennia, so the drain here is far more forgiving than the real one. This model also lets the sink
+            keep growing without limit as concentration rises, whereas real ocean and land sinks saturate. Both
+            simplifications make stabilisation look <em>easier</em> here than it is.
+          </p>
+          <p class="note warn" style="margin-top:10px">
+            <strong>The lake is not a calibrated limnological model either.</strong> It is a stratified summer
+            water column with poor gas exchange, four first-order tubs, and Redfield stoichiometry (41 &micro;g of
+            algal carbon per &micro;g of phosphorus; 2.67 mg of O<sub>2</sub> per mg of carbon respired). Real
+            lakes add light limitation, grazers, sediment phosphorus release, mixing events and species change.
+            Oxygen is floored at 0 mg L&#8315;&sup1;, because below that there is nothing left to consume.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is <em>not</em> simplified is the arithmetic that matters here: in both modes the stock changes by
+            exactly (inflow &minus; outflow) every step, and nothing else. That is the part worth trusting.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear &ldquo;emissions fell last year&rdquo; and conclude that
+        the amount of CO<sub>2</sub> in the air fell too. It did not. Emissions are a <em>flow</em> &mdash; how
+        fast carbon is being added, in gigatonnes per year. Concentration is a <em>stock</em> &mdash; how much is
+        in there right now, in ppm. They are different quantities with different units, and the only thing that
+        connects them is this: <strong>the stock rises whenever inflow is bigger than outflow.</strong> Not when
+        inflow is rising. When it is bigger. A falling emissions rate that is still above the uptake rate is a
+        bathtub filling more slowly &mdash; and a bathtub filling more slowly is still filling.
+      </p>
+      <p>
+        <strong>What to notice, in three moves.</strong> First press Run and change nothing. The tap holds
+        perfectly steady at 41 Gt CO<sub>2</sub> per year, and the level climbs from 424 ppm anyway, because the
+        drain is only carrying 22.3. Second, press <em>Cut 30%</em>. Emissions fall to 28.7 &mdash; a genuinely
+        enormous cut, far bigger than anything achieved so far &mdash; and the level still rises, at
+        +0.82 ppm per year, because 28.7 is still bigger than 22.3. Skip fifty years ahead and the concentration
+        has gone <em>up</em> another 26 ppm during the decades when emissions were falling. Third, press
+        <em>Set emissions to today&rsquo;s uptake</em>. That sets the tap to 22.3, a cut of 45.6%, and only now
+        does the level go flat. That is the number that stops it: not zero, not &ldquo;less than last year&rdquo;,
+        but <strong>equal to the outflow</strong>.
+      </p>
+      <p>
+        <strong>And then the sting.</strong> Set emissions back to 41 and read the second target tile. Constant
+        emissions do not give a constant concentration; they give a <em>rising</em> one that eventually settles
+        near 545 ppm, once the drain has grown enough to keep up. Every emissions rate has its own eventual
+        level: 28.7 buys you 465 ppm, 22.3 buys you today&rsquo;s 424, and 20.5 &mdash; the <em>Cut 50%</em>
+        button &mdash; is finally below the drain, so the level slowly falls to 412 and stops there. Notice how
+        narrow that window is. Between a 30% cut that still raises the level by 41 ppm and a 50% cut that lowers
+        it by 12 lies the whole difference, and neither of them is &ldquo;emissions went down&rdquo;. Choosing an
+        emissions rate is choosing a concentration, decades later.
+      </p>
+      <p>
+        <strong>Why the runoff mode is the same demo.</strong> Switch modes and every label changes but no equation
+        does. Fertiliser fills a nutrient tub; the nutrient tub drains into algae; algae drain into dead organic
+        matter; and decomposers burning that dead matter drain the oxygen tub faster than the air can refill it.
+        Set loading to <em>Heavy, 6.0</em>, run until oxygen collapses to 0.8 mg L<sup>&minus;1</sup>, then press
+        <em>Stop the fertiliser</em> and keep running. The nutrient tub is essentially empty inside a fortnight
+        &mdash; and oxygen does not climb back over 5.0 mg L<sup>&minus;1</sup> for about <strong>53 days</strong>,
+        because 8.2 mg C L<sup>&minus;1</sup> of dead algae is still sitting there being decomposed at 3% a day and
+        the decomposers are still breathing. Nothing is being added any more and the lake is still dying. That is
+        stock-and-flow reasoning, and it is why &ldquo;we stopped doing the bad thing&rdquo; and &ldquo;the problem
+        is over&rdquo; are two entirely different claims.
+      </p>
+      <p>
+        <strong>The honest caveat.</strong> Neither model is a prediction. Both use one well-mixed reservoir per
+        tub and a single first-order drain, which is the simplest thing that behaves like a bathtub at all. Real
+        carbon sinks saturate and real lakes have sediment, grazers and seasons. The numbers on screen are there to
+        make the arithmetic of accumulation visible, not to forecast anything.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one stock-and-flow engine, two labellings.
+      //
+      // Every tub obeys exactly one rule:   d(stock)/dt = inflow - outflow
+      // and every outflow is first order in its own stock, so setting every
+      // inflow to zero drains every tub to its empty fixed point and holds
+      // it there. That is checked by hand below, per tub.
+      //
+      // ---- MODE 1: CARBON -----------------------------------------------
+      //   Stock  C   atmospheric CO2, ppm
+      //   In     E   emissions, Gt CO2 yr^-1                (slider)
+      //   Out    U = KUP * (C - C0), Gt CO2 yr^-1           combined sink
+      //   dC/dt  = (E - U) / GTPPM         GTPPM = 7.79 Gt CO2 per ppm
+      //
+      //   C0 = 280 ppm pre-industrial. KUP = 0.155 Gt CO2 yr^-1 ppm^-1 is
+      //   picked so that today's state reproduces the observed growth rate:
+      //     C = 424 ppm  ->  U = 0.155 * 144   = 22.32 Gt CO2 yr^-1
+      //     E = 41       ->  net = 18.68       -> 18.68/7.79 = 2.40 ppm yr^-1
+      //   which is the measured ~2.4 ppm yr^-1 and an airborne fraction of
+      //   18.68/41 = 46%, also about right.
+      //
+      //   Zero-input fixed point: E = 0  =>  d(C-C0)/dt = -(KUP/GTPPM)(C-C0)
+      //   = -0.0199 (C-C0) per year. Excess decays to EXACTLY zero, i.e. the
+      //   tub drains to the 280 ppm floor and stays there. Monotonic in E:
+      //   equilibrium is C_eq = C0 + E/KUP, strictly increasing in E, and
+      //   dC/dt is strictly increasing in E at fixed C.
+      //
+      // ---- MODE 2: RUNOFF ------------------------------------------------
+      //   Four tubs in a cascade, all first order:
+      //     N  dissolved P, ug P L^-1        dN/dt = L        - UP*N
+      //     B  algal carbon, ug C L^-1       dB/dt = YCP*UP*N - DTH*B
+      //     M  dead organic C, ug C L^-1     dM/dt = DTH*B    - RDEC*M
+      //     O  dissolved oxygen, mg O2 L^-1  dO/dt = KA*(DOSAT-O) - RDEC*M*O2C/1000
+      //
+      //   UP = 0.20 d^-1 algal uptake of P; YCP = 41 ug C per ug P (Redfield
+      //   106C:1P by mole = 41 by mass); DTH = 0.10 d^-1 mortality;
+      //   RDEC = 0.030 d^-1 decomposition (tau = 33 d — this is the LAG);
+      //   O2C = 2.67 mg O2 per mg C respired (32/12); DOSAT = 9.0 mg L^-1;
+      //   KA = 0.08 d^-1 reaeration, a poorly-mixed stratified column.
+      //
+      //   Steady state for a constant loading L, worked through by hand:
+      //     N* = L/UP           B* = YCP*L/DTH      M* = DTH*B*/RDEC
+      //     every flow in the chain equals YCP*L in carbon currency, so
+      //     O* = DOSAT - (YCP*L*O2C/1000)/KA = 9.0 - 1.3684*L
+      //   Zero-input fixed point: L = 0 => N,B,M all decay to exactly 0 and
+      //   O relaxes to DOSAT. Monotonic in L: N*, B*, M* rise linearly with
+      //   L and O* falls linearly with L, with no turning points anywhere.
+      // ==================================================================
+
+      var F = Demo.fmt, CL = Demo.clamp;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      // ---- carbon ----
+      var C0 = 280, CSTART = 424, KUP = 0.155, GTPPM = 7.79;
+      var YEAR0 = 2025, TMAX_C = 175, EDEF = 41;
+
+      // ---- runoff ----
+      var DOSAT = 9.0, KA = 0.08, UPK = 0.20, YCP = 41, DTH = 0.10, RDEC = 0.030, O2C = 2.67;
+      var LDEF = 1.0, TMAX_R = 360;
+
+      var MODE = 'carbon';
+      var SEL = 'o';
+      var speed = 1;
+
+      var CS = { t: 0, C: CSTART, E: EDEF };
+      var RS = { t: 0, N: 0, B: 0, M: 0, O: 0, L: LDEF };
+      var hist = [];
+      var nextSample = 0;
+
+      function tmax() { return MODE === 'carbon' ? TMAX_C : TMAX_R; }
+      function sampleDt() { return MODE === 'carbon' ? 0.5 : 1; }
+      function simTime() { return MODE === 'carbon' ? CS.t : RS.t; }
+
+      // ---------------- integrators ----------------
+
+      function stepC(st, E, h) {
+        var U = KUP * Math.max(0, st.C - C0);
+        st.C = Math.max(C0, st.C + h * (E - U) / GTPPM);
+      }
+
+      function stepR(st, L, h) {
+        var fUp = UPK * st.N;
+        var gB = YCP * fUp;
+        var fD = DTH * st.B;
+        var fR = RDEC * st.M;
+        var fAer = KA * (DOSAT - st.O);
+        var fRes = fR * O2C / 1000;
+        st.N = Math.max(0, st.N + h * (L - fUp));
+        st.B = Math.max(0, st.B + h * (gB - fD));
+        st.M = Math.max(0, st.M + h * (fD - fR));
+        st.O = CL(st.O + h * (fAer - fRes), 0, DOSAT);
+      }
+
+      function runoffSteady(L) {
+        var N = L / UPK, B = YCP * L / DTH, M = DTH * B / RDEC;
+        var O = DOSAT - (RDEC * M * O2C / 1000) / KA;
+        return { N: N, B: B, M: M, O: CL(O, 0, DOSAT) };
+      }
+
+      // ---------------- derived quantities ----------------
+
+      function cFlows() {
+        var U = KUP * Math.max(0, CS.C - C0);
+        return { fin: CS.E, fout: U, net: CS.E - U, dppm: (CS.E - U) / GTPPM };
+      }
+
+      function rFlows() {
+        var fUp = UPK * RS.N, gB = YCP * fUp, fD = DTH * RS.B, fR = RDEC * RS.M;
+        return {
+          L: RS.L, fUp: fUp, gB: gB, fD: fD, fR: fR,
+          fAer: KA * (DOSAT - RS.O), fRes: fR * O2C / 1000
+        };
+      }
+
+      // Forward projection: cut the fertiliser to zero right now, how many
+      // days until oxygen is back above 5.0 mg/L? Integrated on a copy.
+      function recoveryDays() {
+        if (RS.O >= 5) return 0;
+        var st = { N: RS.N, B: RS.B, M: RS.M, O: RS.O };
+        var h = 0.25, t = 0;
+        while (t < 900) {
+          stepR(st, 0, h);
+          t += h;
+          if (st.O >= 5) return t;
+        }
+        return Infinity;
+      }
+
+      // ---------------- history ----------------
+
+      function pushSample() {
+        if (MODE === 'carbon') hist.push({ t: CS.t, C: CS.C, E: CS.E });
+        else hist.push({ t: RS.t, N: RS.N, B: RS.B, M: RS.M, O: RS.O, L: RS.L });
+      }
+
+      function curRec() {
+        if (MODE === 'carbon') return { t: CS.t, C: CS.C, E: CS.E };
+        return { t: RS.t, N: RS.N, B: RS.B, M: RS.M, O: RS.O, L: RS.L };
+      }
+
+      function resetSim(keepInputs) {
+        hist = [];
+        if (MODE === 'carbon') {
+          CS.t = 0; CS.C = CSTART;
+          if (!keepInputs) { CS.E = EDEF; el.eRange.value = EDEF; }
+        } else {
+          RS.t = 0;
+          if (!keepInputs) { RS.L = LDEF; el.lRange.value = LDEF; }
+          var s = runoffSteady(RS.L);
+          RS.N = s.N; RS.B = s.B; RS.M = s.M; RS.O = s.O;
+        }
+        nextSample = sampleDt();
+        pushSample();
+      }
+
+      // ---------------- series specification ----------------
+      // One object per chartable stock. Every one of them is inflow minus
+      // outflow, which is the entire claim this demo is making.
+
+      function spec(c) {
+        var xC = { xLabel: 'year', xTicks: [0, 50, 100, 150], xText: function (t) { return String(YEAR0 + Math.round(t)); } };
+        var xR = { xLabel: 'days', xTicks: [0, 90, 180, 270, 360], xText: function (t) { return String(Math.round(t)); } };
+        var s;
+
+        if (MODE === 'carbon') {
+          s = {
+            stockName: 'Atmospheric CO₂', stockUnit: 'ppm', dp: 0,
+            ymin: C0, ymax: 700, col: c.series[3],
+            flowUnit: 'Gt CO₂ yr⁻¹', flowDp: 0, flowMax: 65,
+            inName: 'emissions in', outName: 'ocean + land uptake out',
+            refs: [{ v: CSTART, label: '2025: 424 ppm' }],
+            baseLabel: 'pre-industrial 280 ppm',
+            read: function (r) { return { v: r.C, fin: r.E, fout: KUP * Math.max(0, r.C - C0) }; }
+          };
+          s.xLabel = xC.xLabel; s.xTicks = xC.xTicks; s.xText = xC.xText;
+        } else if (SEL === 'n') {
+          s = {
+            stockName: 'Dissolved phosphorus', stockUnit: 'µg P L⁻¹', dp: 1,
+            ymin: 0, ymax: 45, col: c.series[3],
+            flowUnit: 'µg P L⁻¹ d⁻¹', flowDp: 1, flowMax: 9,
+            inName: 'fertiliser runoff in', outName: 'taken up by algae',
+            refs: [{ v: 24, label: 'eutrophic above 24 µg P L⁻¹' }],
+            baseLabel: 'empty',
+            read: function (r) { return { v: r.N, fin: r.L, fout: UPK * r.N }; }
+          };
+        } else if (SEL === 'b') {
+          s = {
+            stockName: 'Living algae', stockUnit: 'µg C L⁻¹', dp: 0,
+            ymin: 0, ymax: 3400, col: c.ok,
+            flowUnit: 'µg C L⁻¹ d⁻¹', flowDp: 0, flowMax: 360,
+            inName: 'growth in', outName: 'death out',
+            refs: [{ v: 1500, label: 'visible bloom' }],
+            baseLabel: 'empty',
+            read: function (r) { return { v: r.B, fin: YCP * UPK * r.N, fout: DTH * r.B }; }
+          };
+        } else if (SEL === 'm') {
+          s = {
+            stockName: 'Dead organic matter', stockUnit: 'µg C L⁻¹', dp: 0,
+            ymin: 0, ymax: 11500, col: c.warn,
+            flowUnit: 'µg C L⁻¹ d⁻¹', flowDp: 0, flowMax: 360,
+            inName: 'algae dying in', outName: 'decomposed out',
+            refs: [],
+            baseLabel: 'empty',
+            read: function (r) { return { v: r.M, fin: DTH * r.B, fout: RDEC * r.M }; }
+          };
+        } else {
+          s = {
+            stockName: 'Dissolved oxygen', stockUnit: 'mg O₂ L⁻¹', dp: 1,
+            ymin: 0, ymax: 9.5, col: c.series[0],
+            flowUnit: 'mg O₂ L⁻¹ d⁻¹', flowDp: 2, flowMax: 1.0,
+            inName: 'from the air in', outName: 'decomposer respiration out',
+            refs: [{ v: 5, label: 'fish stressed below 5.0' }, { v: 2, label: 'fish kill below 2.0' }],
+            baseLabel: 'anoxic, 0',
+            read: function (r) {
+              return { v: r.O, fin: KA * (DOSAT - r.O), fout: RDEC * r.M * O2C / 1000 };
+            }
+          };
+        }
+        if (MODE === 'runoff') { s.xLabel = xR.xLabel; s.xTicks = xR.xTicks; s.xText = xR.xText; }
+        s.inCol = c.series[0];
+        s.outCol = c.series[1];
+        if (MODE === 'runoff' && SEL === 'o') { s.inCol = c.ok; s.outCol = c.bad; }
+        return s;
+      }
+
+      // ---------------- small canvas helpers ----------------
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = CL(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+
+      // Measures with whatever font the caller has already set, and leaves
+      // it alone — callers set weight + size before drawing.
+      function fitText(ctx, txt, maxW) {
+        if (ctx.measureText(txt).width <= maxW) return txt;
+        var t = txt;
+        while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+        return t + '…';
+      }
+
+      function nf(v, dp) {
+        if (!isFinite(v)) return '—';
+        if (Math.abs(v) >= 1000) return F.comma(v);
+        return F.dec(v, dp);
+      }
+
+      // ==================================================================
+      // CANVAS 1 — the bathtub schematic
+      // ==================================================================
+      var tubCv = Demo.canvas('#tub', function (ctx, w, h, c) {
+        if (MODE === 'carbon') drawCarbonTub(ctx, w, h, c);
+        else drawRunoffTubs(ctx, w, h, c);
+      }, { aspect: 0.5, minHeight: 178, maxHeight: 240 });
+
+      function waterFill(ctx, c, x0, y0, x1, y1, frac, col) {
+        // y0 = tub floor (bottom), y1 = tub rim (top)
+        var lvl = y0 - (y0 - y1) * CL(frac, 0, 1);
+        if (lvl < y0 - 0.5) {
+          ctx.save();
+          ctx.globalAlpha = 0.35;
+          ctx.fillStyle = col;
+          ctx.fillRect(x0, lvl, x1 - x0, y0 - lvl);
+          ctx.restore();
+          ctx.strokeStyle = col; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(x0, lvl); ctx.lineTo(x1, lvl); ctx.stroke();
+        }
+        return lvl;
+      }
+
+      function tubWalls(ctx, c, x0, y0, x1, y1) {
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.lineTo(x1, y1);
+        ctx.stroke();
+      }
+
+      function drawCarbonTub(ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 9 : 10.5;
+        var fl = cFlows();
+        var x0 = Math.round(w * 0.17), x1 = Math.round(w * 0.83);
+        var yTop = 48, yBot = h - 40;
+        var maxFlowW = narrow ? 11 : 16;
+
+        // ---- inflow stream (the tap) ----
+        var inX = x0 + Math.min(50, (x1 - x0) * 0.24);
+        var inW = 2 + maxFlowW * CL(fl.fin / 60, 0, 1);
+        ctx.fillStyle = c.series[0];
+        ctx.save(); ctx.globalAlpha = 0.75;
+        if (fl.fin > 0.001) ctx.fillRect(inX - inW / 2, 12, inW, yTop - 12);
+        ctx.restore();
+        ctx.fillStyle = c.series[0];
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(fitText(ctx, 'IN  emissions  ' + F.dec(fl.fin, 1) + ' Gt CO₂ yr⁻¹', w - 6), 2, 1);
+        if (fl.fin <= 0.001) {
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + FONT;
+          ctx.textAlign = 'center';
+          ctx.fillText('tap off', inX, 22);
+        }
+
+        // ---- outflow stream (the drain) ----
+        var outX = x1 - Math.min(50, (x1 - x0) * 0.24);
+        var outW = 2 + maxFlowW * CL(fl.fout / 60, 0, 1);
+        ctx.save(); ctx.globalAlpha = 0.75;
+        ctx.fillStyle = c.series[1];
+        if (fl.fout > 0.001) ctx.fillRect(outX - outW / 2, yBot, outW, h - 18 - yBot);
+        ctx.restore();
+        ctx.fillStyle = c.series[1];
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText(fitText(ctx, 'OUT  ocean + land uptake  ' + F.dec(fl.fout, 1) + ' Gt CO₂ yr⁻¹', w - 6), w - 2, h - 1);
+
+        // ---- water ----
+        var frac = (CS.C - C0) / (700 - C0);
+        var lvl = waterFill(ctx, c, x0, yBot, x1, yTop, frac, c.series[3]);
+        tubWalls(ctx, c, x0, yBot, x1, yTop);
+
+        // ---- reference marks ----
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        var refY = yBot - (yBot - yTop) * (CSTART - C0) / (700 - C0);
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(x0, refY); ctx.lineTo(x1, refY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.muted;
+        ctx.fillText('424 ppm, 2025', x0 + 5, refY - 7);
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('floor = pre-industrial 280 ppm', x0 + 1, yBot + 4);
+
+        // ---- the level itself ----
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        var midX = (x0 + x1) / 2;
+        var ty = Math.min(yBot - 12, Math.max(yTop + 26, lvl + 26));
+        ctx.font = '600 ' + (narrow ? 17 : 21) + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(F.dec(CS.C, 1) + ' ppm', midX, ty);
+        ctx.font = (fs - 0.4) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('level (a stock)', midX, ty + 13);
+      }
+
+      function drawRunoffTubs(ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 8.6 : 10;
+        var fl = rFlows();
+        var gap = narrow ? 9 : 14;
+        var tw = (w - 3 * gap) / 4;
+        var yTop = 34, yBot = h - 42;
+
+        var tubs = [
+          { key: 'n', name: 'Nutrient', v: RS.N, max: 45, col: c.series[3], val: F.dec(RS.N, 1), unit: 'µg P L⁻¹' },
+          { key: 'b', name: 'Algae', v: RS.B, max: 3400, col: c.ok, val: F.comma(RS.B), unit: 'µg C L⁻¹' },
+          { key: 'm', name: 'Dead matter', v: RS.M, max: 11500, col: c.warn, val: F.comma(RS.M), unit: 'µg C L⁻¹' },
+          { key: 'o', name: 'Oxygen', v: RS.O, max: 9.5, col: RS.O >= 6 ? c.ok : RS.O >= 2 ? c.warn : c.bad, val: F.dec(RS.O, 2), unit: 'mg O₂ L⁻¹' }
+        ];
+
+        var i, t, x0, x1;
+        for (i = 0; i < 4; i++) {
+          t = tubs[i];
+          x0 = Math.round(i * (tw + gap));
+          x1 = Math.round(x0 + tw);
+
+          if (t.key === SEL) {
+            ctx.save();
+            ctx.fillStyle = c.accentSoft || c.surface2;
+            ctx.fillRect(x0 - 3, yTop - 3, (x1 - x0) + 6, (yBot - yTop) + 6);
+            ctx.strokeStyle = c.accent; ctx.lineWidth = 1;
+            ctx.strokeRect(x0 - 3, yTop - 3, (x1 - x0) + 6, (yBot - yTop) + 6);
+            ctx.restore();
+          }
+
+          waterFill(ctx, c, x0, yBot, x1, yTop, t.v / t.max, t.col);
+          tubWalls(ctx, c, x0, yBot, x1, yTop);
+
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.text;
+          ctx.fillText(fitText(ctx, t.name, tw + gap - 2), (x0 + x1) / 2, yBot + 5);
+          ctx.font = '600 ' + (fs + 1.4) + FONT;
+          ctx.fillStyle = t.col;
+          ctx.fillText(fitText(ctx, t.val, tw + gap - 2), (x0 + x1) / 2, yBot + 16);
+          ctx.font = (fs - 0.8) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(fitText(ctx, t.unit, tw + gap - 2), (x0 + x1) / 2, yBot + 28);
+        }
+
+        // ---- arrows between tubs ----
+        function arrow(cx, cy, col, alpha) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(cx - 5, cy - 5); ctx.lineTo(cx + 5, cy); ctx.lineTo(cx - 5, cy + 5);
+          ctx.closePath(); ctx.fill();
+          ctx.restore();
+        }
+        var midY = (yTop + yBot) / 2;
+        var a1 = CL(fl.gB / 360, 0.15, 1), a2 = CL(fl.fD / 360, 0.15, 1), a3 = CL(fl.fRes / 0.9, 0.15, 1);
+        arrow(tw + gap / 2, midY, c.ok, a1);
+        arrow(2 * tw + 1.5 * gap, midY, c.warn, a2);
+        arrow(3 * tw + 2.5 * gap, midY, c.bad, a3);
+
+        // ---- the fertiliser tap above tub 1 ----
+        var inW = 2 + (narrow ? 8 : 11) * CL(RS.L / 8, 0, 1);
+        ctx.save(); ctx.globalAlpha = 0.75; ctx.fillStyle = c.series[0];
+        if (RS.L > 0.001) ctx.fillRect(tw / 2 - inW / 2, 16, inW, yTop - 16);
+        ctx.restore();
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.series[0];
+        ctx.fillText(fitText(ctx, 'IN  fertiliser  ' + F.dec(RS.L, 2) + ' µg P L⁻¹ d⁻¹', w * 0.62), 1, 1);
+        if (RS.L <= 0.001) {
+          ctx.fillStyle = c.muted;
+          ctx.font = (fs - 0.6) + FONT;
+          ctx.textAlign = 'center';
+          ctx.fillText('tap off', tw / 2, 20);
+        }
+
+        // ---- air exchange above the oxygen tub ----
+        var aerW = 2 + (narrow ? 8 : 11) * CL(fl.fAer / 0.75, 0, 1);
+        var ox = 3 * (tw + gap) + tw / 2;
+        ctx.save(); ctx.globalAlpha = 0.7; ctx.fillStyle = c.ok;
+        if (fl.fAer > 0.0005) ctx.fillRect(ox - aerW / 2, 16, aerW, yTop - 16);
+        ctx.restore();
+        ctx.font = '600 ' + (fs - 0.6) + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.ok;
+        ctx.fillText('O₂ from the air', w - 1, 1);
+        ctx.fillStyle = c.bad;
+        ctx.fillText('respiration out ↓', w - 1, 13);
+
+        // decomposer respiration draining the oxygen tub
+        var resW = 2 + (narrow ? 8 : 11) * CL(fl.fRes / 0.9, 0, 1);
+        ctx.save(); ctx.globalAlpha = 0.75; ctx.fillStyle = c.bad;
+        if (fl.fRes > 0.0005) ctx.fillRect(ox - resW / 2, yBot, resW, 8);
+        ctx.restore();
+      }
+
+      // ==================================================================
+      // CANVAS 2 — stock on top, its two flows underneath
+      // ==================================================================
+      var chartCv = Demo.canvas('#chart', function (ctx, w, h, c) {
+        drawChart(ctx, w, h, c);
+      }, { aspect: 0.74, minHeight: 265, maxHeight: 380 });
+
+      function drawChart(ctx, w, h, c) {
+        var sp = spec(c);
+        var narrow = w < 380;
+        var fs = narrow ? 9 : 10;
+        var padL = narrow ? 42 : 52, padR = narrow ? 10 : 14, padT = 17, padB = 30, gapM = 30;
+        var avail = h - padT - padB - gapM;
+        var h1 = avail * 0.55, h2 = avail - h1;
+        var x0 = padL, x1 = w - padR;
+        var Ay1 = padT, Ay0 = padT + h1;
+        var By1 = Ay0 + gapM, By0 = By1 + h2;
+        var TM = tmax();
+        var cur = curRec();
+        var i, d, px, py;
+
+        // ---- extents ----
+        var vMax = sp.ymax, fMax = sp.flowMax;
+        var all = hist.concat([cur]);
+        for (i = 0; i < all.length; i++) {
+          d = sp.read(all[i]);
+          if (d.v > vMax) vMax = d.v * 1.06;
+          if (d.fin > fMax) fMax = d.fin * 1.08;
+          if (d.fout > fMax) fMax = d.fout * 1.08;
+        }
+
+        function X(t) { return x0 + (x1 - x0) * CL(t, 0, TM) / TM; }
+        function YA(v) { return Ay0 - (Ay0 - Ay1) * CL((v - sp.ymin) / (vMax - sp.ymin), 0, 1); }
+        function YB(f) { return By0 - (By0 - By1) * CL(f / fMax, 0, 1); }
+
+        // ---- gridlines + y labels ----
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gv = sp.ymin + (vMax - sp.ymin) * i / 4;
+          var gy = YA(gv);
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(nf(gv, sp.dp), x0 - 5, gy);
+        }
+        for (i = 0; i <= 3; i++) {
+          var gf = fMax * i / 3;
+          var gy2 = YB(gf);
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy2); ctx.lineTo(x1, gy2); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(nf(gf, sp.flowDp), x0 - 5, gy2);
+        }
+
+        // ---- axes ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, Ay1); ctx.lineTo(x0, Ay0); ctx.lineTo(x1, Ay0);
+        ctx.moveTo(x0, By1); ctx.lineTo(x0, By0); ctx.lineTo(x1, By0);
+        ctx.stroke();
+
+        // ---- panel titles ----
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(fitText(ctx, 'STOCK · ' + sp.stockName + ' (' + sp.stockUnit + ')', w - 4), 1, Ay1 - 3);
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillText(fitText(ctx, 'FLOWS · rates (' + sp.flowUnit + ')', w - 4), 1, By1 - 3);
+
+        // ---- reference lines on the stock panel ----
+        ctx.font = (fs - 0.8) + FONT;
+        for (i = 0; i < sp.refs.length; i++) {
+          var rv = sp.refs[i].v;
+          if (rv < sp.ymin || rv > vMax) continue;
+          var ry = YA(rv);
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, ry); ctx.lineTo(x1, ry); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+          ctx.fillText(sp.refs[i].label, x1 - 3, ry - 2);
+        }
+
+        // ---- the stock, drawn as a filled level ----
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, Ay1, x1 - x0, Ay0 - Ay1); ctx.clip();
+        ctx.beginPath();
+        ctx.moveTo(X(all[0].t), Ay0);
+        for (i = 0; i < all.length; i++) {
+          d = sp.read(all[i]);
+          ctx.lineTo(X(all[i].t), YA(d.v));
+        }
+        ctx.lineTo(X(all[all.length - 1].t), Ay0);
+        ctx.closePath();
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = sp.col;
+        ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = sp.col; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (i = 0; i < all.length; i++) {
+          d = sp.read(all[i]);
+          px = X(all[i].t); py = YA(d.v);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+        d = sp.read(cur);
+        dot(ctx, c, X(cur.t), YA(d.v), 4.5, sp.col);
+
+        // ---- the gap between the flows = the rate of change of the stock ----
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, By1, x1 - x0, By0 - By1); ctx.clip();
+        ctx.beginPath();
+        for (i = 0; i < all.length; i++) {
+          d = sp.read(all[i]);
+          px = X(all[i].t); py = YB(d.fin);
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        for (i = all.length - 1; i >= 0; i--) {
+          d = sp.read(all[i]);
+          ctx.lineTo(X(all[i].t), YB(d.fout));
+        }
+        ctx.closePath();
+        ctx.globalAlpha = 0.16;
+        ctx.fillStyle = c.accent;
+        ctx.fill();
+        ctx.restore();
+
+        function flowLine(pick, col) {
+          ctx.strokeStyle = col; ctx.lineWidth = 2.1; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (i = 0; i < all.length; i++) {
+            d = sp.read(all[i]);
+            px = X(all[i].t); py = YB(pick(d));
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        flowLine(function (o) { return o.fin; }, sp.inCol);
+        flowLine(function (o) { return o.fout; }, sp.outCol);
+        d = sp.read(cur);
+        dot(ctx, c, X(cur.t), YB(d.fin), 4, sp.inCol);
+        dot(ctx, c, X(cur.t), YB(d.fout), 4, sp.outCol);
+
+        // ---- x ticks ----
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (i = 0; i < sp.xTicks.length; i++) {
+          px = X(sp.xTicks[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, By0); ctx.lineTo(px, By0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(sp.xText(sp.xTicks[i]), px, By0 + 6);
+        }
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right';
+        ctx.fillText(sp.xLabel, x1, By0 + 18);
+
+        // ---- which way is the stock moving, said in words on the plot ----
+        d = sp.read(cur);
+        var net = d.fin - d.fout;
+        var word = Math.abs(net) < fMax * 0.004 ? 'holding steady'
+          : net > 0 ? 'inflow > outflow → stock RISING'
+            : 'outflow > inflow → stock FALLING';
+        var wcol = Math.abs(net) < fMax * 0.004 ? c.muted : net > 0 ? sp.inCol : sp.outCol;
+        chip(ctx, c, x1 - 2, By1 + 12, word, fs, wcol, w, 'right');
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        modeSeg: document.getElementById('modeSeg'),
+        stockSeg: document.getElementById('stockSeg'),
+        speedSeg: document.getElementById('speedSeg'),
+        tubLabel: document.getElementById('tubLabel'),
+        tubCap: document.getElementById('tubCap'),
+        chartLabel: document.getElementById('chartLabel'),
+        chartCap: document.getElementById('chartCap'),
+        lgStockSw: document.getElementById('lgStockSw'),
+        lgStockTx: document.getElementById('lgStockTx'),
+        lgInSw: document.getElementById('lgInSw'),
+        lgInTx: document.getElementById('lgInTx'),
+        lgOutSw: document.getElementById('lgOutSw'),
+        lgOutTx: document.getElementById('lgOutTx'),
+
+        clockLabel: document.getElementById('clockLabel'),
+        clockVal: document.getElementById('clockVal'),
+        elapsedVal: document.getElementById('elapsedVal'),
+        elapsedUnit: document.getElementById('elapsedUnit'),
+        btnRun: document.getElementById('btnRun'),
+        btnStep: document.getElementById('btnStep'),
+        btnReset: document.getElementById('btnReset'),
+        speedHint: document.getElementById('speedHint'),
+
+        cPanel: document.getElementById('cPanel'),
+        cRead: document.getElementById('cRead'),
+        cTarget: document.getElementById('cTarget'),
+        eRange: document.getElementById('eRange'),
+        eOut: document.getElementById('eOut'),
+        cPresets: document.getElementById('cPresets'),
+        btnHold: document.getElementById('btnHold'),
+        rConc: document.getElementById('rConc'),
+        rConcSub: document.getElementById('rConcSub'),
+        rIn: document.getElementById('rIn'),
+        rOut: document.getElementById('rOut'),
+        rRate: document.getElementById('rRate'),
+        rRateSub: document.getElementById('rRateSub'),
+        rHold: document.getElementById('rHold'),
+        rHoldSub: document.getElementById('rHoldSub'),
+        rEq: document.getElementById('rEq'),
+        rEqSub: document.getElementById('rEqSub'),
+
+        rPanel: document.getElementById('rPanel'),
+        rRead: document.getElementById('rRead'),
+        rLag: document.getElementById('rLag'),
+        lRange: document.getElementById('lRange'),
+        lOut: document.getElementById('lOut'),
+        rPresets: document.getElementById('rPresets'),
+        rDO: document.getElementById('rDO'),
+        rDOSub: document.getElementById('rDOSub'),
+        doBox: document.getElementById('doBox'),
+        rN: document.getElementById('rN'),
+        rB: document.getElementById('rB'),
+        rM: document.getElementById('rM'),
+        rMSub: document.getElementById('rMSub'),
+        rAer: document.getElementById('rAer'),
+        rResp: document.getElementById('rResp'),
+        rLagVal: document.getElementById('rLagVal'),
+        rLagSub: document.getElementById('rLagSub'),
+        lagBox: document.getElementById('lagBox')
+      };
+
+      var SERIES_VAR = ['--series-1', '--series-2', '--series-3', '--series-4'];
+
+      function stockVar() {
+        if (MODE === 'carbon') return SERIES_VAR[3];
+        if (SEL === 'n') return SERIES_VAR[3];
+        if (SEL === 'b') return '--ok';
+        if (SEL === 'm') return '--warn';
+        return SERIES_VAR[0];
+      }
+      function inVar() { return (MODE === 'runoff' && SEL === 'o') ? '--ok' : SERIES_VAR[0]; }
+      function outVar() { return (MODE === 'runoff' && SEL === 'o') ? '--bad' : SERIES_VAR[1]; }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        if (MODE === 'carbon') renderCarbon(); else renderRunoff();
+        renderClock();
+        renderLegend();
+        if (fast) { tubCv.paint(); chartCv.paint(); }
+        else { tubCv.redraw(); chartCv.redraw(); }
+      }
+
+      function renderClock() {
+        if (MODE === 'carbon') {
+          el.clockLabel.textContent = 'Year';
+          el.clockVal.textContent = String(YEAR0 + Math.round(CS.t));
+          el.elapsedVal.innerHTML = F.dec(CS.t, 0) + '<span class="r-unit">yr</span>';
+        } else {
+          el.clockLabel.textContent = 'Day';
+          el.clockVal.textContent = String(Math.round(RS.t));
+          el.elapsedVal.innerHTML = F.dec(RS.t / 30, 1) + '<span class="r-unit">months</span>';
+        }
+      }
+
+      function renderLegend() {
+        var sp;
+        el.lgStockSw.style.background = 'var(' + stockVar() + ')';
+        el.lgInSw.style.background = 'var(' + inVar() + ')';
+        el.lgOutSw.style.background = 'var(' + outVar() + ')';
+        if (MODE === 'carbon') {
+          el.lgStockTx.textContent = 'CO₂ concentration — a level (ppm)';
+          el.lgInTx.textContent = 'emissions in — a rate';
+          el.lgOutTx.textContent = 'uptake out — a rate';
+        } else {
+          sp = SEL === 'n' ? ['dissolved phosphorus — a level', 'runoff in — a rate', 'algal uptake out — a rate']
+            : SEL === 'b' ? ['algal carbon — a level', 'growth in — a rate', 'death out — a rate']
+              : SEL === 'm' ? ['dead organic matter — a level', 'algae dying in — a rate', 'decomposed out — a rate']
+                : ['dissolved oxygen — a level', 'from the air in — a rate', 'respiration out — a rate'];
+          el.lgStockTx.textContent = sp[0];
+          el.lgInTx.textContent = sp[1];
+          el.lgOutTx.textContent = sp[2];
+        }
+      }
+
+      // ---------------- carbon ----------------
+      function renderCarbon() {
+        var f = cFlows();
+        var excess = CS.C - C0;
+        var hold = f.fout;
+        var eq = C0 + CS.E / KUP;
+
+        el.eOut.innerHTML = F.dec(CS.E, 1) + ' Gt CO&#8322; yr&#8315;&sup1;';
+        el.rConc.innerHTML = F.dec(CS.C, 1) + '<span class="r-unit">ppm</span>';
+        el.rConcSub.textContent = F.dec(excess, 1) + ' ppm above pre-industrial (280 ppm)';
+        el.rIn.textContent = F.dec(f.fin, 1);
+        el.rOut.textContent = F.dec(f.fout, 1);
+
+        el.rRate.innerHTML = (f.dppm >= 0 ? '+' : '−') + F.dec(Math.abs(f.dppm), 2)
+          + '<span class="r-unit">ppm yr&#8315;&sup1;</span>';
+
+        if (Math.abs(f.net) < 0.05) {
+          el.rRateSub.className = 'r-sub flat';
+          el.rRateSub.innerHTML = 'HOLDING STEADY &mdash; inflow and outflow match';
+        } else if (f.net > 0) {
+          el.rRateSub.className = 'r-sub up';
+          el.rRateSub.innerHTML = 'RISING &mdash; inflow beats outflow by ' + F.dec(f.net, 1) + ' Gt CO&#8322; yr&#8315;&sup1;';
+        } else {
+          el.rRateSub.className = 'r-sub down';
+          el.rRateSub.innerHTML = 'FALLING &mdash; outflow beats inflow by ' + F.dec(-f.net, 1) + ' Gt CO&#8322; yr&#8315;&sup1;';
+        }
+
+        el.rHold.innerHTML = F.dec(hold, 1) + '<span class="r-unit">Gt CO&#8322; yr&#8315;&sup1;</span>';
+        if (CS.E <= 0.001) {
+          el.rHoldSub.textContent = 'you are already below it, so the level is falling';
+        } else if (hold >= CS.E) {
+          el.rHoldSub.textContent = 'you are at or under it — the level is not rising';
+        } else {
+          el.rHoldSub.textContent = 'a cut of ' + F.dec(100 * (CS.E - hold) / CS.E, 1) + '% from where the slider is';
+        }
+
+        el.rEq.innerHTML = F.dec(eq, 0) + '<span class="r-unit">ppm</span>';
+        if (CS.E <= 0.001) {
+          el.rEqSub.textContent = 'at zero emissions this tub drains all the way to 280 ppm';
+        } else if (eq > CS.C + 1) {
+          el.rEqSub.textContent = 'that is ' + F.dec(eq - CS.C, 0) + ' ppm above today — constant emissions still means a rising concentration';
+        } else if (eq < CS.C - 1) {
+          el.rEqSub.textContent = 'below where the level is now, so it will fall toward that value';
+        } else {
+          el.rEqSub.textContent = 'the level is already sitting at its equilibrium for this tap setting';
+        }
+
+        el.tubCap.innerHTML = carbonTubCap(f);
+        el.chartCap.innerHTML = carbonChartCap(f);
+        el.tubLabel.innerHTML = 'The carbon bathtub <span>&mdash; tap = emissions (Gt CO<sub>2</sub> yr<sup>&minus;1</sup>), drain = ocean and land uptake, level = concentration (ppm)</span>';
+        el.chartLabel.innerHTML = 'The same story as two graphs <span>&mdash; a level on top, two rates below</span>';
+      }
+
+      function carbonTubCap(f) {
+        var s = 'Inflow ' + F.dec(f.fin, 1) + ' &minus; outflow ' + F.dec(f.fout, 1) + ' = <strong>'
+          + (f.net >= 0 ? '+' : '&minus;') + F.dec(Math.abs(f.net), 1) + ' Gt CO<sub>2</sub> yr<sup>&minus;1</sup></strong> '
+          + 'net, and 7.79 Gt CO<sub>2</sub> is worth 1 ppm, so the level moves '
+          + (f.dppm >= 0 ? '+' : '&minus;') + F.dec(Math.abs(f.dppm), 2) + ' ppm each year. ';
+        if (Math.abs(f.net) < 0.05) s += 'The two streams are the same width. This is the only state in which the level holds still.';
+        else if (f.net > 0) s += 'The tap stream is wider than the drain stream, so the level goes up &mdash; whatever the tap did last year.';
+        else s += 'The drain stream is now the wider one, so the level is genuinely coming down.';
+        return s;
+      }
+
+      function carbonChartCap(f) {
+        var s = '<strong>Two different quantities, two different graphs.</strong> The top graph is a level in ppm; '
+          + 'the bottom graph is two rates in Gt CO<sub>2</sub> per year. The shaded gap between the rates is '
+          + 'exactly how fast the level above is moving. ';
+        if (f.net > 0.05) {
+          s += 'Right now the blue line sits above the orange one, so the shaded gap is on the filling side and the '
+            + 'level climbs &mdash; and it will keep climbing until the orange uptake line has risen to meet the blue one at '
+            + F.dec(C0 + CS.E / KUP, 0) + ' ppm.';
+        } else if (f.net < -0.05) {
+          s += 'The orange uptake line is above the blue emissions line, so the tub is draining. Notice that uptake '
+            + 'shrinks as it drains: a less full tub pushes less carbon into the ocean and the land.';
+        } else {
+          s += 'The two lines are on top of each other, so the gap is zero and the level above is a horizontal line. '
+            + 'Steady stock does not mean zero flow &mdash; it means <em>matched</em> flows.';
+        }
+        return s;
+      }
+
+      // ---------------- runoff ----------------
+      function renderRunoff() {
+        var f = rFlows();
+        var rec = recoveryDays();
+
+        el.lOut.innerHTML = F.dec(RS.L, 2) + ' &micro;g P L&#8315;&sup1; d&#8315;&sup1;';
+        el.rDO.innerHTML = F.dec(RS.O, 2) + '<span class="r-unit">mg O&#8322; L&#8315;&sup1;</span>';
+        el.rN.textContent = F.dec(RS.N, 1);
+        el.rB.textContent = F.comma(RS.B);
+        el.rM.innerHTML = F.dec(RS.M / 1000, 2) + '<span class="r-unit">mg C L&#8315;&sup1;</span>';
+        el.rAer.textContent = F.dec(f.fAer, 3);
+        el.rResp.textContent = F.dec(f.fRes, 3);
+
+        var status, cls, box;
+        if (RS.O >= 6) { status = 'healthy &mdash; above 6 mg L&#8315;&sup1;'; cls = 'r-sub down'; box = 'readout span2 is-ok'; }
+        else if (RS.O >= 5) { status = 'slipping &mdash; sensitive fish start to struggle below 5'; cls = 'r-sub flat'; box = 'readout span2'; }
+        else if (RS.O >= 2) { status = 'STRESSED &mdash; below the 5 mg L&#8315;&sup1; standard'; cls = 'r-sub flat'; box = 'readout span2'; }
+        else { status = 'FISH KILL &mdash; hypoxic, below 2 mg L&#8315;&sup1;'; cls = 'r-sub up'; box = 'readout span2 is-bad'; }
+        el.rDOSub.className = cls;
+        el.rDOSub.innerHTML = status;
+        el.doBox.className = box;
+
+        var dM = f.fD - f.fR;
+        el.rMSub.innerHTML = Math.abs(dM) < 0.5
+          ? 'steady &mdash; dying and decomposing at the same rate'
+          : dM > 0
+            ? 'still <strong>building up</strong> at ' + F.dec(dM, 0) + ' &micro;g C L&#8315;&sup1; d&#8315;&sup1;'
+            : 'draining at ' + F.dec(-dM, 0) + ' &micro;g C L&#8315;&sup1; d&#8315;&sup1; &mdash; this is what holds oxygen down';
+
+        if (rec === 0) {
+          el.rLagVal.textContent = 'already there';
+          el.rLagSub.className = 'r-sub down';
+          el.rLagSub.innerHTML = 'oxygen is above 5.0 mg L&#8315;&sup1; already';
+          el.lagBox.className = 'readout span2 is-ok';
+        } else if (!isFinite(rec)) {
+          el.rLagVal.textContent = 'over 900 days';
+          el.rLagSub.className = 'r-sub up';
+          el.rLagSub.innerHTML = 'the dead-matter tub is enormous';
+          el.lagBox.className = 'readout span2 is-bad';
+        } else {
+          el.rLagVal.innerHTML = F.dec(rec, 0) + '<span class="r-unit">days</span>';
+          el.rLagSub.className = 'r-sub up';
+          el.rLagSub.innerHTML = 'that is <strong>' + F.dec(rec / 30, 1) + ' months</strong> with the tap already off';
+          el.lagBox.className = 'readout span2 is-bad';
+        }
+
+        el.tubCap.innerHTML = runoffTubCap(f);
+        el.chartCap.innerHTML = runoffChartCap(f);
+        el.tubLabel.innerHTML = 'The same engine, relabelled <span>&mdash; four tubs in a row, each one inflow minus outflow</span>';
+        el.chartLabel.innerHTML = 'Pick a tub above <span>&mdash; its level on top, its own two rates below</span>';
+      }
+
+      function runoffTubCap(f) {
+        var s = 'Fertiliser fills the nutrient tub; algae drain it and fill themselves; dead algae fill the third '
+          + 'tub; decomposers burning that dead matter drain the oxygen tub at <strong>' + F.dec(f.fRes, 3)
+          + ' mg O<sub>2</sub> L<sup>&minus;1</sup> d<sup>&minus;1</sup></strong> while the air can only refill it at '
+          + F.dec(f.fAer, 3) + '. ';
+        if (RS.L <= 0.001 && RS.M > 200) {
+          s += '<strong>The tap is already off</strong> and the third tub is still ' + F.dec(RS.M / 1000, 2)
+            + ' mg C L<sup>&minus;1</sup> full. Nothing new is being added and oxygen is still being consumed.';
+        } else if (f.fRes > f.fAer) {
+          s += 'Demand is beating supply, so oxygen is falling.';
+        } else {
+          s += 'Supply is at or above demand, so oxygen is recovering.';
+        }
+        return s;
+      }
+
+      function runoffChartCap(f) {
+        var base = '<strong>Every one of these four tubs runs on the identical rule</strong> the carbon mode uses: '
+          + 'level changes by inflow minus outflow, nothing else. Switch between them and watch the shape of the lag '
+          + 'move down the chain.';
+        if (SEL === 'n') {
+          return 'Dissolved phosphorus empties fast &mdash; algae strip it out with a time constant of 5 days. '
+            + 'Turn the tap off and this tub is basically empty within a fortnight, which is exactly why people '
+            + 'expect the lake to recover straight away. ' + base;
+        }
+        if (SEL === 'b') {
+          return 'Algal biomass is one step behind the nutrient. It keeps growing while phosphorus is available and '
+            + 'then dies off over about ten days, feeding the next tub along the whole time. ' + base;
+        }
+        if (SEL === 'm') {
+          return '<strong>This is the tub that causes the lag.</strong> Decomposition runs at 0.030 per day, a time '
+            + 'constant of 33 days, so dead matter that piled up over a summer takes months to clear &mdash; and while '
+            + 'it clears, decomposers are still consuming oxygen. ' + base;
+        }
+        return 'Oxygen&rsquo;s outflow is not set by the fertiliser tap at all. It is set by how much dead matter is '
+          + 'sitting in the tub next door. That is why cutting the fertiliser does not lift this line for weeks. '
+          + base;
+      }
+
+      // ==================================================================
+      // SIMULATION LOOP
+      // ==================================================================
+      var running = false;
+
+      function setRun(on) {
+        running = on;
+        if (on) sim.start(); else sim.stop();
+        el.btnRun.textContent = on ? 'Pause' : 'Run';
+      }
+
+      function advance(dtSim) {
+        var TM = tmax();
+        var st = MODE === 'carbon' ? CS : RS;
+        var H = MODE === 'carbon' ? 0.02 : 0.05;
+        var rem = Math.min(dtSim, TM - st.t);
+        if (rem <= 1e-9) { setRun(false); return; }
+        while (rem > 1e-9) {
+          var h = Math.min(H, rem);
+          if (MODE === 'carbon') stepC(CS, CS.E, h); else stepR(RS, RS.L, h);
+          st.t += h;
+          rem -= h;
+          if (st.t >= nextSample - 1e-9) { pushSample(); nextSample += sampleDt(); }
+        }
+        if (st.t >= TM - 1e-9) setRun(false);
+      }
+
+      var sim = Demo.loop(function (dt) {
+        advance(dt * speed * (MODE === 'carbon' ? 5 : 20));
+        render(true);
+      });
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#eRange', function (v) { CS.E = v; if (MODE === 'carbon') render(false); });
+      Demo.range('#lRange', function (v) { RS.L = v; if (MODE === 'runoff') render(false); });
+
+      Array.prototype.slice.call(el.cPresets.querySelectorAll('.btn')).forEach(function (b) {
+        b.addEventListener('click', function () {
+          CS.E = parseFloat(b.dataset.e);
+          el.eRange.value = CS.E;
+          render(false);
+        });
+      });
+
+      el.btnHold.addEventListener('click', function () {
+        CS.E = Math.round(KUP * Math.max(0, CS.C - C0) * 10) / 10;
+        el.eRange.value = CS.E;
+        render(false);
+      });
+
+      Array.prototype.slice.call(el.rPresets.querySelectorAll('.btn')).forEach(function (b) {
+        b.addEventListener('click', function () {
+          RS.L = parseFloat(b.dataset.l);
+          el.lRange.value = RS.L;
+          render(false);
+        });
+      });
+
+      el.btnRun.addEventListener('click', function () {
+        if (running) { setRun(false); return; }
+        if (simTime() >= tmax() - 1e-6) resetSim(true);
+        setRun(true);
+      });
+
+      el.btnStep.addEventListener('click', function () {
+        advance(MODE === 'carbon' ? 10 : 30);
+        render(false);
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        setRun(false);
+        resetSim(false);
+        render(false);
+      });
+
+      var speedBtns = Array.prototype.slice.call(el.speedSeg.querySelectorAll('button'));
+      speedBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          speedBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          speed = parseFloat(b.dataset.speed);
+        });
+      });
+
+      var modeBtns = Array.prototype.slice.call(el.modeSeg.querySelectorAll('button'));
+      modeBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          if (MODE === b.dataset.mode) return;
+          modeBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          setRun(false);
+          MODE = b.dataset.mode;
+          applyMode();
+          resetSim(true);
+          render(false);
+        });
+      });
+
+      var stockBtns = Array.prototype.slice.call(el.stockSeg.querySelectorAll('button'));
+      stockBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          stockBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          SEL = b.dataset.stock;
+          render(false);
+        });
+      });
+
+      function applyMode() {
+        var carbon = MODE === 'carbon';
+        el.cPanel.hidden = !carbon;
+        el.cRead.hidden = !carbon;
+        el.cTarget.hidden = !carbon;
+        el.rPanel.hidden = carbon;
+        el.rRead.hidden = carbon;
+        el.rLag.hidden = carbon;
+        el.stockSeg.hidden = carbon;
+        el.btnStep.textContent = carbon ? 'Skip 10 years' : 'Skip 30 days';
+        el.speedHint.innerHTML = carbon
+          ? 'Sliders work while it runs. 1&times; is about five simulated years per second, out to the year 2200.'
+          : 'Sliders work while it runs. 1&times; is about twenty simulated days per second, out to one year.';
+      }
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      applyMode();
+      resetSim(false);
+      render(false);
+    })();
+  </script>
+</body>
+
+</html>

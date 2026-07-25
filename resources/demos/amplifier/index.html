@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Amplifier | Dr. Andres Barboza</title>
+  <meta name="description" content="A four-tier signal transduction cascade on a log axis. Ten hormone molecules become hundreds of millions of product molecules, because every tier multiplies - and a one-step bucket brigade sits beside it delivering ten.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: the written-out multiplication, stage labels, tier list */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* The plain multiplication, written out. It can get long, so it scrolls
+       inside its own box rather than pushing the page sideways. */
+    .mathbox {
+      margin-top: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      padding: 10px 12px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mathline {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      line-height: 1.7;
+    }
+    .mathline .op { color: var(--muted); font-weight: 500; margin: 0 2px; }
+    .mathline .res { color: var(--accent-strong); }
+    .mathline.brig { font-size: 12.5px; font-weight: 500; color: var(--muted); margin-top: 5px; }
+    .mathline.brig .res { color: var(--muted); }
+    .mathcap { font-size: 11.5px; color: var(--muted); margin-top: 7px; line-height: 1.45; white-space: normal; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 24px; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .tierline { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+    .tierline strong { color: var(--text-2); font-weight: 600; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Amplifier</h1>
+        <p class="demo-sub">Ten hormone molecules go in at the top. Read the bottom bar. Then press <em>Bucket brigade</em> and watch the same ten molecules deliver ten.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Signal transduction</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Molecules at each tier <span>&mdash; horizontal axis is a <strong>log</strong> scale: every gridline is &times;10</span></p>
+        <canvas id="plot" role="img"
+                aria-label="Horizontal bar chart on a logarithmic axis showing the number of molecules at each of five tiers of a signalling cascade, with a one-to-one bucket brigade pathway drawn underneath each bar for comparison."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--accent)"></i>four-tier cascade</span>
+          <span class="lg" id="lgBrig"><i style="background:var(--muted)"></i>one-to-one bucket brigade</span>
+        </div>
+
+        <div class="mathbox">
+          <div class="mathline" id="mathLine">&nbsp;</div>
+          <div class="mathline brig" id="mathBrig">&nbsp;</div>
+          <p class="mathcap" id="mathCap">&nbsp;</p>
+        </div>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Turning it off <span>&mdash; product molecules against how fast the terminators work</span></p>
+        <canvas id="tplot" role="img"
+                aria-label="Log-log plot of final product molecules against the termination rate multiplier. The line has slope minus four, because all four tiers lose gain at once."></canvas>
+        <p class="stage-caption" id="tCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The signal arriving</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="n0">Hormone molecules bound</label>
+                <span class="ctrl-value" id="n0Out">10</span>
+              </div>
+              <input type="range" id="n0" min="1" max="100" step="1" value="10">
+              <p class="ctrl-hint">This is the whole input to the cell: a handful of molecules landing on a handful of receptors. Nothing else is added anywhere downstream.</p>
+            </div>
+
+            <label class="check"><input type="checkbox" id="cmpChk" checked> Show the bucket-brigade comparison</label>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnDefault">Realistic cascade</button>
+              <button class="btn" id="btnBrigade">Bucket brigade</button>
+            </div>
+            <p class="ctrl-hint"><em>Bucket brigade</em> sets every tier to &times;1 &mdash; one molecule hands off to exactly one molecule, the way students usually picture it.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The four tiers &mdash; each one multiplies</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="a1">1. G proteins per receptor</label>
+                <span class="ctrl-value" id="a1Out">&times;20</span>
+              </div>
+              <input type="range" id="a1" min="0" max="14" step="1" value="9">
+              <p class="ctrl-hint">One hormone-bound receptor is an enzyme: it keeps swapping GDP for GTP on G protein after G protein for as long as the hormone stays bound.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="a2">2. cAMP per G protein</label>
+                <span class="ctrl-value" id="a2Out">&times;100</span>
+              </div>
+              <input type="range" id="a2" min="0" max="21" step="1" value="14">
+              <p class="ctrl-hint">Each G&alpha;&middot;GTP switches on one adenylyl cyclase, which then makes cAMP continuously from ATP until GTP hydrolysis shuts it down.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="a3">3. Enzymes phosphorylated per cAMP</label>
+                <span class="ctrl-value" id="a3Out">&times;10</span>
+              </div>
+              <input type="range" id="a3" min="0" max="14" step="1" value="7">
+              <p class="ctrl-hint">The net of two opposite things: it takes <strong>four</strong> cAMP to release the catalytic subunits of one protein kinase A, but each released subunit then phosphorylates many target enzymes. The number here is the net effect of both.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="a4">4. Product per activated enzyme</label>
+                <span class="ctrl-value" id="a4Out">&times;1,000</span>
+              </div>
+              <input type="range" id="a4" min="0" max="28" step="1" value="21">
+              <p class="ctrl-hint">Ordinary catalytic turnover: one phosphorylated enzyme converts substrate into product over and over until a phosphatase takes the phosphate back off.</p>
+            </div>
+
+            <p class="note warn">
+              <strong>These factors are illustrative orders of magnitude, not measured constants.</strong> They are the size
+              that textbook cascades are <em>roughly</em> known to be &mdash; tens to thousands per tier. They are not values
+              measured for one named pathway in one named cell, and no real cascade has a single fixed number per step. Treat
+              them as &ldquo;about this big&rdquo;, and treat the total as an order of magnitude, not a fact.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The result</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Product molecules from the cascade</div>
+              <div class="r-value big" id="rProd">200,000,000</div>
+              <div class="r-sub" id="rProdSub">from 10 hormone molecules</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Total gain</div>
+              <div class="r-value" id="rGain">2.0 &times; 10⁷</div>
+              <div class="r-sub">fold, product per hormone</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Bucket brigade would give</div>
+              <div class="r-value" id="rBrig">10</div>
+              <div class="r-sub">product molecules</div>
+            </div>
+            <div class="readout is-accent span2">
+              <div class="r-label">Cascade &divide; bucket brigade</div>
+              <div class="r-value" id="rRatio">2.0 &times; 10⁷</div>
+              <div class="r-sub">times more product for the same input</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            Add a tier and you <strong>multiply</strong> by its factor. Add a step to a bucket brigade and you multiply by
+            one, which is to say you gain nothing at all and just take longer.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Termination &mdash; how it stops</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="term">Terminator activity</label>
+                <span class="ctrl-value" id="termOut">&times;1 normal</span>
+              </div>
+              <input type="range" id="term" min="0" max="9" step="1" value="2">
+              <p class="ctrl-hint">
+                GTP hydrolysis by G&alpha;, phosphodiesterase chewing cAMP into AMP, and phosphatases stripping phosphates
+                back off. Each tier&rsquo;s gain is <em>catalytic rate &times; how long the activated molecule survives</em>,
+                so making the terminators faster shortens every lifetime and shrinks every factor at once.
+              </p>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnShut">Shut the signal off</button>
+              <button class="btn" id="btnReset">Reset everything</button>
+            </div>
+            <p class="note" id="termNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Molecule count at each tier</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Tier</th><th>Step gain</th><th>Molecules</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Hormone bound</td><td id="f0">&mdash;</td><td id="c0">10</td></tr>
+                <tr><td>G&alpha;&middot;GTP active</td><td id="f1">&times;20</td><td id="c1">200</td></tr>
+                <tr><td>cAMP</td><td id="f2">&times;100</td><td id="c2">20,000</td></tr>
+                <tr><td>Enzyme activated</td><td id="f3">&times;10</td><td id="c3">200,000</td></tr>
+                <tr><td>Product</td><td id="f4">&times;1,000</td><td id="c4">200,000,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="tierline" style="margin-top:9px">
+            Counts are <strong>expected numbers</strong> for one cell, so they need not be whole numbers. Real cells run
+            this stochastically and the tiers overlap in time rather than finishing one after another.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What is simplified</div>
+          <p class="ctrl-hint">
+            Every tier here is a single fixed multiplier applied instantly, which is a cartoon of a real cascade in three
+            ways. First, real tiers run <em>simultaneously</em>: cAMP is being destroyed while it is still being made, so the
+            peak count is lower than a clean multiplication suggests. Second, nothing here runs out &mdash; a real cell has
+            a finite pool of G protein, of PKA and of substrate, so every tier eventually saturates and the true output is
+            capped well below what an unbounded product predicts. Third, the numbers assume every activated molecule works
+            for the full lifetime and never fails. What survives all three simplifications is the only claim this page
+            makes: the tiers <strong>multiply</strong>, so gain grows exponentially with the number of tiers rather than
+            additively.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students describe a signal transduction pathway as a bucket brigade &mdash; one
+        molecule hands the message to one molecule, which hands it to one molecule, and eventually the message reaches the
+        end. If that were true, the four steps would be pointless. A message that arrives unchanged after four handoffs
+        would arrive just as well after one. Asked <em>why bother with four steps</em>, students say &ldquo;so the signal
+        gets inside the cell&rdquo; or &ldquo;so it can be regulated&rdquo;. Those are real, but they are not the answer.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Ten hormone molecules land on the surface. Press <em>Bucket brigade</em> and the
+        bars go flat: ten in, ten out, and every one of the five bars is the same length. Now press <em>Realistic
+        cascade</em>. The bars march up the log axis a decade at a time and the bottom one reads
+        <strong>200,000,000</strong> product molecules. The input never changed. Nothing was added at any tier. The whole
+        difference is that each step is a <em>catalyst</em>, and a catalyst is not used up &mdash; one hormone-bound
+        receptor turns on twenty G proteins, each of those switches on a cyclase that makes a hundred cAMP, and so on
+        down. Four handoffs of &times;20, &times;100, &times;10 and &times;1,000 do not add to 1,130. They
+        <strong>multiply</strong> to 20,000,000.
+      </p>
+      <p>
+        <strong>That is why the axis is logarithmic.</strong> On an ordinary axis the first four bars would be invisible
+        specks against the last one &mdash; ten is one twenty-millionth of two hundred million. Each gridline here is a
+        factor of ten, so equal spacing between the bars means equal <em>multiplication</em> between the tiers. When you
+        drag a tier slider and its bar moves one gridline, that tier just got ten times stronger, and every bar below it
+        moved with it.
+      </p>
+      <p>
+        <strong>And it has to be able to stop.</strong> A cascade this powerful triggered by ten molecules would be a
+        catastrophe if it could not be switched off, which is why every tier has its own terminator: G&alpha; hydrolyses
+        its own GTP, phosphodiesterase destroys cAMP, phosphatases pull the phosphates back off. Drag <em>Terminator
+        activity</em> to &times;10 and the product falls from 200,000,000 to 20,000 &mdash; a ten-fold change in the
+        terminators produces a ten-thousand-fold change in the output, because all four tiers lose their gain at the same
+        time and 10 &times; 10 &times; 10 &times; 10 = 10,000. Amplification cuts both ways: the same multiplication that
+        makes the cascade loud makes it fast to silence. The signal does not run until the hormone is used up. It runs
+        until the terminators win, which is usually seconds.
+      </p>
+      <p>
+        <strong>The honest caveat.</strong> The per-tier factors on this page are illustrative orders of magnitude, chosen
+        to be the size that textbook cascades are known to be. They are not measured constants for one named pathway, and
+        the tiers in a real cell overlap in time and run out of raw material. Do not quote &ldquo;200 million&rdquo; as a
+        fact. Quote the shape of the answer: a few molecules outside, millions of molecules of response inside, because
+        four catalytic steps multiply.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — a four-tier cascade, computed directly from the sliders.
+      // No integration, no stocks, no state carried between frames.
+      //
+      //   N0 = hormone molecules bound
+      //   N1 = N0 * g1        G protein activated per bound receptor
+      //   N2 = N1 * g2        cAMP per active G protein
+      //   N3 = N2 * g3        enzyme molecules phosphorylated per cAMP
+      //   N4 = N3 * g4        product molecules per activated enzyme
+      //
+      // Each tier gain is (catalytic rate) x (how long the activated
+      // molecule survives). Termination shortens every lifetime by the
+      // same factor m, so
+      //
+      //   g_i(effective) = a_i / m           and    N4 ∝ m^-4
+      //
+      // which is why the shut-off is as violent as the amplification.
+      //
+      // Bucket brigade: every gain is exactly 1, so N4 = N0 at every tier.
+      //
+      // The a_i are ILLUSTRATIVE orders of magnitude, not measured
+      // constants for a named pathway. That is stated on screen.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      // Nice-number ladders, so the written-out multiplication reads cleanly.
+      var NICE = [1, 1.5, 2, 3, 4, 5, 7];
+      function ladder(topDecade) {
+        var out = [], d, i;
+        for (d = 0; d < topDecade; d++) {
+          for (i = 0; i < NICE.length; i++) out.push(NICE[i] * Math.pow(10, d));
+        }
+        out.push(Math.pow(10, topDecade));
+        return out;
+      }
+
+      var L1 = ladder(2);    // 1 .. 100      15 entries, default index 9  -> 20
+      var L2 = ladder(3);    // 1 .. 1000     22 entries, default index 14 -> 100
+      var L3 = ladder(2);    // 1 .. 100      15 entries, default index 7  -> 10
+      var L4 = ladder(4);    // 1 .. 10000    29 entries, default index 21 -> 1000
+      var LT = [0.5, 0.7, 1, 1.5, 2, 3, 4, 5, 7, 10];   // default index 2 -> 1
+
+      var DEF = { n0: 10, i1: 9, i2: 14, i3: 7, i4: 21, it: 2 };
+      var S = { n0: DEF.n0, i1: DEF.i1, i2: DEF.i2, i3: DEF.i3, i4: DEF.i4, it: DEF.it, compare: true };
+
+      var TIER = [
+        { name: 'Hormone', full: 'hormone bound to receptor' },
+        { name: 'G protein', full: 'Gα·GTP switched on' },
+        { name: 'cAMP', full: 'cAMP made by adenylyl cyclase' },
+        { name: 'Enzyme on', full: 'enzyme phosphorylated by PKA' },
+        { name: 'Product', full: 'product molecules made' }
+      ];
+
+      function raw() { return [L1[S.i1], L2[S.i2], L3[S.i3], L4[S.i4]]; }
+      function mTerm() { return LT[S.it]; }
+
+      function model() {
+        var a = raw(), m = mTerm(), g = [], n = [S.n0], i;
+        for (i = 0; i < 4; i++) {
+          g.push(a[i] / m);
+          n.push(n[i] * g[i]);
+        }
+        var gain = g[0] * g[1] * g[2] * g[3];
+        return {
+          a: a, m: m, g: g, n: n,
+          gain: gain,
+          prod: n[4],
+          brig: S.n0,                       // one-to-one at every tier
+          ratio: gain,                      // prod / brig, since brig = n0
+          prodRef: S.n0 * a[0] * a[1] * a[2] * a[3]   // same cascade at m = 1
+        };
+      }
+
+      // ---------------- number formatting ----------------
+      function cnt(x) {
+        if (!isFinite(x)) return '—';
+        if (x >= 1e12) return F.sci(x, 2);
+        if (x >= 1000) return F.comma(x);
+        if (x >= 1) return F.sig(x, 3);
+        return F.sig(x, 2);
+      }
+      function fac(x) {
+        if (x >= 1000) return F.comma(x);
+        if (x >= 100) return F.sig(x, 4);
+        if (x >= 1) return F.sig(x, 3);
+        return F.sig(x, 2);
+      }
+      function foldSci(x) { return x >= 1e5 ? F.sci(x, 1) : cnt(x); }
+
+      // ==================================================================
+      // MAIN CANVAS — five tiers as bars on a log axis
+      // ==================================================================
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var M = model();
+        var narrow = w < 400;
+        var labW = narrow ? 78 : 116;
+        var padR = narrow ? 12 : 16, padT = 20, padB = 30;
+        var x0 = labW, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9 : 10.5;
+        var i, k;
+
+        // ---- decade window, sized to whatever is on screen ----
+        var vals = M.n.slice();
+        if (S.compare) vals.push(M.brig);
+        // one spare decade below the smallest bar, so the top bar is visible
+        // rather than being a zero-length stub sitting on the axis
+        var lo = Math.floor(Math.log10(Math.min.apply(null, vals))) - 1;
+        var hi = Math.ceil(Math.log10(Math.max.apply(null, vals)));
+        if (hi <= lo) hi = lo + 1;
+        if (hi - lo < 4) hi = lo + 4;
+        var span = hi - lo;
+
+        function X(v) {
+          var l = Demo.clamp(Math.log10(v), lo, hi);
+          return x0 + (x1 - x0) * (l - lo) / span;
+        }
+
+        // ---- decade gridlines ----
+        var everyN = 1;
+        while ((span / everyN) > (narrow ? 6 : 11)) everyN++;
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (k = lo; k <= hi; k++) {
+          var gx = X(Math.pow(10, k));
+          ctx.strokeStyle = k === lo ? c.line : c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(gx, y1); ctx.lineTo(gx, y0); ctx.stroke();
+          if ((k - lo) % everyN === 0 || k === hi) {
+            ctx.fillStyle = c.muted;
+            ctx.fillText('10' + F.sup(k), gx, y0 + 5);
+          }
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.fillStyle = c.muted;
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'center';
+        ctx.fillText('molecules (log scale — each gridline is ×10)', (x0 + x1) / 2, y0 + 17);
+
+        // ---- rows ----
+        var rowH = (y0 - y1) / 5;
+        var barH = S.compare ? Math.min(13, rowH * 0.32) : Math.min(20, rowH * 0.46);
+        var cols = [c.series[0], c.series[1], c.series[2], c.series[3], c.accentStrong];
+
+        function rowY(i) { return y1 + rowH * (i + 0.5); }
+
+        for (i = 0; i < 5; i++) {
+          var cy = rowY(i);
+          var top = S.compare ? cy - barH - 2 : cy - barH / 2;
+          var bx = X(M.n[i]);
+
+          // cascade bar
+          ctx.fillStyle = cols[i];
+          ctx.beginPath();
+          ctx.rect(x0, top, Math.max(1.5, bx - x0), barH);
+          ctx.fill();
+
+          // bucket-brigade bar, always the same length at every tier
+          if (S.compare) {
+            var bbx = X(M.brig);
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = c.muted;
+            ctx.fillRect(x0, cy + 2, Math.max(1.5, bbx - x0), barH * 0.62);
+            ctx.restore();
+          }
+
+          // tier label
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.text;
+          ctx.fillText(TIER[i].name, x0 - 7, cy - (S.compare ? 4 : 0));
+
+          // count, drawn just past the end of the bar (or inside if it would run off)
+          ctx.font = '600 ' + (fs + 0.5) + FONT;
+          var txt = cnt(M.n[i]);
+          var tw = ctx.measureText(txt).width;
+          var inside = bx + tw + 8 > x1;
+          ctx.textAlign = inside ? 'right' : 'left';
+          ctx.fillStyle = inside ? c.surface : cols[i];
+          ctx.textBaseline = 'middle';
+          ctx.fillText(txt, inside ? bx - 5 : bx + 5, top + barH / 2);
+        }
+
+        // ---- the multiplier between each pair of rows ----
+        ctx.textBaseline = 'middle';
+        for (i = 1; i < 5; i++) {
+          var yA = rowY(i - 1) - (S.compare ? barH / 2 + 2 : 0);
+          var yB = rowY(i) - (S.compare ? barH / 2 + 2 : 0);
+          var px = X(M.n[i - 1]);
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(px, yA); ctx.lineTo(px, yB); ctx.stroke();
+          ctx.setLineDash([]);
+
+          var lbl = '×' + fac(M.g[i - 1]);
+          ctx.font = '600 ' + fs + FONT;
+          var lw = ctx.measureText(lbl).width;
+          var lx = Demo.clamp(px + 5, x0 + 2, x1 - lw - 2);
+          var ly = (yA + yB) / 2;
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = c.surface;
+          ctx.fillRect(lx - 3, ly - fs / 2 - 3, lw + 6, fs + 6);
+          ctx.restore();
+          ctx.textAlign = 'left';
+          ctx.fillStyle = c.text2;
+          ctx.fillText(lbl, lx, ly);
+        }
+      }, { aspect: 0.72, minHeight: 285, maxHeight: 400 });
+
+      // ==================================================================
+      // TERMINATION CANVAS — product against terminator activity, log-log
+      // ==================================================================
+      var tplot = Demo.canvas('#tplot', function (ctx, w, h, c) {
+        var M = model();
+        var narrow = w < 400;
+        var padL = narrow ? 44 : 54, padR = narrow ? 12 : 16, padT = 27, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9 : 10.5;
+        var i, k;
+
+        var mLo = LT[0], mHi = LT[LT.length - 1];
+        var base = S.n0 * M.a[0] * M.a[1] * M.a[2] * M.a[3];   // product at m = 1
+        function P(m) { return base / Math.pow(m, 4); }
+
+        var yTop = Math.ceil(Math.log10(P(mLo)));
+        var yBot = Math.floor(Math.log10(P(mHi)));
+        if (yTop - yBot < 3) yTop = yBot + 3;
+
+        function X(m) {
+          return x0 + (x1 - x0) * (Math.log10(m) - Math.log10(mLo)) / (Math.log10(mHi) - Math.log10(mLo));
+        }
+        function Y(p) {
+          var l = Demo.clamp(Math.log10(p), yBot, yTop);
+          return y0 - (y0 - y1) * (l - yBot) / (yTop - yBot);
+        }
+
+        // y gridlines
+        var stepY = 1;
+        while ((yTop - yBot) / stepY > (narrow ? 5 : 8)) stepY++;
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (k = yBot; k <= yTop; k += stepY) {
+          var gy = Y(Math.pow(10, k));
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText('10' + F.sup(k), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // x ticks
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var xt = [0.5, 1, 2, 5, 10];
+        for (i = 0; i < xt.length; i++) {
+          var px = X(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText('×' + xt[i], px, y0 + 6);
+        }
+        ctx.fillText('terminator activity, relative to normal (log)', (x0 + x1) / 2, y0 + 20);
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('product (log)', 1, 2);
+
+        // the curve — a straight line of slope −4 on log–log
+        ctx.strokeStyle = c.accent; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var px2 = x0; px2 <= x1; px2++) {
+          var u = (px2 - x0) / (x1 - x0);
+          var mm = Math.pow(10, Math.log10(mLo) + u * (Math.log10(mHi) - Math.log10(mLo)));
+          var yy = Y(P(mm));
+          if (px2 === x0) ctx.moveTo(px2, yy); else ctx.lineTo(px2, yy);
+        }
+        ctx.stroke();
+
+        // bucket-brigade floor, if it is on this scale at all
+        if (Math.log10(S.n0) >= yBot && Math.log10(S.n0) <= yTop) {
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.2;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, Y(S.n0)); ctx.lineTo(x1, Y(S.n0)); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // where the slider sits
+        var cx = X(M.m), cy2 = Y(M.prod);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, y1); ctx.lineTo(cx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(cx, cy2, 5.5, 0, 6.2832);
+        ctx.fillStyle = c.accentStrong; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+
+        var lbl = cnt(M.prod);
+        ctx.font = '600 ' + (fs + 0.5) + FONT;
+        var lw = ctx.measureText(lbl).width;
+        var lx = Demo.clamp(cx - lw / 2, x0 + 2, x1 - lw - 2);
+        var ly = cy2 - 22 > y1 ? cy2 - 13 : cy2 + 19;
+        ctx.save(); ctx.globalAlpha = 0.9; ctx.fillStyle = c.surface;
+        ctx.fillRect(lx - 3, ly - fs / 2 - 4, lw + 6, fs + 7); ctx.restore();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = c.accentStrong;
+        ctx.fillText(lbl, lx, ly);
+
+        // slope annotation
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('slope −4: all four tiers lose gain at once', x1, y0 - 4);
+      }, { aspect: 0.5, minHeight: 190, maxHeight: 250 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {};
+      ['n0', 'n0Out', 'a1', 'a1Out', 'a2', 'a2Out', 'a3', 'a3Out', 'a4', 'a4Out',
+        'term', 'termOut', 'cmpChk', 'btnDefault', 'btnBrigade', 'btnShut', 'btnReset',
+        'mathLine', 'mathBrig', 'mathCap', 'rProd', 'rProdSub', 'rGain', 'rBrig',
+        'rRatio', 'termNote', 'tCap', 'lgBrig',
+        'f0', 'f1', 'f2', 'f3', 'f4', 'c0', 'c1', 'c2', 'c3', 'c4'
+      ].forEach(function (id) { el[id] = document.getElementById(id); });
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        var M = model(), i;
+
+        el.n0Out.textContent = F.comma(S.n0);
+        el.a1Out.innerHTML = '&times;' + fac(M.a[0]);
+        el.a2Out.innerHTML = '&times;' + fac(M.a[1]);
+        el.a3Out.innerHTML = '&times;' + fac(M.a[2]);
+        el.a4Out.innerHTML = '&times;' + fac(M.a[3]);
+        el.termOut.innerHTML = '&times;' + M.m + ' normal';
+
+        // ---- the plain multiplication, written out ----
+        var line = '<span>' + cnt(S.n0) + '</span>';
+        for (i = 0; i < 4; i++) line += '<span class="op"> &times; </span>' + fac(M.g[i]);
+        line += '<span class="op"> = </span><span class="res">' + cnt(M.prod) + '</span>';
+        el.mathLine.innerHTML = line;
+
+        var bl = '<span>' + cnt(S.n0) + '</span>';
+        for (i = 0; i < 4; i++) bl += '<span class="op"> &times; </span>1';
+        bl += '<span class="op"> = </span><span class="res">' + cnt(S.n0) + '</span>';
+        el.mathBrig.innerHTML = bl;
+        el.mathBrig.hidden = !S.compare;
+        el.lgBrig.hidden = !S.compare;
+
+        var allOne = M.g[0] === 1 && M.g[1] === 1 && M.g[2] === 1 && M.g[3] === 1;
+        if (allOne) {
+          el.mathCap.innerHTML = 'Every tier is set to &times;1, so the cascade <strong>is</strong> a bucket brigade: '
+            + 'four handoffs, no gain, ' + cnt(S.n0) + ' in and ' + cnt(S.n0) + ' out. The extra steps bought nothing.';
+        } else {
+          el.mathCap.innerHTML = 'Second line: the same ' + cnt(S.n0) + ' hormone molecules through a one-to-one bucket '
+            + 'brigade. The cascade delivers <strong>' + foldSci(M.ratio) + ' times</strong> more product from exactly '
+            + 'the same input, because the tiers multiply instead of hand off.';
+        }
+
+        // ---- readouts ----
+        el.rProd.textContent = cnt(M.prod);
+        el.rProdSub.textContent = 'from ' + F.comma(S.n0) + ' hormone molecule' + (S.n0 === 1 ? '' : 's');
+        el.rGain.textContent = foldSci(M.gain);
+        el.rBrig.textContent = F.comma(S.n0);
+        el.rRatio.textContent = foldSci(M.ratio);
+
+        // ---- table ----
+        el.f0.innerHTML = '&mdash;';
+        for (i = 0; i < 5; i++) el['c' + i].textContent = cnt(M.n[i]);
+        for (i = 1; i <= 4; i++) el['f' + i].innerHTML = '&times;' + fac(M.g[i - 1]);
+
+        // ---- termination note ----
+        var drop = Math.pow(M.m, 4);
+        if (M.m === 1) {
+          el.termNote.className = 'note';
+          el.termNote.innerHTML = '<strong>Terminators at normal speed.</strong> Even here the signal is not permanent: '
+            + 'these numbers are the total made during one burst, and the burst ends when GTP hydrolysis, phosphodiesterase '
+            + 'and the phosphatases have undone every tier. Push the slider right and watch how fast that happens.';
+        } else if (M.m > 1) {
+          el.termNote.className = 'note bad';
+          el.termNote.innerHTML = '<strong>Terminators ' + M.m + '&times; faster.</strong> Each tier’s activated '
+            + 'molecule lives ' + M.m + '&times; less long, so each factor falls ' + M.m + '&times;. Four tiers, so the '
+            + 'output falls ' + M.m + '<sup>4</sup> = <strong>' + foldSci(drop) + '&times;</strong>: from '
+            + cnt(M.prodRef) + ' down to <strong>' + cnt(M.prod) + '</strong>. Shutting a cascade off is amplified '
+            + 'exactly as hard as switching it on.';
+        } else {
+          el.termNote.className = 'note warn';
+          el.termNote.innerHTML = '<strong>Terminators ' + M.m + '&times; slower.</strong> Activated molecules survive '
+            + 'longer, so every tier makes more before it is switched off and the output rises to ' + cnt(M.prod)
+            + '. This is what a broken-off switch looks like: a G&alpha; that cannot hydrolyse its own GTP stays on, '
+            + 'and the cell shouts a message nobody is sending any more.';
+        }
+
+        el.tCap.innerHTML = 'A straight line on a log&ndash;log plot with slope &minus;4. Because all four tiers depend on '
+          + 'how long their activated molecule survives, a ' + (M.m === 1 ? '10' : String(M.m))
+          + '&times; change in terminator activity changes the product by that factor to the fourth power.';
+
+        plot.redraw();
+        tplot.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#n0', function (v) { S.n0 = Math.round(v); render(); });
+      Demo.range('#a1', function (v) { S.i1 = Math.round(v); render(); });
+      Demo.range('#a2', function (v) { S.i2 = Math.round(v); render(); });
+      Demo.range('#a3', function (v) { S.i3 = Math.round(v); render(); });
+      Demo.range('#a4', function (v) { S.i4 = Math.round(v); render(); });
+      Demo.range('#term', function (v) { S.it = Math.round(v); render(); });
+
+      el.cmpChk.addEventListener('change', function () { S.compare = this.checked; render(); });
+
+      function setSliders(o) {
+        if (o.n0 != null) { el.n0.value = o.n0; S.n0 = o.n0; }
+        if (o.i1 != null) { el.a1.value = o.i1; S.i1 = o.i1; }
+        if (o.i2 != null) { el.a2.value = o.i2; S.i2 = o.i2; }
+        if (o.i3 != null) { el.a3.value = o.i3; S.i3 = o.i3; }
+        if (o.i4 != null) { el.a4.value = o.i4; S.i4 = o.i4; }
+        if (o.it != null) { el.term.value = o.it; S.it = o.it; }
+        render();
+      }
+
+      el.btnDefault.addEventListener('click', function () {
+        setSliders({ i1: DEF.i1, i2: DEF.i2, i3: DEF.i3, i4: DEF.i4, it: DEF.it });
+      });
+
+      el.btnBrigade.addEventListener('click', function () {
+        // every ladder starts at 1, so index 0 is exactly ×1 on all four tiers
+        setSliders({ i1: 0, i2: 0, i3: 0, i4: 0, it: DEF.it });
+      });
+
+      el.btnShut.addEventListener('click', function () {
+        setSliders({ it: LT.length - 1 });
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        el.cmpChk.checked = true; S.compare = true;
+        setSliders(DEF);
+      });
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>

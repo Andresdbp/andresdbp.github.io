@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>From Bins to Bell Curve | Dr. Andres Barboza</title>
+  <meta name="description" content="Polygenic inheritance built one locus at a time. Watch three discrete phenotype classes turn into a smooth bell, and watch environmental variance swamp the genetic differences entirely.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend, ratio strip */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 8px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dot i { width: 8px; height: 8px; border-radius: 50%; }
+    .legend .lg.ref i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub, .readout .r-label sup { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .ratio {
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 9px;
+      padding: 7px 9px;
+      white-space: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .vlabel { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 5px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">From Bins to Bell Curve</h1>
+        <p class="demo-sub">Start at one locus and count the bars. Then drag the locus slider to 8 &mdash; and only after that, add environment.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 5</span>
+          <span class="tag is-accent">Polygenic inheritance</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label" id="plotLabel">Offspring of a fully heterozygous cross <span>&mdash; exact distribution</span></p>
+        <canvas id="plot" role="img"
+                aria-label="Histogram of offspring height. With one locus there are three separated spikes; as loci are added the spikes become more numerous, closer together and lower at the edges, until the outline is a bell. Environmental variance spreads each spike into an overlapping hump."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i id="lgBar"></i>share of offspring</span>
+          <span class="lg dot"><i id="lgDot"></i>260 sampled offspring</span>
+          <span class="lg ref" id="lgNorm" hidden><i></i>normal approximation</span>
+        </div>
+        <p class="stage-caption" id="caption">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The cross</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="nLoci">Contributing loci, <em>n</em></label>
+                <span class="ctrl-value" id="nOut">1</span>
+              </div>
+              <input type="range" id="nLoci" min="1" max="8" step="1" value="1">
+              <p class="ctrl-hint">Every locus is <em>Aa</em> &times; <em>Aa</em>. Each capital allele adds the same amount, so the total genetic range stays 150&ndash;190&nbsp;cm no matter how many loci share the job.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sigE">Environmental SD, &sigma;<sub>E</sub></label>
+                <span class="ctrl-value" id="sigEOut">0.0 cm</span>
+              </div>
+              <input type="range" id="sigE" min="0" max="12" step="0.25" value="0">
+              <p class="ctrl-hint">Nutrition, illness, sleep &mdash; added to each offspring as a continuous random deviate in centimetres.</p>
+            </div>
+
+            <label class="check">
+              <input type="checkbox" id="normOn">
+              <span>Overlay normal approximation</span>
+            </label>
+            <p class="ctrl-hint" id="normHint">Locked below <em>n</em>&nbsp;=&nbsp;4: with that few loci the distribution is visibly discrete, and drawing a smooth bell over it would be a lie.</p>
+
+            <div class="btn-row">
+              <button class="btn" id="b1">n = 1</button>
+              <button class="btn" id="b8">n = 8</button>
+              <button class="btn" id="bSample">New sample</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="bReset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Genetics alone</div>
+          <div class="readouts two">
+            <div class="readout is-accent">
+              <div class="r-label">Phenotype classes (2<em>n</em>+1)</div>
+              <div class="r-value" id="rClasses">3</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Gap between classes</div>
+              <div class="r-value" id="rStep">20.0<span class="r-unit">cm</span></div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Offspring in one extreme class &mdash; (1/4)<sup><em>n</em></sup></div>
+              <div class="r-value" id="rExtreme">25.00<span class="r-unit">%</span></div>
+              <div class="r-sub" id="rExtremeSub">1 in 4 &mdash; the shortest possible genotype, <em>aa</em></div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="stack-s">
+            <div class="small muted">Class ratio</div>
+            <div class="ratio" id="ratioLine">1 : 2 : 1</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Variance in this population</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Genetic SD</div>
+              <div class="r-value" id="rSdG">14.14<span class="r-unit">cm</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Total SD</div>
+              <div class="r-value" id="rSdT">14.14<span class="r-unit">cm</span></div>
+            </div>
+            <div class="readout is-ok span2">
+              <div class="r-label">Heritability <em>h</em><sup>2</sup> = V<sub>G</sub> / (V<sub>G</sub> + V<sub>E</sub>)</div>
+              <div class="r-value" id="rH2">1.00</div>
+              <div class="r-sub" id="rH2Sub">All of the spread among these offspring is genetic.</div>
+            </div>
+          </div>
+          <hr class="sep" style="margin:12px 0">
+          <div class="bar" aria-hidden="true">
+            <span id="barG"></span><span id="barE"></span>
+          </div>
+          <div class="vlabel">
+            <span id="vgLabel">V<sub>G</sub> 200 cm&sup2;</span>
+            <span id="veLabel">V<sub>E</sub> 0 cm&sup2;</span>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What the model assumes</div>
+          <p class="note">
+            <strong>Simplified on purpose.</strong> Every locus has the same effect size, the alleles are
+            purely additive (no dominance, no epistasis), the loci are unlinked, and the environmental
+            deviate is independent of genotype. Real height is messier &mdash; but the shape argument
+            survives all of that.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students can recite "height is polygenic" but, asked why more
+        genes give a smooth bell instead of just more boxes, they say more genes means more categories &mdash;
+        as if 8 loci produced 8 chunky steps. And they treat environment as random noise sitting on top of
+        the "real" genetic answer.
+      </p>
+      <p>
+        <strong>What to notice:</strong> three things happen at once as you add loci, and it takes all three.
+        The number of classes grows (2<em>n</em>+1: 3, 5, 7, &hellip; 17), the gap between neighbouring classes
+        shrinks (20/<em>n</em> cm, so 20&nbsp;cm becomes 2.5&nbsp;cm), and the extreme classes collapse in
+        frequency &mdash; (1/4)<sup><em>n</em></sup> takes 1 in 4 offspring down to 1 in 65,536. Many classes,
+        packed close, rare at the edges and common in the middle: that is a bell. Count the bars at
+        <em>n</em>&nbsp;=&nbsp;1 and 2 and check them against 3 and 5 yourself.
+      </p>
+      <p>
+        <strong>The binomial is not the normal curve.</strong> This distribution is exactly binomial &mdash; it
+        only <em>approaches</em> a bell as <em>n</em> grows, which is why the smooth overlay stays locked until
+        <em>n</em>&nbsp;=&nbsp;4. At one locus there is no bell to draw, just three spikes.
+      </p>
+      <p>
+        <strong>Environment is variance, not noise.</strong> Push &sigma;<sub>E</sub> up with <em>n</em> = 2 and
+        the five separate spikes merge into one smooth hump: two offspring with different genotypes now land at
+        the same height, and you could not sort them by eye. Heritability drops because V<sub>E</sub> grew, not
+        because the genes changed. And read <em>h</em><sup>2</sup> carefully &mdash; it says what fraction of the
+        <em>variation in this population</em> is genetic. It never says that <em>h</em><sup>2</sup> of any one
+        person's height is "from their genes"; that question does not have an answer.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------- constants of the trait model ----------
+      var LO = 150, HI = 190;          // genetic span of the trait, cm
+      var MID = (LO + HI) / 2;         // 170 cm
+      var SPAN = HI - LO;              // 40 cm
+      var XMIN = 120, XMAX = 220;      // plotted axis, cm
+      var BINW = 0.5;                  // cm per histogram bin
+      var NBIN = Math.round((XMAX - XMIN) / BINW);
+      var NSAMP = 260;
+
+      var state = { n: 1, sigE: 0, norm: false, seed: 20250725 };
+
+      // ---------- exact binomial P(k) for k = 0..2n ----------
+      function binom(n) {
+        var m = 2 * n, p = new Array(m + 1), c = 1, i;
+        var denom = Math.pow(2, m);
+        for (i = 0; i <= m; i++) {
+          p[i] = c / denom;
+          c = c * (m - i) / (i + 1);
+        }
+        return p;
+      }
+      function counts(n) {
+        var m = 2 * n, out = new Array(m + 1), c = 1, i;
+        for (i = 0; i <= m; i++) { out[i] = Math.round(c); c = c * (m - i) / (i + 1); }
+        return out;
+      }
+      function classValue(n, k) { return LO + k * (SPAN / (2 * n)); }
+
+      // ---------- normal CDF (Abramowitz & Stegun 7.1.26) ----------
+      function erf(x) {
+        var s = x < 0 ? -1 : 1, a = Math.abs(x);
+        var t = 1 / (1 + 0.3275911 * a);
+        var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-a * a);
+        return s * y;
+      }
+      function ncdf(z) { return 0.5 * (1 + erf(z / Math.SQRT2)); }
+      function npdf(x, mu, sd) {
+        var z = (x - mu) / sd;
+        return Math.exp(-0.5 * z * z) / (sd * Math.sqrt(2 * Math.PI));
+      }
+
+      // ---------- distribution to draw ----------
+      // discrete: point masses at the 2n+1 class values (sigE == 0)
+      // binned:   exact mass per 0.5 cm bin after convolving with N(0, sigE)
+      function distribution(n, sigE) {
+        var p = binom(n), k, out;
+        if (sigE < 1e-9) {
+          out = [];
+          for (k = 0; k < p.length; k++) out.push({ x: classValue(n, k), p: p[k] });
+          return { mode: 'discrete', pts: out };
+        }
+        var bins = new Float64Array(NBIN);
+        for (k = 0; k < p.length; k++) {
+          if (p[k] < 1e-12) continue;
+          var mu = classValue(n, k);
+          var loZ = ncdf((XMIN - mu) / sigE);
+          for (var i = 0; i < NBIN; i++) {
+            var hiZ = ncdf((XMIN + (i + 1) * BINW - mu) / sigE);
+            bins[i] += p[k] * (hiZ - loZ);
+            loZ = hiZ;
+          }
+        }
+        return { mode: 'binned', bins: bins };
+      }
+
+      // ---------- a sampled population, for the rug ----------
+      var sample = [];
+      function resample() {
+        var rand = Demo.rng(state.seed);
+        var n = state.n, m = 2 * n, step = SPAN / m;
+        sample = [];
+        for (var s = 0; s < NSAMP; s++) {
+          var k = 0;
+          for (var a = 0; a < m; a++) if (rand() < 0.5) k++;
+          var v = LO + k * step;
+          if (state.sigE > 0) v += state.sigE * Demo.gauss(rand);
+          sample.push({ v: v, j: rand() });
+        }
+      }
+
+      // ---------- canvas ----------
+      var plot = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var padL = 44, padR = 12, padT = 12;
+        var rugH = 30, axisGap = 44;
+        var x0 = padL, x1 = w - padR;
+        var yAxis = h - (rugH + axisGap);
+        var yTop = padT;
+        if (yAxis - yTop < 60) yAxis = yTop + 60;
+
+        var pxPerCm = (x1 - x0) / (XMAX - XMIN);
+        function X(cm) { return x0 + (cm - XMIN) * pxPerCm; }
+
+        var n = state.n, sigE = state.sigE;
+        var d = distribution(n, sigE);
+        var sdG = Math.sqrt(200 / n);
+        var sdT = Math.sqrt(sdG * sdG + sigE * sigE);
+
+        // ---- y scale ----
+        var ymax = 0, i;
+        if (d.mode === 'discrete') {
+          for (i = 0; i < d.pts.length; i++) ymax = Math.max(ymax, d.pts[i].p);
+        } else {
+          for (i = 0; i < NBIN; i++) ymax = Math.max(ymax, d.bins[i]);
+        }
+        if (ymax <= 0) ymax = 1;
+        ymax *= 1.18;
+        function Y(p) { return yAxis - (p / ymax) * (yAxis - yTop); }
+
+        ctx.font = '10.5px Poppins, system-ui, sans-serif';
+
+        // ---- horizontal gridlines + y labels ----
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (var g = 1; g <= 3; g++) {
+          var pv = ymax * g / 3;
+          var py = Y(pv);
+          ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          ctx.fillText(Demo.fmt.dec(pv * 100, pv * 100 < 1 ? 2 : 1) + '%', x0 - 6, py);
+        }
+
+        // ---- bars ----
+        ctx.fillStyle = c.accent;
+        if (d.mode === 'discrete') {
+          var step = SPAN / (2 * n);
+          var bw = Demo.clamp(step * pxPerCm * 0.5, 3, 20);
+          for (i = 0; i < d.pts.length; i++) {
+            var px = X(d.pts[i].x), ph = yAxis - Y(d.pts[i].p);
+            ctx.fillRect(px - bw / 2, yAxis - ph, bw, ph);
+          }
+        } else {
+          var bwpx = BINW * pxPerCm;
+          for (i = 0; i < NBIN; i++) {
+            if (d.bins[i] <= 0) continue;
+            var bx = X(XMIN + i * BINW);
+            var bh = yAxis - Y(d.bins[i]);
+            if (bh < 0.4) continue;
+            ctx.fillRect(bx, yAxis - bh, Math.max(bwpx - 0.3, 0.7), bh);
+          }
+        }
+
+        // ---- normal approximation overlay ----
+        if (state.norm && n >= 4) {
+          var scale = (d.mode === 'discrete') ? (SPAN / (2 * n)) : BINW;
+          ctx.strokeStyle = c.text2;
+          ctx.lineWidth = 1.8;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          for (var qx = x0; qx <= x1; qx += 2) {
+            var cm = XMIN + (qx - x0) / pxPerCm;
+            var py2 = Y(npdf(cm, MID, sdT) * scale);
+            qx === x0 ? ctx.moveTo(qx, py2) : ctx.lineTo(qx, py2);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // ---- class position ticks ----
+        ctx.strokeStyle = c.series[2];
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (var k = 0; k <= 2 * n; k++) {
+          var tx = X(classValue(n, k));
+          ctx.moveTo(tx, yAxis); ctx.lineTo(tx, yAxis + 5);
+        }
+        ctx.stroke();
+
+        // ---- axis ----
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, yAxis); ctx.lineTo(x1, yAxis); ctx.stroke();
+
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (var tv = 130; tv <= 210; tv += 20) {
+          ctx.fillText(String(tv), X(tv), yAxis + 8);
+        }
+        ctx.fillText('height of offspring (cm)', (x0 + x1) / 2, yAxis + 24);
+
+        // ---- rug of sampled offspring ----
+        var ry0 = h - rugH, ry1 = h - 4;
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(x0, ry0, x1 - x0, ry1 - ry0);
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = c.series[1];
+        for (var s = 0; s < sample.length; s++) {
+          var sx = X(sample[s].v);
+          if (sx < x0 || sx > x1) continue;
+          var sy = ry0 + 3 + sample[s].j * (ry1 - ry0 - 6);
+          ctx.beginPath();
+          ctx.arc(sx, sy, 1.7, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // ---- genetic span marker ----
+        ctx.strokeStyle = c.lineSoft;
+        ctx.setLineDash([2, 4]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(X(LO), yTop); ctx.lineTo(X(LO), yAxis);
+        ctx.moveTo(X(HI), yTop); ctx.lineTo(X(HI), yAxis);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }, { aspect: 0.62, minHeight: 300, maxHeight: 420 });
+
+      // ---------- readouts ----------
+      function setHTML(id, html) { document.getElementById(id).innerHTML = html; }
+
+      function ratioText(n) {
+        var cs = counts(n);
+        if (n > 4) return cs[0] + ' : ' + cs[1] + ' : ' + cs[2] + ' : … : ' + cs[cs.length - 1] +
+          '  (' + (2 * n + 1) + ' classes, peak ' + Demo.fmt.comma(cs[n]) + ')';
+        return cs.join(' : ');
+      }
+
+      function refresh() {
+        var n = state.n, sigE = state.sigE;
+        var cls = 2 * n + 1;
+        var step = SPAN / (2 * n);
+        var extreme = Math.pow(0.25, n);
+        var denom = Math.pow(4, n);
+        var vG = 200 / n, vE = sigE * sigE;
+        var sdG = Math.sqrt(vG), sdT = Math.sqrt(vG + vE);
+        var h2 = vG / (vG + vE);
+
+        setHTML('rClasses', String(cls));
+        setHTML('rStep', Demo.fmt.dec(step, step < 10 ? 2 : 1) + '<span class="r-unit">cm</span>');
+        setHTML('rExtreme', (extreme >= 0.0001 ? Demo.fmt.dec(extreme * 100, 3) : Demo.fmt.sci(extreme * 100, 2)) +
+          '<span class="r-unit">%</span>');
+        setHTML('rExtremeSub', '1 in ' + Demo.fmt.comma(denom) + ' &mdash; the all-lowercase genotype, at 150 cm');
+        setHTML('ratioLine', ratioText(n));
+
+        setHTML('rSdG', Demo.fmt.dec(sdG, 2) + '<span class="r-unit">cm</span>');
+        setHTML('rSdT', Demo.fmt.dec(sdT, 2) + '<span class="r-unit">cm</span>');
+        setHTML('rH2', Demo.fmt.dec(h2, 2));
+        setHTML('vgLabel', 'V<sub>G</sub> ' + Demo.fmt.dec(vG, 0) + ' cm&sup2;');
+        setHTML('veLabel', 'V<sub>E</sub> ' + Demo.fmt.dec(vE, 0) + ' cm&sup2;');
+
+        var sub;
+        if (vE === 0) sub = 'All of the spread among these offspring is genetic.';
+        else if (h2 >= 0.5) sub = 'Most of the spread among these offspring is genetic — but this is a statement about the population, not about any one child.';
+        else sub = 'Environment now accounts for ' + Demo.fmt.pct(1 - h2, 0) + ' of the variation. Genotypes that differ still overlap in height.';
+        setHTML('rH2Sub', sub);
+
+        var c = Demo.colors();
+        var bg = document.getElementById('barG'), be = document.getElementById('barE');
+        bg.style.width = (h2 * 100) + '%'; bg.style.background = c.accent;
+        be.style.width = ((1 - h2) * 100) + '%'; be.style.background = c.warn;
+        document.getElementById('lgBar').style.background = c.accent;
+        document.getElementById('lgDot').style.background = c.series[1];
+
+        // normal overlay gating: the binomial is NOT normal at small n
+        var chk = document.getElementById('normOn');
+        var allowed = n >= 4;
+        chk.disabled = !allowed;
+        if (!allowed) chk.checked = false;
+        state.norm = allowed && chk.checked;
+        document.getElementById('lgNorm').hidden = !state.norm;
+        document.getElementById('normHint').textContent = allowed
+          ? 'A normal curve with the same mean and SD. It is an approximation to the binomial, not the truth — the bars are the truth.'
+          : 'Locked below n = 4: with that few loci the distribution is visibly discrete, and drawing a smooth bell over it would be a lie.';
+
+        // caption
+        var cap;
+        if (sigE === 0) {
+          cap = n + (n === 1 ? ' locus' : ' loci') + ': ' + cls + ' discrete phenotype classes, ' +
+            Demo.fmt.dec(step, step < 10 ? 1 : 0) + ' cm apart, with ' +
+            (extreme >= 0.0001 ? Demo.fmt.dec(extreme * 100, 2) + '%' : Demo.fmt.sci(extreme * 100, 1) + '%') +
+            ' of offspring at each edge. Bars are point masses — nothing exists between them.';
+        } else if (sigE < step / 2) {
+          cap = 'Environment (σₑ = ' + Demo.fmt.dec(sigE, 2) + ' cm) is smaller than half the ' +
+            Demo.fmt.dec(step, 1) + ' cm class gap, so the ' + cls + ' classes still show as separate humps.';
+        } else if (h2 >= 0.5) {
+          cap = 'The ' + cls + ' classes have merged into one continuous distribution. Genotype still explains ' +
+            Demo.fmt.pct(h2, 0) + ' of the variation, but you can no longer read genotype off height.';
+        } else {
+          cap = 'Environmental variance now outweighs genetic variance (h² = ' + Demo.fmt.dec(h2, 2) +
+            '). Two offspring at the same height can be ' + cls + ' different genotypes apart.';
+        }
+        document.getElementById('caption').textContent = cap;
+
+        setHTML('plotLabel', 'Offspring of a fully heterozygous cross <span>&mdash; ' +
+          (sigE === 0
+            ? 'y axis: share of all offspring falling in each class'
+            : 'y axis: share of all offspring per 0.5 cm of height') + '</span>');
+
+        plot.redraw();
+      }
+
+      // ---------- controls ----------
+      Demo.range('#nLoci', function (v) {
+        state.n = Math.round(v);
+        document.getElementById('nOut').textContent = String(state.n);
+        resample();
+        refresh();
+      });
+
+      Demo.range('#sigE', function (v) {
+        state.sigE = v;
+        document.getElementById('sigEOut').textContent = Demo.fmt.dec(v, 2) + ' cm';
+        resample();
+        refresh();
+      });
+
+      document.getElementById('normOn').addEventListener('change', refresh);
+
+      document.getElementById('b1').addEventListener('click', function () {
+        document.getElementById('nLoci').value = 1;
+        state.n = 1;
+        document.getElementById('nOut').textContent = '1';
+        resample(); refresh();
+      });
+
+      document.getElementById('b8').addEventListener('click', function () {
+        document.getElementById('nLoci').value = 8;
+        state.n = 8;
+        document.getElementById('nOut').textContent = '8';
+        resample(); refresh();
+      });
+
+      document.getElementById('bSample').addEventListener('click', function () {
+        state.seed = (state.seed * 1103515245 + 12345) >>> 0 || 1;
+        resample(); refresh();
+      });
+
+      document.getElementById('bReset').addEventListener('click', function () {
+        state.n = 1; state.sigE = 0; state.seed = 20250725;
+        document.getElementById('nLoci').value = 1;
+        document.getElementById('sigE').value = 0;
+        document.getElementById('nOut').textContent = '1';
+        document.getElementById('sigEOut').textContent = '0.00 cm';
+        document.getElementById('normOn').checked = false;
+        resample(); refresh();
+      });
+
+      Demo.onTheme(refresh);
+
+      resample();
+      refresh();
+    })();
+  </script>
+</body>
+
+</html>

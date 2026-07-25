@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Fold It Yourself: a lattice protein | Dr. Andres Barboza</title>
+  <meta name="description" content="A 14-residue hydrophobic/polar chain on a square lattice. Every one of its 220,375 possible shapes is checked, so the lowest-energy fold is not a guess. Drag it, cool it, heat it, and change one residue.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: the sequence editor, the stage labels, the legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* the lattice canvas is dragged with a finger, so it must not scroll the page */
+    #latt { touch-action: none; cursor: grab; }
+    #latt.is-drag { cursor: grabbing; }
+
+    /* sequence editor: two rows of seven, so it never overflows at 375 px */
+    .seqgrid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 5px;
+    }
+    .res {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      padding: 6px 0 5px;
+      border-radius: 9px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--text-2);
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .res .n {
+      display: block;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .res.is-h { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
+    .res.is-p { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .res:hover { border-color: var(--text-2); }
+    .res.is-mut { box-shadow: 0 0 0 2px var(--bad); }
+
+    .seqline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .r-value.big { font-size: 26px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex: none; }
+    .legend .lg.bond i { width: 17px; height: 3px; border-radius: 2px; }
+    .legend .lg.cont i { width: 17px; height: 0; border-radius: 0; border-top: 3px dotted var(--ok); }
+    .legend .lg.patch i { background: none; border: 2px solid var(--bad); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Fold It Yourself: a lattice protein</h1>
+        <p class="demo-sub">Press <strong>Anneal</strong> and watch the chain bury its greasy residues. Then press it again with a new seed: a designed sequence reaches the same shape every time it reaches the bottom. Then click one residue and see what a single substitution does.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Protein folding</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">The molecule <span>&mdash; drag any bead; the chain follows</span></p>
+        <canvas id="latt" role="img"
+                aria-label="A chain of fourteen beads folded on a square grid. Hydrophobic beads pack into a core; polar beads sit on the outside facing the water."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--warn)"></i>H &mdash; hydrophobic (avoids water)</span>
+          <span class="lg"><i style="background:var(--accent)"></i>P &mdash; polar (happy in water)</span>
+          <span class="lg cont"><i></i>H&ndash;H contact</span>
+          <span class="lg patch"><i></i>H with 2+ sides in water</span>
+        </div>
+        <p class="stage-caption" id="lattCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Melting curve <span>&mdash; computed exactly, by checking every possible shape</span></p>
+        <canvas id="melt" role="img"
+                aria-label="Two curves against temperature: the fraction of molecules sitting in the lowest-energy shape, and the average number of hydrophobic contacts. Both collapse above the melting temperature."></canvas>
+        <p class="stage-caption" id="meltCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Primary structure &mdash; the sequence</div>
+          <div class="stack">
+            <div class="seqgrid" id="seqGrid"></div>
+            <p class="ctrl-hint">Click a residue to mutate it. <strong>H</strong> is hydrophobic (like valine or leucine), <strong>P</strong> is polar or charged (like glutamate or serine). Everything below is recomputed from scratch for the new sequence.</p>
+            <p class="seqline" id="seqStr">&nbsp;</p>
+            <div class="btn-row">
+              <button class="btn is-on" id="btnPreDesigned">Designed</button>
+              <button class="btn" id="btnPreShape">One letter &rarr; new shape</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnPreSickle">Sickle-style patch</button>
+              <button class="btn" id="btnPreRandom">Random sequence</button>
+            </div>
+            <p class="ctrl-hint" id="presetNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Fold it</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnAnneal">Anneal (fold it)</button>
+              <button class="btn" id="btnRun">Run at this T</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnStretch">Stretch it out</button>
+              <button class="btn" id="btnGround">Show a lowest-energy shape</button>
+            </div>
+            <p class="ctrl-hint" id="annealNote">
+              Annealing cools the chain from T* = 2.0 to 0.12 while it jiggles. Each press uses a new random
+              seed, so no two runs take the same path.
+            </p>
+            <div class="readouts two">
+              <div class="readout is-accent">
+                <div class="r-label">H&ndash;H contacts now</div>
+                <div class="r-value big" id="rContacts">0</div>
+                <div class="r-sub" id="rContactsSub">out of 6 possible</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Energy now</div>
+                <div class="r-value big" id="rEnergy">0</div>
+                <div class="r-sub">&epsilon; = one H&ndash;H contact</div>
+              </div>
+              <div class="readout span2">
+                <div class="r-label">Best you have reached with this sequence</div>
+                <div class="r-value" id="rBest">0 contacts</div>
+                <div class="r-sub" id="rBestSub">&nbsp;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Does the sequence decide the shape?</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Lowest energy possible</div>
+              <div class="r-value" id="rMin">&minus;6</div>
+              <div class="r-sub">in units of &epsilon;</div>
+            </div>
+            <div class="readout is-ok">
+              <div class="r-label">Shapes tied at that energy</div>
+              <div class="r-value" id="rShapes">1</div>
+              <div class="r-sub" id="rShapesSub">rotations and mirror images counted once</div>
+            </div>
+          </div>
+          <p class="note" id="shapesNote" style="margin-top:11px">&nbsp;</p>
+          <p class="ctrl-hint" style="margin-top:9px">
+            This page enumerates <strong id="nConf">220,375</strong> shapes &mdash; every self-avoiding way a
+            14-bead chain can sit on a square grid &mdash; and scores all of them. Nothing here is a guess or a
+            fitted curve.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Water and the core</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Sides facing water, H average</div>
+              <div class="r-value" id="rHexp">0.00</div>
+              <div class="r-sub">out of 4</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Sides facing water, P average</div>
+              <div class="r-value" id="rPexp">0.00</div>
+              <div class="r-sub">out of 4</div>
+            </div>
+            <div class="readout span2" id="patchBox">
+              <div class="r-label">Greasy residues left out in the water (H with 2+ free sides)</div>
+              <div class="r-value" id="rPatch">0</div>
+            </div>
+          </div>
+          <p class="note" id="patchNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Temperature &mdash; denaturation</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tRange">Temperature T*</label>
+                <span class="ctrl-value" id="tOut">0.20</span>
+              </div>
+              <input type="range" id="tRange" min="0.05" max="3" step="0.01" value="0.20">
+              <p class="ctrl-hint" id="tHint">&nbsp;</p>
+            </div>
+            <div class="readouts two">
+              <div class="readout is-accent">
+                <div class="r-label">Molecules in the lowest-energy shape</div>
+                <div class="r-value" id="rFolded">92.3%</div>
+                <div class="r-sub">exact, at this T*</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Average H&ndash;H contacts</div>
+                <div class="r-value" id="rMean">5.91</div>
+                <div class="r-sub" id="rMeanSub">random-coil floor 0.56</div>
+              </div>
+              <div class="readout span2">
+                <div class="r-label">Melting temperature (half the molecules still folded)</div>
+                <div class="r-value" id="rTm">T* = 0.318</div>
+              </div>
+            </div>
+            <p class="note warn">
+              <strong>Cooling brings it back.</strong> The melting curve is an equilibrium, so sliding the
+              temperature up past 0.5 and back down to 0.2 really does refold the chain &mdash; try it. That is
+              Anfinsen&rsquo;s result: for a small single-domain protein the sequence alone carries the folding
+              information. In a crowded cell, or a hot beaker, unfolded chains usually stick to each other and
+              aggregate first, and aggregation is not reversible. That is a traffic problem, not a rule of
+              physics &mdash; and it is why a boiled egg stays boiled.
+            </p>
+            <p class="note bad" style="margin-top:10px">
+              <strong>Heat does not cut the chain.</strong> Every bead stays bonded to its neighbours at every
+              temperature on this slider &mdash; look at the picture, the backbone never breaks. Denaturation
+              undoes the weak interactions that hold the <em>shape</em>: hydrophobic packing, hydrogen bonds,
+              ionic bonds. The peptide bonds, and therefore the primary sequence, survive intact.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            <strong>What is simplified.</strong> This is flat, not three-dimensional, and the beads sit on a
+            square grid instead of anywhere in space. There are two kinds of residue instead of twenty. There is
+            exactly one energy term &mdash; two H residues touching without being neighbours in the chain gain
+            &minus;1&thinsp;&epsilon; &mdash; standing in for the whole hydrophobic effect, which in reality is
+            driven by what happens to the <em>water</em>, not by attraction between the greasy groups. Water is
+            not drawn as molecules; the empty grid sites are it. Backbone hydrogen bonding, and therefore all of
+            secondary structure, is absent: there are no &alpha; helices or &beta; sheets here. So are charge,
+            disulfide bridges, chaperones, and everything about how fast folding happens.
+          </p>
+          <p class="ctrl-hint" style="margin-top:9px">
+            <strong>What is exact.</strong> Within those rules, nothing is approximated. The lowest energy, the
+            number of shapes tied for it, the melting curve and the melting temperature all come from scoring
+            every one of the 220,375 shapes. The jiggling animation is a Metropolis Monte Carlo run whose
+            long-run average reproduces those exact curves to within its own noise. One &epsilon; is worth
+            roughly 1&ndash;2&nbsp;kcal&nbsp;mol&#8315;&sup1; in a real protein, and T* is temperature measured
+            in units of &epsilon;/k<sub>B</sub>, so T* = 0.3 is not 0.3&nbsp;kelvin &mdash; it is the point where
+            thermal energy is about a third of one contact.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students are told &ldquo;primary structure determines tertiary
+        structure&rdquo; and file it away as a sentence to repeat. Underneath, most of them believe the shape of
+        a protein is essentially arbitrary &mdash; a picture in the textbook that has to be memorised, decided by
+        something outside the molecule. Ask them <em>why</em> haemoglobin is that shape and the honest answer is
+        usually &ldquo;because it is.&rdquo;
+      </p>
+      <p>
+        <strong>What to notice.</strong> Nothing on this page was designed by hand except the string of H and P
+        letters. The shape is not stored anywhere. Press <em>Anneal</em>: the chain wanders, then collapses, and
+        the six hydrophobic beads end up completely surrounded &mdash; average 0.33 of their four sides touching
+        water, against 2.00 for every polar bead. Press it again. A new random seed, a completely different path,
+        the same final picture. The sequence really does contain the answer, and you can watch it being found.
+        Roughly one anneal in five stops short at &minus;5&epsilon; instead of &minus;6&epsilon;: that is
+        a <em>misfold</em>, a chain trapped in a dead end because it was cooled faster than it could rearrange,
+        and it is worth as much as the successes. Real cells employ chaperones for exactly this problem.
+      </p>
+      <p>
+        <strong>The honest catch, which is worth more than the slogan.</strong> Press <em>Random sequence</em>.
+        That chain has <strong>21 different shapes</strong> tied at its lowest energy, and annealing lands on a
+        different one almost every run &mdash; in one test, 17 distinct shapes in 40 runs. Its sequence does
+        <em>not</em> determine its structure. The difference is not luck: the designed sequence was selected,
+        out of all 16,384 possible 14-letter sequences, precisely because it has one unique ground state. Real
+        proteins are the selected ones. Four billion years of evolution has been throwing away the sequences that
+        fold into whatever they feel like today, because a protein with 21 shapes has no reliable job. So the
+        slogan is true of proteins, and it is true <em>because</em> of natural selection, not because a chain of
+        amino acids must behave that way.
+      </p>
+      <p>
+        <strong>One letter.</strong> Press <em>One letter &rarr; new shape</em>: residue 6 goes from H to P, and
+        the molecule has to refold. The backbone takes a different path, the best it can now manage is
+        &minus;5&epsilon; instead of &minus;6&epsilon;, and the melting temperature drops from T* = 0.318 to
+        0.296 &mdash; the protein is less stable as well as differently shaped. Then press
+        <em>Sickle-style patch</em>, which does the opposite &mdash; residue 2 goes from polar to hydrophobic,
+        and the fold does not change at all. Same shape, same energy, same six contacts. What changed is that
+        there is now a greasy residue sitting on the surface with two sides in the water, and the demo rings it
+        in red. That is deliberately the real story of sickle-cell disease: the Glu6&rarr;Val substitution barely
+        alters the shape of a haemoglobin molecule. It puts a sticky hydrophobic patch on the outside, and the
+        patch lets one molecule dock onto the next, so deoxygenated haemoglobin S polymerises into stiff fibres
+        that deform the red cell. One base change, one amino acid, no change in shape &mdash; and a disease.
+      </p>
+      <p>
+        <strong>And why proteins cannot fold by searching.</strong> This chain is 14 beads long and has 220,375
+        possible shapes, so your laptop can check all of them in a fraction of a second. Add residues and that
+        number explodes: on this same flat grid a 100-residue chain has around 10<sup>41</sup> shapes, and in
+        three dimensions it is far worse. A real protein that tried each shape in turn would still be searching
+        long after the sun burned out, yet it folds in milliseconds. That is Levinthal&rsquo;s paradox, and the
+        resolution is visible here every time you anneal: the chain is not sampling shapes at random. It is
+        rolling downhill on an energy landscape, and the hydrophobic collapse you can watch happen in the first
+        second is the first step of the roll.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — 2D HP lattice protein, N = 14
+      //
+      //   Energy  E = -eps * (number of H-H topological contacts)
+      //   A "topological contact" is a pair of H residues on adjacent
+      //   lattice sites that are NOT adjacent along the chain. Only pairs
+      //   with |i - j| odd and >= 3 can ever qualify: on a square lattice
+      //   the lattice distance between residues i and j has the same parity
+      //   as |i - j|, so |i - j| = 2 gives distance 0 or 2, never 1.
+      //
+      //   EXACT PART. Every self-avoiding walk of 14 beads is enumerated
+      //   once (fixing the first step to +x removes the 4 rotations and
+      //   nothing else, so all 220,375 survivors are physically distinct
+      //   states with equal a priori weight). From the resulting density of
+      //   states g(n) = number of shapes with n contacts:
+      //
+      //     Z(T*)      = SUM_n g(n) exp((n - nmax)/T*)
+      //     <n>(T*)    = SUM_n n g(n) exp((n - nmax)/T*) / Z
+      //     P(native)  = g(nmax) / Z
+      //
+      //   (Subtracting nmax in the exponent is only to keep the numbers
+      //   small; it cancels in every ratio.) Ground-state degeneracy is
+      //   counted up to the 8 symmetries of the square, so a shape and its
+      //   mirror image count once.
+      //
+      //   SIMULATION PART. A Metropolis-Hastings walk over the same state
+      //   space using PULL MOVES (Lesh, Mitzenmacher & Whitesides 2003),
+      //   which are local, always leave the chain connected and self-
+      //   avoiding, and are ergodic. The move set is NOT symmetric: the
+      //   number of moves out of a state varies, and two different moves
+      //   can land on the same state, so the acceptance probability carries
+      //   the full Hastings ratio
+      //
+      //     alpha = min(1, [q(B->A) / q(A->B)] * exp(-(E_B - E_A)/T*))
+      //     q(A->B) = (edges A->B) / (moves out of A)
+      //
+      //   with both edge multiplicities counted explicitly. Checked against
+      //   the exact enumeration at T* = 0.25, 0.3, 0.5, 0.75, 1, 2, 3 and
+      //   infinity: agrees everywhere to within Monte Carlo noise. Without
+      //   the multiplicity correction the sampler is visibly biased towards
+      //   compact states (<n> = 1.15 instead of 0.76 at T* = 3).
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var N = 14;                       // residues
+      var DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];        // orthogonal
+      var GX = [1, 1, -1, -1], GY = [1, -1, 1, -1];      // diagonal
+      var TMIN = 0.05, TMAX = 3;
+      var ANNEAL_HI = 2.0, ANNEAL_LO = 0.12, ANNEAL_STEPS = 50000, ANNEAL_PER_FRAME = 250;
+      var RUN_PER_FRAME = 60;
+
+      var PRESETS = {
+        designed: 'HPHPPHPHPPHPPH',
+        shape:    'HPHPPPPHPPHPPH',   // residue 6 H -> P : refolds completely
+        sickle:   'HHHPPHPHPPHPPH',   // residue 2 P -> H : same fold, exposed H
+        random:   'HPPHPHPHPPHHPH'    // 21 shapes tied for lowest energy
+      };
+      var PRESET_NOTE = {
+        designed: 'The reference chain. Six H, eight P, one unique lowest-energy shape at −6ε.',
+        shape: 'Residue 6 changed H → P. One letter, and the whole molecule refolds into a different shape.',
+        sickle: 'Residue 2 changed P → H. The fold is identical — but a greasy residue now sits on the surface.',
+        random: 'A sequence nobody designed. Twenty-one different shapes tie for lowest energy, so its structure is not determined.'
+      };
+      var PRESET_BTN = {
+        designed: 'btnPreDesigned', shape: 'btnPreShape',
+        sickle: 'btnPreSickle', random: 'btnPreRandom'
+      };
+
+      // ------------------------------------------------------------------
+      // ENUMERATION — runs once, ~200 ms, before the first paint
+      // ------------------------------------------------------------------
+      var NCONF = 220375;                       // c_13 / 4, checked below
+      var walkCode = new Int32Array(NCONF);     // 13 steps x 2 bits
+      var cStart = new Int32Array(NCONF + 1);
+      var cPair = new Uint8Array(600000);       // packed pair id per contact
+      var nWalks = 0, nCont = 0;
+
+      // pair id table: only |i-j| odd and >= 3 can touch
+      var pairI = [], pairJ = [], pairId = new Int32Array(N * N);
+      (function () {
+        var i, j;
+        for (i = 0; i < N * N; i++) pairId[i] = -1;
+        for (i = 0; i < N; i++) {
+          for (j = i + 3; j < N; j++) {
+            if ((j - i) % 2 === 1) { pairId[i * N + j] = pairI.length; pairI.push(i); pairJ.push(j); }
+          }
+        }
+      })();
+      var PI = Uint8Array.from(pairI), PJ = Uint8Array.from(pairJ);
+
+      (function enumerate() {
+        var EG = 64, EO = 32;
+        var eocc = new Uint8Array(EG * EG);
+        var ex = new Int8Array(N), ey = new Int8Array(N), est = new Int8Array(N - 1);
+        function eid(x, y) { return (x + EO) * EG + (y + EO); }
+
+        function store() {
+          var code = 0, s, i, j;
+          for (s = 0; s < N - 1; s++) code |= (est[s] << (2 * s));
+          walkCode[nWalks] = code;
+          for (i = 0; i < N; i++) {
+            for (j = i + 3; j < N; j++) {
+              if ((j - i) % 2 === 0) continue;
+              if (Math.abs(ex[i] - ex[j]) + Math.abs(ey[i] - ey[j]) === 1) cPair[nCont++] = pairId[i * N + j];
+            }
+          }
+          nWalks++;
+          cStart[nWalks] = nCont;
+        }
+
+        function rec(k) {
+          if (k === N) { store(); return; }
+          var lx = ex[k - 1], ly = ey[k - 1], d, nx, ny, p;
+          var dHi = (k === 1) ? 0 : 3;          // first step fixed to +x
+          for (d = 0; d <= dHi; d++) {
+            nx = lx + DX[d]; ny = ly + DY[d]; p = eid(nx, ny);
+            if (eocc[p]) continue;
+            eocc[p] = 1; ex[k] = nx; ey[k] = ny; est[k - 1] = d;
+            rec(k + 1);
+            eocc[p] = 0;
+          }
+        }
+
+        ex[0] = 0; ey[0] = 0; eocc[eid(0, 0)] = 1; cStart[0] = 0;
+        rec(1);
+      })();
+
+      function decode(code) {
+        var X = new Int32Array(N), Y = new Int32Array(N), s, d;
+        for (s = 0; s < N - 1; s++) {
+          d = (code >> (2 * s)) & 3;
+          X[s + 1] = X[s] + DX[d]; Y[s + 1] = Y[s] + DY[d];
+        }
+        return { X: X, Y: Y };
+      }
+
+      // canonical form under the 8 symmetries of the square (chain direction
+      // is NOT a symmetry: residue 1 is the N-terminus and stays that way)
+      function canon(code) {
+        var best = -1, ref, rot, s, d, out;
+        for (ref = 0; ref < 2; ref++) {
+          for (rot = 0; rot < 4; rot++) {
+            out = 0;
+            for (s = 0; s < N - 1; s++) {
+              d = (code >> (2 * s)) & 3;
+              if (ref) d = (4 - d) % 4;
+              out |= (((d + rot) % 4) << (2 * s));
+            }
+            if (best < 0 || out < best) best = out;
+          }
+        }
+        return best;
+      }
+
+      // ------------------------------------------------------------------
+      // STATE
+      // ------------------------------------------------------------------
+      var SHAPE_CAP = 20000;   // above this we do not try to count distinct shapes
+
+      var S = {
+        seq: PRESETS.designed.split('').map(function (ch) { return ch === 'H' ? 1 : 0; }),
+        preset: 'designed',
+        mutated: -1,
+        T: 0.20,
+        seed: 1,
+        best: 0,
+        groundPick: 0,
+        annealStep: -1
+      };
+      var A = null;            // analysis of the current sequence
+      var rand = Demo.rng(S.seed);
+
+      // 24 is comfortably above the geometric ceiling on contacts for a
+      // 14-mer (the all-H chain tops out at 7), so g[] can never be indexed
+      // past its end and silently drop a state.
+      function analyse(seq) {
+        var g = new Int32Array(24), k, t, n, nmax = 0, p;
+        for (k = 0; k < nWalks; k++) {
+          n = 0;
+          for (t = cStart[k]; t < cStart[k + 1]; t++) { p = cPair[t]; if (seq[PI[p]] && seq[PJ[p]]) n++; }
+          g[n]++;
+          if (n > nmax) nmax = n;
+        }
+        var shapes = [], seen = {}, cnt = 0, capped = g[nmax] > SHAPE_CAP;
+        if (!capped) {
+          for (k = 0; k < nWalks; k++) {
+            n = 0;
+            for (t = cStart[k]; t < cStart[k + 1]; t++) { p = cPair[t]; if (seq[PI[p]] && seq[PJ[p]]) n++; }
+            if (n !== nmax) continue;
+            var c = canon(walkCode[k]);
+            if (!seen[c]) { seen[c] = 1; cnt++; if (shapes.length < 400) shapes.push(walkCode[k]); }
+          }
+        }
+        // random-coil average: every shape equally likely
+        var tot = 0, sum = 0;
+        for (n = 0; n < g.length; n++) { tot += g[n]; sum += n * g[n]; }
+        return {
+          g: g, nmax: nmax, total: tot, coil: sum / tot,
+          shapes: shapes, nShapes: capped ? null : cnt, capped: capped
+        };
+      }
+
+      // exact equilibrium from g(n)
+      function stats(T) {
+        var Z = 0, sum = 0, n, w;
+        for (n = 0; n <= A.nmax; n++) {
+          w = A.g[n] * Math.exp((n - A.nmax) / T);
+          Z += w; sum += n * w;
+        }
+        return { mean: sum / Z, pnat: A.g[A.nmax] / Z };
+      }
+
+      function meltT() {
+        if (A.nmax === 0) return null;
+        var lo = 0.005, hi = 8, m, i;
+        if (stats(hi).pnat > 0.5) return null;
+        for (i = 0; i < 70; i++) { m = (lo + hi) / 2; if (stats(m).pnat > 0.5) lo = m; else hi = m; }
+        return (lo + hi) / 2;
+      }
+
+      // ------------------------------------------------------------------
+      // CHAIN + PULL-MOVE ENGINE
+      // ------------------------------------------------------------------
+      var GR = 128, GO = 64;
+      var grid = new Int16Array(GR * GR);
+      var X = new Int32Array(N), Y = new Int32Array(N);
+      function gidx(x, y) { return (x + GO) * GR + (y + GO); }
+      function occupied(x, y) { return grid[gidx(x, y)] !== 0; }
+
+      function place(xs, ys) {
+        var i;
+        for (i = 0; i < N; i++) grid[gidx(X[i], Y[i])] = 0;
+        for (i = 0; i < N; i++) { X[i] = xs[i]; Y[i] = ys[i]; }
+        for (i = 0; i < N; i++) grid[gidx(X[i], Y[i])] = i + 1;
+      }
+
+      function stretch() {
+        var xs = [], ys = [], i;
+        for (i = 0; i < N; i++) { xs.push(i - ((N / 2) | 0)); ys.push(0); }
+        place(xs, ys);
+      }
+
+      function contacts() {
+        var n = 0, i, d, j;
+        for (i = 0; i < N; i++) {
+          if (!S.seq[i]) continue;
+          for (d = 0; d < 4; d++) {
+            j = grid[gidx(X[i] + DX[d], Y[i] + DY[d])] - 1;
+            if (j >= 0 && S.seq[j] && Math.abs(j - i) >= 3) n++;
+          }
+        }
+        return n / 2;
+      }
+
+      // exposure = how many of the 4 neighbouring lattice sites are water
+      function exposure(i) {
+        var n = 0, d;
+        for (d = 0; d < 4; d++) if (!occupied(X[i] + DX[d], Y[i] + DY[d])) n++;
+        return n;
+      }
+
+      function adj(ax, ay, bx, by) { return Math.abs(ax - bx) + Math.abs(ay - by) === 1; }
+
+      // --- move lists ---
+      var MAXM = 256;
+      function newList() {
+        return { i: new Int32Array(MAXM), lx: new Int32Array(MAXM), ly: new Int32Array(MAXM), f: new Int32Array(MAXM), n: 0 };
+      }
+      var LA = newList(), LB = newList();
+
+      // All legal pull moves out of the current chain. A move is (residue i,
+      // target site L diagonal to it, and which neighbour it pulls from).
+      // The corner flip satisfies both the forward and the backward test and
+      // produces the same result either way, so it is emitted once.
+      function collect(L) {
+        var m = 0, i, k, lx, ly, cx, cy, fwd;
+        for (i = 0; i < N; i++) {
+          for (k = 0; k < 4; k++) {
+            lx = X[i] + GX[k]; ly = Y[i] + GY[k];
+            if (occupied(lx, ly)) continue;
+            fwd = false;
+            if (i < N - 1 && adj(lx, ly, X[i + 1], Y[i + 1])) {
+              cx = X[i] + lx - X[i + 1]; cy = Y[i] + ly - Y[i + 1];
+              if (i === 0 || (cx === X[i - 1] && cy === Y[i - 1]) || !occupied(cx, cy)) {
+                L.i[m] = i; L.lx[m] = lx; L.ly[m] = ly; L.f[m] = 1; m++; fwd = true;
+              }
+            }
+            if (!fwd && i > 0 && adj(lx, ly, X[i - 1], Y[i - 1])) {
+              cx = X[i] + lx - X[i - 1]; cy = Y[i] + ly - Y[i - 1];
+              if (i === N - 1 || (cx === X[i + 1] && cy === Y[i + 1]) || !occupied(cx, cy)) {
+                L.i[m] = i; L.lx[m] = lx; L.ly[m] = ly; L.f[m] = 0; m++;
+              }
+            }
+          }
+        }
+        L.n = m;
+        return m;
+      }
+
+      // result of a move, written to tX/tY; the live chain is untouched
+      var tX = new Int32Array(N), tY = new Int32Array(N);
+      function result(i, lx, ly, fwd) {
+        var k, j, cx, cy;
+        for (k = 0; k < N; k++) { tX[k] = X[k]; tY[k] = Y[k]; }
+        tX[i] = lx; tY[i] = ly;
+        if (fwd) {
+          if (i > 0) {
+            cx = X[i] + lx - X[i + 1]; cy = Y[i] + ly - Y[i + 1];
+            if (!(cx === X[i - 1] && cy === Y[i - 1])) {
+              tX[i - 1] = cx; tY[i - 1] = cy;
+              for (j = i - 2; j >= 0; j--) {
+                if (adj(X[j], Y[j], tX[j + 1], tY[j + 1])) break;
+                tX[j] = X[j + 2]; tY[j] = Y[j + 2];
+              }
+            }
+          }
+        } else {
+          if (i < N - 1) {
+            cx = X[i] + lx - X[i - 1]; cy = Y[i] + ly - Y[i - 1];
+            if (!(cx === X[i + 1] && cy === Y[i + 1])) {
+              tX[i + 1] = cx; tY[i + 1] = cy;
+              for (j = i + 2; j < N; j++) {
+                if (adj(X[j], Y[j], tX[j - 1], tY[j - 1])) break;
+                tX[j] = X[j - 2]; tY[j] = Y[j - 2];
+              }
+            }
+          }
+        }
+      }
+
+      var cmpX = new Int32Array(N), cmpY = new Int32Array(N);
+      function matchesCmp() {
+        for (var k = 0; k < N; k++) if (tX[k] !== cmpX[k] || tY[k] !== cmpY[k]) return false;
+        return true;
+      }
+      function countEdgesTo(L) {
+        var c = 0, m;
+        for (m = 0; m < L.n; m++) { result(L.i[m], L.lx[m], L.ly[m], L.f[m]); if (matchesCmp()) c++; }
+        return c;
+      }
+
+      var aX = new Int32Array(N), aY = new Int32Array(N);
+      var bX = new Int32Array(N), bY = new Int32Array(N);
+
+      function mcStep(T) {
+        var nA = collect(LA), k, p;
+        if (!nA) return;
+        for (k = 0; k < N; k++) { aX[k] = X[k]; aY[k] = Y[k]; }
+        p = (rand() * nA) | 0;
+        if (p >= nA) p = nA - 1;
+        result(LA.i[p], LA.lx[p], LA.ly[p], LA.f[p]);
+        for (k = 0; k < N; k++) { bX[k] = tX[k]; bY[k] = tY[k]; }
+
+        for (k = 0; k < N; k++) { cmpX[k] = bX[k]; cmpY[k] = bY[k]; }
+        var cAB = countEdgesTo(LA);
+        var eA = -contacts();
+
+        place(bX, bY);
+        var eB = -contacts();
+        var nB = collect(LB);
+        for (k = 0; k < N; k++) { cmpX[k] = aX[k]; cmpY[k] = aY[k]; }
+        var cBA = countEdgesTo(LB);
+
+        var alpha = ((cBA / nB) / (cAB / nA)) * Math.exp(-(eB - eA) / T);
+        if (!(alpha >= 1 || rand() < alpha)) place(aX, aY);
+      }
+
+      // Bounding box of the chain. The picture is always centred on it, so a
+      // translation of the whole chain is invisible — which is what lets
+      // recenter() keep the chain inside the grid without the view jumping.
+      function bbox() {
+        var i, mnx = 1e9, mxx = -1e9, mny = 1e9, mxy = -1e9;
+        for (i = 0; i < N; i++) {
+          if (X[i] < mnx) mnx = X[i]; if (X[i] > mxx) mxx = X[i];
+          if (Y[i] < mny) mny = Y[i]; if (Y[i] > mxy) mxy = Y[i];
+        }
+        return { mnx: mnx, mxx: mxx, mny: mny, mxy: mxy };
+      }
+
+      function recenter() {
+        var b = bbox(), i, mnx = b.mnx, mxx = b.mxx, mny = b.mny, mxy = b.mxy;
+        if (mnx < -28 || mxx > 28 || mny < -28 || mxy > 28) {
+          var dx = -Math.round((mnx + mxx) / 2), dy = -Math.round((mny + mxy) / 2);
+          var xs = [], ys = [];
+          for (i = 0; i < N; i++) { xs.push(X[i] + dx); ys.push(Y[i] + dy); }
+          place(xs, ys);
+        }
+      }
+
+      // apply a move unconditionally (used by dragging: the student does the work)
+      function force(i, lx, ly, f) {
+        result(i, lx, ly, f);
+        var xs = [], ys = [], k;
+        for (k = 0; k < N; k++) { xs.push(tX[k]); ys.push(tY[k]); }
+        place(xs, ys);
+        recenter();
+      }
+
+      function showGroundShape() {
+        if (!A.shapes.length) return;
+        var code = A.shapes[S.groundPick % A.shapes.length];
+        var d = decode(code);
+        var i, mnx = 99, mxx = -99, mny = 99, mxy = -99;
+        for (i = 0; i < N; i++) {
+          if (d.X[i] < mnx) mnx = d.X[i]; if (d.X[i] > mxx) mxx = d.X[i];
+          if (d.Y[i] < mny) mny = d.Y[i]; if (d.Y[i] > mxy) mxy = d.Y[i];
+        }
+        var ox = -Math.round((mnx + mxx) / 2), oy = -Math.round((mny + mxy) / 2);
+        var xs = [], ys = [];
+        for (i = 0; i < N; i++) { xs.push(d.X[i] + ox); ys.push(d.Y[i] + oy); }
+        place(xs, ys);
+      }
+
+      // ==================================================================
+      // CANVAS 1 — the lattice
+      // ==================================================================
+      var view = { cell: 30, ox: 0, oy: 0, cx: 0, cy: 0 };
+
+      var lattice = Demo.canvas('#latt', function (ctx, w, h, c) {
+        var topBar = 22;
+        var i, j, d, gx, gy;
+
+        var b = bbox();
+        var span = Demo.clamp(Math.max(b.mxx - b.mnx + 1, b.mxy - b.mny + 1) + 3, 8, 15);
+        var side = Math.min(w, h - topBar) - 6;
+        var cell = side / span;
+        var cx = (b.mnx + b.mxx) / 2, cy = (b.mny + b.mxy) / 2;
+        var ox = w / 2, oy = topBar + (h - topBar) / 2;
+        view.cell = cell; view.ox = ox; view.oy = oy; view.cx = cx; view.cy = cy;
+
+        function SX(x) { return ox + (x - cx) * cell; }
+        function SY(y) { return oy - (y - cy) * cell; }
+
+        var n = contacts();
+        var fs = w < 380 ? 9.8 : 11;
+
+        // --- top bar: what the picture is worth ---
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.text;
+        ctx.fillText(n + ' H–H contact' + (n === 1 ? '' : 's') + '   →   E = ' +
+          (n === 0 ? '0' : '−' + n) + ' ε', 1, 2);
+        if (A.nmax > 0 && n === A.nmax) {
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.ok;
+          ctx.fillText('lowest energy possible', w - 1, 2);
+        } else if (A.nmax > 0) {
+          ctx.textAlign = 'right';
+          ctx.fillStyle = c.muted;
+          ctx.fillText((A.nmax - n) + ' short of the best', w - 1, 2);
+        }
+
+        // --- water: every empty lattice site the canvas can show ---
+        var lo = Math.ceil(cx - ox / cell), hi = Math.floor(cx + (w - ox) / cell);
+        var lo2 = Math.ceil(cy - (h - oy) / cell), hi2 = Math.floor(cy + (oy - topBar) / cell);
+        ctx.fillStyle = c.accentLine;
+        for (gx = lo; gx <= hi; gx++) {
+          for (gy = lo2; gy <= hi2; gy++) {
+            if (occupied(gx, gy)) continue;
+            ctx.beginPath();
+            ctx.arc(SX(gx), SY(gy), Math.max(1, cell * 0.075), 0, 6.2832);
+            ctx.fill();
+          }
+        }
+
+        // --- H-H contacts, under everything ---
+        ctx.strokeStyle = c.ok;
+        ctx.lineWidth = Math.max(2, cell * 0.13);
+        ctx.lineCap = 'round';
+        ctx.setLineDash([1, Math.max(3, cell * 0.16)]);
+        for (i = 0; i < N; i++) {
+          if (!S.seq[i]) continue;
+          for (d = 0; d < 4; d++) {
+            j = grid[gidx(X[i] + DX[d], Y[i] + DY[d])] - 1;
+            if (j > i && S.seq[j] && j - i >= 3) {
+              ctx.beginPath();
+              ctx.moveTo(SX(X[i]), SY(Y[i]));
+              ctx.lineTo(SX(X[j]), SY(Y[j]));
+              ctx.stroke();
+            }
+          }
+        }
+        ctx.setLineDash([]);
+
+        // --- backbone: the peptide bonds, never broken ---
+        ctx.strokeStyle = c.text2;
+        ctx.lineWidth = Math.max(2, cell * 0.15);
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (i = 0; i < N; i++) {
+          if (i === 0) ctx.moveTo(SX(X[i]), SY(Y[i])); else ctx.lineTo(SX(X[i]), SY(Y[i]));
+        }
+        ctx.stroke();
+
+        // --- residues ---
+        var r = cell * 0.33;
+        for (i = 0; i < N; i++) {
+          var px = SX(X[i]), py = SY(Y[i]);
+          var isH = !!S.seq[i];
+          ctx.beginPath();
+          ctx.arc(px, py, r, 0, 6.2832);
+          ctx.fillStyle = isH ? c.warn : c.accent;
+          ctx.fill();
+          if (isH && exposure(i) >= 2) {
+            ctx.strokeStyle = c.bad;
+            ctx.lineWidth = Math.max(2, cell * 0.09);
+            ctx.beginPath();
+            ctx.arc(px, py, r + Math.max(2, cell * 0.09), 0, 6.2832);
+            ctx.stroke();
+          }
+          if (i === S.mutated) {
+            ctx.strokeStyle = c.text;
+            ctx.lineWidth = Math.max(1.5, cell * 0.05);
+            ctx.setLineDash([cell * 0.12, cell * 0.12]);
+            ctx.beginPath();
+            ctx.arc(px, py, r + Math.max(4, cell * 0.2), 0, 6.2832);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+          if (cell > 18) {
+            ctx.fillStyle = c.surface;
+            ctx.font = '700 ' + Math.max(8, Math.round(cell * 0.36)) + FONT;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(isH ? 'H' : 'P', px, py + 0.5);
+          }
+        }
+
+        // --- termini ---
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('N', SX(X[0]), SY(Y[0]) - r - 3);
+        ctx.fillText('C', SX(X[N - 1]), SY(Y[N - 1]) - r - 3);
+      }, { aspect: 0.8, minHeight: 250, maxHeight: 400 });
+
+      // ==================================================================
+      // CANVAS 2 — the exact melting curve
+      // ==================================================================
+      var LT0 = Math.log10(TMIN), LT1 = Math.log10(TMAX);
+
+      var meltCv = Demo.canvas('#melt', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 30 : 36, padR = narrow ? 10 : 14, padT = 20, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.4 : 10.4;
+        var i, px;
+
+        function XT(T) { return x0 + (x1 - x0) * (Math.log10(T) - LT0) / (LT1 - LT0); }
+        function YF(f) { return y0 - (y0 - y1) * Demo.clamp(f, 0, 1); }
+
+        if (A.nmax === 0) {
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + 0.6 + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('With fewer than two H residues there are no favourable', w / 2, h / 2 - 9);
+          ctx.fillText('contacts at all. Every shape has the same energy, so there', w / 2, h / 2 + 4);
+          ctx.fillText('is nothing to melt — the chain is a random coil at any T*.', w / 2, h / 2 + 17);
+          return;
+        }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 2; i++) {
+          var gy = YF(i / 2);
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(i === 0 ? '0' : i === 1 ? '0.5' : '1', x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // random-coil floor for the contact curve
+        var floor = A.coil / A.nmax;
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, YF(floor)); ctx.lineTo(x1, YF(floor)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the two exact curves
+        var cur = [], nat = [];
+        for (px = x0; px <= x1; px++) {
+          var u = (px - x0) / (x1 - x0);
+          var T = Math.pow(10, LT0 + u * (LT1 - LT0));
+          var st = stats(T);
+          cur.push(st.mean / A.nmax); nat.push(st.pnat);
+        }
+        function stroke(arr, col, lw) {
+          ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (var k = 0; k < arr.length; k++) {
+            var xx = x0 + k, yy = YF(arr[k]);
+            if (k === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+        }
+        stroke(cur, c.series[3], 1.8);
+        stroke(nat, c.series[2], 2.4);
+
+        // melting temperature
+        var tm = meltT();
+        if (tm && tm > TMIN && tm < TMAX) {
+          ctx.strokeStyle = c.series[2]; ctx.lineWidth = 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(XT(tm), y0); ctx.lineTo(XT(tm), YF(0.5)); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // where the slider is
+        var sx = XT(S.T), st2 = stats(S.T);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(sx, y1); ctx.lineTo(sx, y0); ctx.stroke();
+
+        function dot(x, y, col, rr) {
+          ctx.beginPath(); ctx.arc(x, y, rr, 0, 6.2832);
+          ctx.fillStyle = col; ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+        dot(sx, YF(st2.mean / A.nmax), c.series[3], 4);
+        dot(sx, YF(st2.pnat), c.series[2], 5);
+
+        // where THIS molecule is right now
+        var nowY = YF(contacts() / A.nmax);
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(sx, nowY, 6, 0, 6.2832); ctx.stroke();
+
+        // x ticks
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.font = fs + FONT;
+        var ticks = [0.05, 0.1, 0.3, 1, 3];
+        for (i = 0; i < ticks.length; i++) {
+          px = XT(ticks[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(ticks[i]), px, y0 + 6);
+        }
+        ctx.fillText('temperature T* (log scale)', (x0 + x1) / 2, y0 + 20);
+
+        // legend on the plot itself
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.series[2];
+        ctx.fillText('fraction folded', 1, 2);
+        ctx.fillStyle = c.series[3];
+        ctx.textAlign = 'right';
+        ctx.fillText('contacts / max', w - 1, 2);
+      }, { aspect: 0.44, minHeight: 155, maxHeight: 215 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        seqGrid: document.getElementById('seqGrid'),
+        seqStr: document.getElementById('seqStr'),
+        presetNote: document.getElementById('presetNote'),
+        btnAnneal: document.getElementById('btnAnneal'),
+        btnRun: document.getElementById('btnRun'),
+        btnStretch: document.getElementById('btnStretch'),
+        btnGround: document.getElementById('btnGround'),
+        annealNote: document.getElementById('annealNote'),
+        rContacts: document.getElementById('rContacts'),
+        rContactsSub: document.getElementById('rContactsSub'),
+        rEnergy: document.getElementById('rEnergy'),
+        rBest: document.getElementById('rBest'),
+        rBestSub: document.getElementById('rBestSub'),
+        rMin: document.getElementById('rMin'),
+        rShapes: document.getElementById('rShapes'),
+        rShapesSub: document.getElementById('rShapesSub'),
+        shapesNote: document.getElementById('shapesNote'),
+        nConf: document.getElementById('nConf'),
+        rHexp: document.getElementById('rHexp'),
+        rPexp: document.getElementById('rPexp'),
+        rPatch: document.getElementById('rPatch'),
+        patchBox: document.getElementById('patchBox'),
+        patchNote: document.getElementById('patchNote'),
+        tRange: document.getElementById('tRange'),
+        tOut: document.getElementById('tOut'),
+        tHint: document.getElementById('tHint'),
+        rFolded: document.getElementById('rFolded'),
+        rMean: document.getElementById('rMean'),
+        rMeanSub: document.getElementById('rMeanSub'),
+        rTm: document.getElementById('rTm'),
+        lattCap: document.getElementById('lattCap'),
+        meltCap: document.getElementById('meltCap')
+      };
+
+      // build the sequence editor
+      var resBtns = [];
+      (function () {
+        for (var i = 0; i < N; i++) {
+          var b = document.createElement('button');
+          b.className = 'res';
+          b.type = 'button';
+          b.dataset.i = i;
+          b.innerHTML = '<span class="n">' + (i + 1) + '</span><span class="l">P</span>';
+          b.setAttribute('aria-label', 'Residue ' + (i + 1) + ', click to switch between hydrophobic and polar');
+          el.seqGrid.appendChild(b);
+          resBtns.push(b);
+        }
+      })();
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function seqString() {
+        return S.seq.map(function (v) { return v ? 'H' : 'P'; }).join('');
+      }
+
+      function tWord(T) {
+        var tm = meltT();
+        if (!tm) return 'no folded state to melt';
+        if (T < tm * 0.7) return 'cold — folded';
+        if (T < tm * 1.4) return 'around the melting point';
+        return 'hot — denatured';
+      }
+
+      // Writing identical text back into the DOM 60 times a second is wasted
+      // work, so every setter here is guarded on an actual change.
+      function txt(node, s) { if (node.textContent !== s) node.textContent = s; }
+      function html(node, s) { if (node.__h !== s) { node.__h = s; node.innerHTML = s; } }
+      function cls(node, s) { if (node.className !== s) node.className = s; }
+
+      function render() {
+        if (!A) return;                       // BOOT has not run yet
+        var i, n = contacts();
+        var hs = 0, hn = 0, ps = 0, pn = 0, patch = 0;
+        for (i = 0; i < N; i++) {
+          var e = exposure(i);
+          if (S.seq[i]) { hs += e; hn++; if (e >= 2) patch++; } else { ps += e; pn++; }
+        }
+        if (n > S.best) S.best = n;
+
+        // sequence editor
+        for (i = 0; i < N; i++) {
+          cls(resBtns[i], 'res ' + (S.seq[i] ? 'is-h' : 'is-p') + (i === S.mutated ? ' is-mut' : ''));
+          txt(resBtns[i].lastChild, S.seq[i] ? 'H' : 'P');
+        }
+        txt(el.seqStr, seqString());
+
+        // right-now numbers
+        txt(el.rContacts, String(n));
+        txt(el.rContactsSub, 'out of ' + A.nmax + ' possible');
+        html(el.rEnergy, (n === 0 ? '0' : '−' + n) + '<span class="r-unit">ε</span>');
+        txt(el.rBest, S.best + (S.best === 1 ? ' contact' : ' contacts'));
+        txt(el.rBestSub, A.nmax > 0 && S.best >= A.nmax
+          ? 'you found the lowest-energy fold'
+          : 'the lowest energy possible is ' + A.nmax + ' contacts');
+
+        // sequence -> shape
+        txt(el.rMin, A.nmax === 0 ? '0' : '−' + A.nmax);
+        if (A.capped) {
+          txt(el.rShapes, 'many');
+          txt(el.rShapesSub, 'more than ' + F.comma(SHAPE_CAP) + ' arrangements tie');
+        } else {
+          txt(el.rShapes, F.comma(A.nShapes));
+          txt(el.rShapesSub, 'rotations and mirror images counted once');
+        }
+
+        if (A.nmax === 0) {
+          cls(el.shapesNote, 'note bad');
+          html(el.shapesNote, '<strong>No folding information at all.</strong> With fewer than two H '
+            + 'residues nothing is favourable, every one of the ' + F.comma(A.total) + ' shapes has energy 0, '
+            + 'and the chain is a random coil at any temperature. A sequence is only an instruction if some '
+            + 'shapes are better than others.');
+        } else if (A.capped) {
+          cls(el.shapesNote, 'note warn');
+          html(el.shapesNote, '<strong>Thousands of shapes are tied.</strong> More than '
+            + F.comma(SHAPE_CAP) + ' arrangements reach −' + A.nmax + 'ε, so this sequence barely '
+            + 'constrains its own structure at all.');
+        } else if (A.nShapes === 1) {
+          cls(el.shapesNote, 'note');
+          html(el.shapesNote, '<strong>Exactly one shape.</strong> Out of ' + F.comma(A.total) + ' ways '
+            + 'this chain could sit on the grid, one and only one reaches −' + A.nmax + 'ε. Cool it '
+            + 'from any starting point, with any random seed, and it has one place to go. <em>This</em> is what '
+            + '&ldquo;primary structure determines tertiary structure&rdquo; actually means.');
+        } else {
+          cls(el.shapesNote, 'note warn');
+          html(el.shapesNote, '<strong>' + F.comma(A.nShapes) + ' shapes are tied.</strong> They all have '
+            + 'energy −' + A.nmax + 'ε, so nothing in the sequence chooses between them. Press '
+            + '<em>Anneal</em> a few times: you will get different structures from different seeds. For this '
+            + 'sequence the slogan is simply false, and that is the point — evolution kept the sequences '
+            + 'for which it is true.');
+        }
+
+        // water and the core
+        txt(el.rHexp, hn ? F.dec(hs / hn, 2) : '—');
+        txt(el.rPexp, pn ? F.dec(ps / pn, 2) : '—');
+        txt(el.rPatch, String(patch));
+        cls(el.patchBox, 'readout span2' + (patch === 0 ? ' is-ok' : ' is-bad'));
+
+        if (hn === 0) {
+          cls(el.patchNote, 'note warn');
+          html(el.patchNote, '<strong>There are no hydrophobic residues at all.</strong> Nothing needs to be '
+            + 'hidden from the water, so there is no reason for this chain to adopt any shape rather than any '
+            + 'other. The hydrophobic effect is the engine here; with the engine removed the chain is a '
+            + 'floppy random coil.');
+        } else if (pn === 0) {
+          cls(el.patchNote, 'note warn');
+          html(el.patchNote, '<strong>Everything is hydrophobic.</strong> There is no outside layer to make, '
+            + 'so the chain just balls up as tightly as it can — and, as the shape count shows, there are '
+            + 'many equally tight ways to do that. A protein needs <em>both</em> kinds of residue to have '
+            + 'one definite shape.');
+        } else if (patch === 0) {
+          cls(el.patchNote, 'note');
+          html(el.patchNote, '<strong>Every greasy residue is tucked away.</strong> H beads average '
+            + F.dec(hn ? hs / hn : 0, 2) + ' of their 4 sides in water; P beads average '
+            + F.dec(pn ? ps / pn : 0, 2) + '. Nobody told the chain to do that. It is the only way to collect '
+            + 'H–H contacts, and the polar residues are simply what is left over on the outside.');
+        } else {
+          cls(el.patchNote, 'note bad');
+          html(el.patchNote, '<strong>' + patch + ' hydrophobic residue' + (patch === 1 ? '' : 's')
+            + ' sitting in the water</strong> (ringed in red). In a real cell a patch like this is sticky: the '
+            + 'cheapest way to get it out of the water is to press it against the same patch on another '
+            + 'molecule. That is aggregation — and, for one particular surface substitution in '
+            + 'haemoglobin, it is sickle-cell disease.');
+        }
+
+        // temperature
+        var st = stats(S.T);
+        var tm = meltT();
+        txt(el.tOut, F.dec(S.T, 2));
+        html(el.tHint, tWord(S.T) + '. T* is in units of ε/k<sub>B</sub>, so it compares thermal '
+          + 'energy with the strength of one hydrophobic contact.');
+        txt(el.rFolded, A.nmax === 0 ? '—' : F.pct(st.pnat, 1));
+        txt(el.rMean, F.dec(st.mean, 2));
+        txt(el.rMeanSub, 'random-coil floor ' + F.dec(A.coil, 2));
+        txt(el.rTm, tm ? 'T* = ' + F.dec(tm, 3) : '—');
+
+        // captions
+        html(el.lattCap, anim.running
+          ? (S.annealStep >= 0
+            ? 'Annealing at T* = ' + F.dec(S.T, 2) + ' — seed ' + S.seed + '.'
+            : 'Jiggling at T* = ' + F.dec(S.T, 2) + ' — seed ' + S.seed + '. Every wiggle is one accepted move.')
+          : 'Drag any bead: the rest of the chain is pulled after it, and it can never break or overlap itself. '
+          + 'The dots are water.');
+        html(el.meltCap, A.nmax === 0
+          ? 'Nothing to plot: with no possible contacts, every shape is equally good at every temperature.'
+          : 'The gold ring marks <em>your</em> molecule right now. If it sits far below the purple curve while '
+          + 'the simulation runs cold, you are watching a misfold: trapped in a local minimum, which is exactly '
+          + 'what real chains do when they are cooled too fast.');
+
+        el.btnGround.disabled = !A.shapes.length;
+        txt(el.btnGround, !A.shapes.length ? 'No single lowest-energy shape'
+          : A.nShapes > 1
+            ? 'Show another lowest-energy shape (' + F.comma(A.nShapes) + ' tie)'
+            : 'Show the lowest-energy shape');
+
+        lattice.redraw();
+        meltCv.redraw();
+      }
+
+      // ==================================================================
+      // SEQUENCE CHANGES
+      // ==================================================================
+      function setSequence(str, preset, mutated) {
+        S.seq = str.split('').map(function (ch) { return ch === 'H' ? 1 : 0; });
+        S.preset = preset || null;
+        S.mutated = (mutated == null) ? -1 : mutated;
+        S.best = 0;
+        S.groundPick = 0;
+        A = analyse(S.seq);
+        Object.keys(PRESET_BTN).forEach(function (k) {
+          document.getElementById(PRESET_BTN[k]).classList.toggle('is-on', k === S.preset);
+        });
+        html(el.presetNote, S.preset ? PRESET_NOTE[S.preset]
+          : 'Your own sequence. Everything on this page — the lowest energy, how many shapes reach it, the '
+          + 'melting curve — was recomputed from all ' + F.comma(A.total) + ' shapes just now. The chain is '
+          + 'left exactly where it was, so you can see what the substitution costs before you refold it.');
+        render();
+      }
+
+      resBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          var i = parseInt(b.dataset.i, 10);
+          var s = seqString().split('');
+          s[i] = s[i] === 'H' ? 'P' : 'H';
+          stopAll();
+          setSequence(s.join(''), null, i);
+        });
+      });
+
+      // presets: these snap straight to the lowest-energy shape, because the
+      // whole point of them is comparing one fold with another
+      [['designed', -1], ['shape', 5], ['sickle', 1], ['random', -1]].forEach(function (pair) {
+        document.getElementById(PRESET_BTN[pair[0]]).addEventListener('click', function () {
+          stopAll();
+          setSequence(PRESETS[pair[0]], pair[0], pair[1]);
+          showGroundShape();
+          S.best = contacts();
+          render();
+        });
+      });
+
+      // ==================================================================
+      // DRAGGING — the student folds it by hand
+      // ==================================================================
+      var dragIdx = -1;
+      var cv = document.getElementById('latt');
+
+      // The bounding-box centre is read live rather than from the last frame,
+      // so a mid-drag recenter() (which shifts every bead by the same amount
+      // and therefore changes nothing on screen) cannot desynchronise the map.
+      function pointerLattice(ev) {
+        var rect = cv.getBoundingClientRect();
+        var px = ev.clientX - rect.left, py = ev.clientY - rect.top;
+        var b = bbox();
+        return {
+          x: (b.mnx + b.mxx) / 2 + (px - view.ox) / view.cell,
+          y: (b.mny + b.mxy) / 2 - (py - view.oy) / view.cell
+        };
+      }
+
+      cv.addEventListener('pointerdown', function (ev) {
+        var p = pointerLattice(ev), bestI = -1, bestD = 0.75 * 0.75, i, d;
+        for (i = 0; i < N; i++) {
+          d = (X[i] - p.x) * (X[i] - p.x) + (Y[i] - p.y) * (Y[i] - p.y);
+          if (d < bestD) { bestD = d; bestI = i; }
+        }
+        if (bestI < 0) return;
+        dragIdx = bestI;
+        stopAll();
+        cv.classList.add('is-drag');
+        if (cv.setPointerCapture) { try { cv.setPointerCapture(ev.pointerId); } catch (err) { } }
+        ev.preventDefault();
+      });
+
+      cv.addEventListener('pointermove', function (ev) {
+        if (dragIdx < 0) return;
+        var p = pointerLattice(ev), moved = false, hop, m, best, bd, cur, dd;
+        for (hop = 0; hop < 4; hop++) {
+          collect(LA);
+          cur = (X[dragIdx] - p.x) * (X[dragIdx] - p.x) + (Y[dragIdx] - p.y) * (Y[dragIdx] - p.y);
+          best = -1; bd = cur - 1e-9;
+          for (m = 0; m < LA.n; m++) {
+            if (LA.i[m] !== dragIdx) continue;
+            dd = (LA.lx[m] - p.x) * (LA.lx[m] - p.x) + (LA.ly[m] - p.y) * (LA.ly[m] - p.y);
+            if (dd < bd) { bd = dd; best = m; }
+          }
+          if (best < 0) break;
+          force(LA.i[best], LA.lx[best], LA.ly[best], LA.f[best]);
+          moved = true;
+        }
+        if (moved) render();
+        ev.preventDefault();
+      });
+
+      function endDrag(ev) {
+        if (dragIdx < 0) return;
+        dragIdx = -1;
+        cv.classList.remove('is-drag');
+        if (ev && ev.pointerId != null && cv.hasPointerCapture && cv.hasPointerCapture(ev.pointerId)) {
+          cv.releasePointerCapture(ev.pointerId);
+        }
+      }
+      cv.addEventListener('pointerup', endDrag);
+      cv.addEventListener('pointercancel', endDrag);
+
+      // ==================================================================
+      // THE LOOP
+      // ==================================================================
+      var anim = Demo.loop(function () {
+        var steps, k;
+        if (S.annealStep >= 0) {
+          steps = ANNEAL_PER_FRAME;
+          for (k = 0; k < steps; k++) {
+            var frac = S.annealStep / ANNEAL_STEPS;
+            S.T = ANNEAL_HI * Math.pow(ANNEAL_LO / ANNEAL_HI, frac);
+            mcStep(S.T);
+            recenter();
+            S.annealStep++;
+            if (S.annealStep >= ANNEAL_STEPS) {
+              S.T = ANNEAL_LO;
+              S.annealStep = -1;
+              anim.stop();
+              el.btnAnneal.textContent = 'Anneal again (seed ' + (S.seed + 1) + ')';
+              el.btnRun.textContent = 'Run at this T';
+              break;
+            }
+          }
+          el.tRange.value = S.T;
+        } else {
+          for (k = 0; k < RUN_PER_FRAME; k++) { mcStep(S.T); recenter(); }
+        }
+        render();
+      });
+
+      function stopAll() {
+        if (anim.running) anim.stop();
+        S.annealStep = -1;
+        el.btnRun.textContent = 'Run at this T';
+        el.btnAnneal.textContent = 'Anneal (fold it)';
+      }
+
+      el.btnAnneal.addEventListener('click', function () {
+        if (anim.running && S.annealStep >= 0) { stopAll(); render(); return; }
+        stopAll();
+        S.seed++;
+        rand = Demo.rng(S.seed);
+        stretch();
+        S.best = 0;
+        S.annealStep = 0;
+        S.T = ANNEAL_HI;
+        el.tRange.value = S.T;
+        el.btnAnneal.textContent = 'Stop';
+        anim.start();
+        render();
+      });
+
+      el.btnRun.addEventListener('click', function () {
+        if (anim.running) { stopAll(); render(); return; }
+        S.annealStep = -1;
+        el.btnRun.textContent = 'Pause';
+        anim.start();
+        render();
+      });
+
+      el.btnStretch.addEventListener('click', function () {
+        stopAll();
+        stretch();
+        render();
+      });
+
+      el.btnGround.addEventListener('click', function () {
+        stopAll();
+        if (!A.shapes.length) return;
+        S.groundPick = (S.groundPick + 1) % A.shapes.length;
+        showGroundShape();
+        S.best = contacts();
+        render();
+      });
+
+      Demo.range('#tRange', function (v) {
+        if (S.annealStep >= 0) return;    // the anneal owns the slider while it runs
+        S.T = v;
+        render();
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      el.nConf.textContent = F.comma(nWalks);
+      stretch();                                   // a valid chain must exist first
+      setSequence(PRESETS.designed, 'designed', -1);
+      showGroundShape();                           // open on the folded molecule
+      S.best = contacts();
+      render();
+    })();
+  </script>
+</body>
+
+</html>

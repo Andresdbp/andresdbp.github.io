@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Speciation Sandbox | Dr. Andres Barboza</title>
+  <meta name="description" content="Raise a barrier between two populations, wait, then lower it again. A short separation re-fuses them into one population; a long one does not. Speciation is a continuum, not an event.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend, unit-bearing readout tiles */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 26px; }
+
+    /* these tiles carry real units, longer than the shell's one-line default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.shade i { height: 11px; border-radius: 3px; background: var(--accent-soft); border: 1px solid var(--accent-line); }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    /* the barrier button is the whole demo — give it room */
+    .btn.hero { width: 100%; padding: 12px 14px; font-size: 14.5px; font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Speciation Sandbox</h1>
+        <p class="demo-sub">Raise the barrier, wait, then lower it again. Do it once after a short wait and once after a long wait. Nothing else on this page matters as much as that.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Allopatric speciation</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="mapLabel">The map <span>&mdash; two populations of one species, 50 breeding individuals each</span></p>
+        <canvas id="map" role="img"
+                aria-label="A map showing two populations of animals on either side of a corridor. A barrier can be raised across the corridor. The colour of each population drifts apart while they are separated."></canvas>
+        <p class="stage-caption" id="mapCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">History <span>&mdash; every generation since you started, shaded where the barrier was up</span></p>
+        <canvas id="hist" role="img"
+                aria-label="A time series of genetic divergence, reproductive isolation and hybrid fitness against generations, with shaded regions marking the time the barrier was raised."></canvas>
+        <div class="legend">
+          <span class="lg shade"><i></i>barrier raised</span>
+          <span class="lg"><i id="lgDiv"></i>genetic divergence</span>
+          <span class="lg"><i id="lgIso"></i>reproductive isolation</span>
+          <span class="lg"><i id="lgHyb"></i>hybrid fitness</span>
+        </div>
+        <p class="stage-caption" id="histCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The one thing to do</div>
+          <div class="stack">
+            <button class="btn primary hero" id="btnBarrier">Raise the barrier</button>
+            <p class="ctrl-hint" id="barrierHint">
+              While the barrier is up the two populations cannot exchange genes, so they drift apart and the two
+              habitats push them in different directions. Lower it again and see whether they still recognise
+              each other as one species.
+            </p>
+            <div class="btn-row">
+              <button class="btn" id="btnRun">Pause</button>
+              <button class="btn" id="btnReset">Reset to one population</button>
+            </div>
+            <hr class="sep">
+            <p class="ctrl-hint" style="margin-top:0">
+              Or run a scripted split: the barrier goes up, stays up for the stated number of generations, then
+              comes down on its own.
+            </p>
+            <div class="btn-row" id="presets">
+              <button class="btn" data-gens="60">Split 60 gen</button>
+              <button class="btn" data-gens="140">Split 140 gen</button>
+              <button class="btn" data-gens="260">Split 260 gen</button>
+            </div>
+            <div class="seg" role="tablist" aria-label="Simulation speed" id="speedSeg">
+              <button role="tab" aria-selected="false" data-speed="12">Slow</button>
+              <button role="tab" aria-selected="true" data-speed="40">Normal</button>
+              <button role="tab" aria-selected="false" data-speed="140">Fast</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where the two populations stand</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Reproductive isolation index</div>
+              <div class="r-value big" id="rIso">0.000</div>
+              <div class="r-sub" id="rIsoSub">one population, freely interbreeding</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Genetic divergence</div>
+              <div class="r-value" id="rDiv">0.020</div>
+              <div class="r-sub">0 = identical, 1 = no shared variation</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Hybrid fitness</div>
+              <div class="r-value" id="rHyb">1.00</div>
+              <div class="r-sub">relative to a non-hybrid, which is 1.00</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Gene flow actually getting through</div>
+              <div class="r-value" id="rNmEff">10.0</div>
+              <div class="r-sub">migrants per generation whose genes survive</div>
+            </div>
+            <div class="readout">
+              <div class="r-label" id="rApartLbl">Generations in contact</div>
+              <div class="r-value" id="rApart">0</div>
+              <div class="r-sub" id="rApartSub">barrier is down</div>
+            </div>
+          </div>
+          <div class="bar" style="margin-top:11px"><span id="isoBar" style="width:0%"></span></div>
+          <p class="ctrl-hint" style="margin-top:6px">
+            The bar is the isolation index. It is a <strong>made-up teaching index</strong>, not a measured
+            biological constant &mdash; see the honest-limits panel below.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">If the barrier came down right now</div>
+          <div class="readouts two">
+            <div class="readout span2" id="pullBox">
+              <div class="r-label">Divergence would change by</div>
+              <div class="r-value big" id="rPull">&minus;0.000</div>
+              <div class="r-sub">per generation, at full contact</div>
+            </div>
+          </div>
+          <p class="note" id="pullNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">A leaky barrier</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="leak">Gene flow through a raised barrier</label>
+                <span class="ctrl-value" id="leakOut">0.00</span>
+              </div>
+              <input type="range" id="leak" min="0" max="4" step="0.05" value="0">
+              <p class="ctrl-hint">
+                Migrants per generation that get across even when the barrier is up. A mountain range with one
+                pass; a river with one shallow crossing.
+              </p>
+            </div>
+            <div class="readouts two">
+              <div class="readout span2">
+                <div class="r-label">Divergence this leak settles at, before any isolation has built up</div>
+                <div class="r-value" id="rEq">1.000</div>
+                <div class="r-sub" id="rEqSub">no migrants: divergence runs all the way to 1</div>
+              </div>
+            </div>
+            <p class="note warn" id="leakNote">
+              Set this to <strong>1.00</strong> and raise the barrier. Divergence stalls near 0.25 and stays
+              there forever. <strong>One migrant per generation</strong> &mdash; one animal out of fifty, once a
+              generation &mdash; is enough to keep two populations genetically the same. Gene flow is not a weak
+              force you can ignore; it is the reason most populations never speciate.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Why they diverge at all</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sel">Differing selection</label>
+                <span class="ctrl-value" id="selOut">3.0 &times; 10⁻³</span>
+              </div>
+              <input type="range" id="sel" min="0" max="0.01" step="0.0005" value="0.003">
+              <p class="ctrl-hint">
+                Extra divergence per generation because the two habitats favour different traits. Set it to zero
+                and the populations still drift apart &mdash; just more slowly, at
+                1/(2N) = 1.0 &times; 10⁻² per generation from genetic drift alone.
+              </p>
+            </div>
+            <p class="ctrl-hint" style="margin-top:0">
+              Divergence per generation =
+              (drift + selection) &times; (1 &minus; D) &minus; 2m &times; D, where D is divergence and m is the
+              migration rate. The first term builds difference, the second erases it.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note bad">
+            <strong>The isolation index is invented for this page.</strong> Real biologists do not have a single
+            number called "reproductive isolation" that ticks up from 0 to 1. They measure separate things:
+            whether the two forms will court each other, whether the eggs get fertilised, whether the hybrids
+            survive, whether the hybrids are fertile. This index rolls all of that into one dimensionless
+            0&ndash;1 number so you can watch the shape of the change. Treat the shape as the lesson and the
+            digits as scenery.
+          </p>
+          <p class="note warn" style="margin-top:10px">
+            <strong>This is allopatric speciation only</strong> &mdash; populations split by a physical barrier
+            (geography). It is the easiest case and the one AP Biology asks about first. Speciation also happens
+            <em>without</em> a barrier (sympatric speciation: polyploidy in plants, host-race shifts in insects,
+            assortative mating in one lake). Nothing on this page models that, and the fact that you have to
+            raise a barrier here does not mean a barrier is required in nature.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. Divergence D is a single number standing in for a whole genome, closest in
+            spirit to F<sub>ST</sub>. Each population has an effective size of N = 50 and they are the same
+            size; migration is symmetric. Drift is put in twice on purpose &mdash; once as the deterministic
+            pressure 1/(2N) per generation, which is the expected behaviour, and once as a small random wobble
+            so runs are not identical. Hybrid fitness falls as exp(&minus;8D⁵), a "snowball": incompatible gene
+            pairs accumulate faster than the genes themselves, so hybrids stay healthy for a long time and then
+            fail quickly. Real snowballs are messier and mutation order matters. There is no mutation input, no
+            population growth, no ecology, and no reinforcement: this page never lets selection <em>against</em>
+            bad hybrids push mate choice further apart, which in nature can finish the job.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students picture speciation as a moment. One population, then a wall
+        goes up, then &mdash; at some particular generation &mdash; <em>ping</em>, two species. They expect there
+        to be a birthday. Textbook definitions encourage it: "a species is a group that can interbreed and
+        produce fertile offspring" sounds like a yes/no test, so speciation sounds like the instant the answer
+        flips from yes to no.
+      </p>
+      <p>
+        <strong>There is no such instant.</strong> Press <em>Split 60 gen</em> and watch. The barrier goes up,
+        divergence climbs to about 0.60, isolation reaches roughly 0.6, and hybrids are already only about half
+        as fit as their parents. Then the barrier drops and the two populations pour back into each other. Within
+        roughly ten generations of contact the divergence curve is flat on the floor: they are one population
+        again, and every trace of the split is gone. Now press <em>Split 260 gen</em>. Exactly the same thing
+        happens for the first 60 generations. The barrier comes down 200 generations later, the populations meet
+        &mdash; and nothing fuses. They stay two.
+      </p>
+      <p>
+        <strong>The interesting run is the one in between.</strong> Press <em>Split 140 gen</em>. When that
+        barrier drops, the isolation index reads about 0.99 and hybrid fitness is about 0.03 &mdash; hybrids
+        are born, and almost all of them die or fail to breed. Whether the populations re-fuse or stay apart
+        now hangs on a hair, and the small random wobble in drift genuinely decides it &mdash; run that same
+        preset eight times and it lands on "one species" about five times and "two species" about three. Run it
+        twice yourself.
+        <strong>That knife-edge is the answer to the question.</strong> If speciation were an event, there would
+        be a generation where the outcome switched cleanly from "one species" to "two". Instead there is a wide,
+        slow, ambiguous band where the honest answer is <em>partly</em>.
+      </p>
+      <p>
+        <strong>Watch the last fraction of a percent do the work.</strong> Here is the number that surprises
+        people. Stop a run at 100 generations of separation: isolation is already about <strong>0.96</strong>
+        &mdash; 96% of gene flow blocked, hybrid fitness down to about 0.10, nine hybrids in ten failing. Lower
+        the barrier and they fuse anyway, in about twenty generations. Why? Because 4% of ten potential migrants
+        is still roughly <strong>0.4 migrants per generation</strong> landing their genes, and at that divergence
+        the trickle erases difference faster than drift and selection can build it. Isolation has to climb past
+        about <strong>0.994</strong> &mdash; under 0.06 migrants a generation &mdash; before contact stops
+        undoing the split. "Ninety-six percent isolated" is not "nearly a species"; it is barely started. That
+        is exactly why the middle of the process is so long and so hard to call.
+      </p>
+      <p>
+        <strong>And gene flow is brutally strong.</strong> Set the leak slider to 1.00, raise the barrier, and
+        wait as long as you like. Divergence stalls near 0.25 and never moves again. One animal in fifty
+        crossing once a generation cancels drift and most of the selection at once. Turn the leak down to 0.25
+        and the same barrier now produces a new species. This is why "the barrier" in a speciation story has to
+        be a real barrier: a mountain range that is <em>almost</em> impassable is, genetically, not a barrier at
+        all.
+      </p>
+      <p>
+        <strong>So where do the two species come from?</strong> Nowhere in particular. Divergence is a number
+        that goes up while populations are apart and down while they are together, and reproductive isolation is
+        a consequence of that number. When we say "these are two species now", we are drawing a line on a smooth
+        curve because our language needs nouns. The curve does not have a step in it. That is why biologists
+        argue about whether particular pairs &mdash; polar and brown bears, coyotes and wolves, herring gulls
+        around the Arctic &mdash; are one species or two. They are not being sloppy. They are being asked to
+        name a point on a ramp.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — two allopatric populations, one divergence number
+      //
+      // State: D, a single 0–1 "genetic divergence" between the populations
+      //        (an F_ST-like quantity: 0 = identical, 1 = nothing shared).
+      //
+      //   dD/dgeneration = r (1 - D)  -  2 m D  + drift noise
+      //
+      //     r = 1/(2N) + s     divergence pressure:
+      //                        1/(2N) from genetic drift, s from the two
+      //                        habitats selecting for different traits
+      //     m = Nm_eff / N     migration rate per individual per generation
+      //
+      // With no isolation this is the textbook island model: at equilibrium
+      //     D = r / (r + 2 Nm/N) = 1/(1 + 4 Nm)   when s = 0,
+      // so Nm = 1 migrant per generation gives D = 0.20. That single result
+      // is the reason the leak slider matters.
+      //
+      // Isolation feeds back on gene flow. Genes only cross if the animals
+      // will mate AND the hybrids live and breed:
+      //     prezygotic block P = 1 - exp(-4 D⁵)
+      //     hybrid fitness   w = exp(-8 D⁵)          (Dobzhansky–Muller
+      //                                               snowball: incompatible
+      //                                               pairs grow faster than
+      //                                               the differences do)
+      //     isolation        I = 1 - (1-P) w = 1 - exp(-12 D⁵)
+      //     Nm_eff = Nm_raw (1 - I)
+      //
+      // That feedback is what makes the demonstration work: lowering the
+      // barrier restores Nm_raw = 10, but only Nm_raw(1-I) of it lands.
+      //
+      // HAND-CHECKED (N = 50, s = 0.003 → r = 0.013, barrier down Nm_raw=10):
+      //   Nm = 1, s = 0 : D_eq = 0.005/(0.005+0.02)... in these units
+      //                   r/(r+2Nm/N) = 0.01/(0.01+0.04) = 0.200 = 1/(1+4·1) OK
+      //   sealed 100 gen: D = 1-exp(-1.3) = 0.727, I = 0.913, w = 0.196,
+      //                   Nm_eff on reopening = 0.87 → dD = -0.0217 → re-fuses OK
+      //   sealed 260 gen: D = 0.966, I ≈ 1.000, w = 0.001,
+      //                   Nm_eff ≈ 0.000 → dD = +0.0002 → stays separate OK
+      //   Turning point (dD = 0 at full contact) sits at D* = 0.843,
+      //   which a sealed barrier reaches after about 142 generations.
+      //
+      // ZERO-INPUT STEADY STATE (required check): selection 0, leak 0,
+      //   barrier DOWN, starting fused. r = 0.01, m = 10/50 = 0.2.
+      //   dD/dg = 0.01(1-D) - 0.4 D → fixed point D = 0.01/0.41 = 0.0244,
+      //   which is exactly 1/(1+4·10), the correct panmictic value for ten
+      //   migrants a generation. It decays there from any low start and
+      //   stays. Divergence never sits at a large value with the barrier
+      //   down unless isolation has already been built — which is the point.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var N = 50;                 // effective size of each population
+      var DRIFT = 1 / (2 * N);    // 0.010 divergence per generation
+      var NM_OPEN = 10;           // migrants per generation with the barrier down
+      var KPRE = 4, KPOST = 8, KTOT = KPRE + KPOST;
+      var PWR = 5;                // snowball exponent
+      var NOISE = 0.12;           // random wobble on drift
+      var SUB = 0.25;             // integration substep, generations
+      var MAXDG = 8;              // generations advanced per frame, cap
+
+      var S = {
+        gen: 0, D: 0.0244, barrier: false,
+        leak: 0, sel: 0.003, speed: 40,
+        apart: 0, contact: 0, autoLowerAt: null
+      };
+
+      var rand = Demo.rng(20240717);
+
+      function gens(n) {
+        var r = Math.round(n);
+        return F.comma(r) + ' generation' + (r === 1 ? '' : 's');
+      }
+
+      function iso(D) { return 1 - Math.exp(-KTOT * Math.pow(D, PWR)); }
+      function hyb(D) { return Math.exp(-KPOST * Math.pow(D, PWR)); }
+      function pressure() { return DRIFT + S.sel; }
+      function rawNm() { return S.barrier ? S.leak : NM_OPEN; }
+      function effNm(D, raw) { return raw * (1 - iso(D)); }
+
+      function slope(D, raw) {
+        return pressure() * (1 - D) - 2 * (effNm(D, raw) / N) * D;
+      }
+
+      // Directly-computed equilibrium for the current leak, ignoring the
+      // isolation feedback. Strictly decreasing in leak, increasing in
+      // selection — the honest closed form behind the readout.
+      function eqNoIso(nm) {
+        var r = pressure();
+        return r / (r + 2 * nm / N);
+      }
+
+      // start exactly on the panmictic floor, so nothing jumps on load
+      S.D = eqNoIso(NM_OPEN);
+
+      // ---------------- individuals on the map (fixed seeded layout) -----
+      var POP_A = [], POP_B = [], HYB = [];
+      (function () {
+        var r = Demo.rng(9137), i;
+        for (i = 0; i < 24; i++) POP_A.push({ u: r(), v: r(), j: (r() - 0.5) * 0.13, s: r() });
+        for (i = 0; i < 24; i++) POP_B.push({ u: r(), v: r(), j: (r() - 0.5) * 0.13, s: r() });
+        for (i = 0; i < 7; i++) HYB.push({ u: r(), v: r(), s: r() });
+      })();
+
+      // ---------------- colour helpers (theme colours only) -------------
+      function toRgb(hex) {
+        hex = (hex || '').trim();
+        if (hex.charAt(0) === '#') hex = hex.slice(1);
+        if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        var n = parseInt(hex, 16);
+        if (!isFinite(n) || hex.length !== 6) return [130, 130, 130];
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+      }
+      function mixRgb(a, b, t) {
+        var A = toRgb(a), B = toRgb(b), o = [], i;
+        t = Demo.clamp(t, 0, 1);
+        for (i = 0; i < 3; i++) o.push(Math.round(A[i] + (B[i] - A[i]) * t));
+        return o;
+      }
+      function rgba(arr, alpha) {
+        return 'rgba(' + arr[0] + ',' + arr[1] + ',' + arr[2] + ',' + (alpha == null ? 1 : alpha) + ')';
+      }
+      function mix(a, b, t, alpha) { return rgba(mixRgb(a, b, t), alpha); }
+      // the colour a hybrid would be: halfway between the two parent populations
+      function midRgb(base, ea, eb, t) {
+        var A = mixRgb(base, ea, t), B = mixRgb(base, eb, t), o = [], i;
+        for (i = 0; i < 3; i++) o.push(Math.round((A[i] + B[i]) / 2));
+        return o;
+      }
+      function fade(hex, alpha) {
+        var A = toRgb(hex);
+        return 'rgba(' + A[0] + ',' + A[1] + ',' + A[2] + ',' + alpha + ')';
+      }
+
+      // ---------------- history -----------------------------------------
+      var hist = [], histEvery = 2, histNext = 0, HIST_MAX = 700;
+
+      function pushHist(force) {
+        if (!force && S.gen < histNext) return;
+        hist.push({ g: S.gen, D: S.D, I: iso(S.D), w: hyb(S.D), up: S.barrier });
+        histNext = S.gen + histEvery;
+        if (hist.length > HIST_MAX) {
+          var out = [], i;
+          for (i = 0; i < hist.length; i += 2) out.push(hist[i]);
+          hist = out;
+          histEvery *= 2;
+        }
+      }
+
+      // ==================================================================
+      // INTEGRATION
+      // ==================================================================
+      function stepGen(h) {
+        var raw = rawNm();
+        var dD = slope(S.D, raw) * h;
+        var varTerm = Math.max(S.D * (1 - S.D), 0) / (2 * N);
+        dD += NOISE * Math.sqrt(varTerm) * Math.sqrt(h) * Demo.gauss(rand);
+        S.D = Demo.clamp(S.D + dD, 0, 1);
+        S.gen += h;
+        if (S.barrier) {
+          S.apart += h;
+          if (S.autoLowerAt != null && S.apart >= S.autoLowerAt) setBarrier(false);
+        } else {
+          S.contact += h;
+        }
+      }
+
+      // ==================================================================
+      // MAP CANVAS
+      // ==================================================================
+      var mapCv = Demo.canvas('#map', function (ctx, w, h, c) {
+        var D = S.D, I = iso(D), wH = hyb(D);
+        // Both populations start on the SAME real colour and diverge in
+        // opposite directions. Interpolating straight from one series colour
+        // to another would put an undiverged population on the midpoint,
+        // which for complementary hues is mud — it would read as "broken"
+        // rather than as "these two are identical".
+        var base = c.accent, endA = c.series[1], endB = c.series[2];
+        var pad = 8, topY = 16, botY = h - 20;
+        var x0 = pad, x1 = w - pad;
+        var gapW = Demo.clamp((x1 - x0) * 0.11, 22, 54);
+        var midX = (x0 + x1) / 2;
+        var aL = x0, aR = midX - gapW / 2, bL = midX + gapW / 2, bR = x1;
+        var fs = w < 360 ? 9.3 : 10.4;
+        var i, p;
+
+        // how far each population has moved from the shared starting colour
+        function patch(lx, rx, end, name) {
+          ctx.fillStyle = mix(base, end, D, 0.12);
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(lx, topY, rx - lx, botY - topY, 9);
+          else ctx.rect(lx, topY, rx - lx, botY - topY);
+          ctx.fill();
+          ctx.strokeStyle = mix(base, end, D, 0.40);
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = mix(base, end, D);
+          ctx.fillText(name, lx + 2, topY - 3);
+        }
+
+        patch(aL, aR, endA, 'Population A');
+        patch(bL, bR, endB, 'Population B');
+
+        // individuals — jitter is within-population variation
+        function drawPop(list, lx, rx, end) {
+          for (i = 0; i < list.length; i++) {
+            p = list[i];
+            var px = lx + 9 + p.u * (rx - lx - 18);
+            var py = topY + 10 + p.v * (botY - topY - 20);
+            var rad = 3.1 + p.s * 1.5;
+            ctx.beginPath();
+            ctx.arc(px, py, rad, 0, 6.2832);
+            ctx.fillStyle = mix(base, end, D + p.j * 0.5);
+            ctx.fill();
+          }
+        }
+        drawPop(POP_A, aL, aR, endA);
+        drawPop(POP_B, bL, bR, endB);
+
+        // the corridor between them
+        ctx.save();
+        if (S.barrier) {
+          // solid ridge
+          ctx.fillStyle = fade(c.text2, 0.16);
+          ctx.fillRect(midX - gapW / 2, topY, gapW, botY - topY);
+          ctx.strokeStyle = c.text2;
+          ctx.lineWidth = 1.6;
+          var teeth = Math.max(3, Math.round((botY - topY) / 17));
+          ctx.beginPath();
+          for (i = 0; i <= teeth; i++) {
+            var yy = topY + (botY - topY) * i / teeth;
+            ctx.moveTo(midX - gapW / 2 + 2, yy);
+            ctx.lineTo(midX, yy - (botY - topY) / teeth * 0.45);
+            ctx.lineTo(midX + gapW / 2 - 2, yy);
+          }
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]);
+          ctx.beginPath();
+          ctx.moveTo(midX - gapW / 2, topY); ctx.lineTo(midX - gapW / 2, botY);
+          ctx.moveTo(midX + gapW / 2, topY); ctx.lineTo(midX + gapW / 2, botY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // hybrids in the contact zone, only if there is anything to hybridise
+          if (D > 0.04) {
+            for (i = 0; i < HYB.length; i++) {
+              p = HYB[i];
+              var hx = midX - gapW / 2 + 5 + p.u * (gapW - 10);
+              var hy = topY + 10 + p.v * (botY - topY - 20);
+              var alive = wH > 0.02;
+              ctx.beginPath();
+              ctx.arc(hx, hy, 3.4, 0, 6.2832);
+              ctx.fillStyle = rgba(midRgb(base, endA, endB, D), alive ? 0.35 + 0.65 * wH : 0.16);
+              ctx.fill();
+              if (!alive) {
+                ctx.strokeStyle = fade(c.bad, 0.85);
+                ctx.lineWidth = 1.3;
+                ctx.beginPath();
+                ctx.moveTo(hx - 3.6, hy - 3.6); ctx.lineTo(hx + 3.6, hy + 3.6);
+                ctx.moveTo(hx + 3.6, hy - 3.6); ctx.lineTo(hx - 3.6, hy + 3.6);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+        ctx.restore();
+
+        // migrants actually crossing
+        var nmE = effNm(D, rawNm());
+        if (nmE > 0.02) {
+          var shown = Math.min(4, Math.max(1, Math.round(nmE / 2.6)));
+          for (i = 0; i < shown; i++) {
+            var ph = ((S.gen * 0.22 + i / shown) % 1);
+            var dir = i % 2 === 0 ? 1 : -1;
+            var span = bL - aR + gapW * 0.4;
+            var sx = dir > 0
+              ? aR - gapW * 0.2 + span * ph
+              : bL + gapW * 0.2 - span * ph;
+            var sy = topY + (botY - topY) * (0.25 + 0.5 * ((i * 0.37) % 1));
+            ctx.beginPath();
+            ctx.arc(sx, sy, 3, 0, 6.2832);
+            ctx.fillStyle = mix(base, dir > 0 ? endA : endB, D, 0.9);
+            ctx.fill();
+            ctx.strokeStyle = c.surface; ctx.lineWidth = 1.2; ctx.stroke();
+          }
+        }
+
+        // footer: state of the corridor
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText(S.barrier
+          ? 'Barrier UP — ' + gens(S.apart) + ' separated'
+          : 'Barrier DOWN — populations in contact', x0 + 1, botY + 5);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('generation ' + F.comma(S.gen), x1 - 1, botY + 5);
+
+        // divergence caption inside the corridor
+        ctx.save();
+        ctx.translate(midX, (topY + botY) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '600 ' + (fs - 0.6) + FONT;
+        ctx.fillStyle = S.barrier ? c.text2 : c.muted;
+        ctx.fillText(S.barrier ? 'no gene flow' : (D > 0.04 ? 'hybrid zone' : 'free gene flow'), 0, 0);
+        ctx.restore();
+      }, { aspect: 0.46, minHeight: 175, maxHeight: 250 });
+
+      // ==================================================================
+      // HISTORY CANVAS
+      // ==================================================================
+      var histCv = Demo.canvas('#hist', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var padL = narrow ? 30 : 36, padR = narrow ? 10 : 14, padT = 16, padB = 32;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.3 : 10.4;
+        var i, gy, px;
+
+        var gmax = Math.max(200, S.gen * 1.04);
+        function X(g) { return x0 + (x1 - x0) * Demo.clamp(g / gmax, 0, 1); }
+        function Y(v) { return y0 - (y0 - y1) * Demo.clamp(v, 0, 1); }
+
+        // barrier-up shading
+        ctx.fillStyle = c.accentSoft || fade(c.accent, 0.14);
+        var segStart = null;
+        for (i = 0; i < hist.length; i++) {
+          if (hist[i].up && segStart === null) segStart = hist[i].g;
+          if (segStart !== null && (!hist[i].up || i === hist.length - 1)) {
+            // an open run reaches the live generation, not just the last sample
+            var endG = (hist[i].up && i === hist.length - 1) ? S.gen : hist[i].g;
+            var xa = X(segStart), xb = X(endG);
+            if (xb - xa < 1) xb = xa + 1;
+            ctx.fillRect(xa, y1, xb - xa, y0 - y1);
+            ctx.strokeStyle = c.accentLine || fade(c.accent, 0.4);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(xa, y1); ctx.lineTo(xa, y0);
+            ctx.moveTo(xb, y1); ctx.lineTo(xb, y0);
+            ctx.stroke();
+            segStart = null;
+          }
+        }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(i / 4, 2), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // x ticks
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var stepG = Math.pow(10, Math.floor(Math.log10(gmax / 4)));
+        if (gmax / stepG > 8) stepG *= 2;
+        if (gmax / stepG > 8) stepG *= 2.5;
+        for (var g = 0; g <= gmax; g += stepG) {
+          px = X(g);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.comma(g), px, y0 + 6);
+        }
+        ctx.fillText('generations', (x0 + x1) / 2, y0 + 19);
+
+        // the three curves
+        function line(key, col, width, dash) {
+          if (hist.length < 2) return;
+          ctx.save();
+          ctx.strokeStyle = col; ctx.lineWidth = width; ctx.lineJoin = 'round';
+          if (dash) ctx.setLineDash(dash);
+          ctx.beginPath();
+          for (i = 0; i < hist.length; i++) {
+            var xx = X(hist[i].g), yy = Y(hist[i][key]);
+            if (i === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+        line('w', c.series[2], 1.7, [5, 4]);
+        line('D', c.series[0], 2.2, null);
+        line('I', c.series[3], 2.2, null);
+
+        // the live point
+        if (hist.length) {
+          var live = [[S.D, c.series[0]], [iso(S.D), c.series[3]], [hyb(S.D), c.series[2]]];
+          for (i = 0; i < live.length; i++) {
+            ctx.beginPath();
+            ctx.arc(X(S.gen), Y(live[i][0]), 3.4, 0, 6.2832);
+            ctx.fillStyle = live[i][1]; ctx.fill();
+            ctx.strokeStyle = c.surface; ctx.lineWidth = 1.4; ctx.stroke();
+          }
+        }
+
+        if (hist.length < 2) {
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Raise the barrier to start the clock.', (x0 + x1) / 2, (y0 + y1) / 2);
+        }
+      }, { aspect: 0.42, minHeight: 160, maxHeight: 215 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        btnBarrier: document.getElementById('btnBarrier'),
+        barrierHint: document.getElementById('barrierHint'),
+        btnRun: document.getElementById('btnRun'),
+        btnReset: document.getElementById('btnReset'),
+        leak: document.getElementById('leak'),
+        leakOut: document.getElementById('leakOut'),
+        sel: document.getElementById('sel'),
+        selOut: document.getElementById('selOut'),
+        rIso: document.getElementById('rIso'),
+        rIsoSub: document.getElementById('rIsoSub'),
+        rDiv: document.getElementById('rDiv'),
+        rHyb: document.getElementById('rHyb'),
+        rNmEff: document.getElementById('rNmEff'),
+        rApart: document.getElementById('rApart'),
+        rApartLbl: document.getElementById('rApartLbl'),
+        rApartSub: document.getElementById('rApartSub'),
+        isoBar: document.getElementById('isoBar'),
+        rPull: document.getElementById('rPull'),
+        pullBox: document.getElementById('pullBox'),
+        pullNote: document.getElementById('pullNote'),
+        rEq: document.getElementById('rEq'),
+        rEqSub: document.getElementById('rEqSub'),
+        mapCap: document.getElementById('mapCap'),
+        histCap: document.getElementById('histCap'),
+        lgDiv: document.getElementById('lgDiv'),
+        lgIso: document.getElementById('lgIso'),
+        lgHyb: document.getElementById('lgHyb')
+      };
+
+      el.lgDiv.style.background = 'var(--series-1)';
+      el.lgIso.style.background = 'var(--series-4)';
+      el.lgHyb.style.background = 'var(--series-3)';
+
+      // Bands on a smooth number. They are OUR cut points, not nature's.
+      function band(I) {
+        if (I < 0.10) return ['one population, freely interbreeding', ''];
+        if (I < 0.40) return ['slightly differentiated — still one species', ''];
+        if (I < 0.75) return ['diverging — hybrids common, and less fit', ''];
+        if (I < 0.95) return ['incipient species — strong but leaky isolation', ''];
+        if (I < 0.995) return ['nearly isolated — a few hybrid genes still cross', ''];
+        return ['separate species by any practical test', 'is-ok'];
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        var D = S.D, I = iso(D), wH = hyb(D);
+        var raw = rawNm(), nmE = effNm(D, raw);
+        var openSlope = slope(D, NM_OPEN);
+
+        el.leakOut.textContent = F.dec(S.leak, 2);
+        el.selOut.innerHTML = F.dec(S.sel * 1000, 1) + ' &times; 10⁻³';
+
+        el.rIso.textContent = F.dec(I, 3);
+        var b = band(I);
+        el.rIsoSub.textContent = b[0];
+        el.isoBar.style.width = Demo.clamp(I * 100, 0, 100) + '%';
+        el.isoBar.style.background = I > 0.995 ? 'var(--bad)' : I > 0.75 ? 'var(--warn)' : 'var(--accent)';
+
+        el.rDiv.textContent = F.dec(D, 3);
+        el.rHyb.textContent = wH >= 0.01 ? F.dec(wH, 2) : F.sci(wH, 1);
+        el.rNmEff.textContent = nmE >= 0.1 ? F.dec(nmE, 2) : nmE >= 0.001 ? F.dec(nmE, 3) : '< 0.001';
+        el.rApart.textContent = F.comma(S.barrier ? S.apart : S.contact);
+        el.rApartLbl.textContent = S.barrier ? 'Generations separated' : 'Generations in contact';
+        el.rApartSub.textContent = S.barrier
+          ? 'since you raised the barrier'
+          : 'since the barrier came down';
+
+        // "if the barrier came down right now"
+        el.rPull.textContent = (openSlope >= 0 ? '+' : '−') + F.dec(Math.abs(openSlope), 4);
+        el.pullBox.className = 'readout span2 ' + (openSlope >= 0 ? 'is-bad' : 'is-ok');
+
+        if (!S.barrier) {
+          el.pullNote.className = 'note';
+          el.pullNote.innerHTML = 'The barrier <strong>is</strong> down. Divergence is changing at '
+            + (openSlope >= 0 ? '+' : '−') + F.dec(Math.abs(openSlope), 4)
+            + ' per generation right now, with ' + F.dec(nmE, 2) + ' migrants per generation actually '
+            + 'contributing genes.';
+        } else if (openSlope < 0) {
+          el.pullNote.className = 'note';
+          el.pullNote.innerHTML = 'Contact would <strong>undo</strong> the split. '
+            + F.dec(NM_OPEN * (1 - I), 2) + ' migrants per generation would get their genes '
+            + 'through &mdash; isolation is ' + F.dec(I, 3) + ', and the ' + F.pct(1 - I, 1)
+            + ' that leaks past is more than enough. Keep waiting, or lower it and watch them fuse.';
+        } else {
+          el.pullNote.className = 'note bad';
+          el.pullNote.innerHTML = 'Contact would <strong>not</strong> undo the split. Only '
+            + F.sci(NM_OPEN * (1 - I), 1) + ' migrants per generation would land any genes, which is less '
+            + 'than the divergence being generated. Lower the barrier: they will meet, make almost no viable '
+            + 'hybrids, and stay two.';
+        }
+
+        // the closed-form equilibrium for the leak slider
+        var eq = eqNoIso(S.leak);
+        el.rEq.textContent = S.leak === 0 ? '1.000' : F.dec(eq, 3);
+        el.rEqSub.textContent = S.leak === 0
+          ? 'no migrants: divergence runs all the way to 1'
+          : 'r / (r + 2Nm/N) with ' + F.dec(S.leak, 2) + ' migrants per generation';
+
+        el.mapCap.innerHTML = mapCaption(D, I, wH, nmE);
+        el.histCap.innerHTML = histCaption(D, I, wH, openSlope);
+
+        if (fast) { mapCv.paint(); histCv.paint(); }
+        else { mapCv.redraw(); histCv.redraw(); }
+      }
+
+      function mapCaption(D, I, wH, nmE) {
+        if (S.barrier) {
+          return 'Separated for <strong>' + gens(S.apart) + '</strong>. Divergence '
+            + F.dec(D, 3) + ', isolation ' + F.dec(I, 3) + '. The colours are the two gene pools drifting '
+            + 'apart; nothing is crossing except the ' + F.dec(nmE, 2) + ' migrants a generation you allowed '
+            + 'through the barrier.';
+        }
+        if (D <= 0.05) {
+          return 'One population. Divergence sits at <strong>' + F.dec(D, 3) + '</strong> &mdash; not zero, '
+            + 'because ' + NM_OPEN + ' migrants a generation cannot quite erase drift and selection in '
+            + 'populations of ' + N + '. The floor is r / (r + 2Nm/N) = ' + F.dec(eqNoIso(NM_OPEN), 3)
+            + ', which with selection turned off is exactly 1/(1 + 4Nm) = '
+            + F.dec(1 / (1 + 4 * NM_OPEN), 3) + '.';
+        }
+        return 'In contact after <strong>' + gens(S.contact) + '</strong>. Hybrids form in the '
+          + 'middle strip, and their fitness is <strong>' + (wH >= 0.01 ? F.dec(wH, 2) : F.sci(wH, 1))
+          + '</strong> relative to a non-hybrid'
+          + (wH < 0.02 ? ' &mdash; drawn crossed out, because almost none of them breed.' : '.')
+          + ' Effective gene flow: ' + F.dec(nmE, 2) + ' migrants per generation.';
+      }
+
+      function histCaption(D, I, wH, openSlope) {
+        var t = 'Shaded stripes are the generations the barrier was up. ';
+        if (hist.length < 3) {
+          return t + 'Isolation (purple) is a consequence of divergence (blue), and hybrid fitness (green, '
+            + 'dashed) is the same fact upside down.';
+        }
+        if (S.barrier) {
+          t += 'Watch the purple isolation curve lag behind the blue divergence curve, then overtake it. ';
+          if (I < 0.95) {
+            t += 'At isolation ' + F.dec(I, 3) + ', contact would still swamp the difference.';
+          } else if (openSlope < 0) {
+            t += 'Isolation is ' + F.dec(I, 4) + ' and contact would <em>still</em> undo it. The last '
+              + 'fraction of a percent is the hard part.';
+          } else {
+            t += 'Isolation has passed the point where contact can undo it &mdash; but nothing jumped. '
+              + 'The curve is smooth right through it.';
+          }
+        } else if (D > 0.05 && openSlope < 0) {
+          t += 'The blue curve is falling: the two gene pools are merging back into one, and the purple '
+            + 'isolation curve is following it down. There was no species here to lose.';
+        } else if (D > 0.05) {
+          t += 'The blue curve is climbing again even though the barrier is down. Nothing separates these '
+            + 'populations now except their own biology. That is what "two species" means.';
+        } else {
+          t += 'Flat and low: one population, no history left.';
+        }
+        return t;
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var anim = Demo.loop(function (dt) {
+        var dg = Math.min(dt * S.speed, MAXDG);
+        if (dg <= 0) { render(true); return; }
+        var steps = Math.max(1, Math.ceil(dg / SUB));
+        var h = dg / steps;
+        for (var i = 0; i < steps; i++) stepGen(h);
+        pushHist(false);
+        render(true);
+      });
+
+      function setBarrier(up) {
+        if (S.barrier === up) return;
+        pushHist(true);
+        S.barrier = up;
+        if (up) { S.apart = 0; }
+        else { S.contact = 0; S.autoLowerAt = null; }
+        pushHist(true);
+        syncBarrierUI();
+      }
+
+      function syncBarrierUI() {
+        el.btnBarrier.textContent = S.barrier ? 'Lower the barrier' : 'Raise the barrier';
+        el.barrierHint.innerHTML = S.barrier
+          ? 'The barrier is up. Every generation apart adds divergence, and isolation grows out of that '
+            + 'divergence. <strong>Lower it whenever you like</strong> &mdash; the whole question is whether '
+            + 'you waited long enough.'
+          : 'While the barrier is up the two populations cannot exchange genes, so they drift apart and the '
+            + 'two habitats push them in different directions. Lower it again and see whether they still '
+            + 'recognise each other as one species.';
+      }
+
+      el.btnBarrier.addEventListener('click', function () {
+        S.autoLowerAt = null;
+        setBarrier(!S.barrier);
+        clearPresets();
+        if (!anim.running) startRun();
+        render(false);
+      });
+
+      function startRun() { anim.start(); el.btnRun.textContent = 'Pause'; }
+      function stopRun() { anim.stop(); el.btnRun.textContent = 'Run'; }
+
+      el.btnRun.addEventListener('click', function () {
+        if (anim.running) stopRun(); else startRun();
+      });
+
+      function clearPresets() {
+        var bs = document.querySelectorAll('#presets .btn');
+        for (var i = 0; i < bs.length; i++) bs[i].classList.remove('is-on');
+      }
+
+      function hardReset() {
+        stopRun();
+        S.gen = 0;
+        S.D = eqNoIso(NM_OPEN);
+        S.barrier = false;
+        S.apart = 0; S.contact = 0; S.autoLowerAt = null;
+        rand = Demo.rng(20240717 + Math.floor(Math.random() * 1000));
+        hist = []; histEvery = 2; histNext = 0;
+        syncBarrierUI();
+        pushHist(true);
+      }
+
+      el.btnReset.addEventListener('click', function () {
+        hardReset();
+        clearPresets();
+        render(false);
+      });
+
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#presets .btn'));
+      presetBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          hardReset();
+          clearPresets();
+          btn.classList.add('is-on');
+          S.autoLowerAt = parseFloat(btn.dataset.gens);
+          setBarrier(true);
+          startRun();
+          render(false);
+        });
+      });
+
+      var speedBtns = Array.prototype.slice.call(document.querySelectorAll('#speedSeg button'));
+      speedBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          speedBtns.forEach(function (o) { o.setAttribute('aria-selected', o === btn ? 'true' : 'false'); });
+          S.speed = parseFloat(btn.dataset.speed);
+        });
+      });
+
+      Demo.range('#leak', function (v) { S.leak = v; render(false); });
+      Demo.range('#sel', function (v) { S.sel = v; render(false); });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      syncBarrierUI();
+      pushHist(true);
+      render(false);
+      // Start paused. Raising the barrier or pressing a preset starts the
+      // clock, so the generation axis is not already thousands of empty
+      // generations wide by the time the student does anything.
+      el.btnRun.textContent = 'Run';
+    })();
+  </script>
+</body>
+
+</html>

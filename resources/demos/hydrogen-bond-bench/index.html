@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Hydrogen Bond Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Two things hydrogen bonds do. Set water-water and water-glass attraction independently and watch a capillary tube climb, flatten or sink; then put the same energy into two boxes of particles and see how much of it never becomes motion.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend, unit-bearing readout tiles */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 25px; }
+
+    /* these tiles carry real units, which run longer than one line */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.up { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.down { color: var(--bad); font-weight: 600; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 9px; border-radius: 3px; display: inline-block; flex: none; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Hydrogen Bond Bench</h1>
+        <p class="demo-sub">Start on the capillary tube. Drag <em>adhesion</em> down on its own and watch the meniscus flip over and the liquid sink &mdash; that is the difference between mercury and water, and nothing else changed.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 1</span>
+          <span class="tag is-accent">Cohesion, adhesion, heat</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ================= stage ================= -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Which mechanism" id="panelSeg">
+          <button role="tab" aria-selected="true" data-panel="cap">1 &middot; Capillary action</button>
+          <button role="tab" aria-selected="false" data-panel="eng">2 &middot; Where energy goes</button>
+        </div>
+
+        <!-- ---------- panel 1 ---------- -->
+        <div id="stageCap">
+          <p class="stage-label" style="margin-top:12px">Capillary tube standing in a reservoir
+            <span>&mdash; heights are real millimetres; the bore is drawn far wider than life</span></p>
+          <canvas id="tube" role="img"
+                  aria-label="A narrow tube standing in a dish of liquid. The liquid inside the tube sits above or below the level in the dish, with a curved meniscus whose shape and contact angle change with the cohesion and adhesion settings."></canvas>
+          <p class="stage-caption" id="capCap">&nbsp;</p>
+
+          <hr class="sep" style="margin:16px 0">
+
+          <p class="stage-label">How high it climbs against tube diameter
+            <span>&mdash; Jurin&rsquo;s law, h &prop; 1 / radius</span></p>
+          <canvas id="hcurve" role="img"
+                  aria-label="Height of rise plotted against tube diameter. The curve is a hyperbola: halving the diameter doubles the rise."></canvas>
+          <p class="stage-caption" id="curveCap">&nbsp;</p>
+        </div>
+
+        <!-- ---------- panel 2 ---------- -->
+        <div id="stageEng" hidden>
+          <p class="stage-label" style="margin-top:12px">Two boxes, identical particles, identical energy in
+            <span>&mdash; arbitrary units throughout</span></p>
+          <canvas id="boxes" role="img"
+                  aria-label="Two boxes of moving particles side by side. The left box has no hydrogen bonding; the right box shows lines between neighbouring particles where hydrogen bonds are intact. Particles in the right box move visibly slower."></canvas>
+          <div class="legend">
+            <span class="lg"><i style="background:var(--series-1)"></i>particle</span>
+            <span class="lg"><i style="background:var(--accent);height:3px"></i>intact hydrogen bond</span>
+            <span class="lg"><i style="background:var(--warn)"></i>energy as motion</span>
+            <span class="lg"><i style="background:var(--series-4)"></i>energy stored in broken bonds</span>
+          </div>
+          <p class="stage-caption" id="boxCap">&nbsp;</p>
+
+          <hr class="sep" style="margin:16px 0">
+
+          <p class="stage-label">Where the injected energy ended up
+            <span>&mdash; same bar length in, split differently</span></p>
+          <canvas id="split" role="img"
+                  aria-label="Two stacked bars of equal total length. The box without hydrogen bonding puts all of its energy into motion; the box with hydrogen bonding splits its energy between motion and broken bonds."></canvas>
+          <p class="stage-caption" id="splitCap">&nbsp;</p>
+        </div>
+
+      </div>
+
+      <!-- ================= controls ================= -->
+      <div class="controls">
+
+        <!-- ---------- panel 1 controls ---------- -->
+        <div id="ctrlCap">
+
+          <div class="panel">
+            <div class="panel-title">The two attractions</div>
+            <div class="stack">
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="wcoh">Cohesion &mdash; liquid to liquid</label>
+                  <span class="ctrl-value" id="wcohOut">144 mJ m⁻²</span>
+                </div>
+                <input type="range" id="wcoh" min="40" max="160" step="1" value="144">
+                <p class="ctrl-hint">Work of cohesion: the energy it costs to pull the liquid apart from itself over one square metre. Water is <strong>144 mJ m⁻²</strong>, which is twice its surface tension of 72 mN m⁻¹.</p>
+              </div>
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="wadh">Adhesion &mdash; liquid to glass</label>
+                  <span class="ctrl-value" id="wadhOut">137 mJ m⁻²</span>
+                </div>
+                <input type="range" id="wadh" min="0" max="160" step="1" value="137">
+                <p class="ctrl-hint">Work of adhesion: the energy it costs to peel the liquid off the glass. This is the slider to move first &mdash; drag it to zero and keep everything else where it is.</p>
+              </div>
+
+              <div class="btn-row" id="capPresets">
+                <button class="btn" data-coh="144" data-adh="144">Water, clean glass</button>
+                <button class="btn" data-coh="144" data-adh="50">Water, waxed glass</button>
+                <button class="btn" data-coh="160" data-adh="18">Mercury-like</button>
+              </div>
+              <p class="ctrl-hint">Clean glass gives water a contact angle of 0&deg;; a waxed or greasy surface gives about 108&deg;, which is the measured value for water on paraffin wax. The third preset lands on 140&deg;, mercury&rsquo;s real contact angle on glass.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">The tube</div>
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="dia">Inside diameter</label>
+                <span class="ctrl-value" id="diaOut">0.80 mm</span>
+              </div>
+              <input type="range" id="dia" min="0.8" max="5" step="0.05" value="0.8">
+              <p class="ctrl-hint">Nothing about the liquid changes here &mdash; only the plumbing. Halve the diameter and the rise doubles exactly.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">What the model gives you</div>
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Rise above the reservoir</div>
+                <div class="r-value big" id="rRise">33.2<span class="r-unit">mm</span></div>
+                <div class="r-sub" id="rRiseSub">liquid climbs the tube</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Contact angle &theta;</div>
+                <div class="r-value" id="rTheta">25.5&deg;</div>
+                <div class="r-sub" id="rThetaSub">concave meniscus</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Surface tension &gamma;</div>
+                <div class="r-value" id="rGamma">72<span class="r-unit">mN m⁻¹</span></div>
+                <div class="r-sub">&gamma; = cohesion / 2</div>
+              </div>
+            </div>
+            <hr class="sep" style="margin:12px 0">
+            <p class="note" id="capNote">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">The equations, in full</div>
+            <p class="ctrl-hint">
+              <strong>Young&ndash;Dupr&eacute;:</strong> cos&thinsp;&theta; = W<sub>adhesion</sub>/&gamma; &minus; 1, and
+              since the work of cohesion is W<sub>coh</sub> = 2&gamma;, that is
+              cos&thinsp;&theta; = 2W<sub>adh</sub>/W<sub>coh</sub> &minus; 1.<br>
+              <strong>Jurin&rsquo;s law:</strong> h = 2&gamma;&thinsp;cos&thinsp;&theta; / (&rho;&thinsp;g&thinsp;r), with
+              &rho; = 997 kg m⁻³ and g = 9.81 m s⁻². Put those together and the whole thing collapses to
+              h = (2W<sub>adh</sub> &minus; W<sub>coh</sub>) / (&rho;&thinsp;g&thinsp;r): a straight tug-of-war between
+              the two attractions, divided by the radius.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Honest limits</div>
+            <p class="note warn">
+              <strong>The density stays at water&rsquo;s the whole time.</strong> This bench changes only the two bond
+              strengths, so the &ldquo;mercury-like&rdquo; preset gives you mercury&rsquo;s contact angle but not
+              mercury&rsquo;s liquid. Real mercury has a surface tension of 485 mN m⁻¹ (six times water&rsquo;s) and a
+              density of 13&thinsp;534 kg m⁻³ (13.5 times water&rsquo;s), and those two effects largely cancel: in a
+              0.80 mm tube real mercury sinks about <strong>14 mm</strong>, not the 31 mm drawn here. The
+              <em>direction</em> is right and the contact angle is right; the size of the drop is not.
+            </p>
+            <p class="ctrl-hint" style="margin-top:11px">
+              Also simplified: the tube is perfectly clean and perfectly cylindrical, the liquid is at rest and at
+              equilibrium (Jurin&rsquo;s law says nothing about how fast it gets there), gravity is the only thing
+              opposing the climb, and the meniscus is treated as part of a sphere &mdash; true only while the tube is
+              narrow enough that gravity does not flatten it, which holds across this slider. The bore in the drawing
+              is many times wider than the millimetre scale beside it, or a 0.8 mm tube would be a hairline.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- ---------- panel 2 controls ---------- -->
+        <div id="ctrlEng" hidden>
+
+          <div class="panel">
+            <div class="panel-title">Inject energy into both boxes</div>
+            <div class="stack">
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="ein">Energy added per particle</label>
+                  <span class="ctrl-value" id="einOut">1.00 arb. u.</span>
+                </div>
+                <input type="range" id="ein" min="0" max="3.5" step="0.01" value="1">
+                <p class="ctrl-hint">Both boxes get exactly this much, per particle. Slide it to zero and everything stops dead in both boxes &mdash; there is nothing left over anywhere.</p>
+              </div>
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="bpp">Hydrogen bonds per particle</label>
+                  <span class="ctrl-value" id="bppOut">2.0</span>
+                </div>
+                <input type="range" id="bpp" min="0" max="4" step="0.1" value="2">
+                <p class="ctrl-hint">Right-hand box only. Liquid water averages about 2; ice locks in 4. At 0 the two boxes become identical and the bars match exactly &mdash; check that.</p>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn primary" id="btnAnim">Pause</button>
+                <button class="btn" id="btnEngReset">Reset</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Where the energy went &mdash; arbitrary units</div>
+            <div class="readouts two">
+              <div class="readout span2">
+                <div class="r-label">Fraction of the input that went into breaking bonds</div>
+                <div class="r-value big" id="rFracBond">64.4%</div>
+                <div class="r-sub" id="rFracBondSub">bonded box only; the other box has nowhere to put it</div>
+              </div>
+              <div class="readout is-bad">
+                <div class="r-label">Motion energy, bonding off</div>
+                <div class="r-value" id="rKeA">1.00</div>
+                <div class="r-sub">arb. u. per particle</div>
+              </div>
+              <div class="readout is-ok">
+                <div class="r-label">Motion energy, bonding on</div>
+                <div class="r-value" id="rKeB">0.36</div>
+                <div class="r-sub">arb. u. per particle</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Bonds broken</div>
+                <div class="r-value" id="rBroken">64.4%</div>
+                <div class="r-sub" id="rBrokenSub">of the bonds available</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Particle speed, on vs off</div>
+                <div class="r-value" id="rSpeed">60%</div>
+                <div class="r-sub">speed &prop; &radic;(motion energy)</div>
+              </div>
+            </div>
+            <hr class="sep" style="margin:12px 0">
+            <p class="note" id="engNote">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">The equations, in full</div>
+            <p class="ctrl-hint">
+              Each particle can hold up to <em>n</em> hydrogen bonds, so there are n/2 bonds per particle (every bond
+              is shared by two). A bond costs &epsilon; = 1 arbitrary unit to break, and the broken fraction follows a
+              two-state Boltzmann law, x(T) = g / (g + e<sup>&epsilon;/T</sup>) with g = 30, where T is the mean
+              motion energy per particle.<br>
+              Every unit of energy you add has to end up in one of two places:
+              <strong>e = T + (n/2)&thinsp;&epsilon;&thinsp;x(T)</strong>, solved for T. The left box has n = 0, so all
+              of its energy has nowhere to go but T. Nothing here is integrated over time &mdash; the numbers are the
+              exact solution, and the animation just draws it.
+            </p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Read this before you convert anything</div>
+            <p class="note bad">
+              <strong>Every number on this panel is dimensionless.</strong> Arbitrary units, per particle, comparing
+              this simulation with itself. Do not translate them into joules, degrees, or J g⁻¹ K⁻¹, and do not read a
+              ratio here as a ratio for real substances. A simulation measures energy <em>per particle</em>, and
+              water&rsquo;s famous heat capacity is a <em>per gram</em> fact &mdash; those are not the same comparison,
+              and they do not even point the same way. The footer below explains why.
+            </p>
+            <p class="ctrl-hint" style="margin-top:11px">
+              Also simplified: the particles are hard discs in two dimensions, bonds are all-or-nothing rather than
+              stretched and bent, and rotation and vibration inside a particle are ignored entirely. Real water
+              stores energy in all of those as well.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= the point ================= -->
+    <section class="why">
+      <h2>What this is for</h2>
+
+      <p>
+        <strong>The first misconception:</strong> that cohesion and adhesion are two words for the same stickiness, and
+        that a demo showing one shows the other. They are different attractions with different partners &mdash; water to
+        water, water to glass &mdash; and in a capillary tube they pull against each other. Drop the adhesion slider on
+        its own, touching nothing else, and the meniscus turns over from a smile to a frown and the liquid sinks below
+        the level in the dish. That is the entire difference between water in a glass tube and mercury in a glass tube.
+        Mercury is not somehow less sticky in general; it is enormously more cohesive and barely adheres to glass at all.
+      </p>
+
+      <p>
+        <strong>What to notice.</strong> The whole of panel 1 reduces to one line:
+        h = (2 &times; adhesion &minus; cohesion) / (&rho; g r). Adhesion is on the top with a plus sign and cohesion is
+        on the top with a minus sign &mdash; they are genuinely opposed &mdash; and the radius is underneath, which is
+        why <strong>a narrower tube climbs higher</strong>. At 0.80 mm water rises 33.2 mm; at 1.60 mm, exactly half as
+        far, 16.6 mm. That is not a small tube holding less water, it is a small tube holding a taller column, and the
+        reason is that the pull acts around the circumference (which scales with r) while the weight it lifts is a
+        volume (which scales with r&sup2;).
+      </p>
+
+      <p>
+        <strong>The part almost everyone gets backwards:</strong> capillary rise needs cohesion too. Set adhesion to its
+        maximum and then drag cohesion <em>down</em>. The liquid does not climb higher &mdash; it climbs less. Once the
+        liquid already wets the glass completely (&theta; = 0&deg;), extra adhesion buys nothing more, and from there it
+        is surface tension &mdash; cohesion &mdash; that actually holds the weight of the column up. Adhesion grips the
+        wall; cohesion drags the rest of the liquid along behind it. That is precisely the cohesion&ndash;tension story
+        of water moving up a hundred metres of xylem: adhesion to the vessel walls and cohesion within the water column,
+        both, or the column breaks.
+      </p>
+
+      <p>
+        <strong>The second misconception:</strong> that heating something always means speeding its particles up. Panel 2
+        puts the same energy into two boxes of identical particles and the bonded box ends up moving slower &mdash; at
+        the default settings, 64% of the energy goes into breaking hydrogen bonds and only 36% into motion, so the
+        particles end up moving at 60% of the speed of the ones next door. Temperature only measures the motion part.
+        Energy spent pulling bonds apart is real, it is stored, and you get it all back when the bonds re-form &mdash;
+        but while it is in the bonds, the thermometer cannot see it. That is why a sweating body cools, why coastal
+        towns have milder summers than inland ones, and why a lake takes all autumn to give up its summer heat.
+      </p>
+
+      <p>
+        <strong>And the trap in panel 2, stated plainly.</strong> Water&rsquo;s celebrated specific heat capacity,
+        4.18 J g⁻¹ K⁻¹, is a <em>per gram</em> figure, and a large part of why it wins is simply that a water molecule
+        is unusually small: 18 g mol⁻¹, so a gram of water is an awful lot of molecules. Measure per <em>mole</em>
+        instead &mdash; which is what a particle simulation measures, one particle at a time &mdash; and water&rsquo;s
+        molar heat capacity of 75.3 J mol⁻¹ K⁻¹ is among the <em>lowest</em> of the common liquids: benzene is 136,
+        ethanol 112, hexane 196. Water does not beat those molecules particle for particle. It beats them gram for
+        gram. So the boxes on panel 2 are deliberately labelled in arbitrary units and compared only with each other:
+        they show you the mechanism &mdash; energy diverted into bonds instead of into motion &mdash; and they are not
+        a measurement of water. If you ever see this simulation&rsquo;s ratio quoted as &ldquo;water holds four times
+        the heat&rdquo;, that is the per-gram fact being smuggled into a per-particle picture, and it is wrong.
+      </p>
+
+      <p>
+        <strong>Why this is on a screen and not on the bench.</strong> Surface tension you should meet with a dropper, a
+        penny and a paperclip &mdash; a real floating paperclip beats any simulation ever written. What a bench cannot
+        do is hand you a knob for adhesion alone, or let you watch energy divide itself between bonds and motion. Those
+        two are the only reasons this page exists.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      // ==================================================================
+      // PANEL 1 — CAPILLARY RISE
+      //
+      //   Young–Dupré:  cos θ = W_adh / γ − 1,  and W_coh = 2γ
+      //                 ⇒ cos θ = 2·W_adh / W_coh − 1     (clamped to ±1)
+      //   Jurin:        h = 2 γ cos θ / (ρ g r)
+      //
+      //   Together:     h = (2 W_adh − W_coh) / (ρ g r)   while θ > 0
+      //   so adhesion lifts, cohesion pulls down, and 1/r sets the scale.
+      //
+      //   Units: W in mJ m⁻² (numerically equal to mN m⁻¹ for γ),
+      //          d in mm, h reported in mm.
+      //   Sanity: W_coh = 144, W_adh = 144, d = 1.00 mm → h = 29.4 mm,
+      //           the textbook rise of water in a 1 mm bore.
+      // ==================================================================
+
+      var RHO = 997, GRAV = 9.81;
+      var MMWIN = 46;                 // vertical drawing window, ± mm
+      var DMIN = 0.8, DMAX = 5.0;     // mm
+
+      var C = { wcoh: 144, wadh: 137, d: 0.8 };
+
+      function capModel() {
+        var gam = C.wcoh / 2;                                   // mN m⁻¹
+        var cos = Demo.clamp(2 * C.wadh / C.wcoh - 1, -1, 1);
+        var th = Math.acos(cos);                                // radians
+        return {
+          gam: gam,
+          cos: cos,
+          thDeg: th * 180 / Math.PI,
+          th: th,
+          h: riseAt(gam, cos, C.d),
+          wetting: C.wadh >= C.wcoh                             // θ = 0, fully wetting
+        };
+      }
+
+      // h in mm for γ in mN m⁻¹ and d in mm
+      function riseAt(gam, cos, d) {
+        var r = d / 2 / 1000;                                   // m
+        return 2 * (gam / 1000) * cos / (RHO * GRAV * r) * 1000;
+      }
+
+      // ==================================================================
+      // PANEL 2 — WHERE THE ENERGY GOES  (dimensionless, within-sim only)
+      //
+      //   Each particle can hold n hydrogen bonds ⇒ n/2 bonds per particle.
+      //   A bond costs ε = 1 arb. u.; the broken fraction is two-state
+      //   Boltzmann with degeneracy g:   x(T) = g / (g + e^(ε/T))
+      //   T is the mean MOTION energy per particle.
+      //
+      //   Conservation:  e = T + (n/2)·ε·x(T)          solve for T
+      //
+      //   The right-hand side is strictly increasing in T, so T(e) is unique
+      //   and strictly increasing, and T(0) = 0 EXACTLY: x(0) = g/(g+∞) = 0.
+      //   Nothing is integrated over time, so there is no pool that fails to
+      //   drain — zero energy in gives zero motion and zero broken bonds.
+      // ==================================================================
+
+      var EPS = 1, GDEG = 30, EMAX = 3.5;
+      var NPART = 48;
+
+      var E = { e: 1.0, n: 2.0 };
+
+      function brokenFrac(T) {
+        if (!(T > 0)) return 0;
+        return GDEG / (GDEG + Math.exp(EPS / T));
+      }
+
+      function solveT(e, n) {
+        if (!(e > 0)) return 0;
+        var lo = 0, hi = e, mid;
+        for (var i = 0; i < 80; i++) {
+          mid = (lo + hi) / 2;
+          if (mid + (n / 2) * EPS * brokenFrac(mid) - e > 0) hi = mid; else lo = mid;
+        }
+        return (lo + hi) / 2;
+      }
+
+      function engModel() {
+        var e = E.e;
+        var TA = e;                       // no bonds: every unit becomes motion
+        var TB = solveT(e, E.n);
+        var bondE = e - TB;
+        return {
+          e: e, n: E.n,
+          TA: TA, TB: TB,
+          bondE: bondE,
+          fracBond: e > 0 ? bondE / e : 0,
+          fracMove: e > 0 ? TB / e : 0,
+          broken: brokenFrac(TB),
+          bondsPer: E.n / 2,
+          speedRatio: e > 0 ? Math.sqrt(TB / e) : 0
+        };
+      }
+
+      var EM = engModel();
+
+      // ==================================================================
+      // shared canvas helpers
+      // ==================================================================
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.5; ctx.stroke();
+      }
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, 2, Math.max(2, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      // ==================================================================
+      // CANVAS 1 — the tube
+      // ==================================================================
+      var tubeCv = Demo.canvas('#tube', function (ctx, w, h, c) {
+        var M = capModel();
+        var padL = 30, padR = 12, padT = 12, padB = 12;
+        var x0 = padL, x1 = w - padR, yT = padT, yB = h - padB;
+        var fs = w < 360 ? 9.5 : 10.5;
+        var water = c.series[0];
+
+        function Y(mm) { return yT + (MMWIN - mm) * (yB - yT) / (2 * MMWIN); }
+
+        // ---- geometry ----
+        var bx0 = x0 + 6, bx1 = x1 - 6;
+        var beakerTop = Y(14), beakerBot = Y(-MMWIN);
+        var tubeBot = Y(-45);
+        // the bore is drawn far wider than life so the meniscus is visible
+        var a = Demo.lerp(w < 360 ? 8 : 10, w < 360 ? 19 : 24, (C.d - DMIN) / (DMAX - DMIN));
+        var cx = Math.round(bx0 + (bx1 - bx0) * 0.42);
+        var apexY = Y(M.h);
+
+        // ---- millimetre ruler ----
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'right';
+        var ticks = [40, 20, 0, -20, -40];
+        for (var i = 0; i < ticks.length; i++) {
+          var ty = Y(ticks[i]);
+          ctx.strokeStyle = ticks[i] === 0 ? c.line : c.lineSoft;
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0 - 4, ty); ctx.lineTo(x0, ty); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(ticks[i]), x0 - 6, ty);
+        }
+        ctx.save();
+        ctx.translate(9, (yT + yB) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = c.muted;
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillText('height (mm)', 0, 0);
+        ctx.restore();
+
+        // ---- reservoir water ----
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.fillStyle = water;
+        ctx.fillRect(bx0, Y(0), bx1 - bx0, beakerBot - Y(0));
+        ctx.restore();
+
+        // reservoir surface
+        ctx.strokeStyle = water; ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.moveTo(bx0, Y(0)); ctx.lineTo(bx1, Y(0)); ctx.stroke();
+
+        // Blank the bore before filling it: the column inside the tube is
+        // independent of the reservoir, so a DEPRESSED tube must read as empty
+        // above its meniscus rather than inheriting the reservoir fill.
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(cx - a, yT, 2 * a, tubeBot - yT);
+
+        // ---- liquid inside the tube ----
+        var m = M.cos;
+        var sinA = Math.abs(Math.sin(M.th));
+        var sag = a * m / (1 + sinA);              // + = concave (edges above apex)
+        var edgeY = apexY - sag;
+
+        function meniscusPath() {
+          if (Math.abs(m) < 0.03) {
+            ctx.moveTo(cx - a, edgeY);
+            ctx.quadraticCurveTo(cx, edgeY + 2 * sag, cx + a, edgeY);
+            return;
+          }
+          var t = Math.abs(Math.tan(M.th));
+          var R = a / Math.abs(m);
+          var at = Math.atan(t);
+          if (m > 0) {
+            ctx.arc(cx, edgeY - a * t, R, Math.PI - at, at, true);
+          } else {
+            ctx.arc(cx, edgeY + a * t, R, at - Math.PI, -at, false);
+          }
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx - a, yT, 2 * a, tubeBot - yT);
+        ctx.clip();
+        ctx.beginPath();
+        meniscusPath();
+        ctx.lineTo(cx + a, tubeBot);
+        ctx.lineTo(cx - a, tubeBot);
+        ctx.closePath();
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = water;
+        ctx.fill();
+        ctx.restore();
+
+        // the meniscus line itself
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cx - a - 1, yT, 2 * a + 2, tubeBot - yT);
+        ctx.clip();
+        ctx.beginPath();
+        meniscusPath();
+        ctx.strokeStyle = water; ctx.lineWidth = 2.2;
+        ctx.stroke();
+        ctx.restore();
+
+        // ---- glassware, drawn last so it sits on top ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(bx0, beakerTop); ctx.lineTo(bx0, beakerBot);
+        ctx.lineTo(bx1, beakerBot); ctx.lineTo(bx1, beakerTop);
+        ctx.stroke();
+
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(cx - a, yT + 2); ctx.lineTo(cx - a, tubeBot);
+        ctx.moveTo(cx + a, yT + 2); ctx.lineTo(cx + a, tubeBot);
+        ctx.stroke();
+
+        // ---- contact angle indicator at the left wall ----
+        // The meniscus above is a true circular arc for the drawn bore, so the
+        // angle at the wall really is θ — only the height scale is different.
+        var arcR = Math.min(15, a * 0.85);
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.arc(cx - a, edgeY, arcR, Math.PI / 2 - M.th, Math.PI / 2, M.th < 0);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx - a, edgeY);
+        ctx.lineTo(cx - a + Math.sin(M.th) * arcR * 1.45, edgeY + Math.cos(M.th) * arcR * 1.45);
+        ctx.stroke();
+        chip(ctx, c, cx - a - 6, Demo.clamp(edgeY - arcR - 4, yT + 34, yB - 4),
+          'θ = ' + F.dec(M.thDeg, 1) + '°', fs, c.warn, w, 'right');
+
+        // ---- the h measurement, drawn to the right of the tube ----
+        var ax = cx + a + 26;
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.3;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath(); ctx.moveTo(cx + a, Y(0)); ctx.lineTo(ax + 6, Y(0)); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx + a, apexY); ctx.lineTo(ax + 6, apexY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(ax, Y(0)); ctx.lineTo(ax, apexY); ctx.stroke();
+        // arrow heads
+        var dir = apexY < Y(0) ? -1 : 1;
+        [[Y(0), -dir], [apexY, dir]].forEach(function (p) {
+          ctx.beginPath();
+          ctx.moveTo(ax, p[0]);
+          ctx.lineTo(ax - 3.5, p[0] - p[1] * 6);
+          ctx.lineTo(ax + 3.5, p[0] - p[1] * 6);
+          ctx.closePath();
+          ctx.fillStyle = c.accentStrong; ctx.fill();
+        });
+        chip(ctx, c, ax + 6, (Y(0) + apexY) / 2 + 4,
+          'h = ' + F.dec(M.h, 1) + ' mm', fs + 0.5, c.accentStrong, w, 'left');
+
+        // ---- verdicts ----
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = M.cos > 0 ? c.ok : M.cos < 0 ? c.bad : c.muted;
+        ctx.fillText(M.cos > 0 ? 'concave meniscus — the liquid climbs'
+          : M.cos < 0 ? 'convex meniscus — the liquid sinks'
+            : 'flat meniscus — the liquid goes nowhere', x0 + 2, yT + 1);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('bore drawn ' + F.dec((2 * a) / (C.d * (yB - yT) / (2 * MMWIN)), 0) +
+          '× wider than the height scale', x0 + 2, yT + 15);
+      }, { aspect: 0.96, minHeight: 300, maxHeight: 410 });
+
+      // ==================================================================
+      // CANVAS 2 — rise against diameter
+      // ==================================================================
+      var curveCv = Demo.canvas('#hcurve', function (ctx, w, h, c) {
+        var M = capModel();
+        var narrow = w < 360;
+        var padL = narrow ? 36 : 44, padR = narrow ? 12 : 16, padT = 22, padB = 34;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var col = M.cos >= 0 ? c.series[0] : c.series[3];
+        var i, px;
+
+        // symmetric, adaptive: the extreme of the curve is always at DMIN
+        var A = Demo.clamp(Math.abs(riseAt(M.gam, M.cos, DMIN)) * 1.18, 10, 48);
+
+        function X(d) { return x0 + (x1 - x0) * (d - DMIN) / (DMAX - DMIN); }
+        function Y(mm) { return y0 - (y0 - y1) * (mm + A) / (2 * A); }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        var gl = [A, A / 2, 0, -A / 2, -A];
+        for (i = 0; i < gl.length; i++) {
+          var gy = Y(gl[i]);
+          ctx.strokeStyle = gl[i] === 0 ? c.line : c.lineSoft;
+          ctx.lineWidth = gl[i] === 0 ? 1.4 : 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(gl[i], 0), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('h (mm)', 1, 2);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center';
+        var xt = [1, 2, 3, 4, 5];
+        for (i = 0; i < xt.length; i++) {
+          px = X(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(xt[i], 0), px, y0 + 6);
+        }
+        ctx.fillText('inside diameter (mm)', (x0 + x1) / 2, y0 + 20);
+
+        // reference: water on perfectly clean glass, same tube
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.4;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var dr = DMIN + (px - x0) / (x1 - x0) * (DMAX - DMIN);
+          var yr = Y(Demo.clamp(riseAt(72, 1, dr), -A, A));
+          if (px === x0) ctx.moveTo(px, yr); else ctx.lineTo(px, yr);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the current liquid
+        ctx.strokeStyle = col; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var dd = DMIN + (px - x0) / (x1 - x0) * (DMAX - DMIN);
+          var yy = Y(Demo.clamp(riseAt(M.gam, M.cos, dd), -A, A));
+          if (px === x0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // current point + its half-diameter partner
+        var dHalf = C.d / 2;
+        if (dHalf >= DMIN) {
+          dot(ctx, c, X(dHalf), Y(Demo.clamp(riseAt(M.gam, M.cos, dHalf), -A, A)), 4, c.muted);
+          chip(ctx, c, X(dHalf), Y(Demo.clamp(riseAt(M.gam, M.cos, dHalf), -A, A)) - 9,
+            'half the bore: ' + F.dec(riseAt(M.gam, M.cos, dHalf), 1) + ' mm', fs, c.muted, w, 'center');
+        }
+        var cy = Y(Demo.clamp(M.h, -A, A));
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(X(C.d), y1); ctx.lineTo(X(C.d), y0); ctx.stroke();
+        ctx.setLineDash([]);
+        dot(ctx, c, X(C.d), cy, 5.5, col);
+        chip(ctx, c, X(C.d), cy + (M.h >= 0 ? 20 : -9),
+          F.dec(C.d, 2) + ' mm → ' + F.dec(M.h, 1) + ' mm', fs, col, w, 'center');
+
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('dashed: water on perfectly clean glass', x1, 2);
+      }, { aspect: 0.44, minHeight: 155, maxHeight: 210 });
+
+      // ==================================================================
+      // CANVAS 3 — the two particle boxes
+      // ==================================================================
+      var rand = Demo.rng(20260725);
+      var boxA = [], boxB = [], k;
+      for (k = 0; k < NPART; k++) {
+        var ang = rand() * 6.2832;
+        boxA.push({ x: 0.05 + rand() * 0.9, y: 0.05 + rand() * 0.9, dx: Math.cos(ang), dy: Math.sin(ang) });
+        ang = rand() * 6.2832;
+        boxB.push({ x: 0.05 + rand() * 0.9, y: 0.05 + rand() * 0.9, dx: Math.cos(ang), dy: Math.sin(ang) });
+      }
+      var RN = 0.045;          // particle radius in normalised box units
+      var BONDD = 0.235;       // neighbours closer than this can show a bond
+
+      // Speed is SET from the model every frame — never accumulated. Zero
+      // energy in means zero speed, with no state left over to keep drifting.
+      function stepBox(list, T, dt) {
+        var v = 0.30 * Math.sqrt(Math.max(0, T));
+        for (var i = 0; i < list.length; i++) {
+          var p = list[i];
+          p.x += p.dx * v * dt;
+          p.y += p.dy * v * dt;
+          if (p.x < RN) { p.x = RN; p.dx = Math.abs(p.dx); nudge(p); }
+          if (p.x > 1 - RN) { p.x = 1 - RN; p.dx = -Math.abs(p.dx); nudge(p); }
+          if (p.y < RN) { p.y = RN; p.dy = Math.abs(p.dy); nudge(p); }
+          if (p.y > 1 - RN) { p.y = 1 - RN; p.dy = -Math.abs(p.dy); nudge(p); }
+        }
+      }
+      function nudge(p) {
+        var a = Math.atan2(p.dy, p.dx) + (rand() - 0.5) * 0.7;
+        p.dx = Math.cos(a); p.dy = Math.sin(a);
+      }
+      function pairSeed(i, j) { return ((i * 73 + j * 151 + i * j * 17) % 997) / 997; }
+
+      var boxCv = Demo.canvas('#boxes', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var gap = narrow ? 9 : 14;
+        var padT = 30, padB = 38;
+        var bw = (w - gap) / 2;
+        var bh = h - padT - padB;
+        drawBox(ctx, c, 0, bw, padT, bh, boxA, 0, EM.TA, 'Hydrogen bonding OFF', fs, narrow);
+        drawBox(ctx, c, bw + gap, bw, padT, bh, boxB, 1, EM.TB, 'Hydrogen bonding ON', fs, narrow);
+      }, { aspect: 0.58, minHeight: 215, maxHeight: 295 });
+
+      function drawBox(ctx, c, ox, bw, oy, bh, list, bonded, T, title, fs, narrow) {
+        var i, j, p, q;
+        var pr = bw < 150 ? 2.6 : 3.2;
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + (fs + 0.5) + FONT;
+        ctx.fillStyle = bonded ? c.ok : c.bad;
+        ctx.fillText(title, ox + 1, 1);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(narrow
+          ? F.dec(T, 2) + ' arb. u. per particle'
+          : 'motion energy ' + F.dec(T, 2) + ' arb. u. per particle', ox + 1, 14);
+
+        // box
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(ox, oy, bw, bh);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.4;
+        ctx.strokeRect(ox + 0.5, oy + 0.5, bw - 1, bh - 1);
+
+        function PX(x) { return ox + 3 + x * (bw - 6); }
+        function PY(y) { return oy + 3 + y * (bh - 6); }
+
+        // hydrogen bonds — illustrative: the count that matters is the readout
+        if (bonded && EM.bondsPer > 0) {
+          var intact = 1 - EM.broken;
+          ctx.strokeStyle = c.accent;
+          ctx.lineWidth = 1.6;
+          ctx.save();
+          ctx.globalAlpha = 0.75;
+          ctx.beginPath();
+          for (i = 0; i < list.length; i++) {
+            for (j = i + 1; j < list.length; j++) {
+              p = list[i]; q = list[j];
+              var dx = p.x - q.x, dy = p.y - q.y;
+              var d2 = dx * dx + dy * dy;
+              if (d2 > BONDD * BONDD) continue;
+              if (pairSeed(i, j) >= intact) continue;
+              ctx.moveTo(PX(p.x), PY(p.y));
+              ctx.lineTo(PX(q.x), PY(q.y));
+            }
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // particles
+        ctx.fillStyle = c.series[0];
+        for (i = 0; i < list.length; i++) {
+          p = list[i];
+          ctx.beginPath();
+          ctx.arc(PX(p.x), PY(p.y), pr, 0, 6.2832);
+          ctx.fill();
+        }
+
+        // motion-energy bar underneath, same scale for both boxes
+        var barY = oy + bh + 8, barH = 8;
+        ctx.fillStyle = c.track;
+        ctx.fillRect(ox, barY, bw, barH);
+        ctx.fillStyle = c.warn;
+        ctx.fillRect(ox, barY, bw * Demo.clamp(T / EMAX, 0, 1), barH);
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText(narrow ? 'motion energy, same scale' : 'motion energy, same scale in both boxes',
+          ox + 1, barY + barH + 3);
+      }
+
+      // ==================================================================
+      // CANVAS 4 — the energy split
+      // ==================================================================
+      var splitCv = Demo.canvas('#split', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = 2, padR = 2, padT = 30;
+        var x0 = padL, x1 = w - padR;
+        var full = x1 - x0;
+        var barH = narrow ? 24 : 28;
+        var rowGap = narrow ? 40 : 44;
+        var frac = EM.e / EMAX;
+
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('same energy in: ' + F.dec(EM.e, 2) + ' arb. u. per particle', x0, 2);
+
+        drawRow(padT + 2, 'Bonding OFF', EM.e, 0, c.bad);
+        drawRow(padT + 2 + rowGap, 'Bonding ON', EM.TB, EM.bondE, c.ok);
+
+        function drawRow(y, label, moveE, bondEn, labCol) {
+          var lw = full * frac;
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = labCol;
+          ctx.fillText(label, x0, y - 2);
+
+          // empty outline showing the full slider range, so the bars are comparable
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.strokeRect(x0 + 0.5, y + 0.5, full - 1, barH - 1);
+
+          if (EM.e <= 0) {
+            ctx.font = fs + FONT;
+            ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.fillStyle = c.muted;
+            ctx.fillText('no energy added — nothing anywhere', x0 + 6, y + barH / 2);
+            return;
+          }
+
+          var mw = lw * (moveE / EM.e);
+          var bwid = lw * (bondEn / EM.e);
+          ctx.fillStyle = c.warn;
+          ctx.fillRect(x0, y, mw, barH);
+          ctx.fillStyle = c.series[3];
+          ctx.fillRect(x0 + mw, y, bwid, barH);
+
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textBaseline = 'middle';
+          if (mw > 62) {
+            ctx.textAlign = 'left'; ctx.fillStyle = c.bg;
+            ctx.fillText('motion ' + F.pct(moveE / EM.e, 0), x0 + 6, y + barH / 2);
+          }
+          if (bwid > 58) {
+            ctx.textAlign = 'left'; ctx.fillStyle = c.bg;
+            ctx.fillText('bonds ' + F.pct(bondEn / EM.e, 0), x0 + mw + 6, y + barH / 2);
+          } else if (bondEn > 0) {
+            ctx.textAlign = 'left'; ctx.fillStyle = c.series[3];
+            ctx.fillText('bonds ' + F.pct(bondEn / EM.e, 0), x0 + lw + 6, y + barH / 2);
+          }
+        }
+
+        // the takeaway line
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        var msg = EM.e <= 0
+          ? (narrow ? 'Zero in. Nothing stored, nothing moving.'
+            : 'Both boxes are at zero. Nothing is stored and nothing is moving.')
+          : EM.n <= 0
+            ? (narrow ? 'No bonds: the two boxes are identical.'
+              : 'No bonds available: the two boxes are identical, as they should be.')
+            : (narrow ? 'Same length in. Only one row can split it.'
+              : 'Both rows are the same length. Only the bonded row has anywhere else to put it.');
+        ctx.fillText(msg, x0, padT + 2 + rowGap + barH + 9);
+      }, { aspect: 0.30, minHeight: 132, maxHeight: 150 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        wcoh: document.getElementById('wcoh'),
+        wcohOut: document.getElementById('wcohOut'),
+        wadh: document.getElementById('wadh'),
+        wadhOut: document.getElementById('wadhOut'),
+        dia: document.getElementById('dia'),
+        diaOut: document.getElementById('diaOut'),
+        rRise: document.getElementById('rRise'),
+        rRiseSub: document.getElementById('rRiseSub'),
+        rTheta: document.getElementById('rTheta'),
+        rThetaSub: document.getElementById('rThetaSub'),
+        rGamma: document.getElementById('rGamma'),
+        capNote: document.getElementById('capNote'),
+        capCap: document.getElementById('capCap'),
+        curveCap: document.getElementById('curveCap'),
+
+        ein: document.getElementById('ein'),
+        einOut: document.getElementById('einOut'),
+        bpp: document.getElementById('bpp'),
+        bppOut: document.getElementById('bppOut'),
+        btnAnim: document.getElementById('btnAnim'),
+        btnEngReset: document.getElementById('btnEngReset'),
+        rFracBond: document.getElementById('rFracBond'),
+        rFracBondSub: document.getElementById('rFracBondSub'),
+        rKeA: document.getElementById('rKeA'),
+        rKeB: document.getElementById('rKeB'),
+        rBroken: document.getElementById('rBroken'),
+        rBrokenSub: document.getElementById('rBrokenSub'),
+        rSpeed: document.getElementById('rSpeed'),
+        engNote: document.getElementById('engNote'),
+        boxCap: document.getElementById('boxCap'),
+        splitCap: document.getElementById('splitCap'),
+
+        stageCap: document.getElementById('stageCap'),
+        stageEng: document.getElementById('stageEng'),
+        ctrlCap: document.getElementById('ctrlCap'),
+        ctrlEng: document.getElementById('ctrlEng')
+      };
+
+      // ==================================================================
+      // RENDER — panel 1
+      // ==================================================================
+      function renderCap() {
+        var M = capModel();
+
+        el.wcohOut.innerHTML = F.dec(C.wcoh, 0) + ' mJ m⁻²';
+        el.wadhOut.innerHTML = F.dec(C.wadh, 0) + ' mJ m⁻²';
+        el.diaOut.textContent = F.dec(C.d, 2) + ' mm';
+
+        el.rRise.innerHTML = F.dec(M.h, 1) + '<span class="r-unit">mm</span>';
+        el.rTheta.innerHTML = F.dec(M.thDeg, 1) + '&deg;';
+        el.rGamma.innerHTML = F.dec(M.gam, 0) + '<span class="r-unit">mN m⁻¹</span>';
+
+        if (M.h > 0.05) {
+          el.rRiseSub.className = 'r-sub up';
+          el.rRiseSub.textContent = 'climbs above the reservoir';
+          el.rThetaSub.className = 'r-sub';
+          el.rThetaSub.textContent = M.thDeg < 0.05 ? 'complete wetting' : 'concave meniscus';
+        } else if (M.h < -0.05) {
+          el.rRiseSub.className = 'r-sub down';
+          el.rRiseSub.textContent = 'sinks below the reservoir';
+          el.rThetaSub.className = 'r-sub';
+          el.rThetaSub.textContent = 'convex meniscus';
+        } else {
+          el.rRiseSub.className = 'r-sub';
+          el.rRiseSub.textContent = 'level with the reservoir';
+          el.rThetaSub.className = 'r-sub';
+          el.rThetaSub.textContent = 'flat meniscus';
+        }
+
+        // the note: which attraction is winning, and the wetting ceiling
+        var half = C.wcoh / 2;
+        if (M.wetting) {
+          el.capNote.className = 'note';
+          el.capNote.innerHTML = '<strong>Complete wetting.</strong> Adhesion (' + F.dec(C.wadh, 0)
+            + ') has reached cohesion (' + F.dec(C.wcoh, 0) + '), so &theta; has bottomed out at 0&deg; and the '
+            + 'liquid already coats the glass. <strong>More adhesion now does nothing.</strong> From here the height '
+            + 'is set by surface tension alone &mdash; drag <em>cohesion</em> and watch h follow it. Adhesion grips '
+            + 'the wall; cohesion is what hauls the rest of the column up behind it.';
+        } else if (M.cos > 0.001) {
+          el.capNote.className = 'note';
+          el.capNote.innerHTML = '<strong>Adhesion is winning.</strong> ' + F.dec(C.wadh, 0)
+            + ' mJ m⁻² of water&ndash;glass attraction beats the ' + F.dec(half, 0)
+            + ' mJ m⁻² it has to overcome (half the cohesion), so &theta; = ' + F.dec(M.thDeg, 1)
+            + '&deg;, the meniscus curves up at the walls, and the liquid climbs <strong>'
+            + F.dec(M.h, 1) + ' mm</strong>.';
+        } else if (M.cos < -0.001) {
+          el.capNote.className = 'note bad';
+          el.capNote.innerHTML = '<strong>Cohesion is winning.</strong> The liquid would rather touch itself than the '
+            + 'glass: ' + F.dec(C.wadh, 0) + ' mJ m⁻² of adhesion against ' + F.dec(half, 0)
+            + ' mJ m⁻² needed. &theta; = ' + F.dec(M.thDeg, 1) + '&deg; is past 90&deg;, so the meniscus bulges '
+            + '<em>upward</em> and the liquid is pushed <strong>' + F.dec(-M.h, 1)
+            + ' mm below</strong> the level in the dish. This is what mercury does in a glass tube.';
+        } else {
+          el.capNote.className = 'note warn';
+          el.capNote.innerHTML = '<strong>Dead heat.</strong> Adhesion is exactly half the cohesion, &theta; = 90&deg;, '
+            + 'the meniscus is flat and the liquid neither rises nor falls. This is the tipping point: nudge adhesion '
+            + 'either way and the whole thing flips.';
+        }
+
+        el.capCap.innerHTML = 'Cohesion ' + F.dec(C.wcoh, 0) + ' mJ m⁻², adhesion ' + F.dec(C.wadh, 0)
+          + ' mJ m⁻², bore ' + F.dec(C.d, 2) + ' mm &rarr; &theta; = ' + F.dec(M.thDeg, 1) + '&deg; and h = '
+          + F.dec(M.h, 1) + ' mm. The orange arc at the wall is the real contact angle: the meniscus is drawn as a '
+          + 'true circular arc for the bore width shown, so its <em>shape</em> is honest even though the bore is '
+          + 'drawn much wider than the millimetre scale beside it.';
+
+        var dHalf = C.d / 2, hHalf = riseAt(M.gam, M.cos, dHalf);
+        el.curveCap.innerHTML = 'h &prop; 1/r, so the curve is a hyperbola. At ' + F.dec(C.d, 2) + ' mm the liquid '
+          + 'goes to ' + F.dec(M.h, 1) + ' mm; halve the bore to ' + F.dec(dHalf, 2) + ' mm and it goes to exactly '
+          + 'twice that, ' + F.dec(hHalf, 1) + ' mm'
+          + (dHalf < DMIN ? ' (off the left of this axis, but the arithmetic still holds)' : '')
+          + '. The pull acts around the circumference, which grows with r, while the weight it lifts is a volume, '
+          + 'which grows with r&sup2; &mdash; so the thinner tube wins.';
+
+        tubeCv.redraw();
+        curveCv.redraw();
+      }
+
+      // ==================================================================
+      // RENDER — panel 2
+      // ==================================================================
+      function renderEng(fast) {
+        EM = engModel();
+
+        el.einOut.textContent = F.dec(E.e, 2) + ' arb. u.';
+        el.bppOut.textContent = F.dec(E.n, 1);
+
+        el.rKeA.textContent = F.dec(EM.TA, 2);
+        el.rKeB.textContent = F.dec(EM.TB, 2);
+
+        if (EM.e <= 0) {
+          el.rFracBond.textContent = '—';
+          el.rFracBondSub.textContent = 'no energy has been added yet';
+          el.rSpeed.textContent = '—';
+        } else {
+          el.rFracBond.textContent = F.pct(EM.fracBond, 1);
+          el.rFracBondSub.textContent = EM.n > 0
+            ? 'the other box has nowhere to put it, so it is 0.0% there'
+            : 'no bonds available — the boxes are identical';
+          el.rSpeed.textContent = F.pct(EM.speedRatio, 0);
+        }
+
+        if (EM.n <= 0) {
+          el.rBroken.textContent = '—';
+          el.rBrokenSub.textContent = 'no bonds to break';
+        } else {
+          el.rBroken.textContent = F.pct(EM.broken, 1);
+          el.rBrokenSub.innerHTML = F.dec(EM.n, 1) + ' per particle, so ' + F.dec(EM.bondsPer, 2)
+            + ' distinct bonds each &mdash; every bond is shared by two';
+        }
+
+        if (EM.e <= 0) {
+          el.engNote.className = 'note';
+          el.engNote.innerHTML = '<strong>Zero in, zero everywhere.</strong> No motion, no broken bonds, both boxes '
+            + 'frozen. Nothing is stored anywhere waiting to leak out &mdash; slide the energy up and every bit of it '
+            + 'has to show up either as motion or as a broken bond.';
+        } else if (EM.n <= 0) {
+          el.engNote.className = 'note warn';
+          el.engNote.innerHTML = '<strong>Bonds set to zero, so the two boxes are the same box.</strong> Both hold '
+            + F.dec(EM.e, 2) + ' arb. u. per particle as motion and the bars match exactly. That is the control: any '
+            + 'difference you see at other settings is the bonds, and nothing else.';
+        } else {
+          el.engNote.className = 'note';
+          el.engNote.innerHTML = '<strong>' + F.pct(EM.fracBond, 1) + ' of the energy never became motion.</strong> '
+            + 'Both boxes were handed ' + F.dec(EM.e, 2) + ' arb. u. per particle. The bonded box put '
+            + F.dec(EM.bondE, 2) + ' of it into pulling hydrogen bonds apart and only ' + F.dec(EM.TB, 2)
+            + ' into moving, so its particles run at <strong>' + F.pct(EM.speedRatio, 0) + '</strong> of the speed of '
+            + 'the ones next door. The energy is not lost &mdash; it comes straight back out when the bonds re-form. '
+            + 'It is just not visible to a thermometer while it is in there.';
+        }
+
+        el.boxCap.innerHTML = 'Same particles, same energy in, ' + F.dec(EM.n, 1)
+          + ' hydrogen bonds per particle on the right. The bond lines are illustrative &mdash; drawn between '
+          + 'neighbours that happen to be close, at the fraction the model says is still intact ('
+          + F.pct(1 - EM.broken, 0) + '). The <strong>numbers</strong> come from the equation, not from the picture. '
+          + 'All of it is dimensionless: arbitrary units, this simulation compared with itself.';
+
+        el.splitCap.innerHTML = EM.e > 0 && EM.n > 0
+          ? 'Push the energy slider higher and watch the purple share shrink: once nearly every bond is already broken '
+            + '(' + F.pct(EM.broken, 0) + ' at the moment) there is nothing left to absorb the next unit, so it all '
+            + 'goes into motion. The bonded box still always ends up slower &mdash; the gap just stops widening.'
+          : 'Set the energy above zero and the bonds above zero to see the split.';
+
+        if (fast) { boxCv.paint(); splitCv.paint(); }
+        else { boxCv.redraw(); splitCv.redraw(); }
+      }
+
+      // ==================================================================
+      // CONTROLS — panel 1
+      // ==================================================================
+      Demo.range('#wcoh', function (v) { C.wcoh = v; renderCap(); });
+      Demo.range('#wadh', function (v) { C.wadh = v; renderCap(); });
+      Demo.range('#dia', function (v) { C.d = v; renderCap(); });
+
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#capPresets .btn'));
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          presetBtns.forEach(function (o) { o.classList.toggle('is-on', o === b); });
+          C.wcoh = parseFloat(b.dataset.coh);
+          C.wadh = parseFloat(b.dataset.adh);
+          el.wcoh.value = C.wcoh;
+          el.wadh.value = C.wadh;
+          renderCap();
+        });
+      });
+      [el.wcoh, el.wadh].forEach(function (s) {
+        s.addEventListener('input', function () {
+          presetBtns.forEach(function (o) { o.classList.remove('is-on'); });
+        });
+      });
+
+      // ==================================================================
+      // CONTROLS — panel 2
+      // ==================================================================
+      Demo.range('#ein', function (v) { E.e = v; renderEng(false); });
+      Demo.range('#bpp', function (v) { E.n = v; renderEng(false); });
+
+      var anim = Demo.loop(function (dt) {
+        stepBox(boxA, EM.TA, dt);
+        stepBox(boxB, EM.TB, dt);
+        boxCv.paint();
+      });
+
+      el.btnAnim.addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Play';
+      });
+
+      el.btnEngReset.addEventListener('click', function () {
+        E.e = 1.0; E.n = 2.0;
+        el.ein.value = 1.0;
+        el.bpp.value = 2.0;
+        if (!anim.running) { anim.start(); el.btnAnim.textContent = 'Pause'; }
+        renderEng(false);
+      });
+
+      // ==================================================================
+      // TABS
+      // ==================================================================
+      var segBtns = Array.prototype.slice.call(document.querySelectorAll('#panelSeg button'));
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          segBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          showPanel(b.dataset.panel);
+        });
+      });
+
+      function showPanel(which) {
+        var cap = which === 'cap';
+        el.stageCap.hidden = !cap;
+        el.ctrlCap.hidden = !cap;
+        el.stageEng.hidden = cap;
+        el.ctrlEng.hidden = cap;
+        if (cap) {
+          anim.stop();
+          el.btnAnim.textContent = 'Play';
+          tubeCv.resize();
+          curveCv.resize();
+          renderCap();
+        } else {
+          boxCv.resize();
+          splitCv.resize();
+          renderEng(false);
+          if (!anim.running) { anim.start(); el.btnAnim.textContent = 'Pause'; }
+        }
+      }
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      renderCap();
+      renderEng(false);
+      showPanel('cap');
+    })();
+  </script>
+</body>
+
+</html>
