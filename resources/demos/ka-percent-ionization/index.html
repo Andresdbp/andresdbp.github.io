@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Ka and Percent Ionization | Dr. Andres Barboza</title>
+  <meta name="description" content="Hold Ka fixed and dilute a weak acid: percent ionization climbs toward 100% while the pH rises toward 7. Solved from the full charge balance, not the 'x is small' shortcut.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, the two-up readout grid, the acid pad */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* Sci-notation values do not fit the default 19px tile type at 96 px wide,
+       so this demo runs a fixed two-column grid with a smaller numeric size. */
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.sci { font-size: 15.5px; }
+    .r-value.big { font-size: 27px; }
+    /* .r-label is uppercased, which would turn the subscript in Ka into a
+       capital. Subscripts are not initials. */
+    .readout .r-label sub { text-transform: none; }
+
+    .acidpad { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 7px; }
+    .acidpad .btn { padding: 7px 8px; font-size: 12px; line-height: 1.3; }
+    .acidpad .btn.is-on {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+
+    #barIon { background: var(--accent); }
+
+    .cmp th:first-child, .cmp td:first-child { white-space: nowrap; }
+    .cmp td { white-space: nowrap; }
+    /* .tbl th uppercases its text, which would print HCl as HCL. A formula is
+       not a heading. */
+    .cmp thead th { text-transform: none; font-size: 12px; color: var(--text); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Ka and Percent Ionization</h1>
+        <p class="demo-sub">Leave K<sub>a</sub> alone and drag the concentration slider to the right. Two numbers go up at the same time, and one of them should not feel possible.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Equilibrium</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">Both curves, same solution <span>&mdash; diluting moves you to the right, all at 25 &deg;C</span></p>
+        <canvas id="plot" role="img"
+                aria-label="Percent ionization on the left axis and pH on the right axis, both plotted against the acid concentration on a logarithmic scale. Both curves rise as the solution is diluted."></canvas>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Same concentration, side by side <span>&mdash; 100 acid molecules in each flask</span></p>
+        <canvas id="flasks" role="img"
+                aria-label="Two grids of one hundred dots comparing how many molecules of the weak acid and of a strong acid have ionized at the same concentration."></canvas>
+        <p class="stage-caption" id="flaskCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The acid</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="ka">K<sub>a</sub></label>
+                <span class="ctrl-value" id="kaOut">1.8 &times; 10⁻⁵</span>
+              </div>
+              <input type="range" id="ka" min="-10" max="-3" step="0.01" value="-4.74">
+              <p class="ctrl-hint">Logarithmic: K<sub>a</sub> = 10⁻¹⁰ (very weak) to 10⁻³ (about as strong as a weak acid gets). This is a property of the acid &mdash; nothing you do to the solution changes it.</p>
+            </div>
+
+            <div class="acidpad" id="acidPresets">
+              <button class="btn" data-ka="6.8e-4"  data-name="hydrofluoric acid" data-f="HF"
+                      data-info="Hydrofluoric acid is a weak acid &mdash; it holds on to its proton &mdash; and it still etches glass. Weak describes the equilibrium, not the hazard.">HF</button>
+              <button class="btn" data-ka="1.8e-4"  data-name="formic acid" data-f="HCOOH"
+                      data-info="Formic acid is what ant venom and stinging nettles use.">HCOOH</button>
+              <button class="btn" data-ka="1.8e-5"  data-name="acetic acid" data-f="CH₃COOH"
+                      data-info="Acetic acid. Household vinegar is about 5% by mass, near 0.8 M &mdash; concentrated, and still weak.">CH<sub>3</sub>COOH</button>
+              <button class="btn" data-ka="4.3e-7"  data-name="carbonic acid" data-f="H₂CO₃"
+                      data-info="Carbonic acid, from dissolved CO&#8322;. This is K<sub>a1</sub> only; pulling the second proton off is far harder (K<sub>a2</sub> = 4.7 &times; 10⁻¹¹), which is why the model here is monoprotic.">H<sub>2</sub>CO<sub>3</sub></button>
+              <button class="btn" data-ka="3.0e-8"  data-name="hypochlorous acid" data-f="HClO"
+                      data-info="Hypochlorous acid is the species that actually does the disinfecting in chlorinated water.">HClO</button>
+              <button class="btn" data-ka="6.2e-10" data-name="hydrocyanic acid" data-f="HCN"
+                      data-info="Hydrocyanic acid is an extremely weak acid. What makes it deadly is the cyanide ion, not the acidity.">HCN</button>
+            </div>
+            <p class="ctrl-hint" id="acidInfo">Six real acids, K<sub>a</sub> values at 25 &deg;C. Move the slider to leave the presets and set any K<sub>a</sub> you like.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">How much acid you added</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pc">Concentration</label>
+                <span class="ctrl-value" id="pcOut">0.100 M</span>
+              </div>
+              <input type="range" id="pc" min="0" max="5" step="0.01" value="1">
+              <p class="ctrl-hint">1 M on the left down to 1.00 &times; 10⁻⁵ M on the right. This is the <em>analytical</em> concentration: all the acid you dissolved, ionized or not.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="btnSweep">Watch it dilute</button>
+              <button class="btn" id="btnDilute">Dilute &times;10</button>
+              <button class="btn" id="btnConc">Concentrate &times;10</button>
+            </div>
+            <p class="note" id="moveNote">Keep your eye on <strong>percent ionized</strong> and on <strong>pH</strong> together.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">This solution</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Percent ionized</div>
+              <div class="r-value big" id="rPct">1.33%</div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">pH</div>
+              <div class="r-value" id="rPH">2.88</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">[H&#8323;O&#8314;]</div>
+              <div class="r-value sci" id="rH">1.33 &times; 10⁻³<span class="r-unit">M</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">K<sub>a</sub> &mdash; never moves</div>
+              <div class="r-value sci" id="rKa">1.8 &times; 10⁻⁵</div>
+            </div>
+            <div class="readout" id="waterBox">
+              <div class="r-label">H&#8323;O&#8314; from water</div>
+              <div class="r-value sci" id="rWater">0.00%</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="bar"><span id="barIon" style="width:1.33%"></span></div>
+            <div class="row-between small muted" style="margin-top:5px">
+              <span>ionized &rarr; A&#8315;</span>
+              <span>still intact HA</span>
+            </div>
+          </div>
+
+          <hr class="sep" style="margin:13px 0">
+
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Species</th><th>at equilibrium</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>C, acid added</td><td id="tC">0.1000 M</td></tr>
+                <tr><td>[HA] intact</td><td id="tHA">0.0987 M</td></tr>
+                <tr><td>[A&#8315;] ionized</td><td id="tA">1.33 &times; 10⁻³ M</td></tr>
+                <tr><td>[H&#8323;O&#8314;]</td><td id="tH">1.33 &times; 10⁻³ M</td></tr>
+                <tr><td>[OH&#8315;]</td><td id="tOH">7.5 &times; 10⁻¹² M</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:8px">
+            Charge balance: [H<sub>3</sub>O<sup>+</sup>] = [A<sup>&minus;</sup>] + [OH<sup>&minus;</sup>].
+            Percent ionized is [A<sup>&minus;</sup>] &divide; C &times; 100, which is the same thing as the
+            hydronium that came <em>from the acid</em> divided by C.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Against a strong acid at the same concentration</div>
+          <div class="table-scroll">
+            <table class="tbl cmp">
+              <thead>
+                <tr><th>&nbsp;</th><th id="cmpWeakHead">Weak</th><th>Strong (HCl)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Percent ionized</td><td id="tWeakPct">1.33%</td><td id="tStrongPct">100%</td></tr>
+                <tr><td>[H&#8323;O&#8314;]</td><td id="tWeakH">1.33 &times; 10⁻³</td><td id="tStrongH">0.100</td></tr>
+                <tr><td>pH</td><td id="tWeakPH">2.88</td><td id="tStrongPH">1.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note" id="strongLine" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What the shortcut would say</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Percent ionized</div>
+              <div class="r-value sci" id="scPct">1.34%</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">pH</div>
+              <div class="r-value sci" id="scPH">2.87</div>
+            </div>
+          </div>
+          <p class="note" id="scNote" style="margin-top:11px">&nbsp;</p>
+          <p class="ctrl-hint" style="margin-top:9px">
+            The shortcut is &ldquo;x is small&rdquo;: assume [HA] stays at C, so
+            [H<sub>3</sub>O<sup>+</sup>] = &radic;(K<sub>a</sub>C). Everything else on this page is solved
+            exactly instead. For the general story on when that shortcut is safe, see the
+            <a href="../ice-workbench/index.html">ICE Workbench</a>.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>25 &deg;C throughout.</strong> K<sub>w</sub> = 1.0 &times; 10⁻¹⁴ only at that temperature,
+            and every pH here depends on it. The solution is found from the full charge balance
+            [H<sub>3</sub>O<sup>+</sup>] = [A<sup>&minus;</sup>] + [OH<sup>&minus;</sup>] together with
+            [A<sup>&minus;</sup>] = K<sub>a</sub>C / (K<sub>a</sub> + [H<sub>3</sub>O<sup>+</sup>]), so water&rsquo;s
+            own ionization is included at every concentration &mdash; that is why the pH curve flattens under
+            pH 7 instead of crossing it.
+          </p>
+          <p class="ctrl-hint" style="margin-top:10px">
+            What is simplified: concentrations are used in place of activities, so K<sub>a</sub> is treated as
+            genuinely constant. In a real flask K<sub>a</sub> drifts a little with ionic strength, and at 1 M the
+            drift is not tiny. The acid is monoprotic, nothing else is dissolved, and the acid is assumed fully
+            soluble. Below about 10⁻⁶ M the &ldquo;solution&rdquo; is mostly just water &mdash; the model is still
+            right, but the chemistry stops being about your acid, which is what the
+            <em>H&#8323;O&#8314; from water</em> readout is there to tell you.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students hear <em>weak acid</em> and store it as <em>dilute acid</em>,
+        and <em>strong acid</em> as <em>concentrated acid</em>. The two words are answering completely different
+        questions. <strong>Concentrated or dilute is about how much acid you put in the flask</strong> &mdash; you
+        choose it, and it is the concentration slider here. <strong>Weak or strong is about what fraction of that
+        acid actually gives its proton away</strong> &mdash; the acid decides that, through K<sub>a</sub>, and you
+        cannot change it by adding water.
+      </p>
+      <p>
+        <strong>What to notice:</strong> set acetic acid at 0.100 M. It is <strong>1.33% ionized</strong> at
+        <strong>pH 2.88</strong>. Now press &ldquo;Watch it dilute&rdquo; and follow both curves at once. At
+        1.00 &times; 10⁻⁵ M the same acid is <strong>71.6% ionized</strong> &mdash; fifty times the fraction &mdash;
+        and the pH has risen to <strong>5.15</strong>. Percent ionization went <em>up</em> and the solution got
+        <em>less</em> acidic, at the same time, from the same action. Almost every student calls this a mistake the
+        first time they see it. It is not. A far larger share of a far smaller amount of acid is still less acid:
+        71.6% of 10⁻⁵ M is a hundred times less hydronium than 1.33% of 0.100 M.
+      </p>
+      <p>
+        <strong>Why it happens &mdash; Le Chatelier, applied to the ionization itself.</strong>
+        HA + H<sub>2</sub>O &#8652; H<sub>3</sub>O<sup>+</sup> + A<sup>&minus;</sup>. Count the dissolved particles:
+        one on the left, two on the right (water is the solvent, so it does not count). Adding water spreads
+        everything out, and the equilibrium answers by shifting toward the side that makes <em>more</em> dissolved
+        particles &mdash; the ionized side. Dilution is a stress, and the system relieves it by ionizing further.
+        K<sub>a</sub> never moved through any of this; watch the K<sub>a</sub> tile sit still while the percent
+        climbs.
+      </p>
+      <p>
+        <strong>And the side-by-side settles the other half.</strong> Pick HF at 1 M: it is
+        <strong>2.6% ionized, pH 1.59</strong>, while a strong acid at the very same 1 M is 100% ionized at pH 0.00.
+        Same concentration, different <em>extent</em> &mdash; that is the whole meaning of the word weak. Then dilute
+        both to 10⁻⁵ M: HF reaches <strong>98.6% ionized</strong> and its pH, 5.01, sits within 0.01 of the strong
+        acid&rsquo;s. HF has not become a strong acid. Its K<sub>a</sub> is exactly the 6.8 &times; 10⁻⁴ it always
+        was. Percent ionization is a property of <em>this solution</em>; K<sub>a</sub> is a property of
+        <em>the acid</em>, and only one of them is allowed to move.
+      </p>
+      <p>
+        <strong>Where the model would have lied to you:</strong> the usual classroom shortcut assumes x is small
+        and gives [H<sub>3</sub>O<sup>+</sup>] = &radic;(K<sub>a</sub>C). At acetic acid, 10⁻⁵ M, that shortcut
+        reports <strong>134% ionization</strong> &mdash; more acid ionized than exists. It fails hardest exactly
+        where this demonstration lives, so nothing here uses it. Water matters too: try HCN at 10⁻⁵ M, where
+        <strong>62% of the hydronium comes from water</strong>, not from the acid. Drop the water term and the
+        arithmetic will hand you a pH above 7 for an acid, which is impossible &mdash; a real acid solution can
+        creep toward pH 7 from below and never reach it.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one monoprotic weak acid HA in water, 25 °C
+      //
+      //   HA + H2O  <=>  H3O+ + A-      Ka = [H3O+][A-]/[HA]
+      //   2 H2O     <=>  H3O+ + OH-     Kw = [H3O+][OH-] = 1.00e-14
+      //
+      //   mass balance    C = [HA] + [A-]
+      //   charge balance  h = [A-] + [OH-],  h = [H3O+]
+      //
+      //   Ka with the mass balance gives  [A-] = Ka*C/(Ka + h),
+      //   so the charge balance is one equation in h alone:
+      //
+      //       f(h) = h - Ka*C/(Ka + h) - Kw/h = 0
+      //
+      //   df/dh = 1 + Ka*C/(Ka+h)^2 + Kw/h^2 > 0 for every h > 0, so f is
+      //   strictly increasing and has exactly one positive root. For any
+      //   C > 0:  f(1e-7) = -Ka*C/(Ka+1e-7) < 0  and
+      //           f(C+1e-6) > 1e-6 - Kw/1e-6 = 1e-6 - 1e-8 > 0,
+      //   so [1e-7, C+1e-6] always brackets it and bisection cannot miss.
+      //   The lower end of that bracket is why h can never drop below 1e-7:
+      //   an acid solution approaches pH 7 from below and never crosses it.
+      //
+      //   Deliberately NOT used: the "x is small" shortcut h = sqrt(Ka*C).
+      //   It fails precisely in the dilute limit this page exists to show,
+      //   so it appears on screen only as the wrong answer.
+      // ==================================================================
+
+      var KW = 1.0e-14;
+      var PCMAX = 5;                       // pC = -log10 C, so 0 -> 1 M, 5 -> 1e-5 M
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var F = Demo.fmt;
+
+      var S = {
+        Ka: 1.8e-5,
+        pc: 1,
+        C: 0.1,
+        acid: null           // the active preset button, or null for a hand-set Ka
+      };
+
+      // ---------------- core solver ----------------
+
+      function solveH(Ka, C) {
+        if (!(C > 0)) return 1e-7;
+        var lo = -7;                                  // log10(1e-7): f < 0 here
+        var hi = Math.log10(C + 1e-6);                // f > 0 here
+        for (var i = 0; i < 90; i++) {
+          var m = 0.5 * (lo + hi);
+          var h = Math.pow(10, m);
+          if (h - Ka * C / (Ka + h) - KW / h < 0) lo = m; else hi = m;
+        }
+        return Math.pow(10, 0.5 * (lo + hi));
+      }
+
+      // a strong acid ionizes completely; water is still included
+      function strongH(C) { return (C + Math.sqrt(C * C + 4 * KW)) / 2; }
+
+      function pack(Ka, C) {
+        var h = solveH(Ka, C);
+        var oh = KW / h;
+        var a = Ka * C / (Ka + h);
+        return {
+          h: h, oh: oh, a: a, ha: Math.max(0, C - a),
+          pH: -Math.log10(h),
+          alpha: a / C,            // = Ka/(Ka+h) = (h - [OH-])/C, identical by charge balance
+          fromWater: oh / h        // share of the hydronium that water supplied
+        };
+      }
+
+      // the shortcut, shown only so it can be caught being wrong
+      function shortcut(Ka, C) {
+        var h = Math.sqrt(Ka * C);
+        return { h: h, pH: -Math.log10(h), alpha: Math.sqrt(Ka / C) };
+      }
+
+      // ---------------- formatting ----------------
+
+      // Never clamps at 100: the shortcut panel has to be able to report the
+      // impossible answer it actually produces.
+      function fmtPct(p) {
+        if (!isFinite(p)) return '—';
+        if (p > 100.05) return F.dec(p, p >= 1000 ? 0 : 1) + '%';
+        if (p >= 100) return '100%';
+        if (p >= 99.9) return F.dec(p, 3) + '%';
+        if (p >= 10) return F.dec(p, 1) + '%';
+        if (p >= 1) return F.dec(p, 2) + '%';
+        if (p >= 0.01) return F.dec(p, 3) + '%';
+        return F.sig(p, 2) + '%';
+      }
+
+      // the water share is meaningless below a hundredth of a percent
+      function fmtWater(p) { return p < 0.01 ? '< 0.01%' : fmtPct(p); }
+
+      // Ka always reads as scientific notation — "0.00068" is not how anyone
+      // writes an equilibrium constant.
+      function fmtKa(k) { return F.sci(k, 1); }
+
+      function fmtC(C) {
+        if (C >= 0.00999) {
+          var d = Demo.clamp(2 - Math.floor(Math.log10(C)), 0, 6);
+          return F.dec(C, d);
+        }
+        return F.sci(C, 2);
+      }
+
+      function fmtConc(x) { return x >= 0.00999 ? F.dec(x, 4) : F.sci(x, 2); }
+
+      function acidFormula() { return S.acid ? S.acid.dataset.f : 'HA'; }
+      function acidName() { return S.acid ? S.acid.dataset.name : 'this weak acid'; }
+
+      // ---------------- the plotted curve (depends on Ka only) ----------------
+
+      var CURVE = null;
+      var CURVE_N = 160;
+
+      function recomputeCurve() {
+        var pts = [];
+        for (var i = 0; i <= CURVE_N; i++) {
+          var pc = PCMAX * i / CURVE_N;
+          var r = pack(S.Ka, Math.pow(10, -pc));
+          pts.push({ pc: pc, pct: r.alpha * 100, pH: r.pH });
+        }
+        CURVE = pts;
+      }
+
+      // ---------------- small canvas helpers ----------------
+
+      function chip(ctx, c, cx, y, txt, fs, col, w) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = Demo.clamp(cx - tw / 2 - 4, 2, Math.max(2, w - tw - 10));
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      // shrink a label until it fits its column, down to a floor
+      function fitFont(ctx, txt, maxW, fs, weight) {
+        var f = fs;
+        while (f > 7.5) {
+          ctx.font = (weight ? weight + ' ' : '') + f + FONT;
+          if (ctx.measureText(txt).width <= maxW) break;
+          f -= 0.5;
+        }
+        ctx.font = (weight ? weight + ' ' : '') + f + FONT;
+        return f;
+      }
+
+      // ==================================================================
+      // CANVAS 1 — percent ionization and pH against concentration
+      // ==================================================================
+      var plotCv = Demo.canvas('#plot', function (ctx, w, h, c) {
+        if (!CURVE) return;
+        var narrow = w < 340;
+        var padL = narrow ? 28 : 34, padR = narrow ? 24 : 30, padT = 26, padB = 38;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var i;
+
+        function X(pc) { return x0 + (x1 - x0) * (pc / PCMAX); }
+        function YA(p) { return y0 - (y0 - y1) * Demo.clamp(p, 0, 100) / 100; }   // percent, 0–100
+        function YP(p) { return y0 - (y0 - y1) * Demo.clamp(p, 0, 8) / 8; }       // pH, 0–8
+
+        // gridlines, with the two scales sharing them: 0/25/50/75/100 and 0/2/4/6/8
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var py = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft;
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          }
+          ctx.fillStyle = c.series[0]; ctx.textAlign = 'right';
+          ctx.fillText(String(i * 25), x0 - 4, py);
+          ctx.fillStyle = c.series[1]; ctx.textAlign = 'left';
+          ctx.fillText(String(i * 2), x1 + 4, py);
+        }
+
+        // the ceiling an acid can never break through
+        var y7 = YP(7);
+        ctx.strokeStyle = c.ok;
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, y7); ctx.lineTo(x1, y7); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = c.ok;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        var t7 = narrow ? 'pH 7' : 'pH 7 — pure water at 25 °C';
+        ctx.font = fs + FONT;
+        if (ctx.measureText(t7).width > x1 - x0 - 6) t7 = 'pH 7';
+        ctx.fillText(t7, x0 + 4, y7 - 2);
+
+        // axes
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0);
+        ctx.stroke();
+
+        // axis titles, coloured to match their curve
+        ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.series[0]; ctx.textAlign = 'left';
+        ctx.fillText('% ionized', Math.max(0, x0 - 10), 3);
+        ctx.fillStyle = c.series[1]; ctx.textAlign = 'right';
+        ctx.fillText('pH', Math.min(w, x1 + 10), 3);
+
+        // x ticks: one per decade
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        for (i = 0; i <= PCMAX; i++) {
+          var px = X(i);
+          ctx.strokeStyle = c.line;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillText(i === 0 ? '1' : '10' + F.sup(-i), px, y0 + 6);
+        }
+        var xt = 'concentration (mol L⁻¹) — more dilute →';
+        if (ctx.measureText(xt).width > x1 - x0) xt = 'more dilute →';
+        ctx.fillText(xt, (x0 + x1) / 2, y0 + 21);
+
+        // the two curves
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = c.series[1];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (i = 0; i < CURVE.length; i++) {
+          var q = CURVE[i];
+          if (i) ctx.lineTo(X(q.pc), YP(q.pH)); else ctx.moveTo(X(q.pc), YP(q.pH));
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = c.series[0];
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (i = 0; i < CURVE.length; i++) {
+          var p = CURVE[i];
+          if (i) ctx.lineTo(X(p.pc), YA(p.pct)); else ctx.moveTo(X(p.pc), YA(p.pct));
+        }
+        ctx.stroke();
+
+        // where the sliders currently put you
+        var R = pack(S.Ka, S.C);
+        var mx = X(S.pc);
+        ctx.strokeStyle = c.muted;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(mx, y1); ctx.lineTo(mx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+
+        var ya = YA(R.alpha * 100), yp = YP(R.pH);
+        [[ya, c.series[0]], [yp, c.series[1]]].forEach(function (d) {
+          ctx.beginPath(); ctx.arc(mx, d[0], 5, 0, 6.2832);
+          ctx.fillStyle = d[1]; ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+        });
+
+        // the two live numbers, kept inside the canvas
+        var aAbove = ya - 22 > y1;
+        var pAbove = yp - 22 > y1;
+        if (Math.abs(ya - yp) < 26) { aAbove = ya <= yp; pAbove = !aAbove; }
+        chip(ctx, c, mx, aAbove ? ya - 10 : ya + 20, fmtPct(R.alpha * 100), fs + 1, c.series[0], w);
+        chip(ctx, c, mx, pAbove ? yp - 10 : yp + 20, 'pH ' + F.dec(R.pH, 2), fs + 1, c.series[1], w);
+      }, { aspect: 0.66, minHeight: 250, maxHeight: 340 });
+
+      // ==================================================================
+      // CANVAS 2 — 100 molecules of each acid, at the same concentration
+      // ==================================================================
+      var flasksCv = Demo.canvas('#flasks', function (ctx, w, h, c) {
+        var R = pack(S.Ka, S.C);
+        var hs = strongH(S.C);
+        var cols = [
+          {
+            title: 'Weak acid',
+            sub: acidFormula() + ', Ka = ' + fmtKa(S.Ka),
+            pct: R.alpha * 100, pH: R.pH, hc: R.h
+          },
+          {
+            title: 'Strong acid',
+            sub: 'HCl, ionizes completely',
+            pct: 100, pH: -Math.log10(hs), hc: hs
+          }
+        ];
+
+        var gap = 12;
+        var colW = (w - gap) / 2;
+        var sp = Demo.clamp(Math.min((colW - 18) / 10, (h - 118) / 10), 5, 17);
+        var gridW = sp * 9;
+        var contentH = 34 + 9 * sp + 52;
+        var top = Math.max(2, (h - contentH) / 2);
+        var rad = Math.max(2, sp * 0.33);
+
+        // divider
+        ctx.strokeStyle = c.lineSoft;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.round(w / 2) + 0.5, top);
+        ctx.lineTo(Math.round(w / 2) + 0.5, top + contentH - 8);
+        ctx.stroke();
+
+        for (var k = 0; k < 2; k++) {
+          var col = cols[k];
+          var cx = k * (colW + gap) + colW / 2;
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          fitFont(ctx, col.title, colW - 6, 12.5, '600');
+          ctx.fillStyle = c.text;
+          ctx.fillText(col.title, cx, top);
+
+          fitFont(ctx, col.sub, colW - 6, 10.5);
+          ctx.fillStyle = c.muted;
+          ctx.fillText(col.sub, cx, top + 17);
+
+          // 100 dots, filled from the bottom row up as ionization grows
+          var n = Math.round(Demo.clamp(col.pct, 0, 100));
+          var gx = cx - gridW / 2, gy = top + 34;
+          for (var idx = 0; idx < 100; idx++) {
+            var row = 9 - Math.floor(idx / 10);
+            var cc = idx % 10;
+            var dx = gx + cc * sp, dy = gy + row * sp;
+            ctx.beginPath();
+            ctx.arc(dx, dy, rad, 0, 6.2832);
+            if (idx < n) {
+              ctx.fillStyle = c.accent;
+              ctx.fill();
+            } else {
+              ctx.save();
+              ctx.globalAlpha = 0.55;
+              ctx.strokeStyle = c.muted;
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
+
+          var yb = gy + 9 * sp + 17;
+          fitFont(ctx, fmtPct(col.pct) + ' ionized', colW - 6, 12, '600');
+          ctx.fillStyle = c.accentStrong;
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(fmtPct(col.pct) + ' ionized', cx, yb);
+
+          var pHtxt = 'pH ' + F.dec(col.pH, 2);
+          fitFont(ctx, pHtxt, colW - 6, 13, '600');
+          ctx.fillStyle = c.text;
+          ctx.fillText(pHtxt, cx, yb + 17);
+
+          var htxt = '[H₃O⁺] = ' + F.sci(col.hc, 2) + ' M';
+          fitFont(ctx, htxt, colW - 4, 10.5);
+          ctx.fillStyle = c.text2;
+          ctx.fillText(htxt, cx, yb + 32);
+        }
+      }, { aspect: 0.66, minHeight: 235, maxHeight: 290 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        ka: document.getElementById('ka'),
+        kaOut: document.getElementById('kaOut'),
+        pc: document.getElementById('pc'),
+        pcOut: document.getElementById('pcOut'),
+        acidInfo: document.getElementById('acidInfo'),
+        plotCap: document.getElementById('plotCap'),
+        flaskCap: document.getElementById('flaskCap'),
+        rPct: document.getElementById('rPct'),
+        rPH: document.getElementById('rPH'),
+        rH: document.getElementById('rH'),
+        rKa: document.getElementById('rKa'),
+        rWater: document.getElementById('rWater'),
+        waterBox: document.getElementById('waterBox'),
+        barIon: document.getElementById('barIon'),
+        tC: document.getElementById('tC'),
+        tHA: document.getElementById('tHA'),
+        tA: document.getElementById('tA'),
+        tH: document.getElementById('tH'),
+        tOH: document.getElementById('tOH'),
+        cmpWeakHead: document.getElementById('cmpWeakHead'),
+        tWeakPct: document.getElementById('tWeakPct'),
+        tStrongPct: document.getElementById('tStrongPct'),
+        tWeakH: document.getElementById('tWeakH'),
+        tStrongH: document.getElementById('tStrongH'),
+        tWeakPH: document.getElementById('tWeakPH'),
+        tStrongPH: document.getElementById('tStrongPH'),
+        strongLine: document.getElementById('strongLine'),
+        scPct: document.getElementById('scPct'),
+        scPH: document.getElementById('scPH'),
+        scNote: document.getElementById('scNote'),
+        sweep: document.getElementById('btnSweep')
+      };
+
+      var presetBtns = Array.prototype.slice.call(
+        document.querySelectorAll('#acidPresets .btn'));
+      var DEFAULT_INFO = el.acidInfo.innerHTML;
+
+      function clearPreset() {
+        S.acid = null;
+        presetBtns.forEach(function (b) { b.classList.remove('is-on'); });
+        el.acidInfo.innerHTML = DEFAULT_INFO;
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        var R = pack(S.Ka, S.C);
+        var hs = strongH(S.C);
+        var pHs = -Math.log10(hs);
+        var pct = R.alpha * 100;
+        var sc = shortcut(S.Ka, S.C);
+
+        el.kaOut.innerHTML = fmtKa(S.Ka)
+          + ' <span class="muted">(pK<sub>a</sub> ' + F.dec(-Math.log10(S.Ka), 2) + ')</span>';
+        el.pcOut.textContent = fmtC(S.C) + ' M';
+
+        el.rPct.textContent = fmtPct(pct);
+        el.rPH.textContent = F.dec(R.pH, 2);
+        el.rH.innerHTML = F.sci(R.h, 2) + '<span class="r-unit">M</span>';
+        el.rKa.textContent = fmtKa(S.Ka);
+        el.rWater.textContent = fmtWater(R.fromWater * 100);
+        el.waterBox.className = 'readout' + (R.fromWater > 0.05 ? ' is-bad' : '');
+        el.barIon.style.width = Demo.clamp(pct, 0, 100) + '%';
+
+        el.tC.textContent = fmtC(S.C) + ' M';
+        el.tHA.innerHTML = fmtConc(R.ha) + ' M';
+        el.tA.innerHTML = fmtConc(R.a) + ' M';
+        el.tH.innerHTML = fmtConc(R.h) + ' M';
+        el.tOH.innerHTML = F.sci(R.oh, 2) + ' M';
+
+        el.cmpWeakHead.textContent = S.acid ? S.acid.dataset.f : 'Weak (HA)';
+        el.tWeakPct.textContent = fmtPct(pct);
+        el.tStrongPct.textContent = '100%';
+        el.tWeakH.innerHTML = fmtConc(R.h);
+        el.tStrongH.innerHTML = fmtConc(hs);
+        el.tWeakPH.textContent = F.dec(R.pH, 2);
+        el.tStrongPH.textContent = F.dec(pHs, 2);
+
+        var dpH = R.pH - pHs;
+        var ratio = R.h > 0 ? hs / R.h : Infinity;
+        if (dpH < 0.03) {
+          el.strongLine.innerHTML = 'At this concentration the two are within <strong>'
+            + F.dec(dpH, 2) + ' pH units</strong> of each other. The weak acid is <strong>'
+            + fmtPct(pct) + ' ionized</strong> &mdash; nearly all of it &mdash; and its K<sub>a</sub> is '
+            + 'still ' + fmtKa(S.Ka) + '. The extent moved. The constant did not, so the acid is exactly '
+            + 'as weak as it always was.';
+        } else {
+          el.strongLine.innerHTML = 'Same ' + fmtC(S.C) + ' M in both flasks. The strong acid has <strong>'
+            + F.sig(ratio, 3) + ' times</strong> the hydronium, which is a gap of <strong>'
+            + F.dec(dpH, 2) + ' pH units</strong>. Nothing here is about dilution &mdash; only about what '
+            + 'fraction of the acid let go of its proton.';
+        }
+
+        el.scPct.textContent = fmtPct(sc.alpha * 100);
+        el.scPH.textContent = F.dec(sc.pH, 2);
+        var scErr = Math.abs(sc.h - R.h) / R.h * 100;
+        if (sc.alpha > 1) {
+          el.scNote.className = 'note bad';
+          el.scNote.innerHTML = 'The shortcut claims <strong>' + fmtPct(sc.alpha * 100)
+            + '</strong> of the acid ionized. More than all of it is not a rounding problem &mdash; '
+            + '&ldquo;x is small&rdquo; is simply false here, and the exact answer is '
+            + fmtPct(pct) + '.';
+        } else if (sc.pH >= 7) {
+          el.scNote.className = 'note bad';
+          el.scNote.innerHTML = 'The shortcut hands back <strong>pH ' + F.dec(sc.pH, 2)
+            + '</strong> &mdash; a <em>basic</em> pH, for a flask of acid. It ignored water, and here '
+            + 'water is supplying <strong>' + fmtWater(R.fromWater * 100) + '</strong> of the '
+            + 'H<sub>3</sub>O<sup>+</sup>. The exact answer is pH ' + F.dec(R.pH, 2)
+            + ', which is on the correct side of 7.';
+        } else if (scErr > 5) {
+          el.scNote.className = 'note warn';
+          el.scNote.innerHTML = 'The shortcut misses [H<sub>3</sub>O<sup>+</sup>] by <strong>'
+            + F.dec(scErr, 1) + '%</strong> here. Keep diluting and it gets worse, not better.';
+        } else {
+          el.scNote.className = 'note';
+          el.scNote.innerHTML = 'Here the shortcut is within <strong>' + F.dec(scErr, 2)
+            + '%</strong> of the exact answer &mdash; this is the comfortable region textbooks pick '
+            + 'their examples from. Drag the concentration to the right and watch it fall apart.';
+        }
+
+        // captions
+        el.plotCap.innerHTML = 'At <strong>' + fmtC(S.C) + ' M</strong>, ' + acidName() + ' is <strong>'
+          + fmtPct(pct) + ' ionized</strong> at <strong>pH ' + F.dec(R.pH, 2) + '</strong>. '
+          + 'Both curves climb to the right: more of the acid ionizes, and the solution gets less acidic, '
+          + 'from the same act of adding water. The green line is pH 7 &mdash; the pH curve leans on it and '
+          + 'never crosses, because an acid cannot make water basic.';
+
+        var n = Math.round(Demo.clamp(pct, 0, 100));
+        var extra = '';
+        if (n === 0 && pct > 0) {
+          extra = ' Fewer than 1 molecule in 100 has ionized here, so the weak grid draws no filled dots '
+            + 'at all — the true figure is ' + fmtPct(pct) + '.';
+        } else if (n === 100 && pct < 99.995) {
+          extra = ' Rounded to whole dots, ' + fmtPct(pct) + ' draws as all 100 — the last fraction of a '
+            + 'percent is real but smaller than one dot.';
+        }
+        el.flaskCap.innerHTML = 'Each grid is 100 molecules of acid dissolved at the same <strong>'
+          + fmtC(S.C) + ' M</strong>. Filled = ionized, hollow = still intact HA.' + extra;
+
+        if (fast) { plotCv.paint(); flasksCv.paint(); }
+        else { plotCv.redraw(); flasksCv.redraw(); }
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      function setPC(pc, fromSlider, fast) {
+        S.pc = Demo.clamp(Math.round(pc * 1e6) / 1e6, 0, PCMAX);
+        S.C = Math.pow(10, -S.pc);
+        if (!fromSlider) el.pc.value = S.pc;
+        render(fast);
+      }
+
+      function setKa(ka, fromSlider) {
+        S.Ka = Demo.clamp(ka, 1e-10, 1e-3);
+        if (!fromSlider) el.ka.value = Math.log10(S.Ka);
+        recomputeCurve();
+        render(false);
+      }
+
+      Demo.range('#ka', function (v) {
+        stopSweep();
+        clearPreset();
+        setKa(Math.pow(10, v), true);
+      });
+
+      // Grabbing the slider takes the sweep off the wheel. Setting .value from
+      // JS does not fire 'input', so the sweep cannot cancel itself here.
+      Demo.range('#pc', function (v) {
+        stopSweep();
+        setPC(v, true, false);
+      });
+
+      presetBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          stopSweep();
+          clearPreset();
+          S.acid = b;
+          b.classList.add('is-on');
+          el.acidInfo.innerHTML = b.dataset.info;
+          setKa(parseFloat(b.dataset.ka), false);
+        });
+      });
+
+      document.getElementById('btnDilute').addEventListener('click', function () {
+        stopSweep();
+        var next = Math.floor(S.pc + 1e-6) + 1;
+        setPC(Math.min(next, PCMAX), false, false);
+      });
+
+      document.getElementById('btnConc').addEventListener('click', function () {
+        stopSweep();
+        var next = Math.ceil(S.pc - 1e-6) - 1;
+        setPC(Math.max(next, 0), false, false);
+      });
+
+      // ---- the sweep: watch percent ionization actually move ----
+      var sweep = Demo.loop(function (dt) {
+        var next = S.pc + dt * 0.85;                 // 5 decades in about 6 s
+        if (next >= PCMAX) { setPC(PCMAX, false, true); stopSweep(); return; }
+        setPC(next, false, true);
+      });
+
+      // Demo.range() fires its handler immediately when it is wired, and that
+      // happens above the line where `sweep` is created — so this must survive
+      // being called before there is a loop to stop.
+      function stopSweep() {
+        if (!sweep || !sweep.running) return;
+        sweep.stop();
+        el.sweep.textContent = 'Watch it dilute';
+      }
+
+      el.sweep.addEventListener('click', function () {
+        if (sweep.running) { stopSweep(); return; }
+        if (S.pc >= PCMAX - 0.01) setPC(0, false, false);
+        el.sweep.textContent = 'Stop';
+        sweep.start();
+      });
+
+      // ==================================================================
+      // BOOT — start on acetic acid at 0.100 M
+      // ==================================================================
+      var start = presetBtns[2];                     // CH3COOH, Ka = 1.8e-5
+      S.acid = start;
+      start.classList.add('is-on');
+      el.acidInfo.innerHTML = start.dataset.info;
+      setKa(parseFloat(start.dataset.ka), false);
+      setPC(1, false, false);
+    })();
+  </script>
+</body>
+
+</html>

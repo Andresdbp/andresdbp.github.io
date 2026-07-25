@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>ICE Workbench | Dr. Andres Barboza</title>
+  <meta name="description" content="A working ICE table: Q against K decides the sign of x, coefficients drive the change row, and the 'x is small' shortcut is shown breaking past 5%.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: the ICE table itself, the equation strip, tab wrapping */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .seg.tabs { margin-bottom: 13px; }
+    .seg.tabs button { white-space: normal; font-size: 12px; padding: 7px 6px; line-height: 1.25; }
+    .seg.wrapseg { flex-wrap: wrap; }
+    .seg.wrapseg button { flex: 1 1 45%; white-space: normal; font-size: 12px; line-height: 1.25; }
+
+    @media (max-width: 420px) {
+      .seg.tabs button { font-size: 11px; padding: 6px 4px; }
+      .seg.wrapseg button { font-size: 11px; }
+    }
+
+    .viz-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 15px 0 8px;
+    }
+    .viz-label:first-child { margin-top: 0; }
+    .viz-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .eqstrip {
+      text-align: center;
+      font-size: 17px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+      padding: 4px 0 2px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .eqstrip small { display: block; font-size: 11.5px; color: var(--muted); letter-spacing: 0; margin-top: 3px; white-space: normal; }
+
+    /* the ICE table: it has to be able to grow wider than the phone and scroll */
+    .ice { width: auto; min-width: 100%; }
+    .ice th, .ice td { white-space: nowrap; }
+    .ice thead th { color: var(--text); font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+    .ice thead th .coefbig { color: var(--accent-strong); font-weight: 700; }
+    .ice tr.chg td, .ice tr.chg th { background: var(--accent-soft); }
+    .ice tr.chg td { font-weight: 600; }
+    .ice tr.eqm td { font-weight: 600; }
+    .ice tr.bad-row td, .ice tr.bad-row th { background: var(--bad-soft); color: var(--bad); }
+    .ice tr.bad-row th { color: var(--bad); }
+    .coef { color: var(--accent-strong); font-weight: 700; }
+    .ice .rl { font-size: 11.5px; }
+    .ice .rl em { font-style: normal; color: var(--muted); font-size: 10.5px; display: block; }
+
+    .expr {
+      font-size: 14px;
+      color: var(--text);
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 6px 2px 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    .expr .frac { display: inline-block; text-align: center; vertical-align: middle; margin: 0 3px; }
+    .expr .frac > span { display: block; padding: 0 5px; }
+    .expr .frac > span.den { border-top: 1px solid var(--line); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: 12px; color: var(--muted); margin-top: 9px; }
+    .legend i { width: 16px; height: 7px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: middle; }
+
+    /* demo.css gives .ctrl an explicit display:block, which out-specifies the
+       browser's [hidden] rule. Species sliders are shown and hidden per reaction,
+       so that has to be put back. */
+    .ctrl[hidden] { display: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">ICE Workbench</h1>
+        <p class="demo-sub">Before you write a single number: is Q bigger or smaller than K? That answer, and nothing else, sets the sign of x.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 8</span>
+          <span class="tag is-accent">Equilibrium</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg tabs" id="tabs" role="tablist" aria-label="View">
+          <button role="tab" aria-selected="true" data-tab="ice">ICE table</button>
+          <button role="tab" aria-selected="false" data-tab="solve">Exact vs shortcut</button>
+          <button role="tab" aria-selected="false" data-tab="lc">Le Chatelier</button>
+        </div>
+
+        <!-- ===== TAB 1: the ICE table ===== -->
+        <div id="paneIce">
+          <p class="eqstrip" id="rxnEqBig">&nbsp;<small>&nbsp;</small></p>
+
+          <div class="viz-label">Step 1 &mdash; where is Q relative to K? <span>&mdash; this is what fixes the sign of x</span></div>
+          <canvas id="qk" role="img" aria-label="A logarithmic number line showing the reaction quotient Q and the equilibrium constant K, with an arrow showing which way Q must travel"></canvas>
+          <p class="note" id="qkLine">&nbsp;</p>
+
+          <div class="viz-label">Step 2 &mdash; the ICE table <span>&mdash; all values in mol L&#8315;&#185;</span></div>
+          <div class="table-scroll">
+            <table class="tbl ice" id="iceTable">
+              <thead id="iceHead"></thead>
+              <tbody id="iceBody"></tbody>
+            </table>
+          </div>
+
+          <label class="check" style="margin-top:12px">
+            <input type="checkbox" id="showWrong">
+            <span>Show the most common wrong answer: <b>&plusmn;x in every column</b>, coefficients ignored</span>
+          </label>
+
+          <p class="stage-caption" id="iceCap">&nbsp;</p>
+        </div>
+
+        <!-- ===== TAB 2: exact vs shortcut ===== -->
+        <div id="paneSolve" hidden>
+          <div class="viz-label">The equilibrium expression, with the ICE row substituted in</div>
+          <div class="expr" id="kExprWrap">&nbsp;</div>
+
+          <div class="viz-label">Multiply it out</div>
+          <p class="note" id="polyLine">&nbsp;</p>
+
+          <div class="viz-label">Percent error of the shortcut, as K changes <span>&mdash; everything else held fixed</span></div>
+          <canvas id="err" role="img" aria-label="Plot of the percent error of the x-is-small approximation against the equilibrium constant, with the five percent cutoff marked"></canvas>
+          <p class="stage-caption" id="errCap">&nbsp;</p>
+
+          <div class="viz-label">Side by side</div>
+          <div class="table-scroll">
+            <table class="tbl" id="cmpTable">
+              <thead id="cmpHead"></thead>
+              <tbody id="cmpBody"></tbody>
+            </table>
+          </div>
+          <p class="note" id="errNote" style="margin-top:12px">&nbsp;</p>
+        </div>
+
+        <!-- ===== TAB 3: Le Chatelier ===== -->
+        <div id="paneLc" hidden>
+          <div class="viz-label">Concentration against time <span>&mdash; mol L&#8315;&#185;, time in arbitrary units</span></div>
+          <canvas id="lc" role="img" aria-label="Plot of every concentration against time, showing the approach to equilibrium, the moment a stress is applied, and the new equilibrium"></canvas>
+          <div class="legend" id="lcLegend"></div>
+          <p class="note" id="lcVerdict" style="margin-top:11px">&nbsp;</p>
+          <p class="stage-caption" id="lcCap">&nbsp;</p>
+        </div>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The reaction</div>
+          <div class="stack">
+            <select id="rxn" aria-label="Choose a reaction">
+              <option value="0">H₂ + I₂ &#8652; 2 HI</option>
+              <option value="1">N₂O₄ &#8652; 2 NO₂</option>
+              <option value="2">N₂ + 3 H₂ &#8652; 2 NH₃</option>
+              <option value="3">CO + H₂O &#8652; CO₂ + H₂</option>
+            </select>
+            <div class="readouts">
+              <div class="readout">
+                <div class="r-label">Reference K</div>
+                <div class="r-value" id="fK">54.3</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">at</div>
+                <div class="r-value" id="fT">425<span class="r-unit">&deg;C</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">&Delta;H&deg;</div>
+                <div class="r-value" id="fdH">&minus;9.4<span class="r-unit">kJ/mol</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">&Delta;n gas</div>
+                <div class="r-value" id="fDn">0</div>
+              </div>
+            </div>
+            <p class="ctrl-hint" id="fNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Equilibrium constant</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="logK">K</label>
+                <span class="ctrl-value" id="logKOut">54.3</span>
+              </div>
+              <input type="range" id="logK" min="-3.265" max="6.735" step="0.02" value="1.735">
+              <p class="ctrl-hint">Slider is logarithmic &mdash; it spans ten powers of ten around the reference value.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="kReset">Back to the reference K</button>
+            </div>
+            <p class="note warn" id="tEquiv">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Initial concentrations</div>
+          <div class="stack">
+            <div class="ctrl" id="spBox0">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sp0" id="spLab0">&nbsp;</label>
+                <span class="ctrl-value" id="spOut0">&nbsp;</span>
+              </div>
+              <input type="range" id="sp0" min="0" max="0.4" step="0.002" value="0.1">
+            </div>
+            <div class="ctrl" id="spBox1">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sp1" id="spLab1">&nbsp;</label>
+                <span class="ctrl-value" id="spOut1">&nbsp;</span>
+              </div>
+              <input type="range" id="sp1" min="0" max="0.4" step="0.002" value="0.1">
+            </div>
+            <div class="ctrl" id="spBox2">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sp2" id="spLab2">&nbsp;</label>
+                <span class="ctrl-value" id="spOut2">&nbsp;</span>
+              </div>
+              <input type="range" id="sp2" min="0" max="0.4" step="0.002" value="0">
+            </div>
+            <div class="ctrl" id="spBox3">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sp3" id="spLab3">&nbsp;</label>
+                <span class="ctrl-value" id="spOut3">&nbsp;</span>
+              </div>
+              <input type="range" id="sp3" min="0" max="0.4" step="0.002" value="0">
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="pPureR">Reactants only</button>
+              <button class="btn" id="pPureP">Products only</button>
+              <button class="btn" id="pBoth">Some of both</button>
+            </div>
+            <p class="ctrl-hint">&ldquo;Products only&rdquo; forces Q above K, so x has to come out negative. Watch the change row flip.</p>
+          </div>
+        </div>
+
+        <div class="panel pane-solve" hidden>
+          <div class="panel-title">Break the shortcut</div>
+          <div class="stack">
+            <div class="readouts">
+              <div class="readout is-accent">
+                <div class="r-label">x exact</div>
+                <div class="r-value" id="rXe">&mdash;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">x shortcut</div>
+                <div class="r-value" id="rXa">&mdash;</div>
+              </div>
+              <div class="readout" id="rErrBox">
+                <div class="r-label">Percent error</div>
+                <div class="r-value" id="rErr">&mdash;</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">5% rule check</div>
+                <div class="r-value" id="rRule">&mdash;</div>
+              </div>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="breakBtn">Move K until it breaks</button>
+              <button class="btn" id="fixBtn">Move K until it is safe</button>
+            </div>
+            <p class="ctrl-hint" id="breakHint">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel pane-lc" hidden>
+          <div class="panel-title">Stress the equilibrium</div>
+          <div class="stack">
+            <div class="seg wrapseg" id="stressSeg" role="tablist" aria-label="Stress">
+              <button role="tab" aria-selected="true" data-stress="addR">Add reactant</button>
+              <button role="tab" aria-selected="false" data-stress="addP">Add product</button>
+              <button role="tab" aria-selected="false" data-stress="vol">Change volume</button>
+              <button role="tab" aria-selected="false" data-stress="temp">Change temperature</button>
+              <button role="tab" aria-selected="false" data-stress="cat">Add a catalyst</button>
+            </div>
+
+            <div id="addBox">
+              <div class="stack-s">
+                <select id="stressSpecies" aria-label="Which species to add"></select>
+                <div class="ctrl">
+                  <div class="ctrl-row">
+                    <label class="ctrl-label" for="amt" id="amtLab">Amount added</label>
+                    <span class="ctrl-value" id="amtOut">0.100 M</span>
+                  </div>
+                  <input type="range" id="amt" min="0" max="0.4" step="0.002" value="0.1">
+                </div>
+              </div>
+            </div>
+
+            <div id="volBox" hidden>
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="vol">New volume</label>
+                  <span class="ctrl-value" id="volOut">0.50 &times;</span>
+                </div>
+                <input type="range" id="vol" min="-2" max="2" step="0.05" value="-1">
+                <p class="ctrl-hint">Squeezing the container multiplies every concentration by the same factor. Whether that changes Q at all depends only on &Delta;n of gas.</p>
+              </div>
+            </div>
+
+            <div id="tempBox" hidden>
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="temp">New temperature</label>
+                  <span class="ctrl-value" id="tempOut">798 K</span>
+                </div>
+                <input type="range" id="temp" min="200" max="1500" step="5" value="798">
+                <p class="ctrl-hint" id="tNow">&nbsp;</p>
+              </div>
+            </div>
+
+            <div id="catBox" hidden>
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="cat">Catalyst speed-up</label>
+                  <span class="ctrl-value" id="catOut">8 &times;</span>
+                </div>
+                <input type="range" id="cat" min="1" max="25" step="1" value="8">
+                <p class="ctrl-hint">The catalyst multiplies the forward and reverse rate constants by the same factor. Nothing else in the model changes.</p>
+              </div>
+            </div>
+
+            <hr class="sep">
+            <div class="readouts">
+              <div class="readout">
+                <div class="r-label">K before</div>
+                <div class="r-value" id="lcKb">&mdash;</div>
+              </div>
+              <div class="readout" id="lcKaBox">
+                <div class="r-label">K after</div>
+                <div class="r-value" id="lcKa">&mdash;</div>
+              </div>
+              <div class="readout" id="lcKchgBox">
+                <div class="r-label">K changed?</div>
+                <div class="r-value" id="lcKchg">&mdash;</div>
+              </div>
+              <div class="readout is-accent">
+                <div class="r-label">Shift</div>
+                <div class="r-value" id="lcShift">&mdash;</div>
+              </div>
+            </div>
+            <p class="note" id="lcRule">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn" id="limits">
+            <strong>What is simplified here.</strong> K is written from concentrations in mol&nbsp;L&#8315;&#185;;
+            a real thermodynamic K is built from activities and carries no units, which is why K is printed
+            here as a bare number. The Le Chatelier tab drives the approach to equilibrium with
+            rate = <em>k</em><sub>f</sub>&thinsp;[reactants]<sup>coefficients</sup> &minus;
+            <em>k</em><sub>r</sub>&thinsp;[products]<sup>coefficients</sup>, which assumes the reaction happens
+            in one elementary step &mdash; most do not, so treat the time axis as qualitative and unitless.
+            What is <em>not</em> simplified: the endpoint. The system stops exactly where Q = K, every time.
+            K against temperature uses the van&nbsp;&rsquo;t&nbsp;Hoff equation with &Delta;H&deg; held constant.
+            All four reactions are all-gas, so a volume change moves every concentration; a pure solid or
+            liquid would not appear in K at all.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students treat an ICE table as a form to fill in rather than a
+        piece of bookkeeping. Three specific habits follow, and each one has its own tab here.
+      </p>
+      <p>
+        <strong>1. They guess the sign of x.</strong> Almost everyone writes &minus;x under the reactants and
+        +x under the products every single time, because that is how the first worked example looked. But the
+        reaction runs whichever way it has to in order to reach K. Compute Q first. If Q &lt; K there is not
+        enough product yet and the reaction runs forward, so x is positive. If Q &gt; K there is too much
+        product and the reaction runs backward, so x is <em>negative</em> and the reactants go <em>up</em>.
+        Press &ldquo;Products only&rdquo; and watch every sign in the change row flip. Nothing else on the page
+        decides this &mdash; only Q against K.
+      </p>
+      <p>
+        <strong>2. They ignore the coefficients.</strong> In H<sub>2</sub> + I<sub>2</sub> &#8652; 2 HI, two HI
+        molecules appear for every one H<sub>2</sub> consumed, so the change row is &minus;x, &minus;x,
+        <strong>+2x</strong>. Tick the &ldquo;common wrong answer&rdquo; box: writing +x there gives
+        [HI] = 0.0880 instead of 0.157 mol L&#8315;&#185;. The unnerving part is that the wrong answer still
+        satisfies the K expression &mdash; it feels right on the calculator. What it breaks is the atom
+        bookkeeping. Then switch to CO + H<sub>2</sub>O &#8652; CO<sub>2</sub> + H<sub>2</sub>, where every
+        coefficient is 1 and the mistake changes nothing at all. That is exactly why the habit survives:
+        students practise on reactions that forgive it.
+      </p>
+      <p>
+        <strong>3. They use the &ldquo;x is small&rdquo; shortcut without ever checking it.</strong> On the
+        default settings the shortcut is off by <strong>368%</strong>. Drag K down and watch the error curve
+        fall through the 5% line; drag it up and watch it blow past 100%. Which direction helps is not a rule
+        you can memorise: with H<sub>2</sub> and I<sub>2</sub> in the flask the shortcut needs a
+        <em>small</em> K, and with HI in the flask instead it needs a <em>large</em> one. The shortcut is
+        safe when x is genuinely small next to the concentration you are subtracting it from &mdash; nothing
+        else.
+      </p>
+      <p>
+        <strong>And the three Le Chatelier traps:</strong> a <strong>catalyst never shifts anything</strong>.
+        It speeds up the forward and reverse directions by the same factor, so the system arrives at exactly
+        the same place sooner &mdash; the solid and dashed curves end on identical lines. <strong>Temperature
+        is the only stress on that panel that changes K itself</strong>; adding a substance or squeezing the
+        container moves Q while K sits still. And squeezing only shifts anything when the two sides hold
+        different numbers of moles of gas: H<sub>2</sub> + I<sub>2</sub> &#8652; 2 HI has 2 mol on each side,
+        so halving the volume doubles every concentration and leaves Q at 54.3 &mdash; identical to K, and
+        nothing moves.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // =====================================================================
+      // MODEL
+      //
+      //   Species i has a coefficient v_i and a side s_i (-1 reactant, +1 product).
+      //   With extent of reaction x (mol L^-1):
+      //       [i](x) = [i]_0 + s_i * v_i * x
+      //   so reactants read [i]_0 - v_i x and products read [i]_0 + v_i x.
+      //
+      //   Q(x) = PROD(products [i]^v_i) / PROD(reactants [i]^v_i)
+      //   ln Q(x) = SUM_i  s_i * v_i * ln([i](x))     <- strictly increasing in x
+      //
+      //   Physical window: every concentration >= 0
+      //       x <= min over reactants of [i]_0 / v_i        (= xHi)
+      //       x >= -min over products of [i]_0 / v_i        (= xLo)
+      //   Q -> 0 at xLo and Q -> infinity at xHi, and Q is monotone between them,
+      //   so Q(x) = K has EXACTLY ONE root in the window. Bisection finds it and can
+      //   never return a negative concentration. That is the "pick the right root"
+      //   rule, enforced structurally rather than checked afterwards.
+      //
+      //   Sign of x falls straight out of Q(0) vs K:
+      //       Q(0) < K  ->  x > 0  (runs forward)
+      //       Q(0) > K  ->  x < 0  (runs backward)
+      // =====================================================================
+
+      var RXNS = [
+        {
+          eq: 'H<sub>2</sub>(g) + I<sub>2</sub>(g) &#8652; 2 HI(g)',
+          sub: 'hydrogen iodide synthesis',
+          sp: [
+            { h: 'H<sub>2</sub>', t: 'H₂', v: 1, side: -1, c0: 0.100 },
+            { h: 'I<sub>2</sub>', t: 'I₂', v: 1, side: -1, c0: 0.100 },
+            { h: 'HI', t: 'HI', v: 2, side: 1, c0: 0.000 }
+          ],
+          K: 54.3, T: 698, dH: -9.4, cmax: 0.40,
+          fact: '2 mol of gas on the left, 2 on the right: Δn = 0, so squeezing the container changes nothing.'
+        },
+        {
+          eq: 'N<sub>2</sub>O<sub>4</sub>(g) &#8652; 2 NO<sub>2</sub>(g)',
+          sub: 'colourless dimer to brown monomer',
+          sp: [
+            { h: 'N<sub>2</sub>O<sub>4</sub>', t: 'N₂O₄', v: 1, side: -1, c0: 0.100 },
+            { h: 'NO<sub>2</sub>', t: 'NO₂', v: 2, side: 1, c0: 0.000 }
+          ],
+          K: 0.0046, T: 298, dH: 57.2, cmax: 0.40,
+          fact: '1 mol of gas becomes 2, and the forward reaction is endothermic. Both a squeeze and a heating change something here.'
+        },
+        {
+          eq: 'N<sub>2</sub>(g) + 3 H<sub>2</sub>(g) &#8652; 2 NH<sub>3</sub>(g)',
+          sub: 'the Haber process',
+          sp: [
+            { h: 'N<sub>2</sub>', t: 'N₂', v: 1, side: -1, c0: 1.00 },
+            { h: 'H<sub>2</sub>', t: 'H₂', v: 3, side: -1, c0: 3.00 },
+            { h: 'NH<sub>3</sub>', t: 'NH₃', v: 2, side: 1, c0: 0.00 }
+          ],
+          K: 0.058, T: 773, dH: -91.8, cmax: 4.00,
+          fact: 'The change row is −x, −3x, +2x. Four moles of gas collapse into two, so this one responds hard to a squeeze.'
+        },
+        {
+          eq: 'CO(g) + H<sub>2</sub>O(g) &#8652; CO<sub>2</sub>(g) + H<sub>2</sub>(g)',
+          sub: 'the water-gas shift',
+          sp: [
+            { h: 'CO', t: 'CO', v: 1, side: -1, c0: 0.100 },
+            { h: 'H<sub>2</sub>O', t: 'H₂O', v: 1, side: -1, c0: 0.100 },
+            { h: 'CO<sub>2</sub>', t: 'CO₂', v: 1, side: 1, c0: 0.000 },
+            { h: 'H<sub>2</sub>', t: 'H₂', v: 1, side: 1, c0: 0.000 }
+          ],
+          K: 5.10, T: 700, dH: -41.2, cmax: 0.40,
+          fact: 'Every coefficient is 1 and Δn = 0. This is the forgiving reaction — ignoring coefficients costs nothing here, which is exactly why the habit survives.'
+        }
+      ];
+
+      var RGAS = 8.314;                 // J mol^-1 K^-1
+      var NPTS = 320;                   // samples per relaxation curve
+      var CURVE_N = 90;                 // samples in the error-vs-K sweep
+
+      var S = {
+        rx: 0,
+        K: 54.3,
+        init: [0.100, 0.100, 0.000, 0],
+        tab: 'ice',
+        showWrong: false,
+        stress: 'addR',
+        addIdx: 0,
+        addAmt: 0.100,
+        volF: 0.50,
+        tempK: 798,
+        cat: 8
+      };
+
+      var booting = true;
+      var SOL = null;        // current solve bundle
+      var CURVE = null;      // error-vs-K sweep
+      var LC = null;         // Le Chatelier run
+
+      function R() { return RXNS[S.rx]; }
+
+      // ---------------- core equilibrium maths ----------------
+
+      function lnQ(sp, c0, x) {
+        var s = 0;
+        for (var i = 0; i < sp.length; i++) {
+          var c = c0[i] + sp[i].side * sp[i].v * x;
+          s += sp[i].side * sp[i].v * Math.log(c > 0 ? c : 0);
+        }
+        return s;
+      }
+
+      function windowOf(sp, c0) {
+        var hi = Infinity, lo = -Infinity;
+        for (var i = 0; i < sp.length; i++) {
+          var lim = c0[i] / sp[i].v;
+          if (sp[i].side < 0) { if (lim < hi) hi = lim; }
+          else { if (-lim > lo) lo = -lim; }
+        }
+        return { lo: lo, hi: hi };
+      }
+
+      // the physically meaningful root, by construction
+      function solveExact(sp, c0, K, iters) {
+        var w = windowOf(sp, c0);
+        if (!(w.hi > w.lo)) return NaN;
+        var lo = w.lo, hi = w.hi, lk = Math.log(K), n = iters || 140;
+        for (var i = 0; i < n; i++) {
+          var m = (lo + hi) / 2;
+          if (lnQ(sp, c0, m) < lk) lo = m; else hi = m;
+        }
+        return (lo + hi) / 2;
+      }
+
+      // "x is small": hold the side being consumed at its initial values and
+      // solve for the side being formed. Exactly what a student writes down.
+      function solveApprox(sp, c0, K, iters) {
+        var q = Math.exp(lnQ(sp, c0, 0));
+        if (isNaN(q)) return NaN;
+        if (q === K) return 0;
+        var dir = q < K ? 1 : -1;
+        var sink = dir > 0 ? 1 : -1, src = -sink, i, lnSrc = 0;
+        for (i = 0; i < sp.length; i++) {
+          if (sp[i].side === src) lnSrc += sp[i].v * Math.log(Math.max(0, c0[i]));
+        }
+        var tgt = dir > 0 ? Math.log(K) + lnSrc : lnSrc - Math.log(K);
+        if (!isFinite(tgt)) return NaN;
+        function g(u) {
+          var s = 0;
+          for (var j = 0; j < sp.length; j++) {
+            if (sp[j].side === sink) s += sp[j].v * Math.log(c0[j] + sp[j].v * u);
+          }
+          return s;
+        }
+        var lo = 0, hi = 1e-9, guard = 0;
+        while (g(hi) < tgt && guard++ < 500) hi *= 2;
+        if (guard >= 500) return NaN;
+        var n = iters || 140;
+        for (i = 0; i < n; i++) {
+          var m = (lo + hi) / 2;
+          if (g(m) < tgt) lo = m; else hi = m;
+        }
+        return dir * (lo + hi) / 2;
+      }
+
+      // the classic mistake: every coefficient in the CHANGE row forced to 1,
+      // while the exponents in K stay correct.
+      function solveNoCoef(sp, c0, K) {
+        var hi = Infinity, lo = -Infinity, i;
+        for (i = 0; i < sp.length; i++) {
+          if (sp[i].side < 0) { if (c0[i] < hi) hi = c0[i]; }
+          else { if (-c0[i] > lo) lo = -c0[i]; }
+        }
+        if (!(hi > lo)) return NaN;
+        function lq(x) {
+          var s = 0;
+          for (var j = 0; j < sp.length; j++) {
+            var c = c0[j] + sp[j].side * x;
+            s += sp[j].side * sp[j].v * Math.log(c > 0 ? c : 0);
+          }
+          return s;
+        }
+        var a = lo, b = hi, lk = Math.log(K);
+        for (i = 0; i < 140; i++) {
+          var m = (a + b) / 2;
+          if (lq(m) < lk) a = m; else b = m;
+        }
+        return (a + b) / 2;
+      }
+
+      function concAt(sp, c0, x) {
+        var o = [];
+        for (var i = 0; i < sp.length; i++) o.push(c0[i] + sp[i].side * sp[i].v * x);
+        return o;
+      }
+
+      function dnGas(sp) {
+        var d = 0;
+        for (var i = 0; i < sp.length; i++) d += sp[i].side * sp[i].v;
+        return d;
+      }
+
+      // ---------------- polynomial form (for the quadratic display) ----------------
+
+      function pMul(a, b) {
+        var o = new Array(a.length + b.length - 1);
+        for (var i = 0; i < o.length; i++) o[i] = 0;
+        for (i = 0; i < a.length; i++) for (var j = 0; j < b.length; j++) o[i + j] += a[i] * b[j];
+        return o;
+      }
+      function pPow(p, n) { var o = [1]; for (var i = 0; i < n; i++) o = pMul(o, p); return o; }
+
+      function polyF(sp, c0, K) {
+        var num = [1], den = [1], i;
+        for (i = 0; i < sp.length; i++) {
+          var lin = [c0[i], sp[i].side * sp[i].v];
+          if (sp[i].side > 0) num = pMul(num, pPow(lin, sp[i].v));
+          else den = pMul(den, pPow(lin, sp[i].v));
+        }
+        var L = Math.max(num.length, den.length), f = new Array(L);
+        for (i = 0; i < L; i++) f[i] = (num[i] || 0) - K * (den[i] || 0);
+        // trim leading (highest-power) coefficients that are numerically zero
+        var mx = 0;
+        for (i = 0; i < L; i++) mx = Math.max(mx, Math.abs(f[i]));
+        while (f.length > 1 && Math.abs(f[f.length - 1]) < mx * 1e-12) f.pop();
+        return f;
+      }
+
+      // ---------------- formatting ----------------
+
+      var F = Demo.fmt;
+      function fc(v) { return F.dec(v, 4); }
+      function fK(v) { return F.sig(v, 3); }
+      function fx(v) { return F.sig(v, 4); }
+
+      function brack(s) { return '[' + s.h + ']' + (s.v > 1 ? '<sup>' + s.v + '</sup>' : ''); }
+
+      function termHtml(s, c0) {
+        var coef = s.v > 1 ? s.v : '';
+        var body;
+        if (c0 === 0) body = (s.side < 0 ? '&minus;' : '') + coef + 'x';
+        else body = fc(c0) + ' ' + (s.side < 0 ? '&minus;' : '+') + ' ' + coef + 'x';
+        return '(' + body + ')' + (s.v > 1 ? '<sup>' + s.v + '</sup>' : '');
+      }
+
+      // ---------------- the master recompute ----------------
+
+      function recomputeSolve() {
+        var rx = R(), sp = rx.sp, c0 = S.init.slice(0, sp.length), K = S.K;
+        var q = Math.exp(lnQ(sp, c0, 0));
+        var w = windowOf(sp, c0);
+        var dead = !(w.hi > w.lo);
+        var xe = dead ? NaN : solveExact(sp, c0, K);
+        var xa = dead ? NaN : solveApprox(sp, c0, K);
+        var xw = dead ? NaN : solveNoCoef(sp, c0, K);
+        var err = (isFinite(xe) && isFinite(xa) && Math.abs(xe) > 1e-14)
+          ? Math.abs(xa - xe) / Math.abs(xe) * 100 : NaN;
+
+        // the classic 5% rule: how big is the change compared with what it is
+        // subtracted from, for the species actually being consumed
+        var rule = NaN;
+        if (isFinite(xa) && xa !== 0) {
+          var dir = xa > 0 ? 1 : -1, src = dir > 0 ? -1 : 1, best = 0, any = false;
+          for (var i = 0; i < sp.length; i++) {
+            if (sp[i].side !== src) continue;
+            if (c0[i] <= 0) continue;
+            any = true;
+            var r = 100 * sp[i].v * Math.abs(xa) / c0[i];
+            if (r > best) best = r;
+          }
+          if (any) rule = best;
+        }
+
+        SOL = {
+          sp: sp, c0: c0, K: K, q: q, dead: dead, win: w,
+          xe: xe, xa: xa, xw: xw, err: err, rule: rule,
+          dir: dead ? 0 : (q < K ? 1 : (q > K ? -1 : 0)),
+          ce: dead ? null : concAt(sp, c0, xe),
+          ca: dead ? null : concAt(sp, c0, xa),
+          cw: dead ? null : (function () {
+            var o = [];
+            for (var j = 0; j < sp.length; j++) o.push(c0[j] + sp[j].side * xw);
+            return o;
+          })(),
+          poly: dead ? null : polyF(sp, c0, K)
+        };
+      }
+
+      // error-vs-K sweep: depends on the reaction and the initial mixture only,
+      // so K itself can be dragged without recomputing it
+      function recomputeCurve() {
+        var rx = R(), sp = rx.sp, c0 = S.init.slice(0, sp.length);
+        var lo = Math.log10(rx.K) - 5, hi = Math.log10(rx.K) + 5;
+        var pts = [];
+        for (var i = 0; i <= CURVE_N; i++) {
+          var lk = lo + (hi - lo) * i / CURVE_N;
+          var K = Math.pow(10, lk);
+          var xe = solveExact(sp, c0, K, 60), xa = solveApprox(sp, c0, K, 60);
+          var e = (isFinite(xe) && isFinite(xa) && Math.abs(xe) > 1e-14)
+            ? Math.abs(xa - xe) / Math.abs(xe) * 100 : NaN;
+          pts.push({ lk: lk, e: e });
+        }
+        CURVE = { lo: lo, hi: hi, pts: pts };
+      }
+
+      // ---------------- drawing helpers ----------------
+
+      var FONT = 'px Poppins, system-ui, sans-serif';
+
+      function frame(ctx, w, h, c, o) {
+        var padL = o.padL, padR = o.padR, padT = o.padT, padB = o.padB;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = w < 400 ? 10 : 10.5;
+        ctx.font = fs + FONT;
+        for (var i = 0; i <= o.yTicks; i++) {
+          var f = i / o.yTicks, py = y0 - (y0 - y1) * f;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, py); ctx.lineTo(x1, py); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(o.fmtY(o.yMin + (o.yMax - o.yMin) * f), x0 - 5, py);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+        return {
+          x0: x0, x1: x1, y0: y0, y1: y1, fs: fs,
+          X: function (v) { return x0 + (x1 - x0) * (v - o.xMin) / Math.max(1e-12, o.xMax - o.xMin); },
+          Y: function (v) { return y0 - (y0 - y1) * Demo.clamp((v - o.yMin) / Math.max(1e-12, o.yMax - o.yMin), 0, 1); }
+        };
+      }
+
+      function arrowH(ctx, xa, xb, y, col, lw) {
+        ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw || 2.2;
+        ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xb, y); ctx.stroke();
+        var d = xb > xa ? 1 : -1, s = 8;
+        ctx.beginPath();
+        ctx.moveTo(xb, y);
+        ctx.lineTo(xb - d * s, y - s * 0.55);
+        ctx.lineTo(xb - d * s, y + s * 0.55);
+        ctx.closePath(); ctx.fill();
+      }
+
+      function chipText(ctx, c, x, y, txt, align, fs, col) {
+        ctx.font = fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = align === 'right' ? x - tw - 4 : align === 'center' ? x - tw / 2 - 3 : x - 2;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 2, tw + 7, fs + 6);
+        ctx.fillStyle = col;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(txt, lx + 3, y);
+      }
+
+      // ---------------- canvas 1: Q against K ----------------
+
+      var qkCv = Demo.canvas('#qk', function (ctx, w, h, c) {
+        if (!SOL) return;
+        var padL = 16, padR = 16, padT = 30, padB = 30;
+        var x0 = padL, x1 = w - padR, yb = h - padB;
+        var K = SOL.K, q = SOL.q;
+        var lk = Math.log10(K);
+        var lq = (isFinite(q) && q > 0) ? Math.log10(q) : null;
+        var span = lq === null ? 3 : Math.max(1.5, Math.abs(lq - lk) * 1.5);
+        var mid = lq === null ? lk : (lq + lk) / 2;
+        var lo = mid - span, hi = mid + span;
+        function X(l) { return x0 + (x1 - x0) * Demo.clamp((l - lo) / (hi - lo), 0, 1); }
+
+        var fs = w < 400 ? 10 : 10.5;
+
+        // decade tick marks (unlabelled — the two chips carry the numbers)
+        var step = Math.max(1, Math.ceil((hi - lo) / 8));
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        for (var d = Math.ceil(lo); d <= Math.floor(hi); d += step) {
+          var px = X(d);
+          ctx.beginPath(); ctx.moveTo(px, yb - 5); ctx.lineTo(px, yb + 4); ctx.stroke();
+        }
+
+        // baseline
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(x0, yb); ctx.lineTo(x1, yb); ctx.stroke();
+
+        var kx = X(lk);
+        var qx = lq === null ? (q === 0 ? x0 : x1) : X(lq);
+        if (isNaN(q)) qx = (x0 + x1) / 2;
+
+        // keep a centred chip from hanging off either edge of the canvas
+        function chipX(px, txt) {
+          ctx.font = (fs + 1) + FONT;
+          var half = ctx.measureText(txt).width / 2 + 5;
+          return Demo.clamp(px, half + 2, w - half - 2);
+        }
+
+        // K marker, labelled above the line
+        var ktxt = 'K = ' + fK(K);
+        ctx.strokeStyle = c.accent; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(kx, yb - 18); ctx.lineTo(kx, yb + 3); ctx.stroke();
+        chipText(ctx, c, chipX(kx, ktxt), yb - 22, ktxt, 'center', fs + 1, c.accentStrong);
+
+        // Q marker, labelled below the line
+        var qcol = SOL.dir === 0 ? c.ok : c.series[1];
+        ctx.strokeStyle = qcol; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(qx, yb - 18); ctx.lineTo(qx, yb + 3); ctx.stroke();
+        var qtxt = isNaN(q) ? 'Q undefined' : (q === 0 ? 'Q = 0' : (!isFinite(q) ? 'Q = ∞' : 'Q = ' + fK(q)));
+        chipText(ctx, c, chipX(qx, qtxt), yb + 22, qtxt, 'center', fs + 1, qcol);
+
+        // the arrow: Q always travels toward K
+        ctx.font = (fs + 1.5) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        if (!isNaN(q) && Math.abs(qx - kx) > 3) {
+          arrowH(ctx, qx, kx, padT + 8, qcol, 2.4);
+          ctx.fillStyle = c.text;
+          ctx.fillText(SOL.dir > 0 ? 'Q < K  →  runs forward  →  x is POSITIVE'
+            : 'Q > K  →  runs backward  →  x is NEGATIVE', (x0 + x1) / 2, 4);
+        } else if (!isNaN(q)) {
+          ctx.fillStyle = c.ok;
+          ctx.fillText('Q = K already — x is zero, nothing changes', (x0 + x1) / 2, 4);
+        } else {
+          ctx.fillStyle = c.bad;
+          ctx.fillText('Q is undefined — nothing can react', (x0 + x1) / 2, 4);
+        }
+      }, { aspect: 0.19, minHeight: 120, maxHeight: 142 });
+
+      // ---------------- canvas 2: percent error against K ----------------
+
+      var errCv = Demo.canvas('#err', function (ctx, w, h, c) {
+        if (!CURVE || !SOL) return;
+        var yMin = -2, yMax = 3;                      // log10 of percent error
+        var a = frame(ctx, w, h, c, {
+          padL: w < 400 ? 40 : 46, padR: 14, padT: 16, padB: 30,
+          xMin: CURVE.lo, xMax: CURVE.hi, yMin: yMin, yMax: yMax, yTicks: 5,
+          fmtY: function (v) {
+            var p = Math.pow(10, Math.round(v));
+            return (p >= 1 ? String(p) : (p >= 0.01 ? String(p) : p.toExponential(0))) + '%';
+          }
+        });
+
+        // everything above 5% is the danger zone
+        var y5 = a.Y(Math.log10(5));
+        ctx.save();
+        ctx.globalAlpha = 0.13;
+        ctx.fillStyle = c.bad;
+        ctx.fillRect(a.x0 + 1, a.y1, a.x1 - a.x0 - 1, Math.max(0, y5 - a.y1));
+        ctx.restore();
+        ctx.strokeStyle = c.bad; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(a.x0, y5); ctx.lineTo(a.x1, y5); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the curve
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        var started = false;
+        for (var i = 0; i < CURVE.pts.length; i++) {
+          var p = CURVE.pts[i];
+          if (!isFinite(p.e)) { started = false; continue; }
+          var le = Math.log10(Math.max(p.e, 1e-6));
+          var px = a.X(p.lk), py = a.Y(le);
+          if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // where you are right now
+        var lkNow = Demo.clamp(Math.log10(SOL.K), CURVE.lo, CURVE.hi);
+        var mx = a.X(lkNow);
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1; ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(mx, a.y1); ctx.lineTo(mx, a.y0); ctx.stroke();
+        ctx.setLineDash([]);
+        if (isFinite(SOL.err)) {
+          var my = a.Y(Math.log10(Math.max(SOL.err, 1e-6)));
+          ctx.fillStyle = SOL.err > 5 ? c.bad : c.ok;
+          ctx.beginPath(); ctx.arc(mx, my, 5, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.5; ctx.stroke();
+        }
+
+        ctx.fillStyle = c.bad;
+        chipText(ctx, c, a.x1, y5 - 4, '5% cutoff', 'right', a.fs, c.bad);
+
+        ctx.fillStyle = c.muted; ctx.font = a.fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('K  (logarithmic)', (a.x0 + a.x1) / 2, a.y0 + 6);
+        ctx.textAlign = 'left';
+        ctx.fillText('K = ' + fK(Math.pow(10, CURVE.lo)), a.x0, a.y0 + 6);
+        ctx.textAlign = 'right';
+        ctx.fillText('K = ' + fK(Math.pow(10, CURVE.hi)), a.x1, a.y0 + 6);
+      }, { aspect: 0.44, minHeight: 190, maxHeight: 280 });
+
+      // ---------------- Le Chatelier: kinetics ----------------
+      //
+      //   rate = kf * PROD([reactants]^v) - kr * PROD([products]^v),  kf/kr = K
+      //   dx/dt = rate. This is zero exactly when Q = K, whatever kf and kr are,
+      //   which is why a catalyst (kf and kr both x N) cannot move the endpoint.
+
+      function rateAt(sp, c0, x, kf, kr) {
+        var f = kf, r = kr;
+        for (var i = 0; i < sp.length; i++) {
+          var c = c0[i] + sp[i].side * sp[i].v * x;
+          if (c < 0) c = 0;
+          if (sp[i].side < 0) f *= Math.pow(c, sp[i].v);
+          else r *= Math.pow(c, sp[i].v);
+        }
+        return f - r;
+      }
+
+      // relaxation rate constant at equilibrium, used only to set the time axis
+      function lambdaAt(sp, c0, K, xeq) {
+        var w = windowOf(sp, c0);
+        var span = w.hi - w.lo;
+        if (!(span > 0)) return NaN;
+        var kf = Math.sqrt(K), kr = 1 / Math.sqrt(K);
+        var hstep = span * 1e-4;
+        var xp = Math.min(xeq + hstep, w.hi - span * 1e-9);
+        var xm = Math.max(xeq - hstep, w.lo + span * 1e-9);
+        if (!(xp > xm)) return NaN;
+        var lam = -(rateAt(sp, c0, xp, kf, kr) - rateAt(sp, c0, xm, kf, kr)) / (xp - xm);
+        return (isFinite(lam) && lam > 0) ? lam : NaN;
+      }
+
+      function traj(sp, c0, K, catF, xeq, tEnd, n) {
+        var kf = catF * Math.sqrt(K), kr = catF / Math.sqrt(K);
+        var w = windowOf(sp, c0);
+        var out = [0], x = 0, t = 0, dtOut = tEnd / n, i, guard;
+        for (i = 1; i <= n; i++) {
+          var tT = i * dtOut; guard = 0;
+          while (t < tT - 1e-15 && guard++ < 400) {
+            var v = rateAt(sp, c0, x, kf, kr);
+            var step = tT - t;
+            if (v !== 0) {
+              // never cover more than 3% of the remaining gap in one step
+              var lim = 0.03 * Math.abs(xeq - x) + 1e-15;
+              var s2 = lim / Math.abs(v);
+              if (s2 < step) step = s2;
+            }
+            var xm = x + 0.5 * step * v;
+            xm = Demo.clamp(xm, w.lo, w.hi);
+            x = Demo.clamp(x + step * rateAt(sp, c0, xm, kf, kr), w.lo, w.hi);
+            t += step;
+          }
+          out.push(x);
+        }
+        return out;
+      }
+
+      function t99(arr, xeq, tEnd) {
+        var x0 = arr[0], gap = Math.abs(xeq - x0);
+        if (!(gap > 1e-14)) return 0;
+        for (var i = 0; i < arr.length; i++) {
+          if (Math.abs(arr[i] - xeq) <= 0.01 * gap) return tEnd * i / (arr.length - 1);
+        }
+        return tEnd;
+      }
+
+      // the temperature that would produce the current K, if one exists
+      function effT() {
+        var rx = R();
+        if (Math.abs(rx.dH) < 1e-9) return NaN;
+        var inv = 1 / rx.T - (RGAS / (rx.dH * 1000)) * Math.log(S.K / rx.K);
+        if (!(inv > 0)) return NaN;
+        var T = 1 / inv;
+        return (T > 20 && T < 20000) ? T : NaN;
+      }
+
+      function vantHoff(K1, T1, T2, dHkJ) {
+        return K1 * Math.exp(-(dHkJ * 1000 / RGAS) * (1 / T2 - 1 / T1));
+      }
+
+      function computeLC() {
+        var rx = R(), sp = rx.sp, n = sp.length, i;
+        var c0 = S.init.slice(0, n), K0 = S.K;
+        var out = { ok: false, mode: S.stress, sp: sp, K0: K0, K1: K0, Kchanged: false };
+
+        var w0 = windowOf(sp, c0);
+        if (!(w0.hi > w0.lo)) { LC = out; return; }
+        var xa = solveExact(sp, c0, K0);
+        var lamA = lambdaAt(sp, c0, K0, xa);
+        if (!isFinite(xa) || !isFinite(lamA)) { LC = out; return; }
+        var eqA = concAt(sp, c0, xa);
+
+        if (S.stress === 'cat') {
+          var T = 6.5 / lamA;
+          out.ok = true; out.single = true; out.T = T; out.c0 = c0;
+          out.fast = traj(sp, c0, K0, S.cat, xa, T, NPTS);
+          out.slow = traj(sp, c0, K0, 1, xa, T, NPTS);
+          out.tFast = t99(out.fast, xa, T);
+          out.tSlow = t99(out.slow, xa, T);
+          out.eqA = eqA; out.xa = xa;
+          out.shift = 'none';
+          LC = out; return;
+        }
+
+        var TA = 6.5 / lamA;
+        out.runA = traj(sp, c0, K0, 1, xa, TA, NPTS);
+        out.TA = TA; out.c0 = c0; out.xa = xa; out.eqA = eqA;
+
+        // apply the stress to the equilibrium mixture
+        var c1 = eqA.slice(), K1 = K0;
+        if (S.stress === 'addR' || S.stress === 'addP') {
+          c1[S.addIdx] += S.addAmt;
+        } else if (S.stress === 'vol') {
+          var f = 1 / S.volF;                        // volume x volF -> concentrations x 1/volF
+          for (i = 0; i < n; i++) c1[i] *= f;
+        } else if (S.stress === 'temp') {
+          var T1 = effT();
+          out.Tfrom = isFinite(T1) ? T1 : rx.T;
+          out.TfromIsRef = !isFinite(T1);
+          K1 = vantHoff(K0, out.Tfrom, S.tempK, rx.dH);
+          out.Kchanged = true;
+        }
+        out.c1 = c1; out.K1 = K1;
+
+        var qAfter = Math.exp(lnQ(sp, c1, 0));
+        out.qAfter = qAfter;
+        var xb = solveExact(sp, c1, K1);
+        var lamB = lambdaAt(sp, c1, K1, xb);
+        if (!isFinite(xb) || !isFinite(lamB)) { LC = out; return; }
+        var TB = 6.5 / lamB;
+        out.runB = traj(sp, c1, K1, 1, xb, TB, NPTS);
+        out.TB = TB; out.xb = xb; out.eqB = concAt(sp, c1, xb);
+        out.shift = Math.abs(xb) < 1e-12 ? 'none' : (xb > 0 ? 'right' : 'left');
+        out.ok = true;
+        LC = out;
+      }
+
+      // ---------------- canvas 3: Le Chatelier ----------------
+
+      var lcCv = Demo.canvas('#lc', function (ctx, w, h, c) {
+        var d = LC;
+        ctx.font = '12' + FONT;
+        if (!d || !d.ok) {
+          ctx.fillStyle = c.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Nothing can react from this starting mixture.', w / 2, h / 2);
+          return;
+        }
+        var sp = d.sp, n = sp.length, i, j;
+        var padL = w < 400 ? 40 : 46, padR = w < 400 ? 40 : 52, padT = 22, padB = 26;
+
+        // vertical scale
+        var yMax = 0;
+        function scan(c0, run) {
+          for (var k = 0; k < run.length; k += 4) {
+            for (var m = 0; m < n; m++) {
+              var v = c0[m] + sp[m].side * sp[m].v * run[k];
+              if (v > yMax) yMax = v;
+            }
+          }
+        }
+        if (d.single) { scan(d.c0, d.fast); scan(d.c0, d.slow); }
+        else { scan(d.c0, d.runA); if (d.runB) scan(d.c1, d.runB); }
+        yMax = yMax * 1.12 + 1e-6;
+
+        var total = d.single ? d.T : (d.TA + (d.runB ? d.TB : 0));
+        var a = frame(ctx, w, h, c, {
+          padL: padL, padR: padR, padT: padT, padB: padB,
+          xMin: 0, xMax: total, yMin: 0, yMax: yMax, yTicks: 4,
+          fmtY: function (v) { return F.dec(v, yMax < 0.5 ? 3 : 2); }
+        });
+
+        function drawRun(c0, run, tOff, tLen, dash, lw) {
+          for (var m = 0; m < n; m++) {
+            ctx.save();
+            ctx.strokeStyle = c.series[m % 4]; ctx.lineWidth = lw; ctx.lineJoin = 'round';
+            ctx.setLineDash(dash);
+            ctx.beginPath();
+            for (var k = 0; k < run.length; k++) {
+              var t = tOff + tLen * k / (run.length - 1);
+              var v = c0[m] + sp[m].side * sp[m].v * run[k];
+              var px = a.X(t), py = a.Y(v);
+              k === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        if (d.single) {
+          drawRun(d.c0, d.slow, 0, d.T, [5, 4], 1.7);
+          drawRun(d.c0, d.fast, 0, d.T, [], 2.3);
+          // when each run gets there
+          [[d.tSlow, 'no catalyst', c.muted, [3, 3]], [d.tFast, 'catalyst', c.accentStrong, [3, 3]]]
+            .forEach(function (mk) {
+              if (!(mk[0] > 0)) return;
+              var px = a.X(mk[0]);
+              ctx.save();
+              ctx.strokeStyle = mk[2]; ctx.lineWidth = 1.2; ctx.setLineDash(mk[3]);
+              ctx.beginPath(); ctx.moveTo(px, a.y1); ctx.lineTo(px, a.y0); ctx.stroke();
+              ctx.restore();
+              chipText(ctx, c, px, a.y1 + 11, mk[1], 'center', a.fs, mk[2]);
+            });
+        } else {
+          drawRun(d.c0, d.runA, 0, d.TA, [], 2.3);
+          if (d.runB) {
+            // the stress itself: a vertical jump in concentration, drawn dotted
+            ctx.save();
+            ctx.setLineDash([2, 3]); ctx.lineWidth = 1.6;
+            for (i = 0; i < n; i++) {
+              var vA = d.eqA[i], vB = d.c1[i];
+              if (Math.abs(vA - vB) < 1e-12) continue;
+              ctx.strokeStyle = c.series[i % 4];
+              ctx.beginPath();
+              ctx.moveTo(a.X(d.TA), a.Y(vA)); ctx.lineTo(a.X(d.TA), a.Y(vB));
+              ctx.stroke();
+            }
+            ctx.restore();
+            drawRun(d.c1, d.runB, d.TA, d.TB, [], 2.3);
+          }
+          var sx = a.X(d.TA);
+          ctx.save();
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+          ctx.beginPath(); ctx.moveTo(sx, a.y1); ctx.lineTo(sx, a.y0); ctx.stroke();
+          ctx.restore();
+          chipText(ctx, c, sx, a.y1 + 11, 'stress', 'center', a.fs, c.accentStrong);
+        }
+
+        // right-edge species labels at their final values
+        var finals = [];
+        for (i = 0; i < n; i++) {
+          var last = d.single ? d.fast[d.fast.length - 1] : (d.runB ? d.runB[d.runB.length - 1] : d.runA[d.runA.length - 1]);
+          var base = d.single ? d.c0 : (d.runB ? d.c1 : d.c0);
+          finals.push({ i: i, v: base[i] + sp[i].side * sp[i].v * last });
+        }
+        // tallest concentration first, then push each label DOWN if it would collide
+        finals.sort(function (p, q) { return q.v - p.v; });
+        var lastY = -Infinity, gapY = a.fs + 3;
+        ctx.font = a.fs + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        for (j = 0; j < finals.length; j++) {
+          var fy = a.Y(finals[j].v);
+          if (fy < lastY + gapY) fy = lastY + gapY;
+          lastY = fy;
+          ctx.fillStyle = c.series[finals[j].i % 4];
+          ctx.fillText(sp[finals[j].i].t, a.x1 + 5, Demo.clamp(fy, a.y1 + 4, a.y0 - 2));
+        }
+
+        ctx.fillStyle = c.muted; ctx.font = a.fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('time →  (arbitrary units)', (a.x0 + a.x1) / 2, a.y0 + 6);
+      }, { aspect: 0.56, minHeight: 250, maxHeight: 400 });
+
+      // =====================================================================
+      // RENDERING
+      // =====================================================================
+
+      function renderIce() {
+        var rx = R(), sp = rx.sp, s = SOL, i;
+        document.getElementById('rxnEqBig').innerHTML =
+          rx.eq + '<small>' + rx.sub + ' &nbsp;&middot;&nbsp; reference K = ' + fK(rx.K) +
+          ' at ' + rx.T + ' K</small>';
+
+        var head = '<tr><th class="rl">mol L<sup>&minus;1</sup></th>';
+        for (i = 0; i < sp.length; i++) {
+          head += '<th>' + (sp[i].v > 1 ? '<span class="coefbig">' + sp[i].v + '</span> ' : '') + sp[i].h + '</th>';
+        }
+        head += '</tr>';
+        document.getElementById('iceHead').innerHTML = head;
+
+        var body = '';
+        // I
+        body += '<tr><th class="rl">Initial</th>';
+        for (i = 0; i < sp.length; i++) body += '<td>' + fc(S.init[i]) + '</td>';
+        body += '</tr>';
+
+        // C (symbols)
+        body += '<tr class="chg"><th class="rl">Change<em>in symbols</em></th>';
+        for (i = 0; i < sp.length; i++) {
+          body += '<td>' + (sp[i].side < 0 ? '&minus;' : '+') +
+            (sp[i].v > 1 ? '<span class="coef">' + sp[i].v + '</span>' : '<span class="coef">1</span>') + 'x</td>';
+        }
+        body += '</tr>';
+
+        // C (numbers)
+        body += '<tr class="chg"><th class="rl">Change<em>in numbers</em></th>';
+        for (i = 0; i < sp.length; i++) {
+          if (!s || s.dead || !isFinite(s.xe)) { body += '<td>&mdash;</td>'; continue; }
+          var dv = sp[i].side * sp[i].v * s.xe;
+          body += '<td>' + (dv >= 0 ? '+' : '&minus;') + fc(Math.abs(dv)) + '</td>';
+        }
+        body += '</tr>';
+
+        // E
+        body += '<tr class="eqm"><th class="rl">Equilibrium</th>';
+        for (i = 0; i < sp.length; i++) {
+          if (!s || s.dead || !s.ce) { body += '<td>&mdash;</td>'; continue; }
+          body += '<td>' + fc(s.ce[i]) + '</td>';
+        }
+        body += '</tr>';
+
+        if (S.showWrong && s && !s.dead && isFinite(s.xw)) {
+          body += '<tr class="bad-row"><th class="rl">Wrong change<em>&plusmn;x everywhere</em></th>';
+          for (i = 0; i < sp.length; i++) {
+            var dw = sp[i].side * s.xw;
+            body += '<td>' + (dw >= 0 ? '+' : '&minus;') + fc(Math.abs(dw)) + '</td>';
+          }
+          body += '</tr>';
+          body += '<tr class="bad-row"><th class="rl">Wrong answer</th>';
+          for (i = 0; i < sp.length; i++) body += '<td>' + fc(s.cw[i]) + '</td>';
+          body += '</tr>';
+        }
+        document.getElementById('iceBody').innerHTML = body;
+
+        // the Q vs K sentence
+        var qk = document.getElementById('qkLine');
+        if (!s || s.dead) {
+          qk.className = 'note bad';
+          qk.innerHTML = '<strong>Nothing can react.</strong> At least one reactant and at least one product ' +
+            'are both zero, so neither direction has anything to work with and Q is undefined. Raise a slider.';
+        } else if (s.dir === 0) {
+          qk.className = 'note';
+          qk.innerHTML = '<strong>Q = K already.</strong> The mixture you set is already at equilibrium, so ' +
+            'x = 0 and the change row is all zeros. Move any initial concentration to knock it off.';
+        } else if (s.dir > 0) {
+          qk.className = 'note';
+          qk.innerHTML = '<strong>Q = ' + (s.q === 0 ? '0' : fK(s.q)) + ' is smaller than K = ' + fK(s.K) +
+            '.</strong> There is not enough product yet, so the reaction runs <strong>forward</strong> and ' +
+            '<strong>x comes out positive</strong>: reactants go down, products go up. ' +
+            'x = ' + fx(s.xe) + ' mol L<sup>&minus;1</sup>.';
+        } else {
+          qk.className = 'note warn';
+          qk.innerHTML = '<strong>Q = ' + (isFinite(s.q) ? fK(s.q) : '∞') + ' is bigger than K = ' + fK(s.K) +
+            '.</strong> There is too much product, so the reaction runs <strong>backward</strong> and ' +
+            '<strong>x comes out negative</strong>: the minus signs in the change row now make the reactants ' +
+            '<em>increase</em>. x = ' + fx(s.xe) + ' mol L<sup>&minus;1</sup>.';
+        }
+
+        // caption
+        var cap = document.getElementById('iceCap');
+        if (!s || s.dead) { cap.innerHTML = 'Set a reactant and a product above zero to get started.'; return; }
+        var allOne = true;
+        for (i = 0; i < sp.length; i++) if (sp[i].v > 1) allOne = false;
+        var msg = 'Every equilibrium value is the initial value plus the change &mdash; nothing else. ' +
+          'Substituting them back gives Q = ' + fK(Math.exp(lnQ(sp, S.init.slice(0, sp.length), s.xe))) +
+          ', which is K, so the row checks out.';
+        if (S.showWrong) {
+          if (allOne) {
+            msg += ' <strong>Notice that the wrong rows are identical to the right ones here.</strong> ' +
+              'Every coefficient in this reaction is 1, so ignoring them costs nothing. Switch to a reaction ' +
+              'with a 2 or a 3 in it and the same mistake wrecks the answer.';
+          } else {
+            msg += ' The red rows are what you get by writing &plusmn;x under every column. That answer still ' +
+              'satisfies the K expression &mdash; which is why it feels right &mdash; but it invents or destroys atoms.';
+          }
+        }
+        cap.innerHTML = msg;
+      }
+
+      function renderSolve() {
+        var rx = R(), sp = rx.sp, s = SOL, i;
+
+        // K expression with the ICE row substituted
+        var numB = '', denB = '', numS = '', denS = '';
+        for (i = 0; i < sp.length; i++) {
+          if (sp[i].side > 0) { numS += brack(sp[i]); numB += termHtml(sp[i], S.init[i]); }
+          else { denS += brack(sp[i]); denB += termHtml(sp[i], S.init[i]); }
+        }
+        document.getElementById('kExprWrap').innerHTML =
+          'K = <span class="frac"><span>' + numS + '</span><span class="den">' + denS + '</span></span>' +
+          ' = <span class="frac"><span>' + numB + '</span><span class="den">' + denB + '</span></span>' +
+          ' = ' + fK(s.K);
+
+        // multiplied out
+        var pl = document.getElementById('polyLine');
+        if (!s || s.dead || !s.poly) {
+          pl.className = 'note bad';
+          pl.innerHTML = 'No reaction is possible from this mixture, so there is nothing to solve.';
+        } else {
+          var f = s.poly.slice(), deg = f.length - 1;
+          // normalise so the leading term is positive
+          if (f[deg] < 0) for (i = 0; i < f.length; i++) f[i] = -f[i];
+          var txt = '';
+          for (i = deg; i >= 0; i--) {
+            var cf = f[i];
+            if (Math.abs(cf) < 1e-14 && i !== 0) continue;
+            var sign = cf < 0 ? ' &minus; ' : (txt === '' ? '' : ' + ');
+            txt += sign + F.sig(Math.abs(cf), 4) +
+              (i === 0 ? '' : (i === 1 ? ' x' : ' x<sup>' + i + '</sup>'));
+          }
+          txt += ' = 0';
+
+          var A2 = f[2] || 0, B2 = f[1] || 0, C2 = f[0] || 0;
+          var trulyQuad = deg === 2 && Math.abs(A2) > 1e-10 * Math.max(Math.abs(B2), Math.abs(C2), 1e-30);
+
+          if (trulyQuad) {
+            var D = Math.max(0, B2 * B2 - 4 * A2 * C2);
+            // stable form: the naive one loses all its digits when 4AC << B^2
+            var qq = -0.5 * (B2 + (B2 >= 0 ? 1 : -1) * Math.sqrt(D));
+            var r1 = qq / A2, r2 = (qq !== 0) ? C2 / qq : -B2 / A2;
+            var keep = Math.abs(r1 - s.xe) < Math.abs(r2 - s.xe) ? r1 : r2;
+            var drop = keep === r1 ? r2 : r1;
+            pl.className = 'note';
+            pl.innerHTML = '<strong>A quadratic &mdash; use the quadratic formula:</strong> ' + txt + '<br>' +
+              'It gives two roots: <strong>x = ' + fx(keep) + '</strong> and x = ' +
+              fx(drop) + ' mol L<sup>&minus;1</sup>. ' + rejectWhy(sp, s.c0, drop);
+          } else if (deg === 1 || (deg === 2 && !trulyQuad)) {
+            pl.className = 'note';
+            pl.innerHTML = '<strong>The x<sup>2</sup> terms have cancelled &mdash; this one is linear.</strong> ' +
+              txt + '<br>There is only one root, x = <strong>' + fx(s.xe) + '</strong> mol L<sup>&minus;1</sup>, ' +
+              'and no root to reject. Nudge K and the x<sup>2</sup> term comes back.';
+          } else {
+            pl.className = 'note';
+            pl.innerHTML = '<strong>Degree ' + deg + ' &mdash; there is no formula for this one.</strong> ' + txt +
+              '<br>It is solved here by squeezing in on the answer numerically. Only one root can sit inside the ' +
+              'allowed window ' + fx(s.win.lo) + ' &le; x &le; ' + fx(s.win.hi) +
+              ' mol L<sup>&minus;1</sup>, because outside that window some concentration would be negative. ' +
+              'That root is x = <strong>' + fx(s.xe) + '</strong>.';
+          }
+        }
+
+        // comparison table
+        var head = '<tr><th></th><th>Exact</th><th>Shortcut</th></tr>';
+        document.getElementById('cmpHead').innerHTML = head;
+        var body = '';
+        if (s && !s.dead && isFinite(s.xe)) {
+          body += '<tr><th>x</th><td>' + fx(s.xe) + '</td><td>' +
+            (isFinite(s.xa) ? fx(s.xa) : '&mdash;') + '</td></tr>';
+          for (i = 0; i < sp.length; i++) {
+            var okA = isFinite(s.xa) && s.ca[i] >= 0;
+            body += '<tr><th>[' + sp[i].h + ']</th><td>' + fc(s.ce[i]) + '</td><td>' +
+              (okA ? fc(s.ca[i]) : '<span style="color:var(--bad)">' + fc(s.ca[i]) + '</span>') + '</td></tr>';
+          }
+          var qa = isFinite(s.xa) ? Math.exp(lnQ(sp, s.c0, s.xa)) : NaN;
+          body += '<tr><th>Q of that answer</th><td>' + fK(s.K) + '</td><td>' +
+            (isFinite(qa) ? fK(qa) : '<span style="color:var(--bad)">impossible</span>') + '</td></tr>';
+        } else {
+          body = '<tr><td colspan="3">&mdash;</td></tr>';
+        }
+        document.getElementById('cmpBody').innerHTML = body;
+
+        // readouts
+        document.getElementById('rXe').textContent = (s && isFinite(s.xe)) ? fx(s.xe) : '—';
+        document.getElementById('rXa').textContent = (s && isFinite(s.xa)) ? fx(s.xa) : '—';
+        var eBox = document.getElementById('rErrBox');
+        var eEl = document.getElementById('rErr');
+        if (s && isFinite(s.err)) {
+          eEl.textContent = (s.err >= 1000 ? '>1000' : F.dec(s.err, s.err < 10 ? 2 : 1)) + '%';
+          eBox.className = 'readout ' + (s.err > 5 ? 'is-bad' : 'is-ok');
+        } else { eEl.textContent = '—'; eBox.className = 'readout'; }
+        document.getElementById('rRule').textContent =
+          (s && isFinite(s.rule)) ? (s.rule >= 1000 ? '>1000%' : F.dec(s.rule, 1) + '%') : '—';
+
+        // notes
+        var en = document.getElementById('errNote');
+        if (!s || !isFinite(s.err)) {
+          en.className = 'note';
+          en.innerHTML = 'With Q already equal to K there is no x to approximate.';
+        } else if (s.err > 5) {
+          en.className = 'note bad';
+          en.innerHTML = '<strong>The shortcut fails here: ' +
+            (s.err >= 1000 ? 'over 1000' : F.dec(s.err, s.err < 10 ? 2 : 1)) + '% error.</strong> ' +
+            'It assumed the concentrations being used up would barely move, and they moved by ' +
+            (isFinite(s.rule) ? F.dec(s.rule, 1) + '% of themselves. ' : 'far more than that. ') +
+            (isFinite(s.xa) && s.ca && anyNeg(s.ca)
+              ? 'Look at the shortcut column: it produces a <strong>negative concentration</strong>, which is a flat impossibility.'
+              : s.err > 100
+                ? 'The shortcut answer is not even in the right neighbourhood.'
+                : 'It is over the 5% line, so it is not good enough &mdash; go back and solve the full equation. ' +
+                'Cases like this are why the check exists: the answer looks plausible and is still wrong.');
+        } else {
+          en.className = 'note';
+          en.innerHTML = '<strong>The shortcut is safe here: ' + F.dec(s.err, 2) + '% error.</strong> ' +
+            'x moved the consumed concentrations by only ' + F.dec(s.rule, 1) +
+            '% of their starting values, so dropping it from those terms costs almost nothing. ' +
+            'The usual classroom rule of thumb is to accept the shortcut when that second number is under 5%.';
+        }
+
+        var cap = document.getElementById('errCap');
+        var dirTxt = s && s.dir < 0
+          ? 'Here the reaction is running <strong>backward</strong>, and for a backward shift the shortcut gets ' +
+          '<em>better</em> as K gets bigger &mdash; the curve slopes the other way.'
+          : 'Here the reaction is running <strong>forward</strong>, and for a forward shift the shortcut gets ' +
+          'better as K gets <em>smaller</em>.';
+        cap.innerHTML = 'The blue curve is what the error would be at each value of K, with this reaction and ' +
+          'this starting mixture. The dot is where you are now. ' + dirTxt +
+          ' There is no memorisable direction: what matters is whether x is small next to the concentration ' +
+          'it is being subtracted from.';
+
+        var bh = document.getElementById('breakHint');
+        bh.innerHTML = 'These buttons just drag the K slider along the curve above until the error crosses the ' +
+          '5% line. In a real flask you would move K by changing the temperature &mdash; and only by that.';
+      }
+
+      function anyNeg(arr) {
+        for (var i = 0; i < arr.length; i++) if (arr[i] < 0) return true;
+        return false;
+      }
+
+      function rejectWhy(sp, c0, root) {
+        for (var i = 0; i < sp.length; i++) {
+          var c = c0[i] + sp[i].side * sp[i].v * root;
+          if (c < -1e-15) {
+            return 'The second one is thrown out because it would make [' + sp[i].h + '] = ' +
+              F.dec(c, 4) + ' mol L<sup>&minus;1</sup> &mdash; a negative concentration, which does not exist. ' +
+              '<strong>Both roots can be positive numbers</strong>, so "reject the negative root" is not the ' +
+              'test. The test is whether every concentration stays at or above zero.';
+          }
+        }
+        return 'The second one falls outside the window ' + fx(windowOf(sp, c0).lo) + ' &le; x &le; ' +
+          fx(windowOf(sp, c0).hi) + ', where some concentration would go negative.';
+      }
+
+      function renderLC() {
+        var rx = R(), d = LC, sp = rx.sp, i;
+        var leg = '';
+        for (i = 0; i < sp.length; i++) {
+          leg += '<span><i style="background:var(--series-' + ((i % 4) + 1) + ')"></i>' + sp[i].h + '</span>';
+        }
+        if (S.stress === 'cat') {
+          leg += '<span>solid = with catalyst, dashed = without</span>';
+        }
+        document.getElementById('lcLegend').innerHTML = leg;
+
+        var kb = document.getElementById('lcKb'), ka = document.getElementById('lcKa'),
+          sh = document.getElementById('lcShift'), kaBox = document.getElementById('lcKaBox');
+        var vd = document.getElementById('lcVerdict');
+        var rule = document.getElementById('lcRule');
+        var cap = document.getElementById('lcCap');
+
+        if (!d || !d.ok) {
+          kb.textContent = ka.textContent = sh.textContent = '—';
+          document.getElementById('lcKchg').textContent = '—';
+          vd.className = 'note bad';
+          vd.innerHTML = 'This starting mixture cannot react at all, so there is no equilibrium to stress. ' +
+            'Give at least one reactant and one product a non-zero starting value.';
+          cap.textContent = '';
+          rule.className = 'note';
+          rule.innerHTML = 'Adjust the initial concentrations on the left.';
+          return;
+        }
+
+        kb.textContent = fK(d.K0);
+        ka.textContent = fK(d.K1);
+        kaBox.className = 'readout ' + (d.Kchanged ? 'is-bad' : 'is-ok');
+        document.getElementById('lcKchg').textContent = d.Kchanged ? 'Yes' : 'No';
+        document.getElementById('lcKchgBox').className = 'readout ' + (d.Kchanged ? 'is-bad' : 'is-ok');
+        sh.textContent = d.shift === 'right' ? '→ right' : d.shift === 'left' ? '← left' : 'none';
+
+        var dn = dnGas(sp);
+        var eqTxt = '';
+        if (d.eqB) {
+          var parts = [];
+          for (i = 0; i < sp.length; i++) parts.push('[' + sp[i].h + '] = ' + fc(d.eqB[i]));
+          eqTxt = ' New equilibrium: ' + parts.join(', ') + ' mol L<sup>&minus;1</sup>.';
+        }
+
+        if (S.stress === 'cat') {
+          vd.className = 'note';
+          vd.innerHTML = '<strong>A catalyst moves nothing.</strong> The solid curves (catalyst, ' + S.cat +
+            '&times;) and the dashed curves (no catalyst) end on exactly the same concentrations, because ' +
+            'multiplying <em>k</em><sub>f</sub> and <em>k</em><sub>r</sub> by the same number leaves ' +
+            '<em>k</em><sub>f</sub>/<em>k</em><sub>r</sub> = K untouched. The only thing that changed is the ' +
+            'position of the vertical marker: equilibrium arrives about ' + F.dec(S.cat, 0) +
+            ' times sooner. K before and K after are the same number.';
+          cap.innerHTML = 'Both runs start from the same mixture. A catalyst opens a lower-energy path that ' +
+            'the forward and reverse reactions use equally, so it can only compress the time axis. If a demo ' +
+            'ever shows a catalyst moving the position of an equilibrium, that demo is wrong.';
+        } else if (S.stress === 'addR' || S.stress === 'addP') {
+          var nm = sp[S.addIdx].h;
+          vd.className = 'note';
+          vd.innerHTML = '<strong>Added ' + fc(S.addAmt) + ' mol L<sup>&minus;1</sup> of ' + nm + '.</strong> ' +
+            'That instantly moved Q to ' + fK(d.qAfter) + ' while K stayed at ' + fK(d.K0) + ', so the system ' +
+            'runs ' + (d.shift === 'right' ? 'forward' : d.shift === 'left' ? 'backward' : 'nowhere') +
+            ' until Q is back on K. Notice that ' + nm + ' does not return to where it was &mdash; it settles ' +
+            'higher than before. "The system opposes the change" never means "the system undoes the change."' + eqTxt;
+          cap.innerHTML = 'The dotted vertical line at the stress marker is the addition itself: an instant ' +
+            'jump in one concentration with no reaction involved. Everything after that is the reaction ' +
+            'responding. K is the same number on both sides of the marker.';
+        } else if (S.stress === 'vol') {
+          var f = 1 / S.volF;
+          vd.className = dn === 0 ? 'note warn' : 'note';
+          if (dn === 0) {
+            vd.innerHTML = '<strong>Nothing shifts, and that is the point.</strong> Changing the volume to ' +
+              F.dec(S.volF, 2) + '&times; multiplied every concentration by ' + F.dec(f, 2) + '&times;. ' +
+              'But this reaction has ' + (function () {
+                var r = 0, p = 0;
+                for (i = 0; i < sp.length; i++) { if (sp[i].side < 0) r += sp[i].v; else p += sp[i].v; }
+                return r + ' mol of gas on the left and ' + p + ' on the right';
+              })() + ', so the factors cancel top and bottom: Q went from ' + fK(d.K0) + ' to ' +
+              fK(d.qAfter) + '. Q is still equal to K, so there is nothing to correct. The curves jump and ' +
+              'then sit perfectly flat.';
+          } else {
+            vd.innerHTML = '<strong>Volume changed to ' + F.dec(S.volF, 2) + '&times;</strong>, so every ' +
+              'concentration was multiplied by ' + F.dec(f, 2) + '&times;. Because Δn of gas is ' +
+              (dn > 0 ? '+' : '') + dn + ', Q was multiplied by ' + F.dec(Math.pow(f, dn), 3) +
+              ' and landed at ' + fK(d.qAfter) + ' against an unchanged K of ' + fK(d.K0) + '. The system ' +
+              'shifts ' + (d.shift === 'right' ? 'right' : 'left') + ', toward the side with ' +
+              (Math.pow(f, dn) > 1 ? 'fewer' : 'more') + ' moles of gas.' + eqTxt;
+          }
+          cap.innerHTML = 'K does not care about volume. Only Q moves, and only when the two sides of the ' +
+            'equation hold different numbers of moles of gas. Adding an unreactive gas at fixed volume would ' +
+            'change no concentration at all, so it would do nothing even here.';
+        } else if (S.stress === 'temp') {
+          var up = d.K1 > d.K0;
+          vd.className = 'note bad';
+          vd.innerHTML = '<strong>Temperature is the one that changes K.</strong> Going from ' +
+            F.dec(d.Tfrom, 0) + ' K to ' + S.tempK + ' K on a reaction with ΔH&deg; = ' +
+            F.dec(rx.dH, 1) + ' kJ mol<sup>&minus;1</sup> (' + (rx.dH < 0 ? 'exothermic' : 'endothermic') +
+            ') takes K from ' + fK(d.K0) + ' to <strong>' + fK(d.K1) + '</strong>. No concentration jumped ' +
+            'at the marker &mdash; the goalposts moved instead, and the system then walked ' +
+            (d.shift === 'right' ? 'forward' : d.shift === 'left' ? 'backward' : 'nowhere') + ' to the new K.' +
+            eqTxt + (d.TfromIsRef
+              ? ' <em>(Your hand-set K does not correspond to any real temperature for this reaction, so the ' +
+              'change is measured from the reference temperature instead.)</em>' : '');
+          cap.innerHTML = 'Think of heat as a reagent: it sits on the left of an endothermic reaction and on ' +
+            'the right of an exothermic one. ' + (rx.dH < 0
+              ? 'This reaction gives out heat, so heating it pushes the equilibrium back toward reactants and K falls.'
+              : 'This reaction takes in heat, so heating it pushes the equilibrium toward products and K rises.') +
+            ' Computed from the van ’t Hoff equation with ΔH&deg; held constant.';
+        }
+
+        rule.className = 'note warn';
+        rule.innerHTML = '<strong>Keep these straight.</strong> Adding a substance and changing the volume ' +
+          'move <em>Q</em>; K does not budge. Temperature moves <em>K</em> itself. A catalyst moves ' +
+          'neither &mdash; only the clock.';
+      }
+
+      // ---------------- control wiring ----------------
+
+      function syncKLabel() {
+        document.getElementById('logKOut').textContent = fK(S.K);
+        var T = effT(), rx = R();
+        var el = document.getElementById('tEquiv');
+        if (isFinite(T)) {
+          el.className = 'note warn';
+          el.innerHTML = 'K is not a dial you can turn in the lab. The only thing that changes it is ' +
+            'temperature: for this reaction, K = ' + fK(S.K) + ' is what you would get at about <strong>' +
+            F.dec(T, 0) + ' K</strong> (' + F.dec(T - 273.15, 0) + ' &deg;C).';
+        } else {
+          el.className = 'note bad';
+          el.innerHTML = 'K is not a dial you can turn in the lab &mdash; only temperature changes it. ' +
+            'And <strong>no temperature at all</strong> gives this reaction a K of ' + fK(S.K) +
+            ': with ΔH&deg; = ' + F.dec(rx.dH, 1) + ' kJ mol<sup>&minus;1</sup> the reachable range is ' +
+            'much narrower than this slider. Treat this setting as a thought experiment.';
+        }
+      }
+
+      function syncSpeciesLabels() {
+        var rx = R(), sp = rx.sp;
+        for (var i = 0; i < 4; i++) {
+          var box = document.getElementById('spBox' + i);
+          if (i >= sp.length) { box.hidden = true; continue; }
+          box.hidden = false;
+          document.getElementById('spLab' + i).innerHTML =
+            '[' + sp[i].h + ']<sub>0</sub> &nbsp;<span class="muted small">' +
+            (sp[i].side < 0 ? 'reactant' : 'product') + '</span>';
+          document.getElementById('spOut' + i).textContent = fc(S.init[i]) + ' M';
+        }
+      }
+
+      function setSliderRanges() {
+        var rx = R(), sp = rx.sp, i;
+        var step = rx.cmax / 200;
+        for (i = 0; i < 4; i++) {
+          var el = document.getElementById('sp' + i);
+          el.min = 0; el.max = rx.cmax; el.step = step;
+          el.value = i < sp.length ? sp[i].c0 : 0;
+        }
+        var amt = document.getElementById('amt');
+        amt.min = 0; amt.max = rx.cmax; amt.step = step; amt.value = rx.cmax / 4;
+        S.addAmt = rx.cmax / 4;
+        document.getElementById('amtOut').textContent = fc(S.addAmt) + ' M';
+
+        var lk = document.getElementById('logK');
+        lk.min = Math.log10(rx.K) - 5;
+        lk.max = Math.log10(rx.K) + 5;
+        lk.step = 0.02;
+        lk.value = Math.log10(rx.K);
+        S.K = rx.K;
+
+        var tp = document.getElementById('temp');
+        var t0 = isFinite(effT()) ? effT() : rx.T;
+        S.tempK = Demo.clamp(Math.round((t0 + 120) / 5) * 5, 200, 1500);
+        tp.value = S.tempK;
+        document.getElementById('tempOut').textContent = S.tempK + ' K';
+      }
+
+      function rebuildStressSpecies() {
+        var sp = R().sp, want = S.stress === 'addP' ? 1 : -1, html = '', first = -1;
+        for (var i = 0; i < sp.length; i++) {
+          if (sp[i].side !== want) continue;
+          if (first < 0) first = i;
+          html += '<option value="' + i + '">' + sp[i].t + '</option>';
+        }
+        var sel = document.getElementById('stressSpecies');
+        sel.innerHTML = html;
+        if (sp[S.addIdx] === undefined || sp[S.addIdx].side !== want) S.addIdx = first;
+        sel.value = String(S.addIdx);
+        document.getElementById('amtLab').innerHTML = 'Amount of ' + sp[S.addIdx].t + ' added';
+      }
+
+      function syncStressBoxes() {
+        document.getElementById('addBox').hidden = !(S.stress === 'addR' || S.stress === 'addP');
+        document.getElementById('volBox').hidden = S.stress !== 'vol';
+        document.getElementById('tempBox').hidden = S.stress !== 'temp';
+        document.getElementById('catBox').hidden = S.stress !== 'cat';
+        var t0 = isFinite(effT()) ? effT() : R().T;
+        document.getElementById('tNow').innerHTML =
+          'Starting from ' + F.dec(t0, 0) + ' K. This is the only control on the page that changes K itself.';
+      }
+
+      // full refresh
+      function refresh(opts) {
+        if (booting) return;
+        opts = opts || {};
+        recomputeSolve();
+        if (opts.curve) recomputeCurve();
+        if (S.tab === 'ice') { renderIce(); qkCv.redraw(); }
+        else if (S.tab === 'solve') { renderSolve(); errCv.redraw(); }
+        else { computeLC(); renderLC(); lcCv.redraw(); }
+      }
+
+      // ---- reaction picker ----
+      document.getElementById('rxn').addEventListener('change', function () {
+        S.rx = parseInt(this.value, 10) || 0;
+        var rx = R();
+        booting = true;
+        setSliderRanges();
+        for (var i = 0; i < 4; i++) S.init[i] = i < rx.sp.length ? rx.sp[i].c0 : 0;
+        S.volF = 0.5; document.getElementById('vol').value = -1;
+        document.getElementById('volOut').textContent = '0.50 ×';
+        if (S.stress === 'addR' || S.stress === 'addP') rebuildStressSpecies();
+        syncSpeciesLabels(); syncKLabel(); syncStressBoxes();
+        document.getElementById('fK').textContent = fK(rx.K);
+        document.getElementById('fT').innerHTML = F.dec(rx.T - 273.15, 0) + '<span class="r-unit">&deg;C</span>';
+        document.getElementById('fdH').innerHTML =
+          (rx.dH < 0 ? '&minus;' : '+') + F.dec(Math.abs(rx.dH), 1) + '<span class="r-unit">kJ/mol</span>';
+        var dn = dnGas(rx.sp);
+        document.getElementById('fDn').textContent = (dn > 0 ? '+' : '') + dn;
+        document.getElementById('fNote').innerHTML = rx.fact;
+        booting = false;
+        refresh({ curve: true });
+      });
+
+      // ---- K slider ----
+      Demo.range('#logK', function (v) {
+        S.K = Math.pow(10, v);
+        syncKLabel();
+        refresh();
+      });
+
+      document.getElementById('kReset').addEventListener('click', function () {
+        var el = document.getElementById('logK');
+        el.value = Math.log10(R().K);
+        S.K = R().K;
+        syncKLabel();
+        refresh();
+      });
+
+      // ---- concentration sliders ----
+      [0, 1, 2, 3].forEach(function (i) {
+        Demo.range('#sp' + i, function (v) {
+          S.init[i] = v;
+          if (!booting) {
+            document.getElementById('spOut' + i).textContent = fc(v) + ' M';
+            refresh({ curve: true });
+          }
+        });
+      });
+
+      function setInits(vals) {
+        for (var i = 0; i < 4; i++) {
+          S.init[i] = vals[i] || 0;
+          document.getElementById('sp' + i).value = S.init[i];
+        }
+        syncSpeciesLabels();
+        refresh({ curve: true });
+      }
+
+      document.getElementById('pPureR').addEventListener('click', function () {
+        var sp = R().sp, v = [];
+        for (var i = 0; i < 4; i++) v.push(i < sp.length && sp[i].side < 0 ? sp[i].c0 || R().cmax / 4 : 0);
+        setInits(v);
+      });
+      document.getElementById('pPureP').addEventListener('click', function () {
+        var sp = R().sp, v = [];
+        for (var i = 0; i < 4; i++) v.push(i < sp.length && sp[i].side > 0 ? R().cmax / 4 : 0);
+        setInits(v);
+      });
+      document.getElementById('pBoth').addEventListener('click', function () {
+        var sp = R().sp, v = [];
+        for (var i = 0; i < 4; i++) v.push(i < sp.length ? R().cmax / 4 : 0);
+        setInits(v);
+      });
+
+      document.getElementById('showWrong').addEventListener('change', function () {
+        S.showWrong = this.checked;
+        refresh();
+      });
+
+      // ---- break / fix the shortcut ----
+      // Land on the K whose error is closest to the target, so the buttons always
+      // move somewhere meaningful rather than sitting still when already broken.
+      function moveKToErr(target) {
+        if (!CURVE) return;
+        var best = null, lt = Math.log10(target);
+        for (var i = 0; i < CURVE.pts.length; i++) {
+          var p = CURVE.pts[i];
+          if (!isFinite(p.e) || p.e <= 0) continue;
+          var d = Math.abs(Math.log10(p.e) - lt);
+          if (best === null || d < best.d) best = { lk: p.lk, d: d };
+        }
+        if (!best) return;
+        var el = document.getElementById('logK');
+        el.value = best.lk;
+        S.K = Math.pow(10, best.lk);
+        syncKLabel();
+        refresh();
+      }
+      document.getElementById('breakBtn').addEventListener('click', function () {
+        moveKToErr(50);
+      });
+      document.getElementById('fixBtn').addEventListener('click', function () {
+        moveKToErr(1);
+      });
+
+      // ---- Le Chatelier controls ----
+      document.querySelectorAll('#stressSeg button').forEach(function (b) {
+        b.addEventListener('click', function () {
+          document.querySelectorAll('#stressSeg button').forEach(function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          S.stress = b.dataset.stress;
+          if (S.stress === 'addR' || S.stress === 'addP') rebuildStressSpecies();
+          syncStressBoxes();
+          refresh();
+        });
+      });
+
+      document.getElementById('stressSpecies').addEventListener('change', function () {
+        S.addIdx = parseInt(this.value, 10) || 0;
+        document.getElementById('amtLab').innerHTML = 'Amount of ' + R().sp[S.addIdx].t + ' added';
+        refresh();
+      });
+
+      Demo.range('#amt', function (v) {
+        S.addAmt = v;
+        document.getElementById('amtOut').textContent = fc(v) + ' M';
+        refresh();
+      });
+
+      Demo.range('#vol', function (v) {
+        S.volF = Math.pow(2, v);
+        document.getElementById('volOut').textContent = F.dec(S.volF, 2) + ' ×';
+        refresh();
+      });
+
+      Demo.range('#temp', function (v) {
+        S.tempK = v;
+        document.getElementById('tempOut').textContent = F.dec(v, 0) + ' K  (' + F.dec(v - 273.15, 0) + ' °C)';
+        refresh();
+      });
+
+      Demo.range('#cat', function (v) {
+        S.cat = v;
+        document.getElementById('catOut').textContent = F.dec(v, 0) + ' ×';
+        refresh();
+      });
+
+      // ---- tabs ----
+      function showTab(name) {
+        S.tab = name;
+        document.querySelectorAll('#tabs button').forEach(function (b) {
+          b.setAttribute('aria-selected', b.dataset.tab === name ? 'true' : 'false');
+        });
+        document.getElementById('paneIce').hidden = name !== 'ice';
+        document.getElementById('paneSolve').hidden = name !== 'solve';
+        document.getElementById('paneLc').hidden = name !== 'lc';
+        document.querySelectorAll('.pane-solve').forEach(function (e) { e.hidden = name !== 'solve'; });
+        document.querySelectorAll('.pane-lc').forEach(function (e) { e.hidden = name !== 'lc'; });
+        recomputeSolve();
+        if (name === 'ice') { renderIce(); qkCv.resize(); }
+        else if (name === 'solve') { if (!CURVE) recomputeCurve(); renderSolve(); errCv.resize(); }
+        else { computeLC(); renderLC(); lcCv.resize(); }
+      }
+      document.querySelectorAll('#tabs button').forEach(function (b) {
+        b.addEventListener('click', function () { showTab(b.dataset.tab); });
+      });
+
+      // ---------------- boot ----------------
+      (function boot() {
+        var rx = R();
+        setSliderRanges();
+        for (var i = 0; i < 4; i++) S.init[i] = i < rx.sp.length ? rx.sp[i].c0 : 0;
+        syncSpeciesLabels();
+        syncKLabel();
+        rebuildStressSpecies();
+        syncStressBoxes();
+        document.getElementById('fK').textContent = fK(rx.K);
+        document.getElementById('fT').innerHTML = F.dec(rx.T - 273.15, 0) + '<span class="r-unit">&deg;C</span>';
+        document.getElementById('fdH').innerHTML =
+          (rx.dH < 0 ? '&minus;' : '+') + F.dec(Math.abs(rx.dH), 1) + '<span class="r-unit">kJ/mol</span>';
+        var dn = dnGas(rx.sp);
+        document.getElementById('fDn').textContent = (dn > 0 ? '+' : '') + dn;
+        document.getElementById('fNote').innerHTML = rx.fact;
+        document.getElementById('volOut').textContent = '0.50 ×';
+        document.getElementById('catOut').textContent = '8 ×';
+        booting = false;
+        recomputeSolve();
+        recomputeCurve();
+        renderIce();
+        qkCv.redraw();
+      })();
+    })();
+  </script>
+</body>
+
+</html>
