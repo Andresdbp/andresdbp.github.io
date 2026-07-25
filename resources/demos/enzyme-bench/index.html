@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Enzyme Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Michaelis-Menten kinetics with both inhibitor types. Adding substrate completely rescues competitive inhibition and does nothing at all for noncompetitive - watch which of Vmax and Km actually moves.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=3" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=3" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=3"></script>
+
+  <style>
+    /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 26px; }
+
+    /* These tiles carry real units, which are longer than the shell's
+       single-line label default. Let them wrap instead of ellipsing. */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    /* .r-label is uppercased; the "max" in Vmax is a subscript, not initials. */
+    .readout .r-label sub { text-transform: none; }
+    .readout .r-sub {
+      font-size: 10.5px;
+      line-height: 1.4;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .readout .r-sub.hold { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.moved { color: var(--bad); font-weight: 600; }
+
+    .btn.is-on {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.ref i { height: 0; background: none !important; border-top: 2px dashed var(--muted); }
+
+    .sub-ctrl { padding-left: 25px; margin-top: 6px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Enzyme Bench</h1>
+        <p class="demo-sub">Switch on the competitive inhibitor and drag substrate all the way up. Then do the same with the noncompetitive one. Watch which of V<sub>max</sub> and K<sub>m</sub> moves each time.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Enzyme kinetics</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Plot view" id="viewSeg">
+          <button role="tab" aria-selected="true" data-view="mm">v vs [S]</button>
+          <button role="tab" aria-selected="false" data-view="log">log [S]</button>
+          <button role="tab" aria-selected="false" data-view="lb">1/v vs 1/[S]</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="plotLabel">Reaction rate against substrate concentration</p>
+        <canvas id="plot" role="img"
+                aria-label="Reaction rate plotted against substrate concentration, with the uninhibited curve drawn for comparison whenever an inhibitor is switched on."></canvas>
+
+        <div class="legend" id="legend">
+          <span class="lg ref"><i></i>uninhibited reference</span>
+          <span class="lg" id="lgNow"><i id="lgSwatch"></i><span id="lgNowText">current conditions</span></span>
+        </div>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Where the conditions put you <span>&mdash; activity relative to 37 &deg;C, pH 7</span></p>
+        <canvas id="env" role="img"
+                aria-label="Two small plots: relative enzyme activity against temperature, which rises slowly and then falls off sharply past the optimum, and relative activity against pH, which is a bell centred on the optimum."></canvas>
+        <p class="stage-caption" id="envCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Substrate</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="sRange">[S]</label>
+                <span class="ctrl-value" id="sOut">2.00 mM</span>
+              </div>
+              <input type="range" id="sRange" min="-1" max="2.699" step="0.001" value="0.301">
+              <p class="ctrl-hint">Logarithmic, 0.100 mM to 500 mM, so you can reach genuinely saturating substrate. This is the concentration in the tube, not an amount.</p>
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="btnFlood">Flood with substrate</button>
+              <button class="btn" id="btnReset">Reset all</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Inhibitors &mdash; the whole point</div>
+          <div class="stack">
+
+            <div>
+              <label class="check"><input type="checkbox" id="compChk"> Competitive inhibitor</label>
+              <div class="sub-ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="compRange">[I] competitive</label>
+                  <span class="ctrl-value" id="compOut">0.0 mM</span>
+                </div>
+                <input type="range" id="compRange" min="0" max="10" step="0.1" value="4" disabled>
+                <p class="ctrl-hint">Binds the <strong>active site</strong>. K<sub>i</sub> = 2.0 mM.</p>
+              </div>
+            </div>
+
+            <hr class="sep">
+
+            <div>
+              <label class="check"><input type="checkbox" id="nonChk"> Noncompetitive inhibitor</label>
+              <div class="sub-ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="nonRange">[I] noncompetitive</label>
+                  <span class="ctrl-value" id="nonOut">0.0 mM</span>
+                </div>
+                <input type="range" id="nonRange" min="0" max="10" step="0.1" value="4" disabled>
+                <p class="ctrl-hint">Binds a separate <strong>allosteric site</strong>, on free enzyme and on the enzyme&ndash;substrate complex alike. K<sub>i</sub> = 2.0 mM.</p>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn" id="btnNone">Neither</button>
+              <button class="btn" id="btnComp">Competitive</button>
+              <button class="btn" id="btnNon">Noncompetitive</button>
+            </div>
+            <p class="ctrl-hint">Each preset sets its inhibitor to 10.0 mM &mdash; five times K<sub>i</sub> &mdash; and clears the other one.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The two numbers that matter</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">V<sub>max</sub> (apparent)</div>
+              <div class="r-value big" id="rVmax">100.0<span class="r-unit">&micro;mol L⁻¹ min⁻¹</span></div>
+              <div class="r-sub" id="rVmaxSub">no inhibitor present</div>
+            </div>
+            <div class="readout is-accent span2">
+              <div class="r-label">K<sub>m</sub> (apparent)</div>
+              <div class="r-value big" id="rKm">2.00<span class="r-unit">mM</span></div>
+              <div class="r-sub" id="rKmSub">no inhibitor present</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Rate v now</div>
+              <div class="r-value" id="rV">50.0</div>
+              <div class="r-sub">&micro;mol L⁻¹ min⁻¹</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Share of V<sub>max</sub></div>
+              <div class="r-value" id="rSat">50.0%</div>
+              <div class="r-sub" id="rSatSub">at [S] = 2.00 mM</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            v = V<sub>max</sub>[S] / (K<sub>m</sub> + [S]). K<sub>m</sub> is the [S] that gives exactly half of
+            V<sub>max</sub> &mdash; check it: type the K<sub>m</sub> figure into [S] and the share reads 50.0%.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The rescue test</div>
+          <div class="readouts two">
+            <div class="readout span2" id="rescueBox">
+              <div class="r-label">Rate at saturating [S] (500 mM), as a share of the uninhibited V<sub>max</sub></div>
+              <div class="r-value big" id="rescueVal">100%</div>
+            </div>
+          </div>
+          <div class="bar" style="margin-top:10px"><span id="rescueBar" style="width:100%"></span></div>
+          <p class="note" id="rescueNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">How much enzyme</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="eRange">[E]<sub>total</sub></label>
+                <span class="ctrl-value" id="eOut">100 nM</span>
+              </div>
+              <input type="range" id="eRange" min="0" max="150" step="1" value="100">
+              <p class="ctrl-hint">
+                V<sub>max</sub> = k<sub>cat</sub> &times; [E]<sub>total</sub>, with k<sub>cat</sub> = 1000 min⁻¹
+                at the optimum. Enzyme scales V<sub>max</sub> and <strong>leaves K<sub>m</sub> alone</strong> &mdash;
+                watch the K<sub>m</sub> tile refuse to move.
+              </p>
+            </div>
+            <p class="note">
+              <strong>The enzyme is a catalyst.</strong> It is not used up, not consumed, and not converted into
+              product. One enzyme molecule here turns over 1000 substrate molecules every minute and is unchanged
+              at the end of each one. Nothing in this model depletes it.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Temperature and pH</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="tRange">Temperature</label>
+                <span class="ctrl-value" id="tOut">37.0 &deg;C</span>
+              </div>
+              <input type="range" id="tRange" min="0" max="60" step="0.5" value="37">
+              <p class="ctrl-hint">Two effects at once: collisions get more energetic (Arrhenius, E<sub>a</sub> = 50 kJ mol⁻¹) and the fold starts falling apart (T<sub>m</sub> = 44.5 &deg;C). Both act on V<sub>max</sub>.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="phRange">pH</label>
+                <span class="ctrl-value" id="phOut">7.0</span>
+              </div>
+              <input type="range" id="phRange" min="0" max="14" step="0.1" value="7">
+            </div>
+
+            <div class="btn-row" id="phPresets">
+              <button class="btn is-on" data-opt="7">Cytosolic, opt 7.0</button>
+              <button class="btn" data-opt="2">Pepsin, opt 2.0</button>
+              <button class="btn" data-opt="8">Trypsin, opt 8.0</button>
+            </div>
+            <p class="ctrl-hint" id="phHint">
+              Each preset moves the enzyme&rsquo;s pH optimum <em>and</em> parks the slider on it. Then drag pH back
+              to 7 and watch pepsin die: there is no universal &ldquo;best pH&rdquo;, which is exactly why these
+              enzymes live in different compartments.
+            </p>
+
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Activity vs 37 &deg;C, pH 7</div>
+                <div class="r-value" id="rAct">100%</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Enzyme still folded</div>
+                <div class="r-value" id="rFold">97.5%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>Denaturation here is reversible.</strong> The folded fraction is computed as a two-state
+            equilibrium, so cooling the slider back down really does restore the rate &mdash; drag temperature to
+            55 &deg;C and back to 37 &deg;C and watch. That is Anfinsen&rsquo;s result: for a small single-domain
+            protein the sequence alone contains the folding information, and it can refold. In a real tube it
+            usually does not, because unfolded chains stick to each other and aggregate, and aggregation
+            <em>is</em> irreversible. That is a concentration problem, not a rule of physics.
+          </p>
+          <p class="note bad" style="margin-top:10px">
+            <strong>Denaturation does not cut the chain.</strong> Heat and extreme pH break the weak interactions
+            that hold the three-dimensional shape &mdash; hydrogen bonds, ionic bonds, hydrophobic packing &mdash;
+            and can break disulfide bridges. The <strong>peptide bonds are untouched</strong>. A denatured enzyme
+            still has its full primary sequence in order; it has simply lost the shape that made the active site
+            fit the substrate.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. Rates are initial rates (v<sub>0</sub>): no product has accumulated and the reverse
+            reaction is ignored. Steady-state Michaelis&ndash;Menten is assumed, which needs [S] &gg;
+            [E]<sub>total</sub> &mdash; true everywhere on these sliders. The inhibitors are modelled as
+            <em>pure</em> types: competitive changes only K<sub>m</sub>, noncompetitive only V<sub>max</sub>. Real
+            inhibitors are usually mixed, sitting somewhere between the two, and a third class
+            (uncompetitive, which binds only the ES complex and lowers both) is not included here. Temperature and
+            pH are modelled as acting on V<sub>max</sub> alone; in a real enzyme they nudge K<sub>m</sub> a little
+            too. The enzyme is a generic one-substrate, one-product catalyst, so the numbers are round rather than
+            measured.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn that a competitive inhibitor sits in the active site and
+        a noncompetitive inhibitor sits somewhere else, and they stop there &mdash; as though the whole topic were
+        about <em>where</em> the molecule parks. Where it binds is the cause. The question actually asked on the
+        exam, and the only one a cell cares about, is the consequence: <strong>can you beat the inhibitor by adding
+        more substrate?</strong> For one of these two the answer is yes, completely. For the other it is no, not
+        ever, no matter how much you add.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Press <em>Competitive</em>, leave [S] at 2.00 mM, and the rate collapses
+        from 50.0 to 14.3 &micro;mol L⁻¹ min⁻¹. Now press <em>Flood with substrate</em>. The rate climbs to
+        <strong>97.7</strong> &mdash; back on top of the uninhibited curve. Nothing was removed and no inhibitor
+        left; substrate simply outnumbered it at the door. The V<sub>max</sub> tile never twitched, the whole time.
+        What moved was K<sub>m</sub>: 2.00 mM &rarr; 12.0 mM, because you now need six times as much substrate to
+        reach the same half-maximal rate. Now press <em>Noncompetitive</em> and do exactly the same thing. The rate
+        at 2.00 mM is 8.3; flood it to 500 mM and you get <strong>16.6</strong>, and that is where it stops
+        forever. This time K<sub>m</sub> sat at 2.00 mM without moving and V<sub>max</sub> fell from 100 to 16.7.
+        Substrate bought you nothing.
+      </p>
+      <p>
+        <strong>Why.</strong> A competitive inhibitor and the substrate are queueing for the same seat, so it is a
+        numbers game: K<sub>m,app</sub> = K<sub>m</sub>(1 + [I]/K<sub>i</sub>) grows without limit, but
+        V<sub>max</sub> cannot change, because V<sub>max</sub> is the rate when every enzyme molecule is already
+        holding substrate &mdash; and at high enough [S] you can always get there. A noncompetitive inhibitor binds
+        its own site whether or not substrate is bound, so substrate never competes with it at all. It simply
+        takes enzyme molecules out of service: V<sub>max,app</sub> = V<sub>max</sub>/(1 + [I]/K<sub>i</sub>), with
+        K<sub>m</sub> untouched, because the enzymes that are still working bind substrate exactly as well as they
+        always did. Test that claim on this page: switch the noncompetitive inhibitor off and slide
+        [E]<sub>total</sub> from 100 nM down to about 17 nM instead. You get the same curve. Noncompetitive
+        inhibition <em>is</em> having fewer working enzymes.
+      </p>
+      <p>
+        <strong>The double-reciprocal view says it in one picture.</strong> 1/v = (K<sub>m</sub>/V<sub>max</sub>)(1/[S])
+        + 1/V<sub>max</sub>, so the y-intercept is 1/V<sub>max</sub> and the x-intercept is &minus;1/K<sub>m</sub>.
+        Competitive: both lines cross the vertical axis at the same 0.0100, because V<sub>max</sub> did not move.
+        Noncompetitive: both lines cross the horizontal axis at the same &minus;0.500, because K<sub>m</sub> did
+        not move. That is the tell, and it is not a memorised picture &mdash; it is the same two facts, drawn.
+      </p>
+      <p>
+        <strong>One more thing the graphs will teach you.</strong> The temperature curve is not a bell. It rises
+        gently and roughly exponentially over forty degrees, then falls off a cliff in about ten, because two
+        different things are happening: warmer molecules collide harder <em>and</em> the protein starts losing its
+        fold. Half-maximum activity sits at 27.5 &deg;C on the way up and 46.2 &deg;C on the way down &mdash; the
+        peak at 40.5 &deg;C is nowhere near the middle. And the collapse on the right is not the chain being cut.
+        Denaturation breaks the weak interactions holding the shape; the peptide bonds, and the amino acid
+        sequence, survive intact.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — one enzyme, one substrate, initial rates, 1 L of solution
+      //
+      //   v = Vmax_app * [S] / (Km_app + [S])            Michaelis–Menten
+      //
+      //   Vmax = kcat * [E]total          enzyme scales Vmax, never Km
+      //   Km_app  = Km * (1 + [I]c/Kic)   COMPETITIVE: Km rises, Vmax fixed
+      //   Vmax_app= Vmax / (1 + [I]n/Kin) NONCOMPETITIVE: Vmax falls, Km fixed
+      //
+      //   Only the competitive term is allowed to touch Km, and only the
+      //   noncompetitive term is allowed to touch Vmax. That separation is
+      //   the entire lesson, so it is enforced structurally below rather
+      //   than by being careful.
+      //
+      //   Units: [E] in nM, kcat in min^-1, so with kcat = 1000 min^-1 a
+      //   concentration of E nM gives Vmax = E µmol L^-1 min^-1 exactly.
+      //     100 nM = 1e-7 mol/L; 1000 min^-1 * 1e-7 = 1e-4 mol L^-1 min^-1
+      //            = 100 µmol L^-1 min^-1.
+      //
+      //   Temperature: Arrhenius rise * folded fraction, both on Vmax.
+      //     k(T)/k(310.15) = exp( (Ea/R)(1/310.15 - 1/T) ),  Ea = 50 kJ/mol
+      //     N <=> U, van't Hoff:  Ku = exp( -(dH/R)(1/T - 1/Tm) ),
+      //     f_folded = 1/(1+Ku),  dH = 400 kJ/mol, Tm = 317.65 K (44.5 °C)
+      //   This is a reversible equilibrium on purpose: cool it and the
+      //   activity comes back (Anfinsen). Aggregation is not modelled.
+      //
+      //   pH: two ionisable groups, pKa = opt ± 1.5, normalised to 1 at the
+      //     optimum. Symmetric in pH, which is correct — unlike temperature.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var KM0 = 2.0;        // mM   true Michaelis constant
+      var KIC = 2.0;        // mM   Ki, competitive inhibitor
+      var KIN = 2.0;        // mM   Ki, noncompetitive inhibitor
+      var KCAT = 1000;      // min^-1
+      var SMIN = 0.1, SSAT = 500;              // mM, substrate slider range
+      var LMIN = Math.log10(SMIN), LMAX = Math.log10(SSAT);
+      var LDEF = 0.301;        // log10 of 2.00 mM, snapped to the slider step
+      var XMAX = 40;        // mM,  linear x-axis top
+      var YMAX = 200;       // µmol L^-1 min^-1, fixed rate axis top
+      var UMIN = -0.62, UMAX = 0.55;           // 1/[S] window for Lineweaver–Burk
+
+      var TREF = 310.15, EA_R = 6013, TM = 317.65, DH_R = 48113;
+
+      var S = {
+        logS: LDEF,
+        E: 100, T: 37, pH: 7, pHopt: 7,
+        compOn: false, Ic: 4,
+        nonOn: false, In: 4,
+        view: 'mm'
+      };
+
+      // ---------------- environmental factors (Vmax only) ----------------
+
+      function fFolded(tc) { var T = tc + 273.15; return 1 / (1 + Math.exp(-DH_R * (1 / T - 1 / TM))); }
+      function kArr(tc) { var T = tc + 273.15; return Math.exp(EA_R * (1 / TREF - 1 / T)); }
+      var TNORM = kArr(37) * fFolded(37);
+      function fT(tc) { return kArr(tc) * fFolded(tc) / TNORM; }
+
+      function fPH(ph, opt) {
+        var d = 1 + Math.pow(10, (opt - 1.5) - ph) + Math.pow(10, ph - (opt + 1.5));
+        return (1 + 2 * Math.pow(10, -1.5)) / d;
+      }
+
+      // ---------------- the model ----------------
+
+      function model() {
+        var Ic = S.compOn ? S.Ic : 0;
+        var In = S.nonOn ? S.In : 0;
+        var alpha = 1 + Ic / KIC;                 // touches Km only
+        var beta = 1 + In / KIN;                  // touches Vmax only
+        var Vmax0 = KCAT * (S.E * 1e-9) * 1e6 * fT(S.T) * fPH(S.pH, S.pHopt);
+        var Vmax = Vmax0 / beta;
+        var Km = KM0 * alpha;
+        var s = Math.pow(10, S.logS);
+        var vSat = Vmax * SSAT / (Km + SSAT);
+        return {
+          Ic: Ic, In: In, alpha: alpha, beta: beta,
+          Vmax0: Vmax0, Vmax: Vmax, Km: Km, s: s,
+          v: Vmax * s / (Km + s),
+          vRef: Vmax0 * s / (KM0 + s),
+          vSat: vSat,
+          rescue: Vmax0 > 0 ? vSat / Vmax0 : 0,
+          act: fT(S.T) * fPH(S.pH, S.pHopt),
+          folded: fFolded(S.T)
+        };
+      }
+
+      function rateAt(M, s) { return M.Vmax * s / (M.Km + s); }
+      function rateRefAt(M, s) { return M.Vmax0 * s / (KM0 + s); }
+
+      function anyInhibitor() { return S.compOn || S.nonOn; }
+
+      function curveColor(c) {
+        if (S.compOn && S.nonOn) return c.series[2];
+        if (S.compOn) return c.series[1];
+        if (S.nonOn) return c.series[3];
+        return c.series[0];
+      }
+
+      function condName() {
+        if (S.compOn && S.nonOn) return 'both inhibitors';
+        if (S.compOn) return 'competitive inhibitor';
+        if (S.nonOn) return 'noncompetitive inhibitor';
+        return 'no inhibitor';
+      }
+
+      // ---------------- formatting ----------------
+
+      function fmtS(s) {
+        if (s >= 100) return F.dec(s, 0);
+        if (s >= 10) return F.dec(s, 1);
+        if (s >= 1) return F.dec(s, 2);
+        return F.dec(s, 3);
+      }
+      function fmtRate(v) { return v >= 10 ? F.dec(v, 1) : v >= 1 ? F.dec(v, 2) : F.sig(v, 2); }
+
+      // ---------------- canvas helpers ----------------
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+
+      // ==================================================================
+      // MAIN CANVAS
+      // ==================================================================
+      var mainCv = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var M = model();
+        if (S.view === 'lb') drawLB(ctx, w, h, c, M);
+        else drawRate(ctx, w, h, c, M, S.view === 'log');
+      }, { aspect: 0.62, minHeight: 250, maxHeight: 360 });
+
+      // ---------------- v vs [S], linear or semi-log ----------------
+      function drawRate(ctx, w, h, c, M, isLog) {
+        var narrow = w < 360;
+        var padL = narrow ? 36 : 44, padR = narrow ? 12 : 16, padT = 24, padB = 38;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var col = curveColor(c);
+        var showRef = anyInhibitor();
+        var i, px;
+
+        function Yv(v) { return y0 - (y0 - y1) * Demo.clamp(v, 0, YMAX) / YMAX; }
+        function Xs(s) {
+          if (isLog) {
+            var l = Math.log10(Demo.clamp(s, SMIN, SSAT));
+            return x0 + (x1 - x0) * (l - LMIN) / (LMAX - LMIN);
+          }
+          return x0 + (x1 - x0) * Demo.clamp(s, 0, XMAX) / XMAX;
+        }
+        function invX(p) {
+          var u = (p - x0) / (x1 - x0);
+          return isLog ? Math.pow(10, LMIN + u * (LMAX - LMIN)) : u * XMAX;
+        }
+
+        // horizontal gridlines + rate labels
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(YMAX * i / 4), x0 - 5, gy);
+        }
+
+        // axes
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // axis titles
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('v (µmol L⁻¹ min⁻¹)', 1, 3);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var ticks = isLog ? [0.1, 1, 10, 100, 500] : [0, 10, 20, 30, 40];
+        for (i = 0; i < ticks.length; i++) {
+          px = Xs(ticks[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          // 0 only exists on the linear axis; 0.1 only on the log axis
+          ctx.fillText(ticks[i] === 0 ? '0' : ticks[i] < 1 ? '0.1' : String(ticks[i]), px, y0 + 6);
+        }
+        ctx.fillText(isLog ? '[S] (mM), log scale' : '[S] (mM)', (x0 + x1) / 2, y0 + 21);
+
+        // Vmax asymptotes — the line that competitive inhibition must not move
+        if (showRef) {
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.2;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, Yv(M.Vmax0)); ctx.lineTo(x1, Yv(M.Vmax0)); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.strokeStyle = col; ctx.lineWidth = 1.4;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Yv(M.Vmax)); ctx.lineTo(x1, Yv(M.Vmax)); ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Km markers: vertical guide at Km, horizontal guide at Vmax/2.
+        // The label rides at the TOP of the guide. The band above Vmax is
+        // always empty (Vmax can never exceed 167 on a 200 axis), whereas the
+        // bottom of the plot is exactly where a strongly inhibited curve lies.
+        function kmMark(km, vmax, kcol, label, labY) {
+          var kx = Xs(km), ky = Yv(vmax / 2);
+          ctx.strokeStyle = kcol; ctx.lineWidth = 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(kx, y0); ctx.lineTo(kx, y1); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(kx, ky); ctx.lineTo(x0, ky); ctx.stroke();
+          ctx.setLineDash([]);
+          dot(ctx, c, kx, ky, 3, kcol);
+          chip(ctx, c, kx, labY, label, fs, kcol, w, 'center', x0 + 1);
+        }
+        var twoKm = showRef && M.alpha !== 1;
+        if (twoKm) kmMark(KM0, M.Vmax0, c.muted, 'Km₀ ' + F.dec(KM0, 2) + ' mM', y1 + 30);
+        kmMark(M.Km, M.Vmax, col, 'Km ' + F.dec(M.Km, 2) + ' mM', y1 + 13);
+
+        // the curves
+        ctx.lineJoin = 'round';
+        if (showRef) {
+          ctx.save();
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.6;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          for (px = x0; px <= x1; px++) {
+            var yr = Yv(rateRefAt(M, invX(px)));
+            if (px === x0) ctx.moveTo(px, yr); else ctx.lineTo(px, yr);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.strokeStyle = col; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var yc = Yv(rateAt(M, invX(px)));
+          if (px === x0) ctx.moveTo(px, yc); else ctx.lineTo(px, yc);
+        }
+        ctx.stroke();
+
+        // Vmax labels, drawn over the curves
+        if (showRef && M.beta !== 1) {
+          chip(ctx, c, x1 - 2, Yv(M.Vmax0) - 5, 'Vmax without inhibitor ' + fmtRate(M.Vmax0), fs, c.muted, w, 'right');
+          chip(ctx, c, x1 - 2, Yv(M.Vmax) - 5, 'Vmax now ' + fmtRate(M.Vmax), fs, col, w, 'right');
+        } else if (showRef) {
+          chip(ctx, c, x1 - 2, Yv(M.Vmax) - 5, 'Vmax ' + fmtRate(M.Vmax) + ' — unchanged', fs, col, w, 'right');
+        } else {
+          chip(ctx, c, x1 - 2, Yv(M.Vmax) - 5, 'Vmax ' + fmtRate(M.Vmax), fs, col, w, 'right');
+        }
+
+        // where the [S] slider currently sits
+        var offScale = !isLog && M.s > XMAX;
+        var mx = offScale ? x1 : Xs(M.s);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(mx, y1); ctx.lineTo(mx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (showRef) dot(ctx, c, mx, Yv(M.vRef), 4, c.muted);
+        dot(ctx, c, mx, Yv(M.v), 5.5, col);
+
+        if (offScale) {
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(x1 + 3, Yv(M.v) - 5); ctx.lineTo(x1 + 11, Yv(M.v)); ctx.lineTo(x1 + 3, Yv(M.v) + 5);
+          ctx.closePath(); ctx.fill();
+        }
+
+        var vy = Yv(M.v);
+        var above = vy - 20 > y1;
+        chip(ctx, c, mx, above ? vy - 11 : vy + 21,
+          'v ' + fmtRate(M.v) + (offScale ? ' ([S] off scale →)' : ''), fs + 0.5, col, w, 'center');
+      }
+
+      // ---------------- Lineweaver–Burk ----------------
+      function drawLB(ctx, w, h, c, M) {
+        var narrow = w < 360;
+        var padL = narrow ? 40 : 48, padR = narrow ? 12 : 16, padT = 24, padB = 38;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var col = curveColor(c);
+        var i;
+
+        if (M.Vmax < 0.5 || M.Vmax0 < 0.5) {
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + 1 + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('The rate is essentially zero under these conditions,', w / 2, h / 2 - 10);
+          ctx.fillText('so 1/v runs off the top of any scale.', w / 2, h / 2 + 8);
+          return;
+        }
+
+        var l0 = { m: KM0 / M.Vmax0, b: 1 / M.Vmax0 };     // uninhibited
+        var l1 = { m: M.Km / M.Vmax, b: 1 / M.Vmax };      // current
+        var top = Math.max(l0.m * UMAX + l0.b, l1.m * UMAX + l1.b) * 1.14;
+        top = Demo.clamp(top, 0.02, 3);
+
+        function Xu(u) { return x0 + (x1 - x0) * (u - UMIN) / (UMAX - UMIN); }
+        function Yr(r) { return y0 - (y0 - y1) * Demo.clamp(r, 0, top) / top; }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.sig(top * i / 4, 2), x0 - 5, gy);
+        }
+
+        // frame + the two real axes of the plot (1/[S] = 0 and 1/v = 0)
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+        ctx.strokeStyle = c.text2; ctx.lineWidth = 1.3;
+        ctx.beginPath(); ctx.moveTo(Xu(0), y1); ctx.lineTo(Xu(0), y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('1/v (L min µmol⁻¹)', 1, 3);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center';
+        var xt = [-0.5, -0.25, 0, 0.25, 0.5];
+        for (i = 0; i < xt.length; i++) {
+          var px = Xu(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(xt[i], 2), px, y0 + 6);
+        }
+        ctx.fillText('1/[S] (mM⁻¹)', (x0 + x1) / 2, y0 + 21);
+
+        // the two lines, clipped to the axes box
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1, x1 - x0, y0 - y1); ctx.clip();
+
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.6;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(Xu(UMIN), Yr(l0.m * UMIN + l0.b));
+        ctx.lineTo(Xu(UMAX), Yr(l0.m * UMAX + l0.b));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = col; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(Xu(UMIN), Yr(l1.m * UMIN + l1.b));
+        ctx.lineTo(Xu(UMAX), Yr(l1.m * UMAX + l1.b));
+        ctx.stroke();
+        ctx.restore();
+
+        // intercepts
+        dot(ctx, c, Xu(0), Yr(l0.b), 4, c.muted);
+        dot(ctx, c, Xu(0), Yr(l1.b), 5, col);
+        dot(ctx, c, Xu(-1 / KM0), y0, 4, c.muted);
+        dot(ctx, c, Xu(-1 / M.Km), y0, 5, col);
+
+        // the signature of each inhibition type
+        if (S.compOn && !S.nonOn) {
+          chip(ctx, c, Xu(0) + 8, Yr(l1.b) - 7, 'same 1/Vmax → Vmax unchanged', fs, col, w, 'left');
+          chip(ctx, c, Xu(-1 / M.Km), y0 - 8, '−1/Km moved', fs, col, w, 'center', x0 + 1);
+        } else if (S.nonOn && !S.compOn) {
+          chip(ctx, c, Xu(-1 / M.Km), y0 - 8, 'same −1/Km → Km unchanged', fs, col, w, 'center', x0 + 1);
+          chip(ctx, c, Xu(0) + 8, Yr(l1.b) - 7, '1/Vmax moved up', fs, col, w, 'left');
+        } else if (S.compOn && S.nonOn) {
+          chip(ctx, c, Xu(0) + 8, Yr(l1.b) - 7, 'both intercepts moved', fs, col, w, 'left');
+        } else {
+          chip(ctx, c, Xu(0) + 8, Yr(l1.b) - 7, '1/Vmax = ' + F.sig(l1.b, 3), fs, col, w, 'left');
+          chip(ctx, c, Xu(-1 / M.Km), y0 - 8, '−1/Km = ' + F.dec(-1 / M.Km, 3), fs, col, w, 'center', x0 + 1);
+        }
+
+        // where the [S] slider sits, as a data point on the line
+        var u = 1 / M.s, r = M.v > 0 ? 1 / M.v : Infinity;
+        if (u >= UMIN && u <= UMAX && r <= top) {
+          dot(ctx, c, Xu(u), Yr(r), 5.5, c.accentStrong);
+          chip(ctx, c, Xu(u), Yr(r) - 10, '[S] = ' + fmtS(M.s) + ' mM', fs, c.accentStrong, w, 'center');
+        }
+      }
+
+      // ==================================================================
+      // TEMPERATURE / pH OPTIMUM CANVAS
+      // ==================================================================
+      var envCv = Demo.canvas('#env', function (ctx, w, h, c) {
+        var gap = 12;
+        var pw = (w - gap) / 2;
+        drawOpt(ctx, c, 0, pw, h, true);
+        drawOpt(ctx, c, pw + gap, pw, h, false);
+      }, { aspect: 0.44, minHeight: 165, maxHeight: 215 });
+
+      function drawOpt(ctx, c, ox, pw, h, isTemp) {
+        var fs = pw < 165 ? 8.8 : 9.6;
+        var padL = 24, padR = 6, padT = 27, padB = 26;
+        var x0 = ox + padL, x1 = ox + pw - padR, y1 = padT, y0 = h - padB;
+        var TOP = 1.25;
+        var lo = 0, hi = isTemp ? 60 : 14;
+        var col = isTemp ? c.series[1] : c.series[2];
+        var i, px;
+
+        function Xv(t) { return x0 + (x1 - x0) * (t - lo) / (hi - lo); }
+        function Yr(r) { return y0 - (y0 - y1) * Demo.clamp(r, 0, TOP) / TOP; }
+        function f(t) { return isTemp ? fT(t) : fPH(t, S.pHopt); }
+
+        // title
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + (fs + 1.6) + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(isTemp ? 'Temperature' : 'pH', ox + 2, 1);
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(isTemp ? F.dec(S.T, 1) + ' °C' : F.dec(S.pH, 1) + ' (opt ' + F.dec(S.pHopt, 1) + ')', ox + 2, 14);
+
+        // gridlines at relative activity 0.5 and 1.0
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'right';
+        [0.5, 1].forEach(function (r) {
+          var gy = Yr(r);
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(r, 1), x0 - 4, gy);
+        });
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // folded fraction, so the collapse on the right has a visible cause
+        if (isTemp) {
+          ctx.save();
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath();
+          for (px = x0; px <= x1; px++) {
+            var tt = lo + (px - x0) / (x1 - x0) * (hi - lo);
+            var yy = Yr(fFolded(tt));
+            if (px === x0) ctx.moveTo(px, yy); else ctx.lineTo(px, yy);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // the activity curve
+        ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var t = lo + (px - x0) / (x1 - x0) * (hi - lo);
+          var y = Yr(f(t));
+          if (px === x0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
+        }
+        ctx.stroke();
+
+        // x ticks
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.font = (fs - 0.4) + FONT;
+        var xt = isTemp ? [0, 20, 40, 60] : [0, 7, 14];
+        for (i = 0; i < xt.length; i++) {
+          px = Xv(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(xt[i]), px, y0 + 5);
+        }
+        ctx.fillText(isTemp ? 'temperature (°C)' : 'pH', (x0 + x1) / 2, y0 + 15);
+
+        // current setting
+        var cur = isTemp ? S.T : S.pH;
+        var cx = Xv(cur);
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, y1); ctx.lineTo(cx, y0); ctx.stroke();
+        ctx.setLineDash([]);
+        dot(ctx, c, cx, Yr(f(cur)), 4.5, col);
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        sRange: document.getElementById('sRange'),
+        sOut: document.getElementById('sOut'),
+        btnFlood: document.getElementById('btnFlood'),
+        btnReset: document.getElementById('btnReset'),
+        compChk: document.getElementById('compChk'),
+        compRange: document.getElementById('compRange'),
+        compOut: document.getElementById('compOut'),
+        nonChk: document.getElementById('nonChk'),
+        nonRange: document.getElementById('nonRange'),
+        nonOut: document.getElementById('nonOut'),
+        btnNone: document.getElementById('btnNone'),
+        btnComp: document.getElementById('btnComp'),
+        btnNon: document.getElementById('btnNon'),
+        rVmax: document.getElementById('rVmax'),
+        rVmaxSub: document.getElementById('rVmaxSub'),
+        rKm: document.getElementById('rKm'),
+        rKmSub: document.getElementById('rKmSub'),
+        rV: document.getElementById('rV'),
+        rSat: document.getElementById('rSat'),
+        rSatSub: document.getElementById('rSatSub'),
+        rescueVal: document.getElementById('rescueVal'),
+        rescueBar: document.getElementById('rescueBar'),
+        rescueNote: document.getElementById('rescueNote'),
+        rescueBox: document.getElementById('rescueBox'),
+        eRange: document.getElementById('eRange'),
+        eOut: document.getElementById('eOut'),
+        tRange: document.getElementById('tRange'),
+        tOut: document.getElementById('tOut'),
+        phRange: document.getElementById('phRange'),
+        phOut: document.getElementById('phOut'),
+        rAct: document.getElementById('rAct'),
+        rFold: document.getElementById('rFold'),
+        plotCap: document.getElementById('plotCap'),
+        envCap: document.getElementById('envCap'),
+        plotLabel: document.getElementById('plotLabel'),
+        lgSwatch: document.getElementById('lgSwatch'),
+        lgNowText: document.getElementById('lgNowText'),
+        lgNow: document.getElementById('lgNow')
+      };
+
+      var SERIES_VAR = ['--series-1', '--series-2', '--series-3', '--series-4'];
+      function curveVar() {
+        if (S.compOn && S.nonOn) return SERIES_VAR[2];
+        if (S.compOn) return SERIES_VAR[1];
+        if (S.nonOn) return SERIES_VAR[3];
+        return SERIES_VAR[0];
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        var M = model();
+
+        // --- slider readouts ---
+        el.sOut.textContent = fmtS(M.s) + ' mM';
+        el.compOut.textContent = F.dec(S.compOn ? S.Ic : 0, 1) + ' mM';
+        el.nonOut.textContent = F.dec(S.nonOn ? S.In : 0, 1) + ' mM';
+        el.eOut.textContent = F.dec(S.E, 0) + ' nM';
+        el.tOut.innerHTML = F.dec(S.T, 1) + ' &deg;C';
+        el.phOut.textContent = F.dec(S.pH, 1);
+
+        // --- the two headline numbers ---
+        el.rVmax.innerHTML = fmtRate(M.Vmax) + '<span class="r-unit">&micro;mol L⁻¹ min⁻¹</span>';
+        el.rKm.innerHTML = F.dec(M.Km, 2) + '<span class="r-unit">mM</span>';
+
+        if (!anyInhibitor()) {
+          el.rVmaxSub.className = 'r-sub';
+          el.rVmaxSub.innerHTML = 'no inhibitor present';
+          el.rKmSub.className = 'r-sub';
+          el.rKmSub.innerHTML = 'no inhibitor present';
+        } else {
+          if (M.beta === 1) {
+            el.rVmaxSub.className = 'r-sub hold';
+            el.rVmaxSub.innerHTML = 'UNCHANGED by the inhibitor';
+          } else {
+            el.rVmaxSub.className = 'r-sub moved';
+            el.rVmaxSub.innerHTML = 'CUT to ' + F.dec(100 / M.beta, 1) + '% of ' + fmtRate(M.Vmax0)
+              + ' &mdash; divided by ' + F.dec(M.beta, 2);
+          }
+          if (M.alpha === 1) {
+            el.rKmSub.className = 'r-sub hold';
+            el.rKmSub.innerHTML = 'UNCHANGED by the inhibitor';
+          } else {
+            el.rKmSub.className = 'r-sub moved';
+            el.rKmSub.innerHTML = 'RAISED from ' + F.dec(KM0, 2) + ' mM &mdash; multiplied by '
+              + F.dec(M.alpha, 2);
+          }
+        }
+
+        el.rV.textContent = fmtRate(M.v);
+        el.rSat.textContent = M.Vmax > 0 ? F.pct(M.v / M.Vmax, 1) : '—';
+        el.rSatSub.textContent = 'at [S] = ' + fmtS(M.s) + ' mM';
+
+        // --- rescue test ---
+        el.rescueVal.textContent = F.pct(M.rescue, 1);
+        el.rescueBar.style.width = Demo.clamp(M.rescue * 100, 0, 100) + '%';
+
+        if (!anyInhibitor()) {
+          el.rescueBox.className = 'readout span2';
+          el.rescueBar.style.background = 'var(--accent)';
+          el.rescueNote.className = 'note';
+          el.rescueNote.innerHTML = 'Nothing to rescue from yet. Switch on an inhibitor, then read this tile '
+            + 'again &mdash; it asks one question: <strong>if you flooded the tube with substrate, how much of '
+            + 'the normal V<sub>max</sub> would you get back?</strong>';
+        } else if (S.compOn && !S.nonOn) {
+          el.rescueBox.className = 'readout span2 is-ok';
+          el.rescueBar.style.background = 'var(--ok)';
+          el.rescueNote.className = 'note';
+          el.rescueNote.innerHTML = '<strong>Substrate wins.</strong> At 500 mM the rate is '
+            + fmtRate(M.vSat) + ', which is <strong>' + F.pct(M.rescue, 1) + '</strong> of the uninhibited '
+            + 'V<sub>max</sub> of ' + fmtRate(M.Vmax0) + '. Push [S] higher still and it keeps closing the gap: '
+            + 'the true limit is 100%, because V<sub>max</sub> never moved. The inhibitor is still in the tube. '
+            + 'It is simply being out-voted at the active site.';
+        } else if (S.nonOn && !S.compOn) {
+          el.rescueBox.className = 'readout span2 is-bad';
+          el.rescueBar.style.background = 'var(--bad)';
+          el.rescueNote.className = 'note bad';
+          el.rescueNote.innerHTML = '<strong>Substrate cannot win.</strong> At 500 mM the rate is only '
+            + fmtRate(M.vSat) + ' &mdash; <strong>' + F.pct(M.rescue, 1) + '</strong> of normal &mdash; and '
+            + 'infinite substrate would only reach ' + F.pct(1 / M.beta, 1) + '. The ceiling itself came down. '
+            + 'Substrate never competes with this inhibitor, so no amount of it is relevant.';
+        } else {
+          el.rescueBox.className = 'readout span2 is-bad';
+          el.rescueBar.style.background = 'var(--warn)';
+          el.rescueNote.className = 'note warn';
+          el.rescueNote.innerHTML = 'Both at once. Flooding recovers what the competitive inhibitor took '
+            + '(K<sub>m</sub> is beatable) but not what the noncompetitive one took: the ceiling is stuck at '
+            + F.pct(1 / M.beta, 1) + ' of normal, so 500 mM substrate reaches only '
+            + F.pct(M.rescue, 1) + '. Switch them on one at a time to see which half is which.';
+        }
+
+        // --- conditions ---
+        el.rAct.textContent = F.pct(M.act, 1);
+        el.rFold.textContent = F.pct(M.folded, 1);
+
+        // --- legend + captions ---
+        el.lgSwatch.style.background = 'var(' + curveVar() + ')';
+        el.lgNowText.textContent = condName();
+        el.lgNow.hidden = false;
+        document.querySelector('.legend .lg.ref').hidden = !anyInhibitor();
+
+        el.plotLabel.innerHTML = S.view === 'lb'
+          ? 'Lineweaver&ndash;Burk <span>&mdash; 1/v against 1/[S]; a straight line whose intercepts are 1/V<sub>max</sub> and &minus;1/K<sub>m</sub></span>'
+          : S.view === 'log'
+            ? 'Rate against substrate <span>&mdash; log [S], so saturating concentrations fit on the page</span>'
+            : 'Rate against substrate <span>&mdash; the classic hyperbola, linear [S]</span>';
+
+        el.plotCap.innerHTML = caption(M);
+        el.envCap.innerHTML = envCaption(M);
+
+        if (fast) { mainCv.paint(); envCv.paint(); }
+        else { mainCv.redraw(); envCv.redraw(); }
+      }
+
+      function caption(M) {
+        var s = fmtS(M.s);
+        var head;
+        if (!anyInhibitor()) {
+          head = 'No inhibitor. At [S] = <strong>' + s + ' mM</strong> the rate is <strong>' + fmtRate(M.v)
+            + ' &micro;mol L⁻¹ min⁻¹</strong>, which is ' + F.pct(M.v / M.Vmax, 1)
+            + ' of V<sub>max</sub>. Half-maximal rate happens exactly at [S] = K<sub>m</sub> = '
+            + F.dec(M.Km, 2) + ' mM.';
+        } else if (S.compOn && !S.nonOn) {
+          head = '<strong>Competitive, ' + F.dec(M.Ic, 1) + ' mM.</strong> The plateau has not moved: '
+            + 'V<sub>max</sub> is still ' + fmtRate(M.Vmax0) + '. What moved is K<sub>m</sub>, from '
+            + F.dec(KM0, 2) + ' to <strong>' + F.dec(M.Km, 2) + ' mM</strong>. The solid curve is the dashed one '
+            + 'stretched to the right, and it climbs back onto it &mdash; drag [S] up and watch.';
+        } else if (S.nonOn && !S.compOn) {
+          head = '<strong>Noncompetitive, ' + F.dec(M.In, 1) + ' mM.</strong> K<sub>m</sub> has not moved: '
+            + 'still <strong>' + F.dec(M.Km, 2) + ' mM</strong>, the half-way point is in the same place. What '
+            + 'moved is V<sub>max</sub>, from ' + fmtRate(M.Vmax0) + ' down to <strong>' + fmtRate(M.Vmax)
+            + '</strong>. The solid curve is the dashed one squashed downwards, and no amount of [S] lifts it.';
+        } else {
+          head = '<strong>Both inhibitors.</strong> K<sub>m</sub> rose to ' + F.dec(M.Km, 2)
+            + ' mM <em>and</em> V<sub>max</sub> fell to ' + fmtRate(M.Vmax)
+            + '. Stretched right and squashed down at once &mdash; which is why you test them one at a time.';
+        }
+        var tail = '';
+        if (S.view === 'mm' && M.s > XMAX) {
+          tail = ' Your [S] is past the right edge of this linear axis; the marker is pinned there. '
+            + 'Switch to <em>log [S]</em> to see it properly.';
+        } else if (S.view === 'lb') {
+          tail = ' Each straight line is one condition. Competitive lines share a y-intercept; '
+            + 'noncompetitive lines share an x-intercept.';
+        }
+        return head + tail;
+      }
+
+      function envCaption(M) {
+        var t = '<strong>Temperature is not a bell.</strong> Rate climbs roughly exponentially to a peak near '
+          + '40.5 &deg;C, then falls off a cliff: half-maximum is 27.5 &deg;C going up but only 46.2 &deg;C coming '
+          + 'down. The dotted line is the fraction of enzyme still folded &mdash; that is what causes the cliff. '
+          + 'Right now <strong>' + F.pct(M.folded, 1) + '</strong> of the enzyme is folded and activity is '
+          + '<strong>' + F.pct(M.act, 1) + '</strong> of the 37 &deg;C, pH 7 reference. '
+          + 'The pH curve <em>is</em> symmetric, because it comes from two ionisable groups either side of the '
+          + 'optimum. Both act on V<sub>max</sub> only in this model; neither touches K<sub>m</sub>.';
+        if (M.act < 0.05) {
+          t += ' <strong>Activity is nearly zero here</strong>, so every rate on this page reads as flat &mdash; '
+            + 'bring temperature and pH back toward the optimum.';
+        } else if (S.T > 50) {
+          t += ' Cooling back down restores the rate in this model, because unfolding is treated as a reversible '
+            + 'equilibrium.';
+        }
+        return t;
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      var flood;
+
+      function stopFlood() {
+        if (!flood || !flood.running) return;
+        flood.stop();
+        el.btnFlood.textContent = 'Flood with substrate';
+      }
+
+      function setS(l, fromSlider, fast) {
+        S.logS = Demo.clamp(l, LMIN, LMAX);
+        if (!fromSlider) el.sRange.value = S.logS;
+        render(fast);
+      }
+
+      Demo.range('#sRange', function (v) { stopFlood(); setS(v, true, false); });
+
+      Demo.range('#compRange', function (v) { S.Ic = v; render(false); });
+      Demo.range('#nonRange', function (v) { S.In = v; render(false); });
+      Demo.range('#eRange', function (v) { S.E = v; render(false); });
+      Demo.range('#tRange', function (v) { S.T = v; render(false); });
+      Demo.range('#phRange', function (v) { S.pH = v; render(false); });
+
+      el.compChk.addEventListener('change', function () {
+        S.compOn = this.checked;
+        el.compRange.disabled = !this.checked;
+        render(false);
+      });
+      el.nonChk.addEventListener('change', function () {
+        S.nonOn = this.checked;
+        el.nonRange.disabled = !this.checked;
+        render(false);
+      });
+
+      function setInhibitors(compOn, nonOn, dose) {
+        S.compOn = compOn; S.nonOn = nonOn;
+        if (compOn) { S.Ic = dose; el.compRange.value = dose; }
+        if (nonOn) { S.In = dose; el.nonRange.value = dose; }
+        el.compChk.checked = compOn;
+        el.nonChk.checked = nonOn;
+        el.compRange.disabled = !compOn;
+        el.nonRange.disabled = !nonOn;
+        render(false);
+      }
+
+      el.btnNone.addEventListener('click', function () { stopFlood(); setInhibitors(false, false, 10); });
+      el.btnComp.addEventListener('click', function () { stopFlood(); setInhibitors(true, false, 10); });
+      el.btnNon.addEventListener('click', function () { stopFlood(); setInhibitors(false, true, 10); });
+
+      // pH optimum presets
+      var phBtns = Array.prototype.slice.call(document.querySelectorAll('#phPresets .btn'));
+      phBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          phBtns.forEach(function (o) { o.classList.toggle('is-on', o === b); });
+          S.pHopt = parseFloat(b.dataset.opt);
+          S.pH = S.pHopt;
+          el.phRange.value = S.pH;
+          render(false);
+        });
+      });
+
+      // view tabs
+      var segBtns = Array.prototype.slice.call(document.querySelectorAll('#viewSeg button'));
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          segBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.view = b.dataset.view;
+          render(false);
+        });
+      });
+
+      // the flood: watch competitive inhibition actually get out-competed
+      flood = Demo.loop(function (dt) {
+        var next = S.logS + dt * (LMAX - LMIN) / 1.8;
+        if (next >= LMAX) { setS(LMAX, false, true); stopFlood(); return; }
+        setS(next, false, true);
+      });
+
+      el.btnFlood.addEventListener('click', function () {
+        if (flood.running) { stopFlood(); return; }
+        if (S.logS >= LMAX - 0.01) setS(LDEF, false, false);
+        el.btnFlood.textContent = 'Stop';
+        flood.start();
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        stopFlood();
+        S.E = 100; S.T = 37; S.pH = 7; S.pHopt = 7; S.Ic = 4; S.In = 4;
+        S.compOn = false; S.nonOn = false;
+        el.eRange.value = 100;
+        el.tRange.value = 37;
+        el.phRange.value = 7;
+        el.compRange.value = 4; el.compRange.disabled = true; el.compChk.checked = false;
+        el.nonRange.value = 4; el.nonRange.disabled = true; el.nonChk.checked = false;
+        phBtns.forEach(function (o, i) { o.classList.toggle('is-on', i === 0); });
+        setS(LDEF, false, false);
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      setS(LDEF, false, false);
+    })();
+  </script>
+</body>
+
+</html>
