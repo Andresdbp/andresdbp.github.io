@@ -1,0 +1,797 @@
+/* =========================================================
+   NEO TRACKING TERMINAL — phosphor CRT styling
+
+   Colour discipline: one phosphor hue, six brightness steps.
+   A real monochrome tube had exactly one emitter colour and
+   varied only intensity, so every "colour" here is the same
+   hue at a different alpha. That constraint is what makes it
+   read as a CRT rather than as a green website.
+
+   The viewport's scanlines, curvature and bloom live in the
+   WebGL shader (js/scene.js) so they bend with the glass.
+   The CSS effects below cover the text side of the split.
+   ========================================================= */
+
+:root {
+  --p-hue: 120;
+  --p: #00ff00;
+  --p-rgb: 0, 255, 0;
+
+  /* Brightness steps. Anything that carries TEXT has to clear 4.5:1 against
+     black, which for this phosphor means alpha >= ~0.55 — CSS composites in
+     sRGB, so alpha 0.38 lands at 2.7:1 and alpha 0.22 at 1.6:1. The dimmer
+     steps below are for borders, rules and grid lines only; --p-lo is the
+     floor for anything readable. */
+  --p-max: rgba(var(--p-rgb), 1);      /* 15.3:1 */
+  --p-hi: rgba(var(--p-rgb), 0.86);    /* 11.3:1 */
+  --p-mid: rgba(var(--p-rgb), 0.70);   /*  7.4:1 */
+  --p-lo: rgba(var(--p-rgb), 0.58);    /*  5.2:1 — smallest text step */
+  --p-hint: rgba(var(--p-rgb), 0.44);  /*  3.3:1 — placeholders only */
+  --p-dim: rgba(var(--p-rgb), 0.26);   /* borders, never text */
+  --p-faint: rgba(var(--p-rgb), 0.10);
+  --p-ghost: rgba(var(--p-rgb), 0.045);
+
+  --glow-sm: 0 0 1px rgba(var(--p-rgb), 0.9);
+  --glow: 0 0 1px rgba(var(--p-rgb), 0.8), 0 0 6px rgba(var(--p-rgb), 0.45);
+  --glow-lg: 0 0 2px rgba(var(--p-rgb), 0.9), 0 0 12px rgba(var(--p-rgb), 0.55);
+
+  --bezel: #07090a;
+  --mono: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --display: 'VT323', var(--mono);
+
+  --gap: 10px;
+  --hud-h: 46px;
+}
+
+/* Semantic slots. In the monochrome schemes they all resolve to the single
+   phosphor at different intensities — a real P1 tube has no second colour.
+   The spectrum scheme is the deliberate exception and reassigns each slot
+   to its own hue, so the display can be read by colour as well as position. */
+:root {
+  --c-accent: var(--p-max);
+  --c-ok: var(--p-hi);
+  --c-warn: var(--p-max);
+  --c-bad: var(--p-max);
+  --c-label: var(--p-lo);
+  --c-value: var(--p-hi);
+  --c-rule: var(--p-dim);
+  --c-craft: var(--p-hi);
+  --c-sat: var(--p-hi);
+}
+
+:root[data-phosphor="amber"] {
+  --p: #ffb000;
+  --p-rgb: 255, 176, 0;
+}
+
+/* SPECTRUM — every slot gets a saturated hue of its own.
+   The base is vivid cyan rather than a pale blue-white: the base drives body
+   text AND all the borders through the --p-* alpha steps, so a desaturated
+   base turned most of the interface grey no matter how colourful the accents
+   were. Every value below clears 4.5:1 on black. */
+:root[data-phosphor="spectrum"] {
+  --p: #38e8ff;
+  --p-rgb: 56, 232, 255;
+
+  --c-accent: #ff4fd8;   /* brand, headings, selection  — hot pink   7.2:1 */
+  --c-ok: #3dff88;       /* healthy status, live feeds  — green     14.6:1 */
+  --c-warn: #ffa726;     /* cautions, PHA flags         — orange    10.4:1 */
+  --c-bad: #ff2d55;      /* failures, hazard rows       — red        5.8:1 */
+  --c-label: #c77dff;    /* field labels                — violet     6.8:1 */
+  --c-value: #ffe45e;    /* the numbers themselves      — yellow    14.9:1 */
+  --c-rule: rgba(255, 149, 0, 0.42);   /* section rules — orange */
+  --c-craft: #e879f9;    /* deep-space probes           — fuchsia */
+  --c-sat: #38e8ff;      /* Earth-orbit satellites      — cyan    */
+
+  --glow-sm: 0 0 2px rgba(var(--p-rgb), 0.45);
+  --glow: 0 0 2px rgba(var(--p-rgb), 0.5), 0 0 8px rgba(255, 79, 216, 0.30);
+  --glow-lg: 0 0 3px rgba(var(--p-rgb), 0.6), 0 0 14px rgba(255, 79, 216, 0.40);
+}
+
+/* Colour the remaining shared chrome, which in the monochrome schemes is
+   correctly all one hue and here would otherwise stay flat cyan. */
+:root[data-phosphor="spectrum"] .term-tab[aria-selected="true"] {
+  color: var(--c-accent);
+  background: rgba(255, 79, 216, 0.14);
+  border-bottom-color: var(--c-accent);
+}
+:root[data-phosphor="spectrum"] .seg button[aria-pressed="true"] {
+  color: var(--c-value);
+  background: rgba(255, 228, 94, 0.16);
+}
+:root[data-phosphor="spectrum"] .btn.on {
+  color: var(--c-ok);
+  background: rgba(61, 255, 136, 0.14);
+  border-color: rgba(61, 255, 136, 0.45);
+}
+:root[data-phosphor="spectrum"] .ctl-label { color: var(--c-label); }
+:root[data-phosphor="spectrum"] .ln.dim { color: var(--c-sat); opacity: 0.75; }
+:root[data-phosphor="spectrum"] .ln.sys { color: var(--c-accent); }
+:root[data-phosphor="spectrum"] .rec-dot {
+  background: var(--c-bad);
+  box-shadow: 0 0 8px var(--c-bad);
+}
+:root[data-phosphor="spectrum"] .modal h3 { color: var(--c-warn); }
+:root[data-phosphor="spectrum"] .modal strong { color: var(--c-value); }
+:root[data-phosphor="spectrum"] .modal code { color: var(--c-ok); }
+:root[data-phosphor="spectrum"] a { color: var(--c-accent); }
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  background: #000;
+  color: var(--p-hi);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body { text-shadow: var(--glow-sm); }
+
+a { color: var(--p-max); text-decoration: none; border-bottom: 1px solid var(--p-dim); }
+a:hover { border-bottom-color: var(--p-max); text-shadow: var(--glow); }
+
+::selection { background: rgba(var(--p-rgb), 0.28); color: #000; }
+
+/* ---------- the tube ---------- */
+
+.crt {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: var(--hud-h) 1fr auto;
+  background: #000;
+  padding: 10px;
+  gap: var(--gap);
+  animation: flicker 7s infinite steps(1);
+}
+
+/* Scanlines + vignette over the text side of the display. The viewport
+   masks these out because its own shader already draws them, curved. */
+.crt::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  background:
+    radial-gradient(ellipse 130% 120% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55) 100%),
+    repeating-linear-gradient(to bottom,
+      rgba(0, 0, 0, 0) 0 1px,
+      rgba(0, 0, 0, 0.28) 1px 2px);
+}
+
+/* A slow bright band rolling down the glass. */
+.crt::before {
+  content: '';
+  position: fixed;
+  left: 0; right: 0; height: 28%;
+  pointer-events: none;
+  z-index: 59;
+  background: linear-gradient(to bottom, transparent, rgba(var(--p-rgb), 0.020), transparent);
+  animation: roll 9s linear infinite;
+}
+
+@keyframes roll {
+  from { top: -30%; }
+  to { top: 100%; }
+}
+
+@keyframes flicker {
+  0%, 96%, 100% { opacity: 1; }
+  96.4% { opacity: 0.86; }
+  96.8% { opacity: 1; }
+  97.6% { opacity: 0.93; }
+  98% { opacity: 1; }
+}
+
+/* A hard glitch, triggered from JS at random intervals. */
+.crt.glitch { animation: glitchjump 0.18s steps(2); }
+@keyframes glitchjump {
+  0% { transform: translateX(0); filter: brightness(1); }
+  25% { transform: translateX(-3px); filter: brightness(1.5); }
+  50% { transform: translateX(2px); filter: brightness(0.7); }
+  75% { transform: translateX(-1px); filter: brightness(1.2); }
+  100% { transform: translateX(0); filter: brightness(1); }
+}
+
+/* The colophon claims this is honoured, so it has to actually cover every
+   moving thing: the tube flicker, the glitch jump, the rolling band, the
+   blinking cursor, the recording dot, and the status badge's pulse. The
+   JS side stops the typewriter and the flicker uniform to match. */
+@media (prefers-reduced-motion: reduce) {
+  .crt,
+  .crt.glitch,
+  .crt::before,
+  .blink::after,
+  .rec-dot,
+  .sys-status.warn {
+    animation: none !important;
+  }
+  .crt::before { display: none; }
+  * { transition: none !important; }
+}
+
+/* ---------- focus ---------- */
+
+/* Keyboard focus must be obvious on a display where almost everything is
+   already glowing. An outline plus a filled background reads at a glance
+   without disturbing pointer users. */
+:focus-visible {
+  outline: 2px solid var(--p-max);
+  outline-offset: 2px;
+}
+
+.btn:focus-visible,
+.seg button:focus-visible,
+.term-tab:focus-visible {
+  background: rgba(var(--p-rgb), 0.22);
+  color: var(--p-max);
+}
+
+.vp-stage:focus-visible {
+  outline: 1px solid var(--p-max);
+  outline-offset: -2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- top bar ---------- */
+
+.hud-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 12px;
+  border: 1px solid var(--p-dim);
+  background: rgba(var(--p-rgb), 0.022);
+  min-width: 0;
+}
+
+.brand {
+  font-family: var(--display);
+  font-size: 27px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  color: var(--c-accent);
+  text-shadow: var(--glow-lg);
+  white-space: nowrap;
+}
+
+.brand .v { color: var(--p-lo); font-size: 17px; }
+
+/* Return to the site. Sized as a proper touch target rather than a bare
+   glyph, and kept first in the tab order so keyboard users reach the way
+   out before the controls. */
+.back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px; height: 26px;
+  flex: none;
+  border: 1px solid var(--p-dim);
+  border-bottom: 1px solid var(--p-dim);
+  color: var(--p-mid);
+  font-size: 16px;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.back-link:hover {
+  color: var(--c-accent);
+  border-color: var(--c-accent);
+  background: rgba(var(--p-rgb), 0.10);
+  text-shadow: var(--glow);
+}
+
+.hud-spacer { flex: 1 1 auto; min-width: 0; }
+
+.hud-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--p-mid);
+}
+
+.hud-stat b {
+  font-weight: normal;
+  color: var(--c-value);
+  text-shadow: var(--glow);
+  font-variant-numeric: tabular-nums;
+}
+
+.sys-status {
+  font-size: 12px;
+  padding: 2px 9px;
+  border: 1px solid var(--p-dim);
+  color: var(--p-mid);
+  white-space: nowrap;
+}
+.sys-status.ok { color: var(--c-ok); border-color: currentColor; text-shadow: var(--glow); }
+.sys-status.warn { color: var(--c-warn); border-color: currentColor; animation: pulse 1.4s ease-in-out infinite; }
+.sys-status.err { color: var(--c-bad); border-color: currentColor; background: rgba(var(--p-rgb), 0.10); }
+
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+
+.rec-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--p-max);
+  box-shadow: 0 0 8px var(--p-max);
+  animation: pulse 1.6s ease-in-out infinite;
+  flex: none;
+}
+
+/* ---------- split ---------- */
+
+.split {
+  display: grid;
+  grid-template-columns: 1fr minmax(330px, 30%);
+  gap: var(--gap);
+  min-height: 0;
+}
+
+.pane {
+  position: relative;
+  border: 1px solid var(--p-dim);
+  background: #000;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pane-hd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--p-dim);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--p-mid);
+  text-transform: uppercase;
+  flex: none;
+  min-height: 28px;
+}
+
+.pane-hd .t { color: var(--p-hi); }
+.pane-hd .sp { flex: 1; }
+
+/* ---------- viewport ---------- */
+
+.viewport { overflow: hidden; }
+
+.vp-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  cursor: grab;
+}
+.vp-stage:active { cursor: grabbing; }
+
+#gl { display: block; width: 100%; height: 100%; }
+
+.vp-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.vp-label {
+  position: absolute;
+  top: 0; left: 0;
+  margin: 9px 0 0 9px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--p-mid);
+  white-space: nowrap;
+  text-shadow: var(--glow-sm);
+  will-change: transform;
+}
+.vp-label.is-pha { color: var(--c-warn); }
+.vp-label.is-body { color: var(--c-accent); }
+.vp-label.is-craft { color: var(--c-craft); }
+.vp-label.is-sel {
+  color: var(--c-value);
+  text-shadow: var(--glow);
+  border-left: 1px solid var(--p-max);
+  padding-left: 5px;
+  margin-left: 12px;
+}
+
+/* Corner brackets — the reticle furniture of a targeting display. */
+.vp-corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border: 1px solid var(--p-lo);
+  opacity: 0.7;
+}
+.vp-corner.tl { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+.vp-corner.tr { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+.vp-corner.bl { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+.vp-corner.br { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
+
+.vp-readout {
+  position: absolute;
+  bottom: 12px; left: 14px;
+  font-size: 10.5px;
+  line-height: 1.6;
+  color: var(--p-lo);
+  letter-spacing: 0.05em;
+}
+.vp-readout b { font-weight: normal; color: var(--p-hi); }
+
+.vp-scale {
+  position: absolute;
+  bottom: 12px; right: 14px;
+  text-align: right;
+  font-size: 10.5px;
+  color: var(--p-lo);
+  letter-spacing: 0.05em;
+}
+
+.vp-crosshair {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.vp-crosshair::before, .vp-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--p-faint);
+}
+.vp-crosshair::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+.vp-crosshair::after { top: 50%; left: 0; right: 0; height: 1px; }
+
+/* ---------- terminal ---------- */
+
+.terminal { min-width: 0; }
+
+.term-tabs { display: flex; gap: 0; flex: none; }
+
+.term-tab {
+  flex: 1;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--p-lo);
+  border: 0;
+  border-bottom: 1px solid var(--p-dim);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.15s, background 0.15s;
+}
+.term-tab:hover { color: var(--p-hi); background: rgba(var(--p-rgb), 0.05); }
+.term-tab[aria-selected="true"] {
+  color: var(--p-max);
+  background: rgba(var(--p-rgb), 0.10);
+  text-shadow: var(--glow);
+  border-bottom-color: var(--p-max);
+}
+
+.term-log {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 10px 14px;
+  font-size: 12px;
+  line-height: 1.55;
+  scrollbar-width: thin;
+  scrollbar-color: var(--p-dim) transparent;
+}
+
+.term-log::-webkit-scrollbar { width: 8px; }
+.term-log::-webkit-scrollbar-track { background: transparent; }
+.term-log::-webkit-scrollbar-thumb { background: var(--p-dim); }
+.term-log::-webkit-scrollbar-thumb:hover { background: var(--p-lo); }
+
+.ln {
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--p-mid);
+}
+.ln.wrap { white-space: normal; overflow: visible; }
+.ln.dim { color: var(--p-lo); }
+.ln.hdr { color: var(--c-accent); text-shadow: var(--glow); font-size: 14px; margin: 2px 0 4px; }
+.ln.ok { color: var(--c-ok); }
+.ln.warn { color: var(--c-warn); text-shadow: var(--glow); }
+.ln.err { color: var(--c-bad); background: rgba(var(--p-rgb), 0.10); }
+.ln.sys { color: var(--p-lo); }
+
+.ln.kv { display: flex; gap: 8px; white-space: nowrap; }
+.ln.kv .k {
+  flex: 0 0 132px;
+  color: var(--c-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ln.kv .v {
+  flex: 1;
+  color: var(--c-value);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.ln.kv.warn .v { color: var(--c-warn); text-shadow: var(--glow); }
+
+.ln.rule {
+  margin: 9px 0 5px;
+  border-top: 1px solid var(--c-rule);
+  position: relative;
+  height: 0;
+}
+.ln.rule::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -0.72em;
+  left: 6px;
+  padding: 0 6px;
+  background: #000;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--c-label);
+}
+
+.ln.feed { cursor: pointer; }
+.ln.feed:hover { color: var(--p-max); background: rgba(var(--p-rgb), 0.08); }
+
+.blink::after {
+  content: '█';
+  animation: blink 1.05s steps(1) infinite;
+  color: var(--p-max);
+}
+@keyframes blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } }
+
+/* ---------- controls ---------- */
+
+.hud-bot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  padding: 7px 12px;
+  border: 1px solid var(--p-dim);
+  background: rgba(var(--p-rgb), 0.022);
+  font-size: 11px;
+}
+
+.ctl-group { display: flex; align-items: center; gap: 6px; min-width: 0; }
+
+.ctl-label {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--p-lo);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.seg { display: flex; border: 1px solid var(--p-dim); }
+
+.seg button {
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
+  background: transparent;
+  color: var(--p-lo);
+  border: 0;
+  border-right: 1px solid var(--p-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s;
+}
+.seg button:last-child { border-right: 0; }
+.seg button:hover { color: var(--p-hi); background: rgba(var(--p-rgb), 0.07); }
+.seg button[aria-pressed="true"], .seg button[aria-selected="true"] {
+  background: rgba(var(--p-rgb), 0.16);
+  color: var(--p-max);
+  text-shadow: var(--glow);
+}
+
+.btn {
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 3px 11px;
+  background: transparent;
+  color: var(--p-mid);
+  border: 1px solid var(--p-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+.btn:hover { color: var(--p-max); border-color: var(--p-lo); background: rgba(var(--p-rgb), 0.08); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.on { background: rgba(var(--p-rgb), 0.16); color: var(--p-max); border-color: var(--p-lo); }
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 110px; height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 2px; background: var(--p-dim);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 9px; height: 14px; margin-top: -6px;
+  background: var(--p-max);
+  box-shadow: 0 0 6px rgba(var(--p-rgb), 0.8);
+  border: 0; border-radius: 0;
+}
+input[type="range"]::-moz-range-track { height: 2px; background: var(--p-dim); }
+input[type="range"]::-moz-range-thumb {
+  width: 9px; height: 14px;
+  background: var(--p-max);
+  border: 0; border-radius: 0;
+  box-shadow: 0 0 6px rgba(var(--p-rgb), 0.8);
+}
+
+input[type="text"], input[type="search"] {
+  font: inherit;
+  font-size: 11px;
+  padding: 3px 8px;
+  background: rgba(var(--p-rgb), 0.05);
+  border: 1px solid var(--p-dim);
+  color: var(--p-max);
+  min-width: 0;
+}
+input[type="text"]:focus, input[type="search"]:focus {
+  outline: none;
+  border-color: var(--p-lo);
+  background: rgba(var(--p-rgb), 0.09);
+}
+input::placeholder { color: var(--p-hint); }
+
+.ctl-val {
+  color: var(--p-max);
+  font-variant-numeric: tabular-nums;
+  min-width: 62px;
+  text-shadow: var(--glow-sm);
+}
+
+/* ---------- modal ---------- */
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(0, 0, 0, 0.86);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+.modal-bg[hidden] { display: none; }
+
+.modal {
+  width: min(680px, 100%);
+  max-height: 84vh;
+  overflow-y: auto;
+  border: 1px solid var(--p-lo);
+  background: #000;
+  padding: 18px 22px 22px;
+  box-shadow: 0 0 40px rgba(var(--p-rgb), 0.14);
+}
+
+.modal h2 {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+  color: var(--c-accent);
+  text-shadow: var(--glow);
+  margin: 0 0 4px;
+}
+
+.modal h3 {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--p-lo);
+  margin: 18px 0 6px;
+  border-bottom: 1px solid var(--p-dim);
+  padding-bottom: 4px;
+  font-weight: normal;
+}
+
+.modal p, .modal li { color: var(--p-mid); font-size: 12.5px; margin: 6px 0; }
+.modal strong { color: var(--p-hi); font-weight: normal; text-shadow: var(--glow-sm); }
+.modal ul { padding-left: 18px; margin: 6px 0; }
+.modal li { margin: 4px 0; }
+.modal code {
+  color: var(--p-hi);
+  background: rgba(var(--p-rgb), 0.09);
+  padding: 0 4px;
+  font-size: 11.5px;
+}
+
+.modal-close { position: sticky; top: 0; float: right; }
+
+/* ---------- boot veil ---------- */
+
+.veil {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: #000;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.5s ease;
+}
+.veil.gone { opacity: 0; pointer-events: none; }
+.veil .msg {
+  font-family: var(--display);
+  font-size: 22px;
+  color: var(--p-max);
+  text-shadow: var(--glow-lg);
+  letter-spacing: 0.1em;
+}
+
+.noscript {
+  position: fixed; inset: 0; z-index: 95;
+  display: grid; place-items: center; padding: 30px; text-align: center;
+  background: #000; color: var(--p-max); font-size: 15px;
+}
+
+/* ---------- responsive ---------- */
+
+@media (max-width: 900px) {
+  :root { --hud-h: auto; }
+
+  html, body { overflow: auto; }
+
+  .crt {
+    position: static;
+    min-height: 100%;
+    grid-template-rows: auto auto auto;
+    padding: 8px;
+  }
+
+  .hud-top { flex-wrap: wrap; padding: 8px 10px; gap: 8px 12px; }
+  .brand { font-size: 22px; }
+
+  .split { grid-template-columns: 1fr; }
+  .viewport .vp-stage { height: 56vh; min-height: 320px; }
+  .terminal { height: 46vh; min-height: 300px; }
+
+  .hud-bot { font-size: 11px; }
+  .ln.kv .k { flex-basis: 118px; }
+
+  /* The drag/zoom hint costs three wrapped lines of a short screen to
+     say what a touch user works out in one gesture. The frame label
+     stays — it is the one thing you cannot infer by looking. */
+  #vpHint { display: none; }
+  .pane-hd { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Keep labels from being half-clipped by the pane edge. */
+  .vp-label { max-width: 45vw; overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 560px) {
+  .brand .v { display: none; }
+  .vp-readout { font-size: 9.5px; }
+  .hud-stat.opt { display: none; }
+}

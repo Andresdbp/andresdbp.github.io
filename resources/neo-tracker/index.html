@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NEO — live near-Earth object terminal</title>
+  <meta name="description"
+    content="A phosphor-CRT terminal for near-Earth objects. Live NASA NeoWs data and JPL Small-Body Database records, with real Keplerian orbits rendered in WebGL.">
+  <meta name="color-scheme" content="dark">
+
+  <link rel="icon" href="../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://api.nasa.gov">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+  <link href="style.css?v=14" rel="stylesheet">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+        "satellite.js": "https://cdn.jsdelivr.net/npm/satellite.js@6.0.1/dist/satellite.es.js"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <noscript>
+    <div class="noscript">
+      This terminal renders live orbital data in WebGL and needs JavaScript enabled.
+    </div>
+  </noscript>
+
+  <div class="veil" id="veil">
+    <div class="msg blink">INITIALIZING&nbsp;</div>
+  </div>
+
+  <!-- Announces only deliberate state changes: target lock, frame switch. -->
+  <div id="srAnnounce" class="sr-only" role="status" aria-live="polite"></div>
+
+  <div class="crt" id="crt">
+
+    <!-- ================= top bar ================= -->
+    <header class="hud-top">
+      <a class="back-link" href="../../index.html#resources"
+        title="Back to andresdbp.github.io resources">&#8592;</a>
+      <div class="brand">NEO <span class="v">v2.0</span></div>
+
+      <div class="hud-stat"><span class="rec-dot" aria-hidden="true"></span><b id="statObjects">0</b> TRACKED</div>
+      <div class="hud-stat opt">PHA <b id="statPha">0</b></div>
+      <div class="hud-stat opt">NEAREST <b id="statNearest">—</b></div>
+
+      <div class="hud-spacer"></div>
+
+      <div class="hud-stat"><b id="statClock">—</b> UTC</div>
+      <div class="sys-status" id="sysStatus">STANDBY</div>
+      <button class="btn" id="btnBrief" title="What this shows and what it does not">BRIEFING</button>
+    </header>
+
+    <!-- ================= split ================= -->
+    <div class="split">
+
+      <!-- ---- 3D viewport ---- -->
+      <section class="pane viewport" aria-label="Orbit viewport">
+        <div class="pane-hd">
+          <span class="t">ORBITAL PLOT</span>
+          <span id="vpMode">HELIOCENTRIC / ECLIPTIC J2000</span>
+          <span class="sp"></span>
+          <span id="vpHint">DRAG ROTATE · SCROLL ZOOM · CLICK TARGET</span>
+        </div>
+
+        <div class="vp-stage" id="vpStage" tabindex="0" role="group"
+          aria-label="Orbit plot. Focus this and use the left and right arrow keys to step through tracked objects, Home for the closest approach, Escape to release the lock.">
+          <canvas id="gl"></canvas>
+          <div class="vp-crosshair" aria-hidden="true"></div>
+          <div class="vp-overlay" id="vpOverlay"></div>
+          <div class="vp-corner tl" aria-hidden="true"></div>
+          <div class="vp-corner tr" aria-hidden="true"></div>
+          <div class="vp-corner bl" aria-hidden="true"></div>
+          <div class="vp-corner br" aria-hidden="true"></div>
+
+          <div class="vp-readout" id="vpReadout">
+            EPOCH <b id="vpEpoch">—</b><br>
+            RATE <b id="vpRate">REAL TIME</b>
+          </div>
+          <div class="vp-scale" id="vpScale">
+            <span id="vpScaleTxt">—</span><br>
+            <span id="vpScaleNote">BODIES NOT TO SCALE</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---- telemetry ---- -->
+      <section class="pane terminal" aria-label="Telemetry log">
+        <div class="term-tabs" role="tablist">
+          <button class="term-tab" id="tabFeed" role="tab" aria-selected="true">Telemetry Feed</button>
+          <button class="term-tab" id="tabTarget" role="tab" aria-selected="false">Target Sheet</button>
+        </div>
+        <!-- No aria-live here on purpose. This log gains a line every 420 ms
+             for as long as the page is open; announcing it would make the
+             page unusable with a screen reader and drown out everything
+             else. Selection changes are announced through #srAnnounce
+             instead, which fires only when the operator acts. -->
+        <div class="term-log" id="termLog" role="log" aria-live="off"></div>
+      </section>
+    </div>
+
+    <!-- ================= controls ================= -->
+    <footer class="hud-bot">
+
+      <div class="ctl-group">
+        <span class="ctl-label">Frame</span>
+        <div class="seg" id="segMode">
+          <button data-mode="helio" aria-pressed="true">Heliocentric</button>
+          <button data-mode="geo" aria-pressed="false">Geocentric</button>
+        </div>
+      </div>
+
+      <div class="ctl-group">
+        <span class="ctl-label">Range</span>
+        <div class="seg" id="segRange"></div>
+      </div>
+
+      <div class="ctl-group">
+        <span class="ctl-label">Time</span>
+        <input type="range" id="rateSlider" min="-6" max="6" step="1" value="0"
+          aria-label="Time rate: negative runs backwards, zero is real time">
+        <span class="ctl-val" id="rateVal">REAL TIME</span>
+        <button class="btn" id="btnNow">NOW</button>
+      </div>
+
+      <div class="ctl-group">
+        <span class="ctl-label">Layers</span>
+        <button class="btn on" id="btnOrbits">ORBITS</button>
+        <button class="btn on" id="btnPlanets">PLANETS</button>
+        <button class="btn on" id="btnSats">SATELLITES</button>
+        <button class="btn on" id="btnCraft">SPACECRAFT</button>
+        <button class="btn" id="btnPhaOnly">PHA ONLY</button>
+        <button class="btn" id="btnEarthScale"
+          title="Earth is drawn true to scale against the lunar-orbit ring by default, which makes it a speck">EARTH ×20</button>
+      </div>
+
+      <div class="ctl-group">
+        <span class="ctl-label">Search</span>
+        <input type="search" id="search" placeholder="designation…" style="width:130px"
+          aria-label="Filter objects by designation">
+      </div>
+
+      <div class="ctl-group">
+        <span class="ctl-label">Colour</span>
+        <div class="seg" id="segPhosphor">
+          <button data-p="green" aria-pressed="true">P1 GRN</button>
+          <button data-p="amber" aria-pressed="false">P3 AMB</button>
+          <button data-p="spectrum" aria-pressed="false">SPECTRUM</button>
+        </div>
+      </div>
+
+      <div class="hud-spacer"></div>
+
+      <div class="ctl-group">
+        <button class="btn" id="btnRefresh">↻ REFRESH</button>
+        <button class="btn" id="btnKey" title="Use your own api.nasa.gov key">API KEY</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ================= briefing ================= -->
+  <div class="modal-bg" id="briefBg" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
+      <button class="btn modal-close" id="btnBriefClose">CLOSE ✕</button>
+      <h2 id="briefTitle">Mission Briefing</h2>
+      <p>A phosphor terminal for the near-Earth object population. Every dot is a real object and every
+        curve is that object's real orbit, propagated through Kepler's equation from published
+        osculating elements.</p>
+
+      <h3>Where the numbers come from</h3>
+      <ul>
+        <li><strong>NASA NeoWs</strong> — fetched live from <code>api.nasa.gov</code>. Supplies the
+          close-approach circumstances and the orbital elements that drive the 3D view.</li>
+        <li><strong>JPL Small-Body Database</strong> — the named objects (Apophis, Bennu, Didymos and
+          the rest) come from <code>ssd-api.jpl.nasa.gov</code>, together with the Sentry risk list and
+          the year-ahead close-approach table. JPL's endpoints send no
+          <code>Access-Control-Allow-Origin</code> header, so a browser cannot read them from a static
+          site. Those records were fetched server-side and committed with a retrieval date. The terminal
+          still probes the live endpoint each session and reports which path it is on.</li>
+        <li><strong>CelesTrak</strong> — element sets for objects in Earth orbit, fetched
+          <em>live</em>: unlike JPL, CelesTrak is CORS-enabled. Positions come from SGP4, the model
+          those elements are actually defined against. A TLE is not a Keplerian element set — feeding
+          one to a two-body solver ignores J2 nodal precession, about 5° a day in low orbit, and the
+          orbit would be visibly wrong within hours.</li>
+        <li><strong>JPL Horizons</strong> — heliocentric trajectories for twelve deep-space probes,
+          from Voyager 1 at 171 AU to spacecraft still in the inner system. Also committed
+          server-side, for the same CORS reason.</li>
+        <li><strong>Natural Earth</strong> — 110 m coastlines, public domain, rasterised into a
+          compact land/ocean bitmask that the globe samples per face.</li>
+      </ul>
+
+      <h3>What you can click</h3>
+      <p>Everything on the plot is selectable: asteroids, the planets, the Sun, the Moon, satellites
+        and deep-space probes. Each gets the data sheet that suits it — a satellite reports altitude
+        and sub-point, a probe reports light-time to Earth, an asteroid reports its close approach.</p>
+      <ul>
+        <li><strong>Human-made objects</strong> live at two very different scales. Use the
+          <strong>LEO</strong> and <strong>GEO</strong> ranges in the geocentric frame for satellites,
+          and <strong>DEEP</strong> in the heliocentric frame to see how far the Voyagers have actually
+          gone compared with the planets.</li>
+        <li><strong>Earth is a real globe</strong> in both frames — low-poly, with true coastlines,
+          spun to Greenwich sidereal time and lit from the real direction of the Sun, so the terminator
+          and the hemisphere facing you are both correct.</li>
+      </ul>
+
+      <h3>Colour</h3>
+      <p><strong>P1 GRN</strong> and <strong>P3 AMB</strong> are genuine monochrome phosphors: one
+        emitter colour, varying only in intensity, which is why they read as a CRT rather than as a
+        green web page. <strong>SPECTRUM</strong> drops that constraint and assigns a hue per class —
+        red for potentially hazardous asteroids, green for the rest, orange for planetary orbits,
+        light blue for satellites, purple for deep-space probes.</p>
+      <p>The planets keep their real colours in all three schemes. The viewport encodes a per-pixel
+        "keep my colour" flag in the render target's alpha channel, so a shaded globe survives the
+        collapse onto the phosphor while every vector element around it does not.</p>
+
+      <h3>What the display is honest about</h3>
+      <ul>
+        <li><strong>Quoted distances are NASA's, not mine.</strong> Miss distances and velocities on the
+          data sheet are the published close-approach values. The propagation here is used to place
+          things in 3D, never to quote a number.</li>
+        <li><strong>Two-body propagation drifts.</strong> These are osculating elements: the ellipse an
+          object would follow if the Sun were the only mass in the universe. Propagating each of the 38
+          objects in the committed feed to its published approach time reproduces NASA's own miss
+          distance to a median of 0.03% and a worst case of 2%. That is <em>near-epoch</em> accuracy and
+          it does not extrapolate: run the same code out to Apophis's 2029 encounter, nearly three years
+          past its element epoch, and it returns about 31 000 km against JPL's ~38 000 km. Planetary
+          perturbations are the difference. Nothing here is an impact prediction.</li>
+        <li><strong>Bodies are not to scale.</strong> Distances are. At true scale every asteroid here
+          would be far smaller than one pixel. In the geocentric frame Earth <em>is</em> drawn true to
+          scale against the lunar-orbit ring by default, which is why it looks so small — that emptiness
+          is the real picture. The readout under the plot always states which convention is in force.</li>
+        <li><strong>The geocentric origin is the Earth–Moon barycentre</strong>, not Earth's centre.
+          The planetary model is JPL's approximate-elements table, which tracks the barycentre; the two
+          differ by up to about 4 700 km, or roughly 1% of one lunar distance. Visible only at the
+          closest range setting.</li>
+        <li><strong>Diameters are usually inferred, not measured.</strong> An asteroid's brightness
+          confounds size with reflectivity, so a diameter derived from absolute magnitude is a range
+          spanning a factor of two or more. Where JPL has a measured diameter, the sheet says
+          <code>MEASURED</code>.</li>
+        <li><strong>"Potentially hazardous" is a filing category, not a forecast.</strong> It means the
+          orbit comes within 0.05 AU of Earth's and the object is absolute magnitude <em>H</em> 22 or
+          brighter — close enough and large enough to be worth tracking.</li>
+        <li><strong>Some objects here are on JPL's Sentry list, and that is normal.</strong> Sentry
+          catalogues every object with any non-zero computed impact probability over the next century or
+          more, however remote — currently a few thousand of them. Bennu, the best-studied asteroid in
+          the catalogue, sits at a cumulative probability near 5.7 × 10⁻⁴ spread over 157 possible
+          encounters in the 2100s, with a Palermo rating below zero, meaning the hazard is <em>lower</em>
+          than the background risk from objects that size. The data sheet prints those numbers rather
+          than a bare flag. None of this is a prediction that anything will hit Earth.</li>
+      </ul>
+
+      <h3>Controls</h3>
+      <ul>
+        <li>Drag to rotate, scroll to zoom, click an object to lock the terminal onto it.</li>
+        <li><strong>Keyboard:</strong> tab to the plot, then <code>←</code> / <code>→</code> step
+          through the tracked objects, <code>Home</code> jumps to the closest approach, and
+          <code>Esc</code> releases the lock. Every control is reachable by tab.</li>
+        <li><strong>Frame</strong> switches between the heliocentric solar-system plot and a
+          geocentric approach scope ranged in lunar distances.</li>
+        <li><strong>Time</strong> runs the simulation forward or backward through seven steps:
+          real time, then 1 minute, 1 hour, 6 hours, 1 day, 1 week and 1 month per second.
+          <strong>NOW</strong> snaps back to the wall clock.</li>
+        <li>The NASA demo key allows only a handful of requests per hour, shared across everyone on your
+          network. Responses are cached for six hours, and a committed snapshot keeps the display
+          populated when the quota is gone. <strong>API KEY</strong> stores your own free key from
+          <code>api.nasa.gov</code> locally.</li>
+      </ul>
+
+      <h3>Colophon</h3>
+      <p>Vanilla JavaScript and Three.js, no build step. Curvature, scanlines, aperture grille, bloom and
+        chromatic fringing are a single fragment shader over the viewport, so the scanlines bend with the
+        glass. Honours <code>prefers-reduced-motion</code>.</p>
+      <p style="margin-top:14px"><a href="../../index.html">← Back to andresdbp.github.io</a></p>
+    </div>
+  </div>
+
+  <!-- ================= API key ================= -->
+  <div class="modal-bg" id="keyBg" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="keyTitle" style="max-width:520px">
+      <h2 id="keyTitle">NASA API Key</h2>
+      <p>The shared <code>DEMO_KEY</code> is limited to a few requests per hour <em>per IP address</em>,
+        so it runs out quickly. A personal key is free, instant, and needs only an email address:
+        <a href="https://api.nasa.gov/" target="_blank" rel="noopener noreferrer">api.nasa.gov</a>.</p>
+      <p>The key is stored in this browser's local storage and sent only to <code>api.nasa.gov</code>.</p>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <input type="text" id="keyInput" placeholder="paste key, or leave blank for DEMO_KEY"
+          style="flex:1;min-width:220px" autocomplete="off" spellcheck="false">
+        <button class="btn" id="btnKeySave">SAVE</button>
+        <button class="btn" id="btnKeyClear">USE DEMO_KEY</button>
+        <button class="btn" id="btnKeyClose">CLOSE</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js?v=14"></script>
+</body>
+
+</html>
