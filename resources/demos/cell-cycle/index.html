@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Cell Cycle and Checkpoints | Dr. Andres Barboza</title>
+  <meta name="description" content="Cyclin concentrations driving a cell through G1, S, G2 and M, with the G1, G2 and spindle assembly checkpoints able to fail one at a time so each failure shows its own specific consequence.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: stage labels, checkpoint cards, legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .phase-now {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .phase-now .pn-main { font-size: 17px; font-weight: 600; color: var(--text); }
+    .phase-now .pn-sub { font-size: 12.5px; color: var(--muted); }
+
+    /* three checkpoint cards, side by side on desktop, stacked on a phone */
+    .cps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    @media (max-width: 640px) { .cps { grid-template-columns: 1fr; } }
+
+    .cp {
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-left-width: 3px;
+      border-radius: 11px;
+      padding: 9px 11px;
+      min-width: 0;
+    }
+    .cp .cp-name { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; color: var(--text); }
+    .cp .cp-checks { font-size: 11px; line-height: 1.45; color: var(--muted); margin-top: 3px; }
+    .cp .cp-state { font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .cp .cp-msg { font-size: 11px; line-height: 1.45; color: var(--text-2); margin-top: 2px; }
+
+    .cp.is-ok      { border-left-color: var(--ok); }
+    .cp.is-ok   .cp-state { color: var(--ok); }
+    .cp.is-hold    { border-left-color: var(--warn); background: var(--warn-soft); }
+    .cp.is-hold .cp-state { color: var(--warn); }
+    .cp.is-off     { border-left-color: var(--bad); background: var(--bad-soft); }
+    .cp.is-off  .cp-state { color: var(--bad); }
+    .cp.is-idle    { border-left-color: var(--line); }
+    .cp.is-idle .cp-state { color: var(--muted); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .btn.is-bad { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+
+    .sub-ctrl { padding-left: 25px; margin-top: 5px; }
+    .check.broken { color: var(--bad); font-weight: 600; }
+
+    .tally { list-style: none; font-size: 12.5px; line-height: 1.5; }
+    .tally li { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; }
+    .tally li .tk { flex: none; width: 14px; font-weight: 700; }
+    .tally li.hit { color: var(--bad); }
+    .tally li.hit .tk { color: var(--bad); }
+    .tally li.clean .tk { color: var(--ok); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Cell Cycle and Checkpoints</h1>
+        <p class="demo-sub">Break one checkpoint at a time and watch what specifically goes wrong. Each of the three produces a different broken daughter cell.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Cell cycle control</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="phase-now">
+          <span class="pn-main" id="phaseName">G<sub>1</sub> phase</span>
+          <span class="pn-sub" id="phaseSub">growing, and deciding whether to divide</span>
+        </div>
+
+        <canvas id="cellCv" role="img"
+                aria-label="A cell cycle wheel divided into G1, S, G2 and M, with a pointer showing the current position and markers at the three checkpoints. The cell itself is drawn in the centre with its chromosomes."></canvas>
+        <p class="stage-caption" id="cellCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:14px 0">
+
+        <p class="stage-label">The three checkpoints <span>&mdash; what each one is actually testing, right now</span></p>
+        <div class="cps">
+          <div class="cp is-idle" id="cp1">
+            <div class="cp-name">1 &middot; G<sub>1</sub> / restriction point</div>
+            <div class="cp-checks">Are growth factors present, and is the DNA undamaged? (p53 &rarr; p21)</div>
+            <div class="cp-state" id="cp1State">not being tested</div>
+            <div class="cp-msg" id="cp1Msg">&nbsp;</div>
+          </div>
+          <div class="cp is-idle" id="cp2">
+            <div class="cp-name">2 &middot; G<sub>2</sub> checkpoint</div>
+            <div class="cp-checks">Is <em>all</em> the DNA replicated, and is it undamaged? (ATR &rarr; Chk1 &rarr; Cdc25)</div>
+            <div class="cp-state" id="cp2State">not being tested</div>
+            <div class="cp-msg" id="cp2Msg">&nbsp;</div>
+          </div>
+          <div class="cp is-idle" id="cp3">
+            <div class="cp-name">3 &middot; Spindle assembly (metaphase)</div>
+            <div class="cp-checks">Is every kinetochore attached to a spindle fibre, under tension, from both poles? (MCC &rarr; APC/C)</div>
+            <div class="cp-state" id="cp3State">not being tested</div>
+            <div class="cp-msg" id="cp3Msg">&nbsp;</div>
+          </div>
+        </div>
+
+        <hr class="sep" style="margin:14px 0">
+
+        <p class="stage-label">Cyclin concentrations <span>&mdash; these are what drive the transitions, not a clock</span></p>
+        <canvas id="traceCv" role="img"
+                aria-label="Relative concentrations of cyclin D, cyclin E, cyclin A and cyclin B plotted against time, with the phases shaded behind them. Cyclin B rises through S and G2 and is destroyed at anaphase."></canvas>
+        <div class="legend">
+          <span class="lg"><i style="background:var(--series-1)"></i>cyclin D (mitogen)</span>
+          <span class="lg"><i style="background:var(--series-2)"></i>cyclin E (G<sub>1</sub>/S)</span>
+          <span class="lg"><i style="background:var(--series-3)"></i>cyclin A (S)</span>
+          <span class="lg"><i style="background:var(--series-4)"></i>cyclin B (M)</span>
+        </div>
+        <p class="stage-caption" id="traceCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Run</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnRun">Pause</button>
+              <button class="btn" id="btnReset">Reset all</button>
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="speedR">Speed</label>
+                <span class="ctrl-value" id="speedOut">4.0 h/s</span>
+              </div>
+              <input type="range" id="speedR" min="0.5" max="16" step="0.5" value="4">
+              <p class="ctrl-hint">Simulated hours per real second. An undisturbed cycle here is 24&nbsp;h: G<sub>1</sub> 11&nbsp;h, S 8&nbsp;h, G<sub>2</sub> 4&nbsp;h, M 1&nbsp;h.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Break one checkpoint at a time</div>
+          <div class="stack">
+            <label class="check" id="lblG1"><input type="checkbox" id="cpG1chk" checked> G<sub>1</sub> DNA-damage checkpoint working (p53 present)</label>
+            <p class="ctrl-hint" style="padding-left:25px">Unchecking this is a <strong>p53 loss-of-function</strong> mutation. Consequence to look for: <strong>damaged DNA gets replicated</strong>, so the lesion becomes a permanent mutation in <em>both</em> daughters.</p>
+
+            <label class="check" id="lblG2"><input type="checkbox" id="cpG2chk" checked> G<sub>2</sub> checkpoint working (ATR&ndash;Chk1 present)</label>
+            <p class="ctrl-hint" style="padding-left:25px">Consequence to look for: the cell <strong>enters mitosis with unreplicated or damaged DNA</strong>. Turn up replication stress below to make it show.</p>
+
+            <label class="check" id="lblSAC"><input type="checkbox" id="cpSACchk" checked> Spindle assembly checkpoint working (Mad2/BubR1 present)</label>
+            <p class="ctrl-hint" style="padding-left:25px">Consequence to look for: anaphase starts before every chromosome is attached, so sisters <strong>missegregate and the daughters are aneuploid</strong>.</p>
+
+            <hr class="sep">
+
+            <label class="check" id="lblGFI"><input type="checkbox" id="gfIndChk"> Growth-factor independent (RAS/cyclin&nbsp;D always on)</label>
+            <p class="ctrl-hint" style="padding-left:25px">The cell makes its own &ldquo;divide&rdquo; signal, so it passes the restriction point with no signal from outside. This is not a checkpoint failure &mdash; it is the accelerator jammed on.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Presets</div>
+          <div class="btn-row" id="presets">
+            <button class="btn is-on" data-preset="normal">Healthy cell</button>
+            <button class="btn" data-preset="p53">p53 lost</button>
+            <button class="btn" data-preset="g2">G<sub>2</sub> lost</button>
+            <button class="btn" data-preset="sac">Spindle checkpoint lost</button>
+            <button class="btn" data-preset="gfi">No signal needed</button>
+            <button class="btn" data-preset="multi">Several hits at once</button>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">Each preset sets the damage or stress needed to make that particular failure visible, and clears the others. Watch one full cycle before judging it.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What the cell is dealing with</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="gfR">Growth factors outside</label>
+                <span class="ctrl-value" id="gfOut">100%</span>
+              </div>
+              <input type="range" id="gfR" min="0" max="100" step="1" value="100">
+              <p class="ctrl-hint">Sets how fast cyclin&nbsp;D is made. Below about <strong>32%</strong> the cell never phosphorylates Rb, so it sits in G<sub>0</sub> and never divides &mdash; drag it down and see.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="doseR">DNA damage each cycle</label>
+                <span class="ctrl-value" id="doseOut">0%</span>
+              </div>
+              <input type="range" id="doseR" min="0" max="100" step="1" value="0">
+              <p class="ctrl-hint">Lesions delivered at the start of every G<sub>1</sub> (think UV or a chemical mutagen), as a fraction of the genome.</p>
+              <div class="btn-row" style="margin-top:7px">
+                <button class="btn" id="btnDamage">Damage the DNA right now</button>
+              </div>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="stressR">Replication stress</label>
+                <span class="ctrl-value" id="stressOut">0%</span>
+              </div>
+              <input type="range" id="stressR" min="0" max="100" step="1" value="0">
+              <p class="ctrl-hint">Slows the replication forks (low nucleotide supply, or a drug such as hydroxyurea) and lets stalled forks break. This is the problem the G<sub>2</sub> checkpoint exists to catch.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="spinR">Spindle problems</label>
+                <span class="ctrl-value" id="spinOut">0%</span>
+              </div>
+              <input type="range" id="spinR" min="0" max="100" step="1" value="0">
+              <p class="ctrl-hint">Makes kinetochores slow to capture microtubules (think a low dose of a spindle drug). This is the problem the spindle assembly checkpoint exists to catch &mdash; and note it has nothing to do with DNA damage.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">This cell right now</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Position in the cycle</div>
+              <div class="r-value" id="rPhase">G<sub>1</sub></div>
+              <div class="r-sub" id="rPhaseSub">0.0 h into this cycle</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">DNA replicated</div>
+              <div class="r-value" id="rRep">0%</div>
+              <div class="r-sub">of the genome</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Damage unrepaired</div>
+              <div class="r-value" id="rDmg">0%</div>
+              <div class="r-sub">of the genome</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Kinetochores attached</div>
+              <div class="r-value" id="rAtt">&mdash;</div>
+              <div class="r-sub">only meaningful in mitosis</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Divisions completed</div>
+              <div class="r-value" id="rDiv">0</div>
+              <div class="r-sub" id="rDivSub">following one daughter each time</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What the last division actually produced</div>
+          <div class="readouts two">
+            <div class="readout span2" id="dvMutBox">
+              <div class="r-label">Genome copied while it was damaged</div>
+              <div class="r-value" id="dvMut">&mdash;</div>
+              <div class="r-sub">lesions turned into permanent mutations, inherited by both daughters</div>
+            </div>
+            <div class="readout" id="dvRepBox">
+              <div class="r-label">DNA replicated at the moment mitosis began</div>
+              <div class="r-value" id="dvRep">&mdash;</div>
+            </div>
+            <div class="readout" id="dvKaryoBox">
+              <div class="r-label">Daughter chromosome numbers</div>
+              <div class="r-value" id="dvKaryo">&mdash;</div>
+              <div class="r-sub" id="dvKaryoSub">normal is 6 and 6</div>
+            </div>
+          </div>
+          <p class="note" id="dvNote" style="margin-top:11px">Let one full cycle finish and this panel will tell you exactly what the daughters inherited.</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Damage accumulated in this lineage</div>
+          <ul class="tally" id="tally">
+            <li class="clean"><span class="tk">&#10003;</span><span>Nothing has gone wrong yet.</span></li>
+          </ul>
+          <p class="note warn" style="margin-top:11px">
+            <strong>One broken checkpoint is not cancer.</strong> Every failure on this page produces a
+            <em>specific</em> defect, and a single one of them is usually survivable, silent, or lethal to that
+            one cell. A cancer needs several independent hits stacked in the same lineage &mdash; typically an
+            accelerator jammed on (a growth-factor-independent oncogene), at least one brake removed
+            (p53, Rb), and then a defect that makes further mutations pile up quickly. That is why cancers take
+            years and why they are far more common in old cells than young ones.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            What is simplified. This model cell has <strong>6 chromosomes</strong> and one of everything, so the
+            karyotype is readable; a human cell has 46 and thousands of replication origins. Cyclin
+            concentrations are relative, on a 0&ndash;1 scale, not molar. Each cyclin is modelled as one pool
+            made at a set rate and destroyed at another, and the real families overlap far more than four clean
+            curves suggest. On the wheel, M phase is drawn wider than its true 1/24 share so that the spindle
+            checkpoint marker is visible; the phase durations quoted in the readouts are the honest ones.
+            Cohesin, securin and separase are collapsed into &ldquo;anaphase starts when APC/C switches on&rdquo;.
+            A real cell held in metaphase for hours usually dies or slips out of mitosis rather than waiting
+            forever, and real DNA damage comes in kinds &mdash; a double-strand break is not a thymine dimer &mdash;
+            which the single &ldquo;damage&rdquo; number here does not distinguish.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students learn the checkpoints as three names on a diagram &mdash;
+        G<sub>1</sub>, G<sub>2</sub>, spindle &mdash; and can point at where each one sits on the circle. Ask what
+        any one of them is <em>checking</em>, or what specifically comes out of the cell when it fails, and the
+        answer collapses into a single word: <em>cancer</em>. That answer is wrong three times over. The three
+        checkpoints test three completely different things, they fail in three completely different ways, and not
+        one of those failures is by itself a cancer.
+      </p>
+      <p>
+        <strong>Break them one at a time and read the daughter cell.</strong> Set damage to 100% and leave
+        everything else alone: the G<sub>1</sub> checkpoint holds the cell for about eleven extra hours while p53
+        drives repair, and it enters S with about 2% of the genome still damaged. Now untick p53 and run it again.
+        The cell enters S at the normal 11&nbsp;h with roughly 76% of the genome still carrying lesions, the
+        replication forks copy straight over them, and those lesions stop being damage &mdash; they become
+        permanent base changes that no checkpoint can ever see again, in <em>both</em> daughters. That is what
+        &ldquo;the G<sub>1</sub> checkpoint failed&rdquo; means: not cancer, but <strong>mutations fixed into the
+        sequence</strong>.
+      </p>
+      <p>
+        <strong>The G<sub>2</sub> checkpoint is a different question entirely.</strong> Turn replication stress to
+        100% and leave the checkpoint on: S phase stretches from 8&nbsp;h to about 24&nbsp;h and the cell simply
+        waits, because cyclin B has already passed its threshold but Chk1 is keeping CDK1 switched off. Now untick
+        the G<sub>2</sub> checkpoint. Cyclin B reaches the same threshold at the same time, nothing is holding CDK1
+        down, and the cell tears into mitosis with roughly <strong>43% of its DNA replicated</strong>. Unreplicated
+        chromosomes cannot be pulled apart intact; they shatter. The daughters are missing genes outright. Nobody
+        was checking for spindle attachment here, and no chromosome miscounted &mdash; the failure was about
+        <em>finishing the copy</em>.
+      </p>
+      <p>
+        <strong>The spindle checkpoint is not a DNA checkpoint at all.</strong> This is the one most often
+        remembered wrongly. It acts at <strong>metaphase</strong>, and the thing it tests is mechanical: is every
+        single kinetochore captured by microtubules, from both poles, and under tension? It does not look at DNA
+        damage and it does not look at replication. One unattached kinetochore is enough to keep the mitotic
+        checkpoint complex switched on, which keeps APC/C off, which keeps securin and cyclin B intact, which
+        keeps sister chromatids glued together. Turn spindle problems up with the checkpoint on and the cell parks
+        in metaphase &mdash; that is exactly how spindle drugs kill dividing cells. Untick the checkpoint and
+        anaphase fires on schedule anyway: whichever chromosomes had not attached yet send both sisters to the
+        same pole, and you get daughters with 7 and 5 chromosomes instead of 6 and 6. That is
+        <strong>aneuploidy</strong>, and it is a different disaster from either of the other two.
+      </p>
+      <p>
+        <strong>Watch the cyclins, because they are the mechanism.</strong> Nothing on this page runs on a timer.
+        Cyclin D is made only while growth factors are present, and it is what frees cyclin E&ndash;CDK2 by mopping
+        up p27. Cyclin E accumulating past its threshold is what starts S phase, which is why removing growth
+        factors early sends the cell back to G<sub>0</sub> but removing them after the restriction point does
+        nothing at all &mdash; drag the growth-factor slider to zero at 5&nbsp;h and then try again at 9&nbsp;h.
+        Cyclin A drives the forks. Cyclin B builds all the way through S and G<sub>2</sub>, and the moment
+        CDK1&ndash;cyclin B activity is allowed to cross its threshold, mitosis begins. Every checkpoint on this
+        page works by interfering with a cyclin&ndash;CDK complex: p21 blocks CDK2, Chk1 keeps CDK1
+        phosphorylated and inactive, and the mitotic checkpoint complex blocks the enzyme that destroys cyclin B.
+        Notice what that last one means &mdash; the cell leaves mitosis because cyclin&nbsp;B is
+        <em>destroyed</em>, not because a timer ran out.
+      </p>
+      <p>
+        <strong>And the accelerator is not a brake.</strong> The growth-factor-independent switch is a different
+        kind of fault from all three checkpoints. The cell is not failing to notice a problem; it is manufacturing
+        its own &ldquo;divide&rdquo; instruction. Set growth factors to zero with it ticked and the cell cycles
+        happily with no signal from any neighbour. On its own, in a cell whose checkpoints all still work, this
+        produces extra normal cells &mdash; a lump, not a cancer. Tick it together with p53 loss and watch the
+        tally: now every cycle is both unwanted <em>and</em> mutagenic, and the mutations compound. That
+        combination, over many divisions, is the road to cancer. A single mutation is not.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      // Time is in simulated hours. Cyclin concentrations are relative
+      // (0-1 scale), not molar.
+      //
+      // The transitions are driven by cyclin-CDK activity crossing
+      // thresholds. Nothing here is on a timer; a phase ends when the
+      // relevant kinase activity is high enough AND the relevant
+      // checkpoint is not holding.
+      //
+      //   mitogen m           = growth factor level (or 1 if GF-independent)
+      //   dD/dt  = kD (m - D)                       cyclin D tracks mitogen
+      //   p27 free            = max(0, p27 - seq*D) cyclin D-CDK4/6 mops up p27
+      //   p21                 = p21max * H(damage)  p53 -> p21, only if G1 cp on
+      //   aE  = E / (1 + (p27free + p21)/K)         active cyclin E-CDK2
+      //   E2F = H(D + fb*aE, 0.62, 6)               Rb released; aE feeds back
+      //   dE/dt  = kEs*E2F*gate - kEd*E
+      //   dp27/dt= kPs - kPd*p27 - kPe*p27*(aE+aA)  CDK2 destroys its own brake
+      //   G1 -> S when aE >= 0.50
+      //
+      //   dA/dt  = kAs (S,G2,M) - kAd A             cyclin A
+      //   drep/dt= kRep * A * (1 - 0.75*stress)     replication needs cyclin A
+      //   S -> G2 when rep = 1
+      //
+      //   dB/dt  = kBs (S,G2,M), destroyed by APC/C cyclin B accumulates
+      //   G2 -> M when B >= 1.00 AND the G2 checkpoint is not holding
+      //   M exit when APC/C has destroyed cyclin B
+      //
+      // Checkpoints act by INHIBITING a cyclin-CDK complex, which is how
+      // real checkpoints work:
+      //   G1  : p53 -> p21 -| cyclin E-CDK2      (checks damage + mitogen)
+      //   G2  : ATR -> Chk1 -| Cdc25 -| CDK1     (checks replication + damage)
+      //   SAC : MCC -| APC/C-Cdc20               (checks kinetochore attachment)
+      //
+      // Damage handling. Repair is much faster when p53 is present, because
+      // p53 transactivates repair genes as well as p21. During S phase a
+      // lesion that the fork copies over is CONVERTED into a permanent
+      // mutation: it stops being damage (no checkpoint can see it again)
+      // and is counted in mutationLoad. That is why losing p53 shows up as
+      // mutations rather than as a permanent arrest later on.
+      //
+      // Verified numerically before shipping:
+      //   default run          G1 11.15 h, S 8.00 h, G2 4.03 h, M ~1.0 h
+      //   restriction point    7.55 h; true commitment 7.37 h, so the
+      //                        marker never appears before commitment
+      //   growth factor 0      cell stays in G0 forever, every cyclin -> 0
+      //   GF sweep             monotonic: 100% -> G1 11.1 h, 60% -> 14.1 h,
+      //                        45% -> 26.7 h, 35% -> 210 h, 30% -> never
+      //   damage 100%, p53 on  S entry at 22.7 h, 1.9% of genome mutated
+      //   damage 100%, p53 off S entry at 11.1 h, 76.2% of genome mutated
+      //   stress 100%, G2 on   S 24.1 h, mitosis at 40 h, DNA 100% copied
+      //   stress 100%, G2 off  mitosis at 23.2 h, DNA only 43.4% copied
+      // ==================================================================
+
+      var F = Demo.fmt, C = Demo.clamp;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var P = {
+        kD: 1.00,                       // cyclin D turnover (t1/2 ~ 42 min)
+        kEs: 0.0613, kEd: 0.0613,       // cyclin E in G1
+        kEdS: 0.55, gateES: 0.10,       // cyclin E destroyed once S begins
+        E2Fk: 0.62, E2Fn: 6, fbE: 2.6,  // Rb / E2F switch
+        KcdkI: 0.25,                    // potency of p27 and p21 on CDK2
+        aEthr: 0.50,                    // cyclin E-CDK2 activity that starts S
+        kPs: 0.05, kPd: 0.05, kPe: 1.0, seq: 0.50,   // p27
+        p21max: 4.0, p21K: 0.15,        // p53 -> p21 response to damage
+        kAs: 0.35, kAd: 0.35,           // cyclin A
+        kRep: 0.188,                    // replication rate per unit cyclin A
+        strMax: 0.75, strDmg: 0.03,     // replication stress
+        kBs: 0.083, Bthr: 1.00,         // cyclin B accumulation and threshold
+        kApc: 4.0, kCdh1: 1.5,          // APC/C-Cdc20 and APC/C-Cdh1
+        repP53: 0.16, repBase: 0.02,    // DNA repair rate with / without p53
+        conv: 6.0,                      // lesion -> mutation on replication
+        dmgSeen: 0.03,                  // damage a checkpoint can still detect
+        lamAtt: 12.0,                   // kinetochore capture rate, per hour
+        tPro: 0.15, tMeta: 0.10, tSacSlip: 0.15,
+        NCHR0: 6
+      };
+
+      // display widths on the wheel (M is widened so its marker is legible)
+      var WH = { G1: 10, S: 7, G2: 4, M: 4 };
+      var WTOT = WH.G1 + WH.S + WH.G2 + WH.M;
+      var TRUEH = { G1: 11, S: 8, G2: 4, M: 1 };
+
+      function H(x, K, n) {
+        if (x <= 0) return 0;
+        var a = Math.pow(x, n), b = Math.pow(K, n);
+        return a / (a + b);
+      }
+
+      // ---------------- inputs ----------------
+      var IN = {
+        gf: 1, gfInd: false, dose: 0, stress: 0, spindle: 0,
+        g1ok: true, g2ok: true, sacOk: true, speed: 4
+      };
+
+      // ---------------- state ----------------
+      var S, hist, rand, tally, lastDiv, divisions, lineageBroken;
+
+      function makeCell(n, dmg) {
+        return {
+          t: 0,                 // hours since this cycle began
+          tAbs: 0,              // hours since reset (kept across cycles)
+          D: IN.gfInd ? 1 : IN.gf,
+          E: 0.02, A: 0, B: 0, p27: 1.0,
+          rep: 0, dmg: dmg, mut: 0,
+          n: n,                 // chromosomes in this cell
+          phase: 'G1', sub: '', subT: 0,
+          committed: false,
+          holdG1: 0, holdG2: 0, holdSAC: 0,
+          repAtM: 0, dmgAtM: 0, gfAtR: 0,
+          att: [], attT: [], miss: [], pole: [],
+          apc: false, karyo: null, Bana: 1
+        };
+      }
+
+      function reset(hard) {
+        rand = Demo.rng(20240415);
+        S = makeCell(P.NCHR0, IN.dose);
+        hist = [];
+        if (hard !== false) {
+          divisions = 0;
+          lastDiv = null;
+          lineageBroken = 0;
+          tally = { mut: 0, under: 0, aneu: 0, nosig: 0, worstMut: 0 };
+        }
+        sample(true);
+      }
+
+      // ---------------- derived quantities ----------------
+      function derive() {
+        var m = IN.gfInd ? 1 : IN.gf;
+        var p21if = P.p21max * H(S.dmg, P.p21K, 2);
+        var p21 = IN.g1ok ? p21if : 0;
+        var freeP = Math.max(0, S.p27 - P.seq * S.D);
+        var aE = S.E / (1 + (freeP + p21) / P.KcdkI);
+        var aEclean = S.E / (1 + freeP / P.KcdkI);
+        var aEwould = S.E / (1 + (freeP + p21if) / P.KcdkI);
+        var aA = S.A / (1 + (freeP + p21) / P.KcdkI);
+        var E2F = H(S.D + P.fbE * aE, P.E2Fk, P.E2Fn);
+
+        var inG1 = S.phase === 'G1', inS = S.phase === 'S';
+        var inG2 = S.phase === 'G2', inM = S.phase === 'M';
+
+        // G1 damage checkpoint: would the cell have entered S but for p21?
+        var g1Would = inG1 && aEclean >= P.aEthr && aEwould < P.aEthr;
+        // G2 checkpoint: cyclin B is over threshold but something is unfinished
+        var g2Problem = (inS || inG2) && S.B >= P.Bthr &&
+                        (S.rep < 0.9999 || S.dmg > P.dmgSeen);
+        // SAC: at least one kinetochore still unattached
+        var allAtt = true, nAtt = 0;
+        if (inM) {
+          for (var i = 0; i < S.n; i++) { if (S.att[i]) nAtt++; else allAtt = false; }
+        }
+        var sacWould = inM && S.sub === 'prometa' && !allAtt;
+
+        return {
+          m: m, p21: p21, p21if: p21if, freeP: freeP,
+          aE: aE, aEclean: aEclean, aA: aA, E2F: E2F,
+          inG1: inG1, inS: inS, inG2: inG2, inM: inM,
+          g1Hold: IN.g1ok && g1Would, g1Bypass: !IN.g1ok && g1Would,
+          g2Hold: IN.g2ok && g2Problem, g2Bypass: !IN.g2ok && g2Problem,
+          sacHold: IN.sacOk && sacWould, sacBypass: !IN.sacOk && sacWould,
+          allAtt: allAtt, nAtt: nAtt
+        };
+      }
+
+      // ---------------- one integration step ----------------
+      function step(h) {
+        var d = derive();
+        var inG1 = d.inG1, cyc = d.inS || d.inG2 || d.inM;
+
+        // APC/C: Cdh1 form in G1, Cdc20 form from anaphase onwards
+        var apcOn = inG1 || (d.inM && (S.sub === 'meta' || S.sub === 'ana' || S.sub === 'telo'));
+        var kApcNow = inG1 ? P.kCdh1 : P.kApc;
+
+        S.D += P.kD * (d.m - S.D) * h;
+        S.E += (P.kEs * d.E2F * (inG1 ? 1 : P.gateES) - (inG1 ? P.kEd : P.kEdS) * S.E) * h;
+        S.p27 += (P.kPs - P.kPd * S.p27 - P.kPe * S.p27 * (d.aE + d.aA)) * h;
+        if (S.p27 < 0) S.p27 = 0;
+        S.A += (P.kAs * (cyc ? 1 : 0) - (apcOn ? kApcNow : P.kAd) * S.A) * h;
+        S.B += (P.kBs * (cyc ? 1 : 0) - (apcOn ? kApcNow : 0) * S.B) * h;
+        if (S.A < 0) S.A = 0;
+        if (S.B < 0) S.B = 0;
+
+        // DNA repair — p53 turns on repair genes as well as p21
+        S.dmg -= (IN.g1ok ? P.repP53 : P.repBase) * S.dmg * h;
+        if (S.dmg < 0) S.dmg = 0;
+
+        // hold bookkeeping
+        if (d.g1Hold) S.holdG1 += h;
+        if (d.g2Hold) S.holdG2 += h;
+        if (d.sacHold && S.subT > P.tSacSlip) S.holdSAC += h;
+
+        if (!S.committed && S.p27 < 0.45) {
+          S.committed = true;
+          S.gfAtR = d.m;
+        }
+
+        // ---- replication ----
+        if (d.inS) {
+          var v = P.kRep * S.A * (1 - P.strMax * IN.stress);
+          S.rep += v * h;
+          if (S.rep > 1) S.rep = 1;
+          S.dmg += P.strDmg * IN.stress * h;
+          var conv = P.conv * S.dmg * v;      // lesion copied -> fixed mutation
+          S.dmg -= conv * h;
+          S.mut += conv * h;
+          if (S.dmg < 0) S.dmg = 0;
+          if (S.dmg > 1) S.dmg = 1;
+          if (S.mut > 1) S.mut = 1;
+        }
+
+        S.t += h;
+        S.tAbs += h;
+
+        // ---- transitions ----
+        if (inG1) {
+          if (d.aE >= P.aEthr) { S.phase = 'S'; }
+        } else if (d.inS) {
+          if (S.rep >= 0.9999) S.phase = 'G2';
+          else if (S.B >= P.Bthr && !IN.g2ok) enterM();
+        } else if (d.inG2) {
+          if (S.B >= P.Bthr && !d.g2Hold) enterM();
+        } else if (d.inM) {
+          mitosis(h, d);
+        }
+      }
+
+      function enterM() {
+        S.phase = 'M'; S.sub = 'pro'; S.subT = 0;
+        S.repAtM = S.rep; S.dmgAtM = S.dmg;
+        S.att = []; S.attT = []; S.miss = []; S.pole = [];
+        var lam = P.lamAtt * (1 - 0.96 * IN.spindle);
+        if (lam < 0.05) lam = 0.05;
+        for (var i = 0; i < S.n; i++) {
+          var u = rand();
+          if (u <= 0) u = 1e-6;
+          S.att.push(false);
+          S.attT.push(-Math.log(u) / lam);
+          S.miss.push(false);
+          S.pole.push(0);
+        }
+      }
+
+      function mitosis(h, d) {
+        S.subT += h;
+        if (S.sub === 'pro') {
+          if (S.subT >= P.tPro) { S.sub = 'prometa'; S.subT = 0; }
+        } else if (S.sub === 'prometa') {
+          var all = true;
+          for (var i = 0; i < S.n; i++) {
+            if (!S.att[i] && S.subT >= S.attT[i]) S.att[i] = true;
+            if (!S.att[i]) all = false;
+          }
+          var release = IN.sacOk ? all : (S.subT >= P.tSacSlip);
+          if (release) { anaphaseOnset(); }
+        } else if (S.sub === 'meta') {
+          if (S.subT >= P.tMeta) { S.sub = 'ana'; S.subT = 0; S.Bana = Math.max(S.B, 0.2); }
+        } else if (S.sub === 'ana') {
+          if (S.B < 0.30) { S.sub = 'telo'; S.subT = 0; }
+        } else if (S.sub === 'telo') {
+          if (S.B < 0.08) divide();
+        }
+      }
+
+      function anaphaseOnset() {
+        // Whatever is not attached when APC/C fires sends BOTH sisters one way.
+        var a = 0, b = 0;
+        for (var i = 0; i < S.n; i++) {
+          if (S.att[i]) { S.pole[i] = -1; a++; b++; }
+          else {
+            S.miss[i] = true;
+            S.pole[i] = rand() < 0.5 ? 0 : 1;
+            if (S.pole[i] === 0) a += 2; else b += 2;
+          }
+        }
+        S.karyo = [a, b];
+        S.sub = 'meta'; S.subT = 0;
+      }
+
+      function divide() {
+        var k = S.karyo || [S.n, S.n];
+        divisions++;
+        var aneu = (k[0] !== P.NCHR0 || k[1] !== P.NCHR0);
+        var under = S.repAtM < 0.99;
+        var nosig = S.gfAtR < 0.32 && IN.gfInd;
+
+        lastDiv = {
+          mut: S.mut, rep: S.repAtM, karyo: k, aneu: aneu, under: under,
+          nosig: nosig, holdG1: S.holdG1, holdG2: S.holdG2, holdSAC: S.holdSAC,
+          dmgAtM: S.dmgAtM, cycleLen: S.t, nBefore: S.n
+        };
+
+        if (S.mut > 0.05) tally.mut++;
+        if (S.mut > tally.worstMut) tally.worstMut = S.mut;
+        if (under) tally.under++;
+        if (aneu) tally.aneu++;
+        if (nosig) tally.nosig++;
+
+        // follow one daughter; carry any chromosome gain or loss forward
+        var next = k[0];
+        var carry = IN.dose;
+        if (under) carry = Math.min(1, carry + 0.6 * (1 - S.repAtM)); // shattered DNA
+        if (next < 2 || next > 12) {
+          lineageBroken++;
+          next = P.NCHR0;
+          carry = IN.dose;
+        }
+        var keepAbs = S.tAbs;
+        S = makeCell(next, carry);
+        S.tAbs = keepAbs;
+      }
+
+      // ---------------- history for the trace ----------------
+      var lastSample = -1;
+      function sample(force) {
+        if (!force && S.tAbs - lastSample < 0.12) return;
+        lastSample = S.tAbs;
+        hist.push([S.tAbs, S.D, S.E, S.A, S.B, S.phase]);
+        if (hist.length > 2400) hist.splice(0, 600);
+      }
+
+      // ==================================================================
+      // CANVAS 1 — the cell cycle wheel with the cell inside
+      // ==================================================================
+      var PHCOL = { G1: 0, S: 1, G2: 2, M: 3 };
+
+      function phaseSpan(p) {
+        var u = 0;
+        if (p === 'G1') return [0, WH.G1];
+        u += WH.G1; if (p === 'S') return [u, u + WH.S];
+        u += WH.S; if (p === 'G2') return [u, u + WH.G2];
+        u += WH.G2; return [u, u + WH.M];
+      }
+
+      function phaseProgress(d) {
+        if (S.phase === 'G1') return C(d.aE / P.aEthr, 0, 0.995);
+        if (S.phase === 'S') return C(S.rep, 0, 0.995);
+        if (S.phase === 'G2') return C(S.B / P.Bthr, 0, d.g2Hold ? 0.97 : 0.995);
+        // M
+        if (S.sub === 'pro') return C(S.subT / P.tPro, 0, 1) * 0.18;
+        if (S.sub === 'prometa') return 0.18 + 0.37 * (S.n ? d.nAtt / S.n : 1);
+        if (S.sub === 'meta') return 0.55 + 0.07 * C(S.subT / P.tMeta, 0, 1);
+        if (S.sub === 'ana') return 0.62 + 0.23 * C((S.Bana - S.B) / Math.max(0.01, S.Bana - 0.30), 0, 1);
+        return 0.85 + 0.15 * C((0.30 - S.B) / 0.22, 0, 1);
+      }
+
+      function ang(u) { return -Math.PI / 2 + (u / WTOT) * Math.PI * 2; }
+
+      var cellCv = Demo.canvas('#cellCv', function (ctx, w, h, c) {
+        var d = derive();
+        var cx = w / 2, cy = h / 2;
+        var R = Math.min(w, h) / 2 - 12;
+        var rIn = R * 0.80;
+        var i, p, sp, a0, a1;
+        var fs = w < 380 ? 9.5 : 11;
+        var names = ['G1', 'S', 'G2', 'M'];
+
+        // ---- ring segments ----
+        for (i = 0; i < names.length; i++) {
+          p = names[i]; sp = phaseSpan(p);
+          a0 = ang(sp[0]) + 0.012; a1 = ang(sp[1]) - 0.012;
+          ctx.beginPath();
+          ctx.arc(cx, cy, (R + rIn) / 2, a0, a1);
+          ctx.lineWidth = R - rIn;
+          ctx.strokeStyle = c.series[PHCOL[p]];
+          ctx.globalAlpha = (S.phase === p) ? 1 : 0.30;
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+
+          // segment label
+          var am = (a0 + a1) / 2, rm = (R + rIn) / 2;
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = (S.phase === p) ? '#ffffff' : c.text2;
+          ctx.globalAlpha = (S.phase === p) ? 1 : 0.85;
+          ctx.fillText(p === 'G1' ? 'G₁' : p === 'G2' ? 'G₂' : p,
+            cx + Math.cos(am) * rm, cy + Math.sin(am) * rm);
+          ctx.globalAlpha = 1;
+        }
+
+        // ---- checkpoint markers ----
+        var marks = [
+          { u: WH.G1, on: IN.g1ok, hold: d.g1Hold, bypass: d.g1Bypass, txt: '1' },
+          { u: WH.G1 + WH.S + WH.G2, on: IN.g2ok, hold: d.g2Hold, bypass: d.g2Bypass, txt: '2' },
+          { u: WH.G1 + WH.S + WH.G2 + WH.M * 0.58, on: IN.sacOk, hold: d.sacHold, bypass: d.sacBypass, txt: '3' }
+        ];
+        for (i = 0; i < marks.length; i++) {
+          var mk = marks[i], am2 = ang(mk.u);
+          var mx = cx + Math.cos(am2) * R, my = cy + Math.sin(am2) * R;
+          var col = !mk.on ? c.bad : mk.hold ? c.warn : c.ok;
+          ctx.beginPath(); ctx.arc(mx, my, 9, 0, 6.2832);
+          ctx.fillStyle = c.surface; ctx.fill();
+          ctx.lineWidth = mk.hold || !mk.on ? 3 : 2;
+          ctx.strokeStyle = col; ctx.stroke();
+          ctx.font = '700 ' + (fs - 1.5) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillStyle = col;
+          ctx.fillText(mk.on ? mk.txt : '✕', mx, my + 0.5);
+        }
+
+        // ---- pointer ----
+        sp = phaseSpan(S.phase);
+        var up = sp[0] + (sp[1] - sp[0]) * phaseProgress(d);
+        var ap = ang(up);
+        var px = cx + Math.cos(ap) * (R + rIn) / 2, py = cy + Math.sin(ap) * (R + rIn) / 2;
+        ctx.beginPath(); ctx.arc(px, py, 6.5, 0, 6.2832);
+        ctx.fillStyle = c.text; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = c.surface; ctx.stroke();
+
+        // ---- the cell itself ----
+        drawCellArt(ctx, c, cx, cy, rIn * 0.86, d);
+      }, { aspect: 0.80, minHeight: 260, maxHeight: 380 });
+
+      // seeded interphase chromosome placement, stable between frames
+      var CHPOS = (function () {
+        var r = Demo.rng(7), out = [];
+        for (var i = 0; i < 14; i++) out.push([r() * 2 - 1, r() * 2 - 1, r() * 2 - 1]);
+        return out;
+      })();
+
+      function drawCellArt(ctx, c, cx, cy, rad, d) {
+        var inM = d.inM;
+        var telo = inM && S.sub === 'telo';
+        var i;
+
+        ctx.save();
+
+        // ---- membrane ----
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = c.line;
+        ctx.fillStyle = c.surface2;
+        if (telo) {
+          var off = rad * 0.46 * C(S.subT / 0.35, 0, 1);
+          ctx.beginPath();
+          ctx.arc(cx - off, cy, rad * 0.80, 0, 6.2832);
+          ctx.fill(); ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + off, cy, rad * 0.80, 0, 6.2832);
+          ctx.fill(); ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, rad, rad * 0.92, 0, 0, 6.2832);
+          ctx.fill(); ctx.stroke();
+        }
+
+        var poleX = rad * 0.74;
+
+        if (inM && S.sub !== 'pro') {
+          // ---- spindle poles + microtubules ----
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          for (i = 0; i < 2; i++) {
+            var sx = cx + (i ? poleX : -poleX);
+            ctx.beginPath(); ctx.arc(sx, cy, 4, 0, 6.2832);
+            ctx.fillStyle = c.muted; ctx.fill();
+            for (var k = -3; k <= 3; k++) {
+              ctx.beginPath();
+              ctx.moveTo(sx, cy);
+              ctx.lineTo(sx + (i ? -1 : 1) * rad * 0.30, cy + k * rad * 0.13);
+              ctx.stroke();
+            }
+          }
+          if (S.sub === 'prometa' || S.sub === 'meta') {
+            ctx.strokeStyle = c.lineSoft;
+            ctx.setLineDash([3, 4]);
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - rad * 0.72); ctx.lineTo(cx, cy + rad * 0.72);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        }
+
+        if (!inM) {
+          // ---- nucleus ----
+          ctx.beginPath();
+          ctx.arc(cx, cy, rad * 0.62, 0, 6.2832);
+          ctx.fillStyle = c.surface;
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1.5;
+          ctx.fill(); ctx.stroke();
+        }
+
+        // ---- chromosomes ----
+        var n = S.n;
+        var dmgN = Math.round(S.dmg * 7);
+        var mutN = Math.round(S.mut * 7);
+
+        for (i = 0; i < n; i++) {
+          var pos = CHPOS[i % CHPOS.length];
+          var dup;                       // is this chromosome two chromatids?
+          if (S.phase === 'G1') dup = false;
+          else if (S.phase === 'S') dup = (i + 1) / n <= S.rep;
+          else dup = S.repAtM ? ((i + 1) / n <= S.repAtM) : true;
+          if (S.phase === 'G2') dup = true;
+
+          if (!inM) {
+            var nx = cx + pos[0] * rad * 0.34;
+            var ny = cy + pos[1] * rad * 0.34;
+            drawInterphaseChr(ctx, c, nx, ny, rad * 0.20, pos[2], dup);
+          } else if (S.sub === 'pro') {
+            var ax = cx + pos[0] * rad * 0.44;
+            var ay = cy + pos[1] * rad * 0.44;
+            drawMitoticChr(ctx, c, ax, ay, rad * 0.15, dup, false, false);
+          } else if (S.sub === 'prometa' || S.sub === 'meta') {
+            var y = cy + (i - (n - 1) / 2) * (rad * 1.30 / Math.max(n, 4));
+            var attached = S.att[i];
+            var x = attached ? cx : cx + pos[0] * rad * 0.42;
+            var yy = attached ? y : cy + pos[1] * rad * 0.50;
+            if (attached) {
+              ctx.strokeStyle = c.ok; ctx.lineWidth = 1.4;
+              ctx.beginPath(); ctx.moveTo(cx - poleX, cy); ctx.lineTo(x, yy); ctx.stroke();
+              ctx.beginPath(); ctx.moveTo(cx + poleX, cy); ctx.lineTo(x, yy); ctx.stroke();
+            }
+            drawMitoticChr(ctx, c, x, yy, rad * 0.15, dup, !attached, false);
+          } else {
+            // anaphase / telophase — sisters separated
+            var f = S.sub === 'ana'
+              ? C((S.Bana - S.B) / Math.max(0.01, S.Bana - 0.30), 0, 1)
+              : 1;
+            var yA = cy + (i - (n - 1) / 2) * (rad * 1.10 / Math.max(n, 4));
+            if (S.miss[i]) {
+              var sgn = S.pole[i] === 0 ? -1 : 1;
+              drawSister(ctx, c, cx + sgn * poleX * 0.80 * f - 5, yA, rad * 0.13, true);
+              drawSister(ctx, c, cx + sgn * poleX * 0.80 * f + 5, yA, rad * 0.13, true);
+            } else {
+              drawSister(ctx, c, cx - poleX * 0.80 * f, yA, rad * 0.13, false);
+              drawSister(ctx, c, cx + poleX * 0.80 * f, yA, rad * 0.13, false);
+            }
+          }
+        }
+
+        // ---- damage and mutation marks ----
+        var mr = Demo.rng(99);
+        for (i = 0; i < dmgN; i++) {
+          var da = mr() * 6.2832, dr = Math.sqrt(mr()) * rad * (inM ? 0.55 : 0.40);
+          ctx.beginPath();
+          ctx.arc(cx + Math.cos(da) * dr, cy + Math.sin(da) * dr, 3, 0, 6.2832);
+          ctx.fillStyle = c.bad; ctx.fill();
+        }
+        for (i = 0; i < mutN; i++) {
+          var ma = mr() * 6.2832, mrr = Math.sqrt(mr()) * rad * (inM ? 0.55 : 0.40);
+          ctx.beginPath();
+          ctx.rect(cx + Math.cos(ma) * mrr - 2, cy + Math.sin(ma) * mrr - 2, 4, 4);
+          ctx.fillStyle = c.warn; ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      function drawInterphaseChr(ctx, c, x, y, len, tilt, dup) {
+        ctx.strokeStyle = c.text2;
+        ctx.lineWidth = dup ? 3.2 : 2;
+        ctx.lineCap = 'round';
+        var a = tilt * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(x - Math.cos(a) * len, y - Math.sin(a) * len);
+        ctx.quadraticCurveTo(x + Math.sin(a) * len * 0.5, y - Math.cos(a) * len * 0.5,
+          x + Math.cos(a) * len, y + Math.sin(a) * len);
+        ctx.stroke();
+      }
+
+      function drawMitoticChr(ctx, c, x, y, s, dup, flag) {
+        ctx.strokeStyle = flag ? c.bad : c.text;
+        ctx.lineWidth = 3.4;
+        ctx.lineCap = 'round';
+        if (dup) {
+          ctx.beginPath();
+          ctx.moveTo(x - s * 0.55, y - s); ctx.lineTo(x - s * 0.20, y + s);
+          ctx.moveTo(x + s * 0.55, y - s); ctx.lineTo(x + s * 0.20, y + s);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(x, y - s); ctx.lineTo(x, y + s);
+          ctx.stroke();
+        }
+        if (flag) {
+          ctx.beginPath(); ctx.arc(x, y, s * 1.25, 0, 6.2832);
+          ctx.strokeStyle = c.bad; ctx.lineWidth = 1.4;
+          ctx.setLineDash([2, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+      }
+
+      function drawSister(ctx, c, x, y, s, bad) {
+        ctx.strokeStyle = bad ? c.bad : c.text;
+        ctx.lineWidth = 3.2; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x, y - s); ctx.lineTo(x, y + s);
+        ctx.stroke();
+      }
+
+      // ==================================================================
+      // CANVAS 2 — cyclin traces with the phases shaded behind
+      // ==================================================================
+      var traceCv = Demo.canvas('#traceCv', function (ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 30 : 38, padR = narrow ? 10 : 14, padT = 12, padB = 30;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9.5 : 10.5;
+        var YMAX = 1.6;
+        var WIN = 60;
+        var tEnd = Math.max(S.tAbs, WIN * 0.35);
+        var tStart = Math.max(0, tEnd - WIN);
+        var i, j;
+
+        function X(t) { return x0 + (x1 - x0) * (t - tStart) / (tEnd - tStart); }
+        function Y(v) { return y0 - (y0 - y1) * C(v, 0, YMAX) / YMAX; }
+
+        // phase bands
+        var prev = null, segStart = tStart;
+        for (i = 0; i < hist.length; i++) {
+          if (hist[i][0] < tStart) continue;
+          if (prev === null) { prev = hist[i][5]; segStart = hist[i][0]; continue; }
+          if (hist[i][5] !== prev) {
+            band(prev, segStart, hist[i][0]);
+            prev = hist[i][5]; segStart = hist[i][0];
+          }
+        }
+        if (prev !== null) band(prev, segStart, tEnd);
+
+        function band(p, a, b) {
+          if (b <= a) return;
+          ctx.globalAlpha = 0.13;
+          ctx.fillStyle = c.series[PHCOL[p]];
+          ctx.fillRect(X(a), y1, Math.max(1, X(b) - X(a)), y0 - y1);
+          ctx.globalAlpha = 1;
+          var mid = (X(a) + X(b)) / 2;
+          if (X(b) - X(a) > 22) {
+            ctx.font = '600 ' + (fs - 0.5) + FONT;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+            ctx.fillStyle = c.muted;
+            ctx.fillText(p === 'G1' ? 'G₁' : p === 'G2' ? 'G₂' : p, mid, y1 + 2);
+          }
+        }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(YMAX * i / 4, 1), x0 - 5, gy);
+        }
+
+        // cyclin B threshold — the line that starts mitosis
+        ctx.strokeStyle = c.series[3]; ctx.lineWidth = 1.2;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Y(P.Bthr)); ctx.lineTo(x1, Y(P.Bthr)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.font = '600 ' + (fs - 0.5) + FONT;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillStyle = c.series[3];
+        ctx.fillText('cyclin B threshold for mitosis', x1 - 2, Y(P.Bthr) - 2);
+
+        // axes
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        // traces
+        for (j = 1; j <= 4; j++) {
+          ctx.strokeStyle = c.series[j - 1];
+          ctx.lineWidth = 2.1; ctx.lineJoin = 'round';
+          ctx.beginPath();
+          var started = false;
+          for (i = 0; i < hist.length; i++) {
+            if (hist[i][0] < tStart) continue;
+            var xx = X(hist[i][0]), yy = Y(hist[i][j]);
+            if (!started) { ctx.moveTo(xx, yy); started = true; } else ctx.lineTo(xx, yy);
+          }
+          ctx.stroke();
+        }
+
+        // x axis
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        var stepH = (tEnd - tStart) > 40 ? 12 : 6;
+        for (var t = Math.ceil(tStart / stepH) * stepH; t <= tEnd; t += stepH) {
+          var xt = X(t);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(xt, y0); ctx.lineTo(xt, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(Math.round(t)), xt, y0 + 6);
+        }
+        ctx.fillText('time (simulated hours)', (x0 + x1) / 2, y0 + 17);
+
+        ctx.save();
+        ctx.translate(9, (y0 + y1) / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.font = '600 ' + fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('relative concentration', 0, 0);
+        ctx.restore();
+      }, { aspect: 0.46, minHeight: 190, maxHeight: 260 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {};
+      ['speedR', 'speedOut', 'gfR', 'gfOut', 'doseR', 'doseOut', 'stressR', 'stressOut',
+        'spinR', 'spinOut', 'btnRun', 'btnReset', 'btnDamage', 'presets',
+        'cpG1chk', 'cpG2chk', 'cpSACchk', 'gfIndChk', 'lblG1', 'lblG2', 'lblSAC', 'lblGFI',
+        'phaseName', 'phaseSub', 'cellCap', 'traceCap',
+        'cp1', 'cp1State', 'cp1Msg', 'cp2', 'cp2State', 'cp2Msg', 'cp3', 'cp3State', 'cp3Msg',
+        'rPhase', 'rPhaseSub', 'rRep', 'rDmg', 'rAtt', 'rDiv', 'rDivSub',
+        'dvMut', 'dvRep', 'dvKaryo', 'dvKaryoSub', 'dvNote', 'dvMutBox', 'dvRepBox', 'dvKaryoBox',
+        'tally'].forEach(function (id) { el[id] = document.getElementById(id); });
+
+      var PHNAME = {
+        G1: ['G<sub>1</sub> phase', 'growing, and deciding whether to divide'],
+        S: ['S phase', 'copying every chromosome'],
+        G2: ['G<sub>2</sub> phase', 'growing again, and checking the copy'],
+        M: ['M phase', 'mitosis and cytokinesis']
+      };
+      var SUBNAME = {
+        pro: 'prophase &mdash; chromosomes condensing',
+        prometa: 'prometaphase / metaphase &mdash; kinetochores capturing microtubules',
+        meta: 'metaphase &mdash; APC/C switched on, securin being destroyed',
+        ana: 'anaphase &mdash; cyclin B and securin destroyed, sisters pulled apart',
+        telo: 'telophase and cytokinesis'
+      };
+
+      function setCp(box, stateEl, msgEl, cls, state, msg) {
+        box.className = 'cp ' + cls;
+        stateEl.textContent = state;
+        msgEl.innerHTML = msg;
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        if (!S) return;
+        var d = derive();
+
+        // ---- phase heading ----
+        el.phaseName.innerHTML = PHNAME[S.phase][0];
+        el.phaseSub.innerHTML = d.inM ? SUBNAME[S.sub] : PHNAME[S.phase][1];
+
+        el.rPhase.innerHTML = S.phase === 'G1' ? 'G<sub>1</sub>' : S.phase === 'G2' ? 'G<sub>2</sub>' : S.phase;
+        el.rPhaseSub.innerHTML = F.dec(S.t, 1) + ' h into this cycle &mdash; normal '
+          + TRUEH[S.phase] + ' h for ' + (S.phase === 'G1' ? 'G₁' : S.phase === 'G2' ? 'G₂' : S.phase);
+
+        el.rRep.textContent = F.dec(S.rep * 100, 0) + '%';
+        el.rDmg.textContent = F.dec(S.dmg * 100, 1) + '%';
+        el.rAtt.textContent = d.inM && S.sub !== 'pro' ? d.nAtt + ' / ' + S.n : '—';
+        el.rDiv.textContent = String(divisions);
+        el.rDivSub.innerHTML = lineageBroken
+          ? '<span style="color:var(--bad)">' + lineageBroken + ' daughter lineage'
+            + (lineageBroken > 1 ? 's' : '') + ' died &mdash; restarted</span>'
+          : 'following one daughter each time';
+
+        // ---- checkpoint cards ----
+        if (!IN.g1ok) {
+          setCp(el.cp1, el.cp1State, el.cp1Msg, 'is-off', 'BROKEN — p53 lost',
+            d.g1Bypass
+              ? 'Damage is present and this cell would normally be held here. It is going into S anyway.'
+              : 'Nothing is testing the DNA before replication. Add damage and watch what gets copied.');
+        } else if (d.g1Hold) {
+          setCp(el.cp1, el.cp1State, el.cp1Msg, 'is-hold', 'HOLDING',
+            'p21 is blocking cyclin E–CDK2. ' + F.dec(S.dmg * 100, 1)
+            + '% of the genome is still damaged, and repair is running. Held for '
+            + F.dec(S.holdG1, 1) + ' h so far.');
+        } else if (d.inG1) {
+          setCp(el.cp1, el.cp1State, el.cp1Msg, 'is-ok',
+            S.committed ? 'PASSED — past the restriction point' : 'TESTING',
+            S.committed
+              ? 'Rb is fully phosphorylated and p27 is gone. Growth factors no longer matter: this cell will finish the cycle even if you remove them.'
+              : 'Cyclin D–CDK4/6 is mopping up p27 and phosphorylating Rb. Cyclin E–CDK2 activity is at '
+                + F.dec(d.aE / P.aEthr * 100, 0) + '% of the level that starts S phase.');
+        } else {
+          setCp(el.cp1, el.cp1State, el.cp1Msg, 'is-idle', 'passed for this cycle',
+            'This gate only operates in G<sub>1</sub>.');
+        }
+
+        if (!IN.g2ok) {
+          setCp(el.cp2, el.cp2State, el.cp2Msg, 'is-off', 'BROKEN — no Chk1 restraint',
+            d.g2Bypass
+              ? 'Cyclin B is over threshold with only ' + F.dec(S.rep * 100, 0)
+                + '% of the DNA copied. CDK1 is firing anyway — mitosis is starting on an unfinished genome.'
+              : 'Nothing is verifying that replication finished. Turn up replication stress to see what that costs.');
+        } else if (d.g2Hold) {
+          setCp(el.cp2, el.cp2State, el.cp2Msg, 'is-hold', 'HOLDING',
+            'Cyclin B has already passed its threshold, but Chk1 is keeping CDK1 phosphorylated and inactive. '
+            + (S.rep < 0.9999
+              ? 'Only ' + F.dec(S.rep * 100, 0) + '% of the DNA is copied. '
+              : F.dec(S.dmg * 100, 1) + '% of the genome is still damaged. ')
+            + 'Held for ' + F.dec(S.holdG2, 1) + ' h so far.');
+        } else if (d.inS || d.inG2) {
+          setCp(el.cp2, el.cp2State, el.cp2Msg, 'is-ok', 'TESTING',
+            'Replication ' + F.dec(S.rep * 100, 0) + '% complete, damage '
+            + F.dec(S.dmg * 100, 1) + '%. Cyclin B is at ' + F.dec(S.B / P.Bthr * 100, 0)
+            + '% of the level that starts mitosis.');
+        } else {
+          setCp(el.cp2, el.cp2State, el.cp2Msg, 'is-idle', 'not being tested',
+            'This gate operates at the end of G<sub>2</sub>.');
+        }
+
+        if (!d.inM) {
+          setCp(el.cp3, el.cp3State, el.cp3Msg, 'is-idle', 'not being tested',
+            'This gate operates at metaphase, and only there. It never looks at DNA damage.');
+        } else if (!IN.sacOk) {
+          setCp(el.cp3, el.cp3State, el.cp3Msg, 'is-off', 'BROKEN — no mitotic checkpoint complex',
+            'APC/C is free to switch on regardless of attachment. '
+            + (S.sub === 'prometa'
+              ? d.nAtt + ' of ' + S.n + ' kinetochores are attached and anaphase is coming anyway.'
+              : 'Any chromosome that was unattached sent both sisters to the same pole.'));
+        } else if (d.sacHold) {
+          setCp(el.cp3, el.cp3State, el.cp3Msg, 'is-hold', 'HOLDING',
+            (S.n - d.nAtt) + ' kinetochore' + (S.n - d.nAtt === 1 ? ' is' : 's are')
+            + ' still unattached. That is enough to keep APC/C off, so cyclin B and securin survive and the '
+            + 'sisters stay glued. Held ' + F.dec(S.holdSAC, 1) + ' h so far.');
+        } else {
+          setCp(el.cp3, el.cp3State, el.cp3Msg, 'is-ok',
+            S.sub === 'pro' ? 'WAITING for the spindle' : 'SATISFIED',
+            S.sub === 'pro'
+              ? 'The nuclear envelope is breaking down. Nothing to test until kinetochores exist.'
+              : 'Every kinetochore is attached from both poles and under tension. APC/C switched on, cyclin B is being destroyed, and that is what ends mitosis.');
+        }
+
+        // ---- captions ----
+        el.cellCap.innerHTML = cellCaption(d);
+        el.traceCap.innerHTML = traceCaption(d);
+
+        // ---- last division ----
+        if (lastDiv) {
+          var L = lastDiv;
+          el.dvMut.textContent = F.dec(L.mut * 100, 1) + '%';
+          el.dvMutBox.className = 'readout span2' + (L.mut > 0.05 ? ' is-bad' : ' is-ok');
+          el.dvRep.textContent = F.dec(L.rep * 100, 0) + '%';
+          el.dvRepBox.className = 'readout' + (L.under ? ' is-bad' : ' is-ok');
+          el.dvKaryo.textContent = L.karyo[0] + ' and ' + L.karyo[1];
+          el.dvKaryoBox.className = 'readout' + (L.aneu ? ' is-bad' : ' is-ok');
+          el.dvKaryoSub.textContent = L.aneu
+            ? 'aneuploid — normal is ' + P.NCHR0 + ' and ' + P.NCHR0
+            : 'normal is ' + P.NCHR0 + ' and ' + P.NCHR0;
+          el.dvNote.className = 'note' + (L.mut > 0.05 || L.under || L.aneu ? ' bad' : '');
+          el.dvNote.innerHTML = verdict(L);
+        }
+
+        // ---- tally ----
+        el.tally.innerHTML = tallyHTML();
+
+        cellCv.paint();
+        traceCv.paint();
+      }
+
+      function cellCaption(d) {
+        if (d.g1Hold) {
+          return '<strong>Arrested in G<sub>1</sub>.</strong> The cell is not broken and not dying — it is '
+            + 'repairing. p53 has raised p21, p21 is sitting on cyclin E–CDK2, and S phase cannot start.';
+        }
+        if (d.g2Hold) {
+          return '<strong>Arrested before mitosis.</strong> Cyclin B is already over its threshold; what is '
+            + 'missing is active CDK1. This is the checkpoint working, not the cyclin running out.';
+        }
+        if (d.sacHold) {
+          return '<strong>Arrested at metaphase.</strong> One unattached kinetochore is enough. This is exactly '
+            + 'how spindle drugs such as taxol kill dividing cells.';
+        }
+        if (d.g1Bypass) {
+          return '<strong>Damaged DNA is entering S phase.</strong> Watch the replication forks copy straight '
+            + 'over the lesions — that is how a lesion becomes a permanent mutation.';
+        }
+        if (d.g2Bypass) {
+          return '<strong>Mitosis is starting on an unfinished genome.</strong> Chromosomes that are still being '
+            + 'replicated cannot be pulled apart in one piece.';
+        }
+        if (d.sacBypass) {
+          return '<strong>Anaphase is about to start with kinetochores unattached.</strong> Those chromosomes '
+            + 'will send both sisters to the same pole.';
+        }
+        if (d.inG1 && d.aE < 0.02 && d.m < 0.32) {
+          return '<strong>G<sub>0</sub>.</strong> Without growth factors, cyclin D never accumulates, Rb is '
+            + 'never phosphorylated, and the cell simply does not enter the cycle. Every cyclin here is at zero.';
+        }
+        if (d.inM && (S.sub === 'ana' || S.sub === 'telo')) {
+          return 'Cyclin B is being destroyed by APC/C right now. <strong>That destruction is what ends '
+            + 'mitosis</strong> — not a timer.';
+        }
+        return 'Green markers are checkpoints that are satisfied, amber means one is actively holding the cell, '
+          + 'red means you have switched it off.';
+      }
+
+      function traceCaption(d) {
+        if (S.phase === 'G1') {
+          return 'Cyclin D tracks the growth-factor level. Cyclin E is climbing towards the activity that '
+            + 'starts S phase — currently ' + F.dec(d.aE / P.aEthr * 100, 0) + '% of it.';
+        }
+        if (S.phase === 'S') {
+          return 'Cyclin E is being destroyed now that S has begun; cyclin A drives the forks; cyclin B has '
+            + 'started the climb that will end in mitosis.';
+        }
+        if (S.phase === 'G2') {
+          return 'Cyclin B is at ' + F.dec(S.B / P.Bthr * 100, 0) + '% of its mitotic threshold. Crossing that '
+            + 'dashed line is what starts mitosis — provided the G<sub>2</sub> checkpoint lets CDK1 switch on.';
+        }
+        return 'Watch cyclin B fall off a cliff at anaphase. APC/C tags it for destruction, CDK1 activity '
+          + 'collapses, and the cell leaves mitosis.';
+      }
+
+      function verdict(L) {
+        var bits = [];
+        if (L.holdG1 > 0.2) {
+          bits.push('The G<sub>1</sub> checkpoint held this cell for <strong>' + F.dec(L.holdG1, 1)
+            + ' h</strong> while p53 drove repair, and only ' + F.dec(L.mut * 100, 1)
+            + '% of the genome was copied while damaged. That delay is the checkpoint doing its job.');
+        }
+        if (L.mut > 0.05 && L.holdG1 <= 0.2) {
+          bits.push('<strong>The G<sub>1</sub> checkpoint failure showed up here.</strong> '
+            + F.dec(L.mut * 100, 1) + '% of the genome was replicated while it still carried lesions. Those '
+            + 'lesions are now permanent base changes in <em>both</em> daughters, and no checkpoint can ever '
+            + 'detect them again — they are not damage any more, they are sequence.');
+        }
+        if (L.under) {
+          bits.push('<strong>The G<sub>2</sub> checkpoint failure showed up here.</strong> Mitosis began with '
+            + 'only ' + F.dec(L.rep * 100, 0) + '% of the DNA replicated. Half-copied chromosomes break when '
+            + 'the spindle pulls on them, so each daughter is missing genes outright. This is not a counting '
+            + 'error — it is missing DNA.');
+        } else if (L.holdG2 > 0.2) {
+          bits.push('The G<sub>2</sub> checkpoint held the cell for <strong>' + F.dec(L.holdG2, 1)
+            + ' h</strong> until replication was finished and the damage was repaired, so mitosis began on a '
+            + 'complete, intact genome.');
+        }
+        if (L.aneu) {
+          bits.push('<strong>The spindle checkpoint failure showed up here.</strong> Anaphase started before '
+            + 'every kinetochore was attached, so the daughters got <strong>' + L.karyo[0] + ' and '
+            + L.karyo[1] + '</strong> chromosomes instead of ' + P.NCHR0 + ' and ' + P.NCHR0
+            + '. Every gene is intact and correctly sequenced; there is simply the wrong number of copies. '
+            + 'That is aneuploidy, and it is a different disease from either of the other two.');
+        } else if (L.holdSAC > 0.2) {
+          bits.push('The spindle checkpoint held the cell at metaphase for <strong>' + F.dec(L.holdSAC, 1)
+            + ' h</strong> until the last kinetochore attached, and the chromosomes then divided evenly.');
+        }
+        if (L.nosig) {
+          bits.push('<strong>This division was not requested by anything.</strong> The growth-factor signal was '
+            + 'absent; the cell manufactured its own. Nothing was checked incorrectly here — the accelerator is '
+            + 'jammed on, which is a different kind of fault from a broken checkpoint.');
+        }
+        if (!bits.length) {
+          bits.push('A clean division. Complete genome, no fixed mutations, ' + P.NCHR0 + ' and ' + P.NCHR0
+            + ' chromosomes, and it happened because a growth factor asked for it. Cycle length '
+            + F.dec(L.cycleLen, 1) + ' h.');
+        }
+        return bits.join(' ');
+      }
+
+      function tallyHTML() {
+        var rows = [];
+        if (tally.mut) {
+          rows.push(['hit', tally.mut + ' division' + (tally.mut > 1 ? 's' : '')
+            + ' replicated damaged DNA — up to ' + F.dec(tally.worstMut * 100, 0)
+            + '% of the genome mutated in one cycle (G<sub>1</sub> checkpoint)']);
+        }
+        if (tally.under) {
+          rows.push(['hit', tally.under + ' division' + (tally.under > 1 ? 's' : '')
+            + ' entered mitosis with the genome unfinished — DNA lost (G<sub>2</sub> checkpoint)']);
+        }
+        if (tally.aneu) {
+          rows.push(['hit', tally.aneu + ' division' + (tally.aneu > 1 ? 's' : '')
+            + ' produced aneuploid daughters (spindle assembly checkpoint)']);
+        }
+        if (tally.nosig) {
+          rows.push(['hit', tally.nosig + ' division' + (tally.nosig > 1 ? 's' : '')
+            + ' happened with no growth-factor signal (accelerator jammed on)']);
+        }
+        if (!rows.length) {
+          rows.push(['clean', divisions
+            ? divisions + ' clean division' + (divisions > 1 ? 's' : '') + ' so far. Nothing has gone wrong.'
+            : 'Nothing has gone wrong yet.']);
+        } else {
+          var n = rows.length;
+          rows.push(['hit', '<strong>' + n + ' of 4 distinct defects present in this lineage.</strong> '
+            + (n >= 3
+              ? 'This is what the multi-hit model of cancer looks like: independent faults stacking in one cell line over many divisions.'
+              : 'Still not cancer. Add another independent fault and run it for several more divisions.')]);
+        }
+        return rows.map(function (r) {
+          return '<li class="' + r[0] + '"><span class="tk">' + (r[0] === 'hit' ? '!' : '✓')
+            + '</span><span>' + r[1] + '</span></li>';
+        }).join('');
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      reset(true);
+
+      Demo.range('#speedR', function (v) {
+        IN.speed = v;
+        el.speedOut.textContent = F.dec(v, 1) + ' h/s';
+      });
+      Demo.range('#gfR', function (v) {
+        IN.gf = v / 100;
+        el.gfOut.textContent = F.dec(v, 0) + '%';
+      });
+      Demo.range('#doseR', function (v) {
+        IN.dose = v / 100;
+        el.doseOut.textContent = F.dec(v, 0) + '%';
+      });
+      Demo.range('#stressR', function (v) {
+        IN.stress = v / 100;
+        el.stressOut.textContent = F.dec(v, 0) + '%';
+      });
+      Demo.range('#spinR', function (v) {
+        IN.spindle = v / 100;
+        el.spinOut.textContent = F.dec(v, 0) + '%';
+      });
+
+      function syncChecks() {
+        el.lblG1.className = 'check' + (IN.g1ok ? '' : ' broken');
+        el.lblG2.className = 'check' + (IN.g2ok ? '' : ' broken');
+        el.lblSAC.className = 'check' + (IN.sacOk ? '' : ' broken');
+        el.lblGFI.className = 'check' + (IN.gfInd ? ' broken' : '');
+      }
+      el.lblGFI = document.getElementById('lblGFI');
+
+      el.cpG1chk.addEventListener('change', function () { IN.g1ok = this.checked; syncChecks(); render(); });
+      el.cpG2chk.addEventListener('change', function () { IN.g2ok = this.checked; syncChecks(); render(); });
+      el.cpSACchk.addEventListener('change', function () { IN.sacOk = this.checked; syncChecks(); render(); });
+      el.gfIndChk.addEventListener('change', function () { IN.gfInd = this.checked; syncChecks(); render(); });
+
+      el.btnDamage.addEventListener('click', function () {
+        S.dmg = Math.max(S.dmg, IN.dose > 0 ? IN.dose : 0.6);
+        if (IN.dose === 0) {
+          document.getElementById('doseR').value = 60;
+          IN.dose = 0.6;
+          el.doseOut.textContent = '60%';
+        }
+        render();
+      });
+
+      var PRESETS = {
+        normal: { gf: 100, dose: 0, stress: 0, spin: 0, g1: true, g2: true, sac: true, gfi: false },
+        p53: { gf: 100, dose: 100, stress: 0, spin: 0, g1: false, g2: true, sac: true, gfi: false },
+        g2: { gf: 100, dose: 0, stress: 100, spin: 0, g1: true, g2: false, sac: true, gfi: false },
+        sac: { gf: 100, dose: 0, stress: 0, spin: 55, g1: true, g2: true, sac: false, gfi: false },
+        gfi: { gf: 0, dose: 0, stress: 0, spin: 0, g1: true, g2: true, sac: true, gfi: true },
+        multi: { gf: 0, dose: 70, stress: 30, spin: 40, g1: false, g2: true, sac: false, gfi: true }
+      };
+
+      function setSlider(id, val, out, txt) {
+        document.getElementById(id).value = val;
+        el[out].textContent = txt;
+      }
+
+      el.presets.addEventListener('click', function (e) {
+        var b = e.target.closest('button[data-preset]');
+        if (!b) return;
+        var p = PRESETS[b.dataset.preset];
+        if (!p) return;
+        Array.prototype.forEach.call(el.presets.querySelectorAll('button'), function (o) {
+          o.className = 'btn' + (o === b ? ' is-on' : '');
+        });
+        IN.gf = p.gf / 100; IN.dose = p.dose / 100;
+        IN.stress = p.stress / 100; IN.spindle = p.spin / 100;
+        IN.g1ok = p.g1; IN.g2ok = p.g2; IN.sacOk = p.sac; IN.gfInd = p.gfi;
+        setSlider('gfR', p.gf, 'gfOut', p.gf + '%');
+        setSlider('doseR', p.dose, 'doseOut', p.dose + '%');
+        setSlider('stressR', p.stress, 'stressOut', p.stress + '%');
+        setSlider('spinR', p.spin, 'spinOut', p.spin + '%');
+        el.cpG1chk.checked = p.g1;
+        el.cpG2chk.checked = p.g2;
+        el.cpSACchk.checked = p.sac;
+        el.gfIndChk.checked = p.gfi;
+        syncChecks();
+        reset(true);
+        render();
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        reset(true);
+        render();
+        if (!anim.running) { anim.start(); el.btnRun.textContent = 'Pause'; }
+      });
+
+      // ==================================================================
+      // LOOP
+      // ==================================================================
+      var anim = Demo.loop(function (dt) {
+        var span = dt * IN.speed;          // simulated hours this frame
+        var hStep = 0.01;
+        var nSteps = Math.ceil(span / hStep);
+        if (nSteps > 400) { nSteps = 400; hStep = span / 400; }
+        for (var i = 0; i < nSteps; i++) {
+          step(hStep);
+          sample(false);
+        }
+        render();
+      });
+
+      el.btnRun.addEventListener('click', function () {
+        anim.toggle();
+        this.textContent = anim.running ? 'Pause' : 'Run';
+      });
+
+      syncChecks();
+      render();
+      anim.start();
+    })();
+  </script>
+</body>
+
+</html>

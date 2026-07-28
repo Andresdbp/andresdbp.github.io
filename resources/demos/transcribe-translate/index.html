@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Transcribe and Translate | Dr. Andres Barboza</title>
+  <meta name="description" content="Step a real short gene from DNA to protein: the template strand read 3' to 5', mRNA built 5' to 3', introns spliced out in the nucleus, then codon-by-codon translation at a ribosome in the cytoplasm. Edit the DNA and re-run.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: sequence viewers, the codon table grid, chips */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 7px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* ---------- sequence viewers ---------- */
+    .seqbox { margin-top: 13px; }
+    .seq-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 8px; margin-bottom: 5px;
+    }
+    .seq-title {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .seq-meta {
+      font-size: 11px; color: var(--muted);
+      font-variant-numeric: tabular-nums; white-space: nowrap;
+    }
+    .seq {
+      display: flex; flex-wrap: wrap; align-items: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px; line-height: 1.3;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      padding: 7px 8px;
+      min-height: 38px;
+    }
+    .seq .empty {
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 12px; color: var(--muted);
+    }
+
+    /* DNA: one column per base pair, coding on top, template below */
+    .seq .bp, .seq .cap { flex: none; width: 11px; text-align: center; }
+    .seq .cap { width: 16px; }
+    .seq .bp b, .seq .cap b { display: block; font-weight: 600; color: var(--text-2); }
+    .seq .bp i, .seq .cap i { display: block; font-style: normal; color: var(--muted); }
+    .seq .cap b, .seq .cap i { color: var(--accent-strong); font-weight: 700; font-size: 10px; }
+    .seq .bp.intr { background: var(--warn-soft); }
+    .seq .bp.intr b, .seq .bp.intr i { color: var(--warn); }
+    .seq .bp.read b { color: var(--text); }
+    .seq .bp.read i { color: var(--accent-strong); font-weight: 600; }
+    .seq .bp.cursor { background: var(--accent); border-radius: 3px; }
+    .seq .bp.cursor b, .seq .bp.cursor i { color: #fff; font-weight: 700; }
+
+    /* single-strand RNA */
+    .seq .b { flex: none; width: 10px; text-align: center; color: var(--text-2); }
+    .seq .b.intr { color: var(--warn); background: var(--warn-soft); }
+    .seq .b.cut { opacity: 0.4; text-decoration: line-through; }
+    .seq .b.now { background: var(--accent); color: #fff; border-radius: 3px; font-weight: 700; }
+    .seq .u { flex: none; width: 10px; text-align: center; color: var(--muted); }
+
+    /* mature mRNA: boxed codons so the reading frame is a visible object */
+    .seq .codon {
+      flex: none; display: inline-block;
+      padding: 1px 3px; margin: 1.5px; border-radius: 5px;
+      border: 1px solid var(--line); color: var(--text-2);
+      letter-spacing: 0.04em;
+    }
+    .seq .codon.start { border-color: var(--ok); color: var(--ok); font-weight: 700; }
+    .seq .codon.stopc { border-color: var(--bad); color: var(--bad); font-weight: 700; }
+    .seq .codon.done { background: var(--surface); color: var(--muted); border-color: var(--line-soft); }
+    .seq .codon.hot {
+      background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 700;
+    }
+
+    .chip {
+      flex: none;
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 9.5px; font-weight: 600;
+      padding: 2px 7px; border-radius: 20px; margin: 0 4px;
+      white-space: nowrap;
+    }
+    .chip.cap5 { background: var(--accent-soft); color: var(--accent-strong); }
+    .chip.tailA { background: var(--ok-soft); color: var(--ok); }
+
+    /* protein */
+    .aa {
+      flex: none;
+      font-family: 'Poppins', system-ui, sans-serif;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 7px; margin: 2px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--line); color: var(--text-2);
+    }
+    .aa.first { border-color: var(--ok); color: var(--ok); }
+    .aa.newest { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .aa.stopmark { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+    .oneletter {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px; color: var(--muted); margin-top: 6px; word-break: break-all;
+    }
+
+    /* ---------- the genetic code, all 64 codons ---------- */
+    .ctable {
+      display: grid;
+      grid-template-columns: 15px repeat(4, minmax(0, 1fr));
+      gap: 2px;
+      font-size: 9px;
+      line-height: 1.25;
+    }
+    .ctable .hd {
+      font-size: 9px; font-weight: 700; color: var(--muted);
+      text-align: center; padding-bottom: 2px;
+    }
+    .ctable .gut {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ctable .cell {
+      border: 1px solid var(--line-soft); border-radius: 4px;
+      padding: 2px 1px; text-align: center;
+      color: var(--text-2); white-space: nowrap; overflow: hidden;
+    }
+    .ctable .cell b {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 700;
+    }
+    .ctable .cell.isStart { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+    .ctable .cell.isStop { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); }
+    .ctable .cell.hot { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ---------- misc ---------- */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .btn.tiny { font-size: 11.5px; padding: 6px 9px; }
+    .seqinput {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px; letter-spacing: 0.04em;
+    }
+    .seqinput.is-warn { border-color: var(--warn); }
+    .lbl-row {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 8px; margin-bottom: 3px;
+    }
+    .lbl-row .ctrl-label { font-size: 12px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+    .legend .lg i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; flex: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Transcribe and Translate</h1>
+        <p class="demo-sub">Press Play and watch one gene become one protein. Then press Step and go one base at a time: notice which strand the polymerase is actually reading, and which way each new molecule grows.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 6</span>
+          <span class="tag is-accent">Gene expression</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="stageLabel">Step 1 of 5 <span>&mdash; the gene, in the nucleus</span></p>
+        <canvas id="cell" role="img"
+                aria-label="A cell drawn in two compartments. The nucleus on top holds the double-stranded gene, RNA polymerase and the growing pre-mRNA; the cytoplasm below holds the ribosome, the incoming tRNA and the growing polypeptide. A nuclear pore joins them."></canvas>
+        <p class="stage-caption" id="cellCap">&nbsp;</p>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--accent)"></i>exon &mdash; kept</span>
+          <span class="lg"><i style="background:var(--warn)"></i>intron &mdash; cut out</span>
+          <span class="lg"><i style="background:var(--series-3)"></i>RNA</span>
+          <span class="lg"><i style="background:var(--series-4)"></i>tRNA</span>
+        </div>
+
+        <div class="seqbox">
+          <div class="seq-head">
+            <span class="seq-title">DNA &mdash; the gene (nucleus)</span>
+            <span class="seq-meta" id="dnaMeta">178 bp</span>
+          </div>
+          <div class="seq" id="dnaSeq"></div>
+          <p class="ctrl-hint" style="margin-top:5px">
+            Top row = <strong>coding (sense) strand, 5'&rarr;3'</strong>. Bottom row =
+            <strong>template (antisense) strand, 3'&rarr;5'</strong>. Only the bottom row is read.
+            The polymerase walks left to right, which is from the template's 3' end toward its 5' end.
+          </p>
+        </div>
+
+        <div class="seqbox">
+          <div class="seq-head">
+            <span class="seq-title">Pre-mRNA &mdash; first draft (nucleus)</span>
+            <span class="seq-meta" id="preMeta">0 nt</span>
+          </div>
+          <div class="seq" id="preSeq"></div>
+        </div>
+
+        <div class="seqbox">
+          <div class="seq-head">
+            <span class="seq-title">Mature mRNA &mdash; what leaves the nucleus</span>
+            <span class="seq-meta" id="matMeta">&mdash;</span>
+          </div>
+          <div class="seq" id="matSeq"></div>
+          <p class="ctrl-hint" style="margin-top:5px">
+            Grey letters are untranslated regions (UTRs) &mdash; they are on the mRNA but outside the reading
+            frame. Boxed triplets are codons. The frame is set by the first <strong>AUG</strong>, not by base 1.
+          </p>
+        </div>
+
+        <div class="seqbox">
+          <div class="seq-head">
+            <span class="seq-title">Polypeptide (cytoplasm)</span>
+            <span class="seq-meta" id="protMeta">&mdash;</span>
+          </div>
+          <div class="seq" id="protSeq"></div>
+          <p class="oneletter" id="protLetters">&nbsp;</p>
+        </div>
+
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Run it</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnPlay">Play</button>
+              <button class="btn" id="btnStep">Step</button>
+              <button class="btn" id="btnReset">Reset</button>
+            </div>
+            <p class="ctrl-hint">
+              <strong>Step</strong> adds one nucleotide during transcription and one codon during translation.
+              Use it to check the base-pairing rule yourself.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="speed">Speed</label>
+                <span class="ctrl-value" id="speedOut">10 nt/s</span>
+              </div>
+              <input type="range" id="speed" min="2" max="24" step="1" value="10">
+            </div>
+
+            <hr class="sep">
+            <div class="btn-row" id="jump">
+              <button class="btn tiny" data-ph="0">1 Gene</button>
+              <button class="btn tiny" data-ph="1">2 Transcribe</button>
+              <button class="btn tiny" data-ph="2">3 Splice</button>
+              <button class="btn tiny" data-ph="3">4 Export</button>
+              <button class="btn tiny" data-ph="4">5 Translate</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What is happening right now</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Where in the cell</div>
+              <div class="r-value" id="rWhere">Nucleus</div>
+              <div class="r-sub" id="rStep">the gene is sitting in the chromosome</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Codon at the ribosome</div>
+              <div class="r-value" id="rCodon">&mdash;</div>
+              <div class="r-sub" id="rCodonSub">translation has not started</div>
+            </div>
+          </div>
+          <p class="note" id="noteNow" style="margin-top:11px">
+            Press <strong>Play</strong> to start, or <strong>Step</strong> to move one base at a time.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Lengths &mdash; the introns are the point</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Gene (DNA)</div>
+              <div class="r-value" id="rGene">178<span class="r-unit">bp</span></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Pre-mRNA</div>
+              <div class="r-value" id="rPre">178<span class="r-unit">nt</span></div>
+            </div>
+            <div class="readout is-bad">
+              <div class="r-label">Introns cut out</div>
+              <div class="r-value" id="rCut">57<span class="r-unit">nt</span></div>
+            </div>
+            <div class="readout is-accent">
+              <div class="r-label">Mature mRNA</div>
+              <div class="r-value" id="rMature">121<span class="r-unit">nt</span></div>
+            </div>
+            <div class="readout is-ok span2">
+              <div class="r-label">Protein</div>
+              <div class="r-value" id="rProt">27<span class="r-unit">amino acids</span></div>
+              <div class="r-sub" id="rProtSub">27 codons of protein, plus one stop codon that codes for nothing</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            The mRNA that reaches the ribosome is shorter than the gene. Introns are transcribed and
+            <em>then</em> thrown away, inside the nucleus, before the mRNA is allowed out.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Edit the DNA (coding strand, 5'&rarr;3')</div>
+          <div class="stack">
+            <div>
+              <div class="lbl-row"><label class="ctrl-label" for="e1">Exon 1</label><span class="seq-meta" id="m1">39 nt</span></div>
+              <input type="text" id="e1" class="seqinput" spellcheck="false" autocomplete="off" autocapitalize="off">
+            </div>
+            <div>
+              <div class="lbl-row"><label class="ctrl-label" for="i1">Intron 1</label><span class="seq-meta" id="m2">25 nt</span></div>
+              <input type="text" id="i1" class="seqinput" spellcheck="false" autocomplete="off" autocapitalize="off">
+            </div>
+            <div>
+              <div class="lbl-row"><label class="ctrl-label" for="e2">Exon 2</label><span class="seq-meta" id="m3">33 nt</span></div>
+              <input type="text" id="e2" class="seqinput" spellcheck="false" autocomplete="off" autocapitalize="off">
+            </div>
+            <div>
+              <div class="lbl-row"><label class="ctrl-label" for="i2">Intron 2</label><span class="seq-meta" id="m4">32 nt</span></div>
+              <input type="text" id="i2" class="seqinput" spellcheck="false" autocomplete="off" autocapitalize="off">
+            </div>
+            <div>
+              <div class="lbl-row"><label class="ctrl-label" for="e3">Exon 3</label><span class="seq-meta" id="m5">49 nt</span></div>
+              <input type="text" id="e3" class="seqinput" spellcheck="false" autocomplete="off" autocapitalize="off">
+            </div>
+            <p class="ctrl-hint">
+              Only A, C, G and T are accepted. Every edit rebuilds the gene and rewinds to step 1.
+              An intron is only spliced out if it starts with <strong>GT</strong> and ends with
+              <strong>AG</strong> in the DNA (GU&hellip;AG in the RNA) &mdash; that is the real signal the
+              spliceosome looks for.
+            </p>
+            <p class="note" id="noteSplice">&nbsp;</p>
+            <p class="note" id="noteFrame">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Try these</div>
+          <div class="btn-row" id="presets">
+            <button class="btn tiny is-on" data-p="wt">Normal gene</button>
+            <button class="btn tiny" data-p="sickle">Sickle-cell (A&rarr;T)</button>
+            <button class="btn tiny" data-p="del">Delete one base</button>
+            <button class="btn tiny" data-p="splice">Break a splice site</button>
+            <button class="btn tiny" data-p="nointron">No introns</button>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px" id="presetHint">
+            The normal gene is the first 27 codons of the human &beta;-globin gene (<em>HBB</em>), shortened.
+            The protein it makes really is MVHLTPEEKSAVTALWGKVNVDEVGGE.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The genetic code &mdash; all 64 codons</div>
+          <div class="ctable" id="ctable"></div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Read as mRNA, 5'&rarr;3'. Row group = 1st base, column = 2nd base, row within a group = 3rd base.
+            Green = the start codon <strong>AUG</strong> (which also codes for methionine anywhere else in the
+            message). Red = the three stop codons, <strong>UAA</strong>, <strong>UAG</strong>,
+            <strong>UGA</strong>, which code for no amino acid at all. The highlighted cell is the codon
+            currently sitting in the ribosome.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>This gene is a shortened one.</strong> Real <em>HBB</em> is about 1600 bp with three exons
+            and two introns of 130 and 850 bases &mdash; the introns are far bigger than the exons, which is
+            normal for a human gene. Everything here is scaled down so it fits on a screen, but the first 27
+            codons and the GU&hellip;AG splice signals are real.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. The promoter, the TATA box, transcription factors and the termination signal
+            are not modelled &mdash; transcription just starts at base 1 of the gene and stops at the end. One
+            polymerase is drawn; a busy gene carries many at once. The 5' cap and the poly-A tail are drawn as
+            symbols, not as sequence, and they are added by the cell rather than copied from the DNA.
+            Splicing is decided here by the GU&hellip;AG ends alone; a real spliceosome also needs a branch
+            point and a polypyrimidine tract, and can use different exon combinations
+            (alternative splicing) from the same gene. Exon and intron boundaries are placed on whole codons
+            here; in real genes an intron often interrupts a codon. The standard genetic code is used &mdash;
+            mitochondria and a few organisms read a handful of codons differently. And this is a eukaryote:
+            a bacterium has no nucleus, no splicing, and ribosomes that start translating an mRNA while it is
+            still being transcribed.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students collapse transcription and translation into one blurry
+        process called "making a protein". Ask them which strand is read and they say "the DNA". Ask which
+        direction anything is built and they shrug. Ask where it happens and they say "in the cell". Those
+        three questions have exact answers, and the answers are what the whole unit is about.
+      </p>
+      <p>
+        <strong>Which strand.</strong> A gene has two strands and only one of them is copied. RNA polymerase
+        reads the <strong>template</strong> (antisense) strand and builds an RNA that is complementary to it
+        &mdash; which means the RNA ends up matching the <em>other</em> strand, the coding (sense) strand,
+        with U wherever that strand has T. Step through transcription one base at a time and watch the
+        readout: template C gives RNA G, template A gives RNA U, template T gives RNA A. Then compare the
+        mRNA with the top row of the DNA. Identical, except T became U. That is why the top strand is called
+        the sense strand &mdash; and it is also why students who "read the top strand" get the right letters
+        for the wrong reason and then fall apart the moment a question asks them to write the template.
+      </p>
+      <p>
+        <strong>Which direction.</strong> The two strands run antiparallel, so if the coding strand reads
+        5'&rarr;3' left to right, the template reads 3'&rarr;5' left to right. The polymerase moves left to
+        right in this picture, which means it is travelling along the template from that strand's 3' end
+        toward its 5' end &mdash; and every new nucleotide is added to the 3' end of the growing RNA, so the
+        RNA itself is built 5'&rarr;3'. Same rule at the ribosome: the mRNA is read 5'&rarr;3', and the
+        polypeptide grows from its N-terminus toward its C-terminus. Nothing in a cell is ever built
+        3'&rarr;5'.
+      </p>
+      <p>
+        <strong>Where.</strong> The DNA never leaves the nucleus. Watch it stay there for the whole run while
+        a copy goes out. Transcription, splicing, capping and tailing all happen inside; only the finished
+        mRNA is exported through a nuclear pore; and the ribosome that reads it is out in the cytoplasm. That
+        separation is precisely what an intron is for. The pre-mRNA here is 178 nucleotides, the same length
+        as the gene. Fifty-seven of those nucleotides are intron, and they are cut out <em>before</em> export,
+        so what arrives at the ribosome is 121 nucleotides. Transcription copies everything; the cell edits
+        afterwards. In a bacterium, which has no nucleus, there is no room for that step &mdash; and,
+        accordingly, essentially no introns.
+      </p>
+      <p>
+        <strong>Where the frame comes from.</strong> The reading frame is not "start at the beginning". The
+        first 18 bases of this mRNA are a 5' UTR and are never translated; the ribosome scans until it finds
+        the first <strong>AUG</strong> and counts in threes from there. Edit the sequence and the frame is
+        re-derived every time. That is what makes the presets bite: <em>Delete one base</em> removes a single
+        nucleotide from exon 2 and every codon downstream is misread, producing a stop codon early and a
+        18-amino-acid fragment instead of a 27-amino-acid protein. <em>Break a splice site</em> changes one G
+        to an A at the start of intron 1, so the spliceosome cannot see the intron, the intron stays in the
+        message, and the protein is wrecked from residue 8 onward. That is not a made-up scenario &mdash;
+        splice-site mutations in this exact gene cause &beta;-thalassemia.
+      </p>
+      <p>
+        <strong>And the smallest change of all.</strong> Press <em>Sickle-cell</em>. One base changes, A to T,
+        in the seventh codon: GAG becomes GTG, and glutamate becomes valine. Length unchanged, every other
+        amino acid unchanged, splicing unchanged. That single substitution is sickle-cell disease. Compare it
+        with <em>Delete one base</em>, where the protein is destroyed, and you have the difference between a
+        substitution and a frameshift in one click.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // THE STANDARD GENETIC CODE — generated, then spot-checked by hand
+      //
+      //   index = 16*b1 + 4*b2 + b3  with the bases ordered U, C, A, G
+      //   against the NCBI translation table 1 string. Checks:
+      //     UUU=Phe  AUG=Met  UAA/UAG/UGA=Stop  GUG=Val  CAC=His
+      //     CUG=Leu  ACU=Thr  CCU=Pro  GAG=Glu  AAG=Lys  UGG=Trp
+      // ==================================================================
+      var B4 = ['U', 'C', 'A', 'G'];
+      var AAS = 'FFLLSSSSYY**CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG';
+      var CODE = {};
+      (function () {
+        for (var a = 0; a < 4; a++) {
+          for (var b = 0; b < 4; b++) {
+            for (var d = 0; d < 4; d++) {
+              CODE[B4[a] + B4[b] + B4[d]] = AAS.charAt(16 * a + 4 * b + d);
+            }
+          }
+        }
+      })();
+
+      var THREE = {
+        F: 'Phe', L: 'Leu', I: 'Ile', M: 'Met', V: 'Val', S: 'Ser', P: 'Pro',
+        T: 'Thr', A: 'Ala', Y: 'Tyr', H: 'His', Q: 'Gln', N: 'Asn', K: 'Lys',
+        D: 'Asp', E: 'Glu', C: 'Cys', W: 'Trp', R: 'Arg', G: 'Gly', '*': 'Stop'
+      };
+      var FULLNAME = {
+        F: 'phenylalanine', L: 'leucine', I: 'isoleucine', M: 'methionine', V: 'valine',
+        S: 'serine', P: 'proline', T: 'threonine', A: 'alanine', Y: 'tyrosine',
+        H: 'histidine', Q: 'glutamine', N: 'asparagine', K: 'lysine', D: 'aspartate',
+        E: 'glutamate', C: 'cysteine', W: 'tryptophan', R: 'arginine', G: 'glycine'
+      };
+      var COMP = { A: 'T', T: 'A', C: 'G', G: 'C' };
+
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      // ==================================================================
+      // THE GENE — the first 27 codons of human beta-globin (HBB),
+      // shortened, with its real 5' UTR tail and two GT..AG introns.
+      //   exon1 = 18 nt of 5' UTR + codons 1-7
+      //   exon2 = codons 8-18
+      //   exon3 = codons 19-27 + UAA stop + 19 nt of 3' UTR
+      // Verified by hand: mature mRNA 121 nt, first AUG at index 18,
+      // peptide MVHLTPEEKSAVTALWGKVNVDEVGGE then UAA.
+      // ==================================================================
+      var WT = {
+        e1: 'ACATTTGCTTCTGACACCATGGTGCACCTGACTCCTGAG',
+        i1: 'GTTGGTATCAAGGTTACAAGACAAG',
+        e2: 'GAGAAGTCTGCCGTTACTGCCCTGTGGGGCAAG',
+        i2: 'GTGAGTCTATGGGACCCTTGAGGTTCTTTTAG',
+        e3: 'GTGAACGTGGATGAAGTTGGTGGTGAGTAAGCTCGCTTTCTTGCTGTCC'
+      };
+
+      var PRESETS = {
+        wt: { seq: WT, hint: 'The normal gene is the first 27 codons of the human &beta;-globin gene (<em>HBB</em>), shortened. The protein it makes really is MVHLTPEEKSAVTALWGKVNVDEVGGE.' },
+        sickle: {
+          seq: { e1: WT.e1.slice(0, -3) + 'GTG', i1: WT.i1, e2: WT.e2, i2: WT.i2, e3: WT.e3 },
+          hint: 'One base changed, A&rarr;T, in codon 7: GAG&rarr;GTG, so glutamate becomes valine. Same length, same splicing, one different amino acid. That is sickle-cell disease.'
+        },
+        del: {
+          seq: { e1: WT.e1, i1: WT.i1, e2: WT.e2.slice(1), i2: WT.i2, e3: WT.e3 },
+          hint: 'One nucleotide deleted from the start of exon 2. Everything downstream is read in the wrong frame, a UGA appears early, and the protein stops at 18 amino acids.'
+        },
+        splice: {
+          seq: { e1: WT.e1, i1: 'A' + WT.i1.slice(1), e2: WT.e2, i2: WT.i2, e3: WT.e3 },
+          hint: 'The first G of intron 1 is now an A, so the intron no longer begins GT. The spliceosome cannot see it, the intron stays in the mRNA, and the frame collapses after residue 7. Splice-site mutations in this gene cause &beta;-thalassemia.'
+        },
+        nointron: {
+          seq: { e1: WT.e1, i1: '', e2: WT.e2, i2: '', e3: WT.e3 },
+          hint: 'With no introns the pre-mRNA and the mature mRNA are the same length &mdash; nothing is cut out. This is roughly how a bacterial gene behaves. The protein is unchanged.'
+        }
+      };
+
+      // ==================================================================
+      // STATE
+      //   Everything drawn is a pure function of (sequence, ph, prog).
+      //   ph 0 gene | 1 transcription | 2 splicing | 3 export | 4 translation | 5 done
+      // ==================================================================
+      var ST = {
+        e1: WT.e1, i1: WT.i1, e2: WT.e2, i2: WT.i2, e3: WT.e3,
+        ph: 0, prog: 0, speed: 10, preset: 'wt'
+      };
+
+      function build() {
+        var defs = [
+          ['exon', ST.e1], ['intron', ST.i1], ['exon', ST.e2],
+          ['intron', ST.i2], ['exon', ST.e3]
+        ];
+        var segs = [], coding = '', pos = 0, j, i;
+        for (j = 0; j < defs.length; j++) {
+          var sq = defs[j][1] || '';
+          var isIntron = defs[j][0] === 'intron';
+          var ok = isIntron && sq.length >= 4 &&
+                   sq.slice(0, 2) === 'GT' && sq.slice(-2) === 'AG';
+          segs.push({
+            kind: defs[j][0], seq: sq, start: pos, len: sq.length,
+            ok: ok, spliced: ok, num: isIntron ? (j === 1 ? 1 : 2) : (j / 2 + 1)
+          });
+          pos += sq.length;
+          coding += sq;
+        }
+
+        var template = '', pre = '';
+        for (i = 0; i < coding.length; i++) {
+          template += COMP[coding.charAt(i)];
+          pre += coding.charAt(i) === 'T' ? 'U' : coding.charAt(i);
+        }
+
+        var segOf = new Array(coding.length);
+        for (j = 0; j < segs.length; j++) {
+          for (i = 0; i < segs[j].len; i++) segOf[segs[j].start + i] = segs[j];
+        }
+
+        var mature = '', mapIdx = [], cut = 0;
+        for (i = 0; i < pre.length; i++) {
+          if (segOf[i].spliced) { cut++; }
+          else { mature += pre.charAt(i); mapIdx.push(i); }
+        }
+
+        var start = mature.indexOf('AUG');
+        var codons = [], hitStop = false, p;
+        if (start >= 0) {
+          for (p = start; p + 3 <= mature.length; p += 3) {
+            var cd = mature.substr(p, 3);
+            var aa = CODE[cd];
+            codons.push({ c: cd, aa: aa, pos: p });
+            if (aa === '*') { hitStop = true; break; }
+          }
+        }
+        var protLen = 0;
+        for (i = 0; i < codons.length; i++) if (codons[i].aa !== '*') protLen++;
+
+        return {
+          segs: segs, segOf: segOf, coding: coding, template: template, pre: pre,
+          mature: mature, mapIdx: mapIdx, cut: cut,
+          start: start, orfEnd: start >= 0 ? start + codons.length * 3 : -1,
+          codons: codons, hitStop: hitStop, protLen: protLen
+        };
+      }
+
+      // Built before the canvas exists, so the first paint always has a model.
+      var MODEL = build();
+
+      function matureReady() { return ST.ph >= 3 || (ST.ph === 2 && ST.prog >= 0.5); }
+
+      function ntDone() {
+        if (ST.ph === 0) return 0;
+        if (ST.ph === 1) return Math.min(Math.floor(ST.prog), MODEL.coding.length);
+        return MODEL.coding.length;
+      }
+      function codDone() {
+        if (ST.ph < 4) return 0;
+        if (ST.ph === 4) return Math.min(Math.floor(ST.prog), MODEL.codons.length);
+        return MODEL.codons.length;
+      }
+
+      // ==================================================================
+      // CANVAS — the cell, in two compartments
+      // ==================================================================
+      function rr(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function tag(ctx, c, x, y, txt, fs, col, bg) {
+        ctx.font = '700 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        ctx.fillStyle = bg;
+        rr(ctx, x - tw / 2 - 4, y - fs - 2, tw + 8, fs + 6, 4);
+        ctx.fill();
+        ctx.fillStyle = col;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(txt, x, y + 1);
+      }
+
+      var cv = Demo.canvas('#cell', function (ctx, w, h, c) {
+        var M = MODEL;
+        var fs = w < 430 ? 8.4 : 9.6;
+        var nucB = Math.round(Math.max(140, h * 0.50));
+        var poreX = Math.round(w * 0.72);
+        var loc = ST.ph <= 2 ? 'nuc' : (ST.ph === 3 ? 'pore' : 'cyt');
+        var i, x;
+
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+
+        // ---- compartments ----
+        rr(ctx, 1, 1, w - 2, h - 2, 14);
+        ctx.fillStyle = c.surface2; ctx.fill();
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1; ctx.stroke();
+
+        rr(ctx, 8, 8, w - 16, nucB - 8, 13);
+        ctx.fillStyle = c.surface; ctx.fill();
+        ctx.strokeStyle = loc === 'nuc' ? c.accent : c.line;
+        ctx.lineWidth = 2; ctx.stroke();
+        rr(ctx, 13, 13, w - 26, nucB - 18, 9);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1; ctx.stroke();
+
+        // nuclear pore: an actual opening in the envelope
+        ctx.fillStyle = c.surface; ctx.fillRect(poreX - 11, nucB - 7, 22, 7);
+        ctx.fillStyle = c.surface2; ctx.fillRect(poreX - 11, nucB, 22, 7);
+        ctx.fillStyle = loc === 'pore' ? c.accent : c.muted;
+        rr(ctx, poreX - 15, nucB - 7, 4, 14, 2); ctx.fill();
+        rr(ctx, poreX + 11, nucB - 7, 4, 14, 2); ctx.fill();
+
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.font = '700 ' + fs + FONT;
+        ctx.fillStyle = loc === 'nuc' || loc === 'pore' ? c.accentStrong : c.muted;
+        ctx.fillText('NUCLEUS', 17, 12);
+        ctx.fillStyle = loc === 'cyt' ? c.accentStrong : c.muted;
+        ctx.fillText('CYTOPLASM', 17, nucB + 9);
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center';
+        ctx.fillText('nuclear pore', poreX, nucB + 10);
+
+        // ==================== inside the nucleus ====================
+        var gx0 = 30, gx1 = w - 30, gw = gx1 - gx0;
+        var N = Math.max(1, M.coding.length);
+        var yC = 44, yT = 57, yR = 96;
+        var nt = ntDone();
+
+        ctx.save();
+        if (ST.ph >= 4) ctx.globalAlpha = 0.34;
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('coding (sense) strand', gx0, 34);
+        ctx.fillText('template (antisense) strand — the one that is read', gx0, 74);
+
+        // the two strands, exon/intron segmented
+        for (i = 0; i < M.segs.length; i++) {
+          var s = M.segs[i];
+          if (!s.len) continue;
+          x = gx0 + gw * s.start / N;
+          var sw = Math.max(1.5, gw * s.len / N);
+          var col = s.kind === 'exon' ? c.accent : c.warn;
+          ctx.globalAlpha *= 0.5;
+          ctx.fillStyle = col; ctx.fillRect(x, yC - 4, sw, 8);
+          ctx.globalAlpha /= 0.5;
+          ctx.fillStyle = col; ctx.fillRect(x, yT - 4, sw, 8);
+        }
+        // how much of the template has been read
+        if (nt > 0) {
+          ctx.fillStyle = c.accentStrong;
+          ctx.fillRect(gx0, yT - 6, gw * nt / N, 12);
+          ctx.globalAlpha *= 0.35;
+          ctx.fillStyle = c.text;
+          ctx.fillRect(gx0, yT - 6, gw * nt / N, 12);
+          ctx.globalAlpha /= 0.35;
+        }
+
+        // strand polarity labels
+        ctx.font = '700 ' + (fs - 0.4) + FONT;
+        ctx.fillStyle = c.text2;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.fillText("5'", gx0 - 5, yC);
+        ctx.fillText("3'", gx0 - 5, yT);
+        ctx.textAlign = 'left';
+        ctx.fillText("3'", gx1 + 5, yC);
+        ctx.fillText("5'", gx1 + 5, yT);
+
+        // direction arrow along the template
+        if (ST.ph >= 1) {
+          ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.2;
+          var ay = 68, a0 = gx0 + 4, a1 = gx0 + Math.min(gw - 6, 54);
+          ctx.beginPath(); ctx.moveTo(a0, ay); ctx.lineTo(a1, ay);
+          ctx.moveTo(a1 - 4, ay - 3); ctx.lineTo(a1, ay); ctx.lineTo(a1 - 4, ay + 3);
+          ctx.stroke();
+        }
+
+        // ---- the RNA ----
+        var rnaCol = c.series[2];
+        if (ST.ph === 1) {
+          if (nt > 0) {
+            ctx.strokeStyle = rnaCol; ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.moveTo(gx0, yR); ctx.lineTo(gx0 + gw * nt / N, yR);
+            ctx.stroke();
+          }
+          ctx.font = '700 ' + (fs - 0.4) + FONT;
+          ctx.fillStyle = rnaCol;
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText("5'", gx0 - 5, yR);
+          ctx.textAlign = 'left';
+          ctx.font = (fs - 0.6) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('pre-mRNA, built 5\'→3\'', gx0, yR - 10);
+
+          // RNA polymerase
+          var px = gx0 + gw * nt / N;
+          rr(ctx, px - 15, 36, 30, 30, 9);
+          ctx.fillStyle = c.surface2; ctx.fill();
+          ctx.strokeStyle = c.accent; ctx.lineWidth = 2; ctx.stroke();
+          ctx.font = '700 ' + (fs - 1.2) + FONT;
+          ctx.fillStyle = c.accentStrong;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('POL', px, 51);
+        } else if (ST.ph === 2) {
+          // splicing: exons slide together, introns drop out.
+          // From step 4 on there is no RNA left in the nucleus — the copy
+          // has gone out through the pore, which is the whole point.
+          var u = Demo.clamp(ST.prog, 0, 1);
+          var matN = Math.max(1, M.mature.length);
+          var packed = 0, k;
+          var drawn = [];
+          for (i = 0; i < M.segs.length; i++) {
+            var g = M.segs[i];
+            if (!g.len) continue;
+            var preX = gx0 + gw * g.start / N;
+            var preW = gw * g.len / N;
+            if (g.spliced) {
+              drawn.push({ x: preX, w: preW, y: yR + 26 * u, a: 1 - u, col: c.warn });
+            } else {
+              var mtX = gx0 + gw * packed / N;
+              packed += g.len;
+              drawn.push({
+                x: Demo.lerp(preX, mtX, u), w: preW,
+                y: yR, a: 1, col: g.kind === 'exon' ? rnaCol : c.warn
+              });
+            }
+          }
+          for (k = 0; k < drawn.length; k++) {
+            var d = drawn[k];
+            if (d.a <= 0.02) continue;
+            ctx.save();
+            ctx.globalAlpha *= d.a;
+            ctx.strokeStyle = d.col; ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x + d.w, d.y); ctx.stroke();
+            ctx.restore();
+          }
+          ctx.font = (fs - 0.6) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(u < 0.9 ? 'splicing: introns looped out and discarded'
+                               : 'mature mRNA — shorter than the gene', gx0, yR - 10);
+          if (u > 0.35) {
+            ctx.font = '700 ' + (fs - 0.4) + FONT;
+            ctx.fillStyle = c.accentStrong;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('cap', gx0 - 13, yR);
+          }
+        }
+        ctx.restore();
+
+        // ==================== export through the pore ====================
+        var yM = nucB + 74;
+        var mx0 = 26, mx1 = w - 26;
+        if (ST.ph === 3) {
+          var t = Demo.clamp(ST.prog, 0, 1);
+          var sx = gx0 + gw * (M.mature.length / N) / 2, sy = yR;
+          var ex = (mx0 + mx1) / 2, ey = yM;
+          var cxp = poreX, cyp = nucB;
+          var bx = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cxp + t * t * ex;
+          var by = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cyp + t * t * ey;
+          var bw = gw * M.mature.length / N * (1 - 0.35 * t) + 20 * t;
+          ctx.save();
+          ctx.strokeStyle = c.series[2]; ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(bx - bw / 2, by); ctx.lineTo(bx + bw / 2, by);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // ==================== the cytoplasm ====================
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText('a ribosome reads the mRNA 5\'→3\', three bases at a time', w / 2, h - 11);
+
+        if (ST.ph >= 4) {
+          var matL = Math.max(1, M.mature.length);
+          var k4 = codDone();
+          var frac = ST.ph === 4 ? Demo.clamp(ST.prog - Math.floor(ST.prog), 0, 1) : 1;
+          var cur = M.codons.length ? M.codons[Math.min(k4, M.codons.length - 1)] : null;
+          var basePos = M.start >= 0 ? M.start + (Math.min(k4, Math.max(0, M.codons.length - 1)) + frac) * 3 : 0;
+          var rx = mx0 + (mx1 - mx0) * Demo.clamp(basePos / matL, 0, 1);
+
+          // mRNA strand with a tick per codon
+          ctx.strokeStyle = c.series[2]; ctx.lineWidth = 4;
+          ctx.beginPath(); ctx.moveTo(mx0, yM); ctx.lineTo(mx1, yM); ctx.stroke();
+          ctx.strokeStyle = c.surface2; ctx.lineWidth = 1;
+          for (i = 0; M.start >= 0 && M.start + i * 3 <= M.orfEnd; i++) {
+            x = mx0 + (mx1 - mx0) * (M.start + i * 3) / matL;
+            ctx.beginPath(); ctx.moveTo(x, yM - 2); ctx.lineTo(x, yM + 2); ctx.stroke();
+          }
+          ctx.font = '700 ' + (fs - 0.4) + FONT;
+          ctx.fillStyle = c.series[2];
+          ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText("5'", mx0 - 5, yM);
+          ctx.textAlign = 'left';
+          ctx.fillText("3'", mx1 + 5, yM);
+
+          // growing polypeptide, drawn under the ribosome so it looks extruded
+          var nBeads = Math.min(k4, M.protLen);
+          var pcx = Demo.clamp(rx - 46, mx0 + 44, mx1 - 44), pcy = yM - 40;
+          if (nBeads > 0) {
+            var pts = [];
+            for (i = 0; i < nBeads; i++) {
+              var th = -0.55 - i * 0.62;
+              var rad = 8 + 5.0 * Math.sqrt(i);
+              pts.push([pcx + rad * Math.cos(th), pcy + rad * Math.sin(th) * 0.72]);
+            }
+            ctx.strokeStyle = c.muted; ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            for (i = 0; i < pts.length; i++) {
+              if (i === 0) ctx.moveTo(pts[i][0], pts[i][1]); else ctx.lineTo(pts[i][0], pts[i][1]);
+            }
+            ctx.stroke();
+            for (i = 0; i < pts.length; i++) {
+              ctx.beginPath();
+              ctx.arc(pts[i][0], pts[i][1], 4.6, 0, 6.2832);
+              ctx.fillStyle = i === 0 ? c.ok : c.series[i % 4];
+              ctx.fill();
+            }
+          }
+
+          // ribosome: small subunit under the mRNA, large subunit over it
+          ctx.fillStyle = c.line;
+          ctx.beginPath(); ctx.ellipse(rx, yM + 10, 27, 11, 0, 0, 6.2832); ctx.fill();
+          ctx.save();
+          ctx.globalAlpha = 0.92;
+          ctx.fillStyle = c.lineSoft;
+          ctx.beginPath(); ctx.ellipse(rx, yM - 16, 34, 20, 0, 0, 6.2832); ctx.fill();
+          ctx.restore();
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.ellipse(rx, yM - 16, 34, 20, 0, 0, 6.2832); ctx.stroke();
+          ctx.font = '700 ' + (fs - 1.4) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('ribosome', rx, yM - 30);
+
+          // the tRNA (or a release factor at a stop codon)
+          if (cur && ST.ph === 4) {
+            var slide = (1 - frac) * 46;
+            ctx.save();
+            ctx.globalAlpha = Demo.clamp(0.35 + frac, 0, 1);
+            if (cur.aa === '*') {
+              ctx.fillStyle = c.bad;
+              rr(ctx, rx + 6 + slide, yM - 34, 24, 16, 5); ctx.fill();
+              ctx.font = '700 ' + (fs - 1.6) + FONT;
+              ctx.fillStyle = '#fff';
+              ctx.fillText('RF', rx + 18 + slide, yM - 26);
+            } else {
+              var tx = rx + 10 + slide;
+              ctx.strokeStyle = c.series[3]; ctx.lineWidth = 5;
+              ctx.beginPath();
+              ctx.moveTo(tx, yM - 7);
+              ctx.lineTo(tx + 3, yM - 26);
+              ctx.lineTo(tx + 19, yM - 31);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.arc(tx + 24, yM - 32, 5.4, 0, 6.2832);
+              ctx.fillStyle = c.series[0]; ctx.fill();
+              ctx.font = '700 ' + (fs - 1.6) + FONT;
+              ctx.fillStyle = c.series[3];
+              ctx.textAlign = 'left';
+              ctx.fillText('tRNA', tx + 32, yM - 32);
+            }
+            ctx.restore();
+          }
+
+          // codon and anticodon, on top of everything so they stay readable
+          if (cur) {
+            tag(ctx, c, rx, yM + 4, cur.c, fs + 0.6, c.text, c.surface);
+            if (cur.aa !== '*') {
+              var anti = '';
+              for (i = 0; i < 3; i++) {
+                var bch = cur.c.charAt(i);
+                anti += bch === 'A' ? 'U' : bch === 'U' ? 'A' : bch === 'G' ? 'C' : 'G';
+              }
+              tag(ctx, c, rx, yM - 8, anti, fs + 0.6, c.series[3], c.surface);
+            }
+          }
+          if (ST.ph === 5 && M.protLen > 0) {
+            ctx.font = '700 ' + (fs - 0.2) + FONT;
+            ctx.fillStyle = c.ok;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+            ctx.fillText('protein complete: ' + M.protLen + ' amino acids', w / 2, nucB + 26);
+          }
+        } else {
+          // ribosome idling, so the compartment is never empty
+          ctx.save();
+          ctx.globalAlpha = 0.4;
+          ctx.fillStyle = c.line;
+          ctx.beginPath(); ctx.ellipse(w / 2, yM + 10, 27, 11, 0, 0, 6.2832); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(w / 2, yM - 12, 34, 20, 0, 0, 6.2832); ctx.fill();
+          ctx.restore();
+          ctx.font = (fs - 0.4) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('ribosome waiting — no mRNA has arrived yet', w / 2, yM + 34);
+        }
+      }, { aspect: 0.66, minHeight: 300, maxHeight: 400 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      function $(id) { return document.getElementById(id); }
+      var el = {
+        stageLabel: $('stageLabel'), cellCap: $('cellCap'),
+        dnaSeq: $('dnaSeq'), dnaMeta: $('dnaMeta'),
+        preSeq: $('preSeq'), preMeta: $('preMeta'),
+        matSeq: $('matSeq'), matMeta: $('matMeta'),
+        protSeq: $('protSeq'), protMeta: $('protMeta'), protLetters: $('protLetters'),
+        ctable: $('ctable'),
+        btnPlay: $('btnPlay'), btnStep: $('btnStep'), btnReset: $('btnReset'),
+        speedOut: $('speedOut'), jump: $('jump'), presets: $('presets'), presetHint: $('presetHint'),
+        rWhere: $('rWhere'), rStep: $('rStep'), rCodon: $('rCodon'), rCodonSub: $('rCodonSub'),
+        rGene: $('rGene'), rPre: $('rPre'), rCut: $('rCut'), rMature: $('rMature'),
+        rProt: $('rProt'), rProtSub: $('rProtSub'),
+        noteNow: $('noteNow'), noteSplice: $('noteSplice'), noteFrame: $('noteFrame'),
+        e1: $('e1'), i1: $('i1'), e2: $('e2'), i2: $('i2'), e3: $('e3'),
+        m1: $('m1'), m2: $('m2'), m3: $('m3'), m4: $('m4'), m5: $('m5')
+      };
+
+      // ---------------- the codon table, built once ----------------
+      var cellFor = {};
+      (function () {
+        var html = '<div class="hd"></div>';
+        var i2b, i3b, i1b;
+        for (i2b = 0; i2b < 4; i2b++) html += '<div class="hd">' + B4[i2b] + '</div>';
+        for (i1b = 0; i1b < 4; i1b++) {
+          html += '<div class="gut" style="grid-row:span 4">' + B4[i1b] + '</div>';
+          for (i3b = 0; i3b < 4; i3b++) {
+            for (i2b = 0; i2b < 4; i2b++) {
+              var cd = B4[i1b] + B4[i2b] + B4[i3b];
+              var aa = CODE[cd];
+              var cls = 'cell' + (cd === 'AUG' ? ' isStart' : (aa === '*' ? ' isStop' : ''));
+              html += '<div class="' + cls + '" data-c="' + cd + '"><b>' + cd + '</b> ' + THREE[aa] + '</div>';
+            }
+          }
+        }
+        el.ctable.innerHTML = html;
+        var cells = el.ctable.querySelectorAll('.cell');
+        for (var q = 0; q < cells.length; q++) cellFor[cells[q].getAttribute('data-c')] = cells[q];
+      })();
+
+      // ==================================================================
+      // SEQUENCE VIEWS
+      // ==================================================================
+      function renderDNA() {
+        var M = MODEL, nt = ntDone(), i;
+        var html = '<span class="cap"><b>5\'</b><i>3\'</i></span>';
+        for (i = 0; i < M.coding.length; i++) {
+          var cls = 'bp';
+          if (M.segOf[i].kind === 'intron') cls += ' intr';
+          if (i < nt) cls += ' read';
+          if (i === nt && ST.ph === 1) cls += ' cursor';
+          html += '<span class="' + cls + '"><b>' + M.coding.charAt(i) + '</b><i>' +
+                  M.template.charAt(i) + '</i></span>';
+        }
+        html += '<span class="cap"><b>3\'</b><i>5\'</i></span>';
+        el.dnaSeq.innerHTML = html;
+        el.dnaMeta.textContent = M.coding.length + ' bp';
+      }
+
+      function renderPre() {
+        var M = MODEL, nt = ntDone(), i;
+        if (nt === 0) {
+          el.preSeq.innerHTML = '<span class="empty">Nothing yet — transcription has not started.</span>';
+          el.preMeta.textContent = '0 nt';
+          return;
+        }
+        var cutNow = matureReady();
+        var html = '<span class="chip cap5">' + (ST.ph >= 2 ? '5\' cap' : '5\'') + '</span>';
+        for (i = 0; i < nt; i++) {
+          var seg = M.segOf[i];
+          var cls = 'b';
+          if (seg.kind === 'intron') cls += ' intr';
+          if (cutNow && seg.spliced) cls += ' cut';
+          if (ST.ph === 1 && i === nt - 1) cls += ' now';
+          html += '<span class="' + cls + '">' + M.pre.charAt(i) + '</span>';
+        }
+        if (ST.ph >= 2) html += '<span class="chip tailA">AAAA… tail</span>';
+        else html += '<span class="chip cap5">3\' end, growing</span>';
+        el.preSeq.innerHTML = html;
+        el.preMeta.textContent = nt + ' of ' + M.coding.length + ' nt';
+      }
+
+      function renderMature() {
+        var M = MODEL;
+        if (!matureReady()) {
+          el.matSeq.innerHTML = '<span class="empty">The mature mRNA appears once splicing is finished.</span>';
+          el.matMeta.textContent = '—';
+          return;
+        }
+        var k = codDone(), i = 0;
+        var html = '<span class="chip cap5">cap</span>';
+        while (i < M.mature.length) {
+          if (M.start >= 0 && i >= M.start && i < M.orfEnd) {
+            var ci = (i - M.start) / 3;
+            var cd = M.mature.substr(i, 3);
+            var cls = 'codon';
+            if (ci === 0) cls += ' start';
+            if (CODE[cd] === '*') cls += ' stopc';
+            if (ci < k) cls += ' done';
+            if (ci === k && ST.ph === 4) cls += ' hot';
+            html += '<span class="' + cls + '">' + cd + '</span>';
+            i += 3;
+          } else {
+            html += '<span class="u">' + M.mature.charAt(i) + '</span>';
+            i++;
+          }
+        }
+        html += '<span class="chip tailA">AAAA…</span>';
+        el.matSeq.innerHTML = html;
+        el.matMeta.textContent = M.mature.length + ' nt — ' + M.cut + ' nt shorter than the gene';
+      }
+
+      function renderProtein() {
+        var M = MODEL, k = codDone(), i;
+        if (ST.ph < 4 || k === 0) {
+          el.protSeq.innerHTML = '<span class="empty">No amino acids yet — translation has not started.</span>';
+          el.protMeta.textContent = '—';
+          el.protLetters.innerHTML = '&nbsp;';
+          return;
+        }
+        var html = '', letters = '', n = 0;
+        for (i = 0; i < k; i++) {
+          var co = M.codons[i];
+          if (co.aa === '*') {
+            html += '<span class="aa stopmark">STOP (' + co.c + ')</span>';
+          } else {
+            var cls = 'aa' + (i === 0 ? ' first' : '') +
+                      (i === k - 1 && ST.ph === 4 ? ' newest' : '');
+            html += '<span class="' + cls + '">' + THREE[co.aa] + '</span>';
+            letters += co.aa;
+            n++;
+          }
+        }
+        el.protSeq.innerHTML = html;
+        el.protMeta.textContent = n + ' of ' + M.protLen + ' amino acids';
+        el.protLetters.textContent = letters ? 'N–' + letters + '–C' : ' ';
+      }
+
+      function updateCodonTable() {
+        var hot = el.ctable.querySelector('.cell.hot');
+        if (hot) hot.classList.remove('hot');
+        if (ST.ph === 4 && MODEL.codons.length) {
+          var k = Math.min(codDone(), MODEL.codons.length - 1);
+          var c = cellFor[MODEL.codons[k].c];
+          if (c) c.classList.add('hot');
+        }
+      }
+
+      // ==================================================================
+      // READOUTS
+      // ==================================================================
+      var STEPNAME = ['1 of 5 — the gene, in the nucleus',
+        '2 of 5 — transcription, in the nucleus',
+        '3 of 5 — RNA processing: splicing, capping, tailing',
+        '4 of 5 — export through a nuclear pore',
+        '5 of 5 — translation, in the cytoplasm',
+        '5 of 5 — translation finished'];
+
+      function updateReadouts() {
+        var M = MODEL, nt = ntDone(), k = codDone();
+
+        el.stageLabel.innerHTML = 'Step ' + STEPNAME[ST.ph].replace(/— (.*)$/, '<span>&mdash; $1</span>');
+        el.rWhere.textContent = ST.ph <= 2 ? 'Nucleus' : (ST.ph === 3 ? 'Nuclear pore' : 'Cytoplasm');
+
+        el.rGene.innerHTML = M.coding.length + '<span class="r-unit">bp</span>';
+        el.rPre.innerHTML = M.coding.length + '<span class="r-unit">nt</span>';
+        el.rCut.innerHTML = M.cut + '<span class="r-unit">nt</span>';
+        el.rMature.innerHTML = M.mature.length + '<span class="r-unit">nt</span>';
+        el.rProt.innerHTML = M.protLen + '<span class="r-unit">amino acids</span>';
+        el.rProtSub.textContent = M.protLen + ' codons of protein' +
+          (M.hitStop ? ', plus one stop codon that codes for nothing' : ' — no stop codon was found');
+
+        var s, cap, now;
+        if (ST.ph === 0) {
+          el.rStep.textContent = 'the gene is sitting in the chromosome';
+          cap = 'Both strands are here. Only one of them will be copied.';
+          now = 'Press <strong>Play</strong> to start, or <strong>Step</strong> to move one base at a time.';
+        } else if (ST.ph === 1) {
+          el.rStep.textContent = 'RNA polymerase is copying the template strand';
+          var i = Math.min(nt, M.coding.length - 1);
+          var tb = M.template.charAt(i);
+          var rb = M.pre.charAt(i);
+          cap = 'Base ' + (nt + 1) + ' of ' + M.coding.length + '. RNA polymerase moves along the ' +
+                'template strand from its 3′ end toward its 5′ end.';
+          now = 'Reading template base <strong>' + tb + '</strong> → adding <strong>' + rb +
+                '</strong> to the 3′ end of the growing mRNA. Check the top strand: it also says ' +
+                '<strong>' + M.coding.charAt(i) + '</strong>. The mRNA copies the coding strand’s ' +
+                'letters because it is complementary to the template, with U in place of T.';
+        } else if (ST.ph === 2) {
+          el.rStep.textContent = 'introns are being cut out, still inside the nucleus';
+          cap = 'The spliceosome removes each GU…AG intron and joins the exons. A 5′ cap and a ' +
+                'poly-A tail are added — neither is copied from the DNA.';
+          now = M.cut > 0
+            ? '<strong>' + M.cut + ' nucleotides</strong> of intron are being thrown away. The message ' +
+              'goes from ' + M.coding.length + ' nt to ' + M.mature.length + ' nt.'
+            : 'There is nothing to splice out — this gene has no recognisable introns, so the mature ' +
+              'mRNA is the same length as the gene.';
+        } else if (ST.ph === 3) {
+          el.rStep.textContent = 'only the finished mRNA is allowed out';
+          cap = 'The DNA stays behind. A single-stranded copy, ' + M.mature.length +
+                ' nt long, leaves through a nuclear pore.';
+          now = 'This is the step students skip. The gene never moves. What crosses into the cytoplasm is ' +
+                'an edited copy — already spliced, capped and tailed.';
+        } else if (ST.ph === 4 || ST.ph === 5) {
+          el.rStep.textContent = 'the ribosome is reading the mRNA 5′→3′';
+          if (!M.codons.length) {
+            cap = 'Nothing can be translated: there is no AUG in this mRNA.';
+            now = 'Without a start codon the small ribosomal subunit has nowhere to begin, so no reading ' +
+                  'frame is ever set.';
+          } else {
+            var idx = Math.min(k, M.codons.length - 1);
+            var co = M.codons[idx];
+            cap = 'Codon ' + (idx + 1) + ' of ' + M.codons.length + ', at mRNA base ' + (co.pos + 1) +
+                  '–' + (co.pos + 3) + '.';
+            if (ST.ph === 5) {
+              now = M.hitStop
+                ? 'Finished. The ribosome reached <strong>' + M.codons[M.codons.length - 1].c +
+                  '</strong>, a stop codon. No tRNA matches it; a release factor binds instead and the ' +
+                  '<strong>' + M.protLen + '-amino-acid</strong> chain is let go.'
+                : 'The ribosome ran off the end of the message without meeting a stop codon. In a real cell ' +
+                  'that transcript would be destroyed.';
+            } else if (co.aa === '*') {
+              now = '<strong>' + co.c + '</strong> is a <strong>stop</strong> codon. There is no tRNA with a ' +
+                    'matching anticodon, so a release factor comes in instead and the chain is released.';
+            } else {
+              now = 'A tRNA carrying <strong>' + FULLNAME[co.aa] + '</strong> pairs its anticodon with ' +
+                    '<strong>' + co.c + '</strong>, and that amino acid is joined to the chain. The chain ' +
+                    'grows from the N-terminus toward the C-terminus.';
+            }
+          }
+        }
+        el.cellCap.textContent = cap;
+        el.noteNow.innerHTML = now;
+
+        if (ST.ph === 4 && M.codons.length) {
+          var cc = M.codons[Math.min(k, M.codons.length - 1)];
+          el.rCodon.textContent = cc.c + ' → ' + THREE[cc.aa];
+          el.rCodonSub.innerHTML = cc.aa === '*'
+            ? 'stop codon — codes for no amino acid'
+            : 'anticodon 3′-' + antiOf(cc.c) + '-5′ · ' + FULLNAME[cc.aa];
+        } else if (ST.ph === 5 && M.codons.length) {
+          el.rCodon.textContent = 'done';
+          el.rCodonSub.textContent = M.protLen + ' amino acids released';
+        } else {
+          el.rCodon.textContent = '—';
+          el.rCodonSub.textContent = 'translation has not started';
+        }
+
+        // segment length meters
+        el.m1.textContent = ST.e1.length + ' nt';
+        el.m2.textContent = ST.i1.length + ' nt';
+        el.m3.textContent = ST.e2.length + ' nt';
+        el.m4.textContent = ST.i2.length + ' nt';
+        el.m5.textContent = ST.e3.length + ' nt';
+
+        // stage buttons
+        var jb = el.jump.querySelectorAll('button');
+        for (var q = 0; q < jb.length; q++) {
+          var want = parseInt(jb[q].getAttribute('data-ph'), 10);
+          var on = (want === ST.ph) || (want === 4 && ST.ph === 5);
+          jb[q].className = 'btn tiny' + (on ? ' is-on' : '');
+        }
+      }
+
+      function antiOf(codon) {
+        var out = '';
+        for (var i = 0; i < 3; i++) {
+          var b = codon.charAt(i);
+          out += b === 'A' ? 'U' : b === 'U' ? 'A' : b === 'G' ? 'C' : 'G';
+        }
+        return out;
+      }
+
+      function updateNotes() {
+        var M = MODEL, bad = [], i;
+        for (i = 0; i < M.segs.length; i++) {
+          var s = M.segs[i];
+          if (s.kind === 'intron' && s.len > 0 && !s.ok) bad.push(s.num);
+        }
+        var anyIntron = false;
+        for (i = 0; i < M.segs.length; i++) if (M.segs[i].kind === 'intron' && M.segs[i].len > 0) anyIntron = true;
+
+        if (bad.length) {
+          el.noteSplice.className = 'note bad';
+          el.noteSplice.innerHTML = '<strong>Intron ' + bad.join(' and ') + ' cannot be spliced.</strong> ' +
+            'It does not both begin with GT and end with AG, so the spliceosome does not recognise it. ' +
+            'It stays in the mRNA and is read as if it were coding sequence.';
+        } else if (anyIntron) {
+          el.noteSplice.className = 'note';
+          el.noteSplice.innerHTML = 'Both introns begin <strong>GT</strong> and end <strong>AG</strong> ' +
+            '(GU…AG in the RNA), so both are removed. Total cut: <strong>' + M.cut + ' nt</strong>.';
+        } else {
+          el.noteSplice.className = 'note warn';
+          el.noteSplice.innerHTML = 'No introns in this version of the gene, so the mature mRNA is exactly ' +
+            'as long as the gene. This is roughly how a bacterial gene behaves.';
+        }
+
+        if (M.start < 0) {
+          el.noteFrame.className = 'note bad';
+          el.noteFrame.innerHTML = '<strong>No AUG anywhere in the mature mRNA.</strong> With no start codon ' +
+            'there is no reading frame and nothing is translated at all.';
+        } else if (!M.hitStop) {
+          el.noteFrame.className = 'note warn';
+          el.noteFrame.innerHTML = 'Reading frame starts at base <strong>' + (M.start + 1) + '</strong> of the ' +
+            'mature mRNA — the first AUG. But there is <strong>no stop codon in that frame</strong>, so ' +
+            'the ribosome runs off the end of the message.';
+        } else {
+          el.noteFrame.className = 'note';
+          el.noteFrame.innerHTML = 'Reading frame starts at base <strong>' + (M.start + 1) + '</strong> of the ' +
+            'mature mRNA — the first AUG, not base 1. The ' + M.start + ' bases before it are the ' +
+            '5′ UTR. Stop codon <strong>' + M.codons[M.codons.length - 1].c + '</strong> at base ' +
+            (M.orfEnd - 2) + '.';
+        }
+      }
+
+      // ==================================================================
+      // RENDER — only rebuild the sequence views when something changed
+      // ==================================================================
+      var last = { ph: -1, nt: -1, cod: -1, sub: -1 };
+
+      function render(force) {
+        var nt = ntDone(), cod = codDone();
+        // The splicing and export steps are continuous, but only one visible
+        // thing changes in the text panels (the introns get struck out), so
+        // one extra rebuild per phase is enough. Rebuilding 178 base spans
+        // every frame is not.
+        var sub = matureReady() ? 1 : 0;
+        var changed = force || ST.ph !== last.ph || sub !== last.sub;
+        if (changed || nt !== last.nt) { renderDNA(); renderPre(); }
+        if (changed || cod !== last.cod) {
+          renderMature(); renderProtein(); updateCodonTable();
+        }
+        updateReadouts();
+        last.ph = ST.ph; last.nt = nt; last.cod = cod; last.sub = sub;
+      }
+
+      // ==================================================================
+      // TIME — a discrete walk through the five steps. Every frame the
+      // picture is recomputed from (sequence, ph, prog); nothing is
+      // accumulated that could survive a reset.
+      // ==================================================================
+      function stopPlay() {
+        anim.stop();
+        el.btnPlay.textContent = 'Play';
+      }
+
+      var anim = Demo.loop(function (dt) {
+        var M = MODEL;
+        if (ST.ph === 0) { ST.ph = 1; ST.prog = 0; }
+        else if (ST.ph === 1) {
+          ST.prog += ST.speed * dt;
+          if (ST.prog >= M.coding.length) { ST.prog = 0; ST.ph = 2; }
+        } else if (ST.ph === 2) {
+          ST.prog += dt / 1.9;
+          if (ST.prog >= 1) { ST.prog = 0; ST.ph = 3; }
+        } else if (ST.ph === 3) {
+          ST.prog += dt / 1.5;
+          if (ST.prog >= 1) { ST.prog = 0; ST.ph = 4; }
+        } else if (ST.ph === 4) {
+          if (!M.codons.length) { ST.ph = 5; ST.prog = 0; stopPlay(); }
+          else {
+            ST.prog += (ST.speed / 3) * dt;
+            if (ST.prog >= M.codons.length) { ST.prog = M.codons.length; ST.ph = 5; stopPlay(); }
+          }
+        } else { stopPlay(); }
+        render(false);
+        cv.paint();
+      });
+
+      function stepOnce() {
+        var M = MODEL;
+        if (ST.ph === 0) { ST.ph = 1; ST.prog = 0; }
+        else if (ST.ph === 1) {
+          ST.prog = Math.floor(ST.prog) + 1;
+          if (ST.prog >= M.coding.length) { ST.prog = 0; ST.ph = 2; }
+        } else if (ST.ph === 2) {
+          if (ST.prog < 1) ST.prog = 1; else { ST.prog = 0; ST.ph = 3; }
+        } else if (ST.ph === 3) {
+          if (ST.prog < 1) ST.prog = 1; else { ST.prog = 0; ST.ph = 4; }
+        } else if (ST.ph === 4) {
+          if (!M.codons.length) { ST.ph = 5; ST.prog = 0; }
+          else {
+            ST.prog = Math.floor(ST.prog) + 1;
+            if (ST.prog >= M.codons.length) { ST.prog = M.codons.length; ST.ph = 5; }
+          }
+        }
+        render(false);
+        cv.redraw();
+      }
+
+      function gotoPhase(p) {
+        stopPlay();
+        ST.ph = p;
+        ST.prog = (p === 2 || p === 3) ? 1 : 0;
+        if (p === 1) ST.prog = 0;
+        render(true);
+        cv.redraw();
+      }
+
+      function rebuild(resetPhase) {
+        MODEL = build();
+        if (resetPhase !== false) { stopPlay(); ST.ph = 0; ST.prog = 0; }
+        updateNotes();
+        render(true);
+        cv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      el.btnPlay.addEventListener('click', function () {
+        if (anim.running) { stopPlay(); return; }
+        if (ST.ph === 5) { ST.ph = 0; ST.prog = 0; }
+        anim.start();
+        el.btnPlay.textContent = 'Pause';
+      });
+      el.btnStep.addEventListener('click', function () { stopPlay(); stepOnce(); });
+      el.btnReset.addEventListener('click', function () {
+        stopPlay(); ST.ph = 0; ST.prog = 0; render(true); cv.redraw();
+      });
+
+      Demo.range('#speed', function (v) {
+        ST.speed = v;
+        el.speedOut.textContent = Demo.fmt.dec(v, 0) + ' nt/s';
+      });
+
+      (function () {
+        var jb = el.jump.querySelectorAll('button');
+        for (var q = 0; q < jb.length; q++) {
+          jb[q].addEventListener('click', function () {
+            gotoPhase(parseInt(this.getAttribute('data-ph'), 10));
+          });
+        }
+      })();
+
+      // ---- sequence editing ----
+      var KEYS = ['e1', 'i1', 'e2', 'i2', 'e3'];
+      function cleanInput(inp) {
+        var p = inp.selectionStart == null ? inp.value.length : inp.selectionStart;
+        var kept = inp.value.slice(0, p).replace(/[^ACGTacgt]/g, '').length;
+        var v = inp.value.replace(/[^ACGTacgt]/g, '').toUpperCase();
+        if (v !== inp.value) {
+          inp.value = v;
+          try { inp.setSelectionRange(kept, kept); } catch (e) { }
+        }
+        return v;
+      }
+      (function () {
+        for (var q = 0; q < KEYS.length; q++) {
+          (function (key) {
+            var inp = el[key];
+            inp.addEventListener('input', function () {
+              ST[key] = cleanInput(inp);
+              markPreset(null);
+              rebuild(true);
+              flagIntron();
+            });
+          })(KEYS[q]);
+        }
+      })();
+
+      function flagIntron() {
+        el.i1.className = 'seqinput' + (ST.i1.length && !MODEL.segs[1].ok ? ' is-warn' : '');
+        el.i2.className = 'seqinput' + (ST.i2.length && !MODEL.segs[3].ok ? ' is-warn' : '');
+      }
+
+      function markPreset(name) {
+        var pb = el.presets.querySelectorAll('button');
+        for (var q = 0; q < pb.length; q++) {
+          pb[q].className = 'btn tiny' + (pb[q].getAttribute('data-p') === name ? ' is-on' : '');
+        }
+      }
+
+      function applyPreset(name) {
+        var p = PRESETS[name];
+        if (!p) return;
+        ST.preset = name;
+        for (var q = 0; q < KEYS.length; q++) {
+          ST[KEYS[q]] = p.seq[KEYS[q]];
+          el[KEYS[q]].value = p.seq[KEYS[q]];
+        }
+        el.presetHint.innerHTML = p.hint;
+        markPreset(name);
+        rebuild(true);
+        flagIntron();
+      }
+
+      (function () {
+        var pb = el.presets.querySelectorAll('button');
+        for (var q = 0; q < pb.length; q++) {
+          pb[q].addEventListener('click', function () {
+            applyPreset(this.getAttribute('data-p'));
+          });
+        }
+      })();
+
+      // ==================================================================
+      // GO
+      // ==================================================================
+      for (var q0 = 0; q0 < KEYS.length; q0++) el[KEYS[q0]].value = ST[KEYS[q0]];
+      rebuild(true);
+      flagIntron();
+    })();
+  </script>
+</body>
+
+</html>

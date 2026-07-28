@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Membrane Transport Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Three transport routes across one bilayer, side by side. Cut the ATP and watch which routes stop and which ones carry on exactly as before - facilitated diffusion is passive, and the protein is a route, not a push.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: stage labels, wrapping readout labels, legend swatches */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+
+    /* These tiles carry real units, longer than the shell's one-line default. */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.pass { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.act { color: var(--warn); font-weight: 600; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dash i { height: 0; background: none !important; border-top: 2px dashed currentColor; }
+
+    .sub-ctrl { padding-left: 25px; margin-top: 6px; }
+    .route-off { opacity: 0.5; }
+
+    .pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 20px;
+      vertical-align: 1px;
+    }
+    .pill.passive { background: var(--ok-soft); color: var(--ok); }
+    .pill.active { background: var(--warn-soft); color: var(--warn); }
+
+    /* the two chart tabs carry real sentences; let them wrap on a phone
+       instead of running off the end of the segmented control */
+    @media (max-width: 620px) {
+      .seg button { white-space: normal; font-size: 11.5px; padding: 6px 7px; line-height: 1.3; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Membrane Transport Bench</h1>
+        <p class="demo-sub">Three routes across one bilayer, running at once. Press <em>Cut ATP supply</em> and watch carefully: exactly one of the three stops.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 2</span>
+          <span class="tag is-accent">Cell structure &amp; function</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">One membrane, three routes <span>&mdash; each solute has its own lane</span></p>
+        <canvas id="membrane" role="img"
+                aria-label="A phospholipid bilayer divided into three lanes. In the first, oxygen crosses straight through the lipid. In the second, glucose crosses through a carrier protein. In the third, sodium leaks in through a channel and is pumped back out by an ATP-driven pump. Particles cross in both directions in every lane."></canvas>
+        <p class="stage-caption" id="memCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <div class="seg" role="tablist" aria-label="Chart view" id="viewSeg">
+          <button role="tab" aria-selected="true" data-view="flux">Flux vs concentration</button>
+          <button role="tab" aria-selected="false" data-view="time">Concentrations over time</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="chartLabel">Net flux into an empty cell</p>
+        <canvas id="chart" role="img"
+                aria-label="A chart comparing the two passive routes: simple diffusion gives a straight line through the origin with no ceiling, while facilitated diffusion gives a rectangular hyperbola that flattens against the carrier ceiling."></canvas>
+
+        <div class="legend" id="legFlux">
+          <span class="lg"><i style="background:var(--series-1)"></i>simple diffusion &mdash; O<sub>2</sub></span>
+          <span class="lg"><i style="background:var(--series-3)"></i>facilitated &mdash; glucose</span>
+          <span class="lg dash" style="color:var(--muted)"><i></i>carrier ceiling (V<sub>max</sub>)</span>
+        </div>
+        <div class="legend" id="legTime" hidden>
+          <span class="lg"><i style="background:var(--series-1)"></i>O<sub>2</sub> inside</span>
+          <span class="lg"><i style="background:var(--series-3)"></i>glucose inside</span>
+          <span class="lg"><i style="background:var(--series-4)"></i>Na<sup>+</sup> inside</span>
+          <span class="lg dash" style="color:var(--muted)"><i></i>outside (the bath)</span>
+          <span class="lg dash" style="color:var(--warn)"><i></i>ATP charge, right axis</span>
+        </div>
+        <p class="stage-caption" id="chartCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Bench</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnRun">Pause</button>
+              <button class="btn" id="btnAtp">Cut ATP supply</button>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnEqualise">Equalise all sides</button>
+              <button class="btn" id="btnReset">Reset bench</button>
+            </div>
+            <p class="ctrl-hint">
+              <strong>Equalise all sides</strong> wipes out every gradient. Then watch: O<sub>2</sub> and glucose
+              stay flat forever, and only the Na<sup>+</sup> lane rebuilds a gradient &mdash; because only the
+              Na<sup>+</sup> lane is spending anything.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel" id="panelO2">
+          <div class="panel-title">1 &middot; Simple diffusion &mdash; O<sub>2</sub> <span class="pill passive">passive</span></div>
+          <div class="stack">
+            <label class="check"><input type="checkbox" id="chkO2" checked> Bilayer is permeable to this molecule</label>
+            <p class="ctrl-hint">
+              O<sub>2</sub> is small and nonpolar, so it dissolves straight into the greasy tails and comes out
+              the other side. No protein, no ATP, no ceiling. Uncheck the box to model a molecule the lipid
+              will not pass &mdash; a charged ion, say &mdash; and watch it stop dead.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="o2Out">[O<sub>2</sub>] outside</label>
+                <span class="ctrl-value" id="o2OutVal">100.0 mM</span>
+              </div>
+              <input type="range" id="o2Out" min="0" max="200" step="1" value="100">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="o2In">[O<sub>2</sub>] inside</label>
+                <span class="ctrl-value" id="o2InVal">10.0 mM</span>
+              </div>
+              <input type="range" id="o2In" min="0" max="200" step="0.1" value="10">
+              <p class="ctrl-hint">Inside sliders are live: drag one to inject or remove solute, then let go and the model takes over again.</p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Net flux</div>
+                <div class="r-value" id="rO2Net">9.00<span class="r-unit">fmol s⁻¹</span></div>
+                <div class="r-sub" id="rO2Dir">into the cell</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Crossing in &rarr;</div>
+                <div class="r-value" id="rO2In">10.0</div>
+                <div class="r-sub">fmol s⁻¹</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Crossing out &larr;</div>
+                <div class="r-value" id="rO2Out">1.00</div>
+                <div class="r-sub">fmol s⁻¹</div>
+              </div>
+            </div>
+            <p class="ctrl-hint">
+              Fick&rsquo;s law: net flux = P &times; ([out] &minus; [in]), with P = 0.10 fmol s⁻¹ mM⁻¹.
+              Double the difference and you exactly double the flux &mdash; forever. Nothing to saturate.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel" id="panelGlc">
+          <div class="panel-title">2 &middot; Facilitated diffusion &mdash; glucose <span class="pill passive">passive</span></div>
+          <div class="stack">
+            <label class="check"><input type="checkbox" id="chkGlc" checked> Carrier protein present in the membrane</label>
+            <p class="ctrl-hint">
+              Glucose is polar, so the lipid tails block it completely. The carrier gives it a
+              <strong>route</strong>, not a shove: it still only runs downhill, and it costs no ATP.
+              Uncheck the box and glucose is stranded exactly where it is.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="carriers">Carrier proteins</label>
+                <span class="ctrl-value" id="carriersVal">100</span>
+              </div>
+              <input type="range" id="carriers" min="0" max="200" step="5" value="100">
+              <p class="ctrl-hint">Each carrier turns over 0.08 fmol s⁻¹ at full occupancy, so V<sub>max</sub> = 0.08 &times; carriers. More carriers raises the ceiling; it never changes where the solute ends up.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="glcOut">[glucose] outside</label>
+                <span class="ctrl-value" id="glcOutVal">100.0 mM</span>
+              </div>
+              <input type="range" id="glcOut" min="0" max="200" step="1" value="100">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="glcIn">[glucose] inside</label>
+                <span class="ctrl-value" id="glcInVal">10.0 mM</span>
+              </div>
+              <input type="range" id="glcIn" min="0" max="200" step="0.1" value="10">
+              <p class="ctrl-hint">Set inside higher than outside and watch the arrow flip. The carrier runs backwards without complaint, because it has no preferred direction to enforce.</p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Net flux</div>
+                <div class="r-value" id="rGlcNet">6.26<span class="r-unit">fmol s⁻¹</span></div>
+                <div class="r-sub" id="rGlcDir">into the cell</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Carriers occupied</div>
+                <div class="r-value" id="rGlcOcc">88.0%</div>
+                <div class="r-sub" id="rGlcOccSub">of 100 carriers</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Ceiling V<sub>max</sub></div>
+                <div class="r-value" id="rGlcVmax">8.00</div>
+                <div class="r-sub">fmol s⁻¹</div>
+              </div>
+            </div>
+            <p class="ctrl-hint">
+              net flux = V<sub>max</sub>([out] &minus; [in]) / (K<sub>m</sub> + [out] + [in]), K<sub>m</sub> = 15 mM.
+              The two sides compete for the same binding site, which is why the numerator is a difference:
+              this expression <em>cannot</em> be positive unless [out] &gt; [in].
+            </p>
+          </div>
+        </div>
+
+        <div class="panel" id="panelNa">
+          <div class="panel-title">3 &middot; Active transport &mdash; Na<sup>+</sup> pump <span class="pill active">costs ATP</span></div>
+          <div class="stack">
+            <label class="check"><input type="checkbox" id="chkPump" checked> Pump protein present in the membrane</label>
+            <p class="ctrl-hint">
+              A leak channel for Na<sup>+</sup> is <strong>always open</strong> in this lane &mdash; real cells have
+              one, which is exactly why the pump has to keep running. The pump drives Na<sup>+</sup>
+              <strong>out</strong>, against the gradient, and burns ATP to do it.
+            </p>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="atpSup">ATP supply</label>
+                <span class="ctrl-value" id="atpSupVal">10.0 % s⁻¹</span>
+              </div>
+              <input type="range" id="atpSup" min="0" max="20" step="0.5" value="10">
+              <p class="ctrl-hint">How fast respiration recharges the ATP pool. Take it to zero and the pool drains, because the pump is spending it.</p>
+            </div>
+
+            <div class="row-between" style="margin-top:2px">
+              <span class="small muted">ATP charge</span>
+              <span class="ctrl-value" id="rAtp">51.1%</span>
+            </div>
+            <div class="bar"><span id="atpBar" style="width:51%;background:var(--warn)"></span></div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="naOut">[Na<sup>+</sup>] outside</label>
+                <span class="ctrl-value" id="naOutVal">145.0 mM</span>
+              </div>
+              <input type="range" id="naOut" min="0" max="200" step="1" value="145">
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="naIn">[Na<sup>+</sup>] inside</label>
+                <span class="ctrl-value" id="naInVal">145.0 mM</span>
+              </div>
+              <input type="range" id="naIn" min="0" max="200" step="0.1" value="145">
+            </div>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Gradient the pump is holding</div>
+                <div class="r-value" id="rGrad">1.0&times;</div>
+                <div class="r-sub" id="rGradSub">outside &divide; inside</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Pump rate, out &uarr;</div>
+                <div class="r-value" id="rPump">0.00</div>
+                <div class="r-sub act">uphill &mdash; fmol s⁻¹</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Leak, net in &darr;</div>
+                <div class="r-value" id="rLeak">0.00</div>
+                <div class="r-sub pass">downhill &mdash; fmol s⁻¹</div>
+              </div>
+            </div>
+            <p class="ctrl-hint">
+              pump rate = V<sub>pump</sub> &times; [in]/(K<sub>P</sub> + [in]) &times; ATP/(K<sub>ATP</sub> + ATP),
+              with V<sub>pump</sub> = 36 fmol s⁻¹, K<sub>P</sub> = 20 mM, K<sub>ATP</sub> = 20 %. Both factors are
+              hard multipliers: no Na<sup>+</sup> inside, or no ATP, and the rate is exactly zero.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The ATP test</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr><th>Route</th><th>Rate now</th><th>If ATP = 0</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Simple &mdash; O<sub>2</sub></td><td id="tO2">9.00</td><td id="tO2z">9.00</td></tr>
+                <tr><td>Facilitated &mdash; glucose</td><td id="tGlc">6.26</td><td id="tGlcz">6.26</td></tr>
+                <tr><td>Na<sup>+</sup> pump</td><td id="tNa">0.00</td><td id="tNaz">0.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="note" id="atpNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            <strong>What is simplified.</strong> The outside is treated as a large bath &mdash; a cell sitting in a
+            dish of buffer &mdash; so its concentration stays exactly where you put the slider and only the cell
+            interior moves. The cell is one well-mixed compartment of 1 pL, which is why 1 fmol of solute inside is
+            exactly 1 mM. All three solutes share one 0&ndash;200 mM scale so the routes can be compared side by
+            side; real extracellular values are about 145 mM Na<sup>+</sup>, 5 mM glucose and 0.1 mM O<sub>2</sub>.
+            Water movement, membrane voltage and cell volume are held fixed, so nothing here swells or shrinks and
+            no electrical gradient builds &mdash; a real Na<sup>+</sup>/K<sup>+</sup>-ATPase is electrogenic and
+            exchanges 3 Na<sup>+</sup> for 2 K<sup>+</sup>, which this single-solute pump does not model. Rate
+            constants are chosen so the changes happen on a watchable timescale, not measured from a real cell.
+          </p>
+          <p class="note warn" style="margin-top:11px">
+            <strong>The pump has a real thermodynamic limit that is not drawn here.</strong> In this model the pump
+            weakens only because it runs out of Na<sup>+</sup> to grab or out of ATP to spend. A real pump also
+            stalls when the gradient gets steep enough that one ATP no longer pays for the move. That is why the
+            gradient here settles where pumping balances leaking, rather than at a hard ceiling.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students see the word <em>facilitated</em>, see a protein in the
+        diagram, and conclude the cell is paying for it. The reasoning is usually &ldquo;a protein is doing work,
+        work costs energy, so this must be active transport.&rdquo; It sounds airtight and it is wrong.
+        <strong>Facilitated diffusion is passive.</strong> The protein is a doorway, not a hand in the back.
+      </p>
+      <p>
+        <strong>Run the test that settles it.</strong> Press <em>Cut ATP supply</em> and keep your eye on all three
+        lanes. The O<sub>2</sub> lane does not flinch. The glucose lane does not flinch either &mdash; the carrier
+        keeps ferrying glucose at exactly the same rate, and the ATP-test table shows the same number in both
+        columns. Only the Na<sup>+</sup> pump stops, and once it does, the gradient it was holding drains away:
+        [Na<sup>+</sup>] inside climbs from about 9 mM back up to 145 mM, until inside and outside are identical
+        and there is no gradient left. That is the whole distinction, in one button.
+      </p>
+      <p>
+        <strong>The second tell is the shape of the graph.</strong> Simple diffusion has no protein, so there is
+        nothing to run out of: double the concentration outside and you double the flux, every time, all the way up
+        the axis &mdash; a straight line. Facilitated diffusion has a fixed number of carriers, and once they are
+        all busy, extra glucose just waits its turn. The curve bends over and flattens against a ceiling. On the
+        chart, simple diffusion is the losing route below 65 mM and the winning route above it, and the crossover
+        happens because one curve keeps climbing and the other cannot. <em>That bend is the evidence a protein is
+        involved.</em> It has nothing to do with energy &mdash; a straight line versus a hyperbola tells you there
+        is a protein; it does not tell you anything about ATP.
+      </p>
+      <p>
+        <strong>Try to cheat with the carrier.</strong> Set glucose to 20 mM outside and 120 mM inside. The carrier
+        is right there, fully functional &mdash; and it runs <em>backwards</em>, dumping glucose out of the cell at
+        5.16 fmol s⁻¹. Add carriers and it goes backwards faster. There is no setting of any slider on this page
+        that makes the carrier move glucose uphill, because the flux expression has ([out] &minus; [in]) in the
+        numerator: when that is negative, so is the flux. A passive protein cannot build a gradient. It can only
+        help one collapse.
+      </p>
+      <p>
+        <strong>And do not conclude that equilibrium means stillness.</strong> Press <em>Equalise all sides</em>
+        and watch the O<sub>2</sub> and glucose lanes: the net flux reads 0.00, and molecules are still streaming
+        across in both directions at about 10 and 3.7 fmol s⁻¹. Nothing stopped. The two opposing streams just got
+        the same size. &ldquo;Equilibrium&rdquo; is a statement about the <em>difference</em> between two rates,
+        never about either rate being zero.
+      </p>
+      <p>
+        <strong>So what is active transport actually for?</strong> Look at what the Na<sup>+</sup> lane can do that
+        neither other lane can: it holds 145 mM outside against 9 mM inside &mdash; a sixteen-fold difference
+        &mdash; indefinitely, while a leak channel sits wide open beside it draining it the whole time. That is the
+        thing ATP buys. Not motion, and not a protein. <strong>A gradient that will not go away on its own.</strong>
+        Every gradient in your body that does useful work &mdash; the one that fires your neurons, the one that
+        pulls glucose into your gut lining, the one that makes your ATP in the first place &mdash; is being held up
+        by something spending energy against a leak, exactly like this.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      //   One cell of 1 pL sitting in a large bath. Because 1 pL x 1 mM
+      //   = 1 fmol, a flux of 1 fmol s^-1 changes the interior by exactly
+      //   1 mM s^-1 — so d[in]/dt = J numerically. The bath is treated as
+      //   infinite: [out] is whatever the slider says and stays there.
+      //
+      //   1 SIMPLE DIFFUSION (O2) — Fick, straight line, no ceiling
+      //       J_in  = P·[out]         J_out = P·[in]
+      //       J_net = P([out] − [in])                     P = 0.10
+      //
+      //   2 FACILITATED (glucose) — one carrier, both faces competing for
+      //     the same binding site. Saturable, and structurally incapable
+      //     of running uphill: the numerator IS the gradient.
+      //       D     = Km + [out] + [in]
+      //       J_in  = Vmax·[out]/D    J_out = Vmax·[in]/D
+      //       J_net = Vmax([out] − [in])/D                Km = 15 mM
+      //       Vmax  = 0.08 × carriers
+      //     At [out] = [in] the net is exactly 0 while BOTH unidirectional
+      //     fluxes stay positive — equilibrium is traffic, not stillness.
+      //
+      //   3 ACTIVE (Na+) — an always-open leak plus an ATP-driven pump
+      //       leak_in = kL·[out]      leak_out = kL·[in]     kL = 0.06
+      //       pump    = Vp · [in]/(Kp+[in]) · ATP/(Katp+ATP)  (in → out)
+      //       d[Na]in/dt = kL([out] − [in]) − pump
+      //       dATP/dt    = supply·(1 − ATP/100) − cost·pump
+      //     Both pump factors are multipliers, so ATP = 0 gives pump = 0
+      //     exactly, and the leak then drags [in] back to [out].
+      //
+      //   VERIFIED EXTREMES (integrated to steady state before shipping):
+      //     supply 0  → [Na]in 145.00 mM, ATP 0.00 %, pump 0.000 — and it
+      //                 stays there; the gradient is exactly 1.00×.
+      //     supply sweep 0 / 2 / 5 / 10 / 15 / 20 %/s →
+      //                 [Na]in 145.0 / 90.8 / 23.1 / 9.19 / 8.39 / 8.12 mM
+      //                 (monotonic).
+      //     [Na]out sweep 40 / 80 / 145 / 200 → [Na]in 1.71 / 3.86 / 9.19
+      //                 / 18.31 mM (monotonic).
+      //     [out] = 0 on any route → [in] decays to 0 and stays.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var CMAX = 200;           // mM — top of every concentration slider
+      var P_S = 0.10;           // fmol s^-1 mM^-1
+      var CARRIER_RATE = 0.08;  // fmol s^-1 per carrier
+      var KM_G = 15;            // mM
+      var K_LEAK = 0.06;        // fmol s^-1 mM^-1
+      var VP = 36;              // fmol s^-1
+      var KP = 20;              // mM
+      var K_ATP = 20;           // %
+      var ATP_COST = 0.6;       // % of the pool per fmol pumped
+      var DEF_SUPPLY = 10;      // % s^-1
+      var FMAX = 20;            // fmol s^-1 — top of the flux chart
+      var WINDOW = 60;          // s — width of the time trace
+
+      var S = {
+        o2On: true, o2Out: 100, o2In: 10,
+        glcOn: true, carriers: 100, glcOut: 100, glcIn: 10,
+        pumpOn: true, naOut: 145, naIn: 145,
+        atpSupply: DEF_SUPPLY, atp: 100,
+        view: 'flux', t: 0
+      };
+
+      // ---------------- fluxes ----------------
+
+      function fluxes() {
+        var ks = S.o2On ? P_S : 0;
+        var o2 = { inn: ks * S.o2Out, out: ks * S.o2In };
+        o2.net = o2.inn - o2.out;
+
+        var vmax = S.glcOn ? CARRIER_RATE * S.carriers : 0;
+        var D = KM_G + S.glcOut + S.glcIn;
+        var g = { vmax: vmax, inn: vmax * S.glcOut / D, out: vmax * S.glcIn / D };
+        g.net = g.inn - g.out;
+        g.occ = (S.glcOut + S.glcIn) / D;
+
+        var na = {};
+        na.leakIn = K_LEAK * S.naOut;
+        na.leakOut = K_LEAK * S.naIn;
+        na.leakNet = na.leakIn - na.leakOut;
+        na.pump = (S.pumpOn ? VP : 0) * (S.naIn / (KP + S.naIn)) * (S.atp / (K_ATP + S.atp));
+        na.inn = na.leakIn;
+        na.out = na.leakOut + na.pump;
+        na.net = na.inn - na.out;
+        na.grad = S.naIn > 0.05 ? S.naOut / S.naIn : Infinity;
+
+        return { o2: o2, g: g, na: na };
+      }
+
+      // ---------------- integration ----------------
+
+      function step(dt) {
+        var n = Math.max(1, Math.ceil(dt / 0.025));
+        var h = dt / n;
+        for (var i = 0; i < n; i++) {
+          var f = fluxes();
+          S.o2In = Demo.clamp(S.o2In + f.o2.net * h, 0, CMAX);
+          S.glcIn = Demo.clamp(S.glcIn + f.g.net * h, 0, CMAX);
+          S.naIn = Demo.clamp(S.naIn + f.na.net * h, 0, CMAX);
+          S.atp = Demo.clamp(S.atp + (S.atpSupply * (1 - S.atp / 100) - ATP_COST * f.na.pump) * h, 0, 100);
+        }
+        S.t += dt;
+      }
+
+      // ---------------- history ----------------
+
+      var hist = [];
+      var histAcc = 0;
+      function pushHist(force) {
+        if (!force && histAcc < 0.1) return;
+        histAcc = 0;
+        hist.push({
+          t: S.t,
+          o2i: S.o2In, o2o: S.o2Out,
+          gi: S.glcIn, go: S.glcOut,
+          ni: S.naIn, no: S.naOut,
+          atp: S.atp
+        });
+        while (hist.length > 700) hist.shift();
+      }
+
+      // ---------------- formatting ----------------
+
+      function fF(x) { var a = Math.abs(x); return a >= 10 ? F.dec(x, 1) : F.dec(x, 2); }
+      function fC(x) { return F.dec(x, 1); }
+      function dirWord(net) {
+        if (net > 0.005) return 'into the cell ↓';
+        if (net < -0.005) return 'out of the cell ↑';
+        return 'balanced — no net movement';
+      }
+
+      // ==================================================================
+      // MEMBRANE CANVAS
+      // ==================================================================
+
+      var LANES = [
+        { key: 'o2', name: 'Simple diffusion', short: 'Simple', solute: 'O₂', ci: 0 },
+        { key: 'glc', name: 'Facilitated', short: 'Facilitated', solute: 'glucose', ci: 2 },
+        { key: 'na', name: 'Pump + leak', short: 'Pump', solute: 'Na⁺', ci: 3 }
+      ];
+
+      // stable pseudo-random dot positions, jiggled over time so the picture
+      // never looks frozen even when the net flux is exactly zero
+      var MAXDOTS = 26;
+      var dotBase = (function () {
+        var r = Demo.rng(20260725);
+        var out = [];
+        for (var lane = 0; lane < 3; lane++) {
+          out[lane] = [];
+          for (var side = 0; side < 2; side++) {
+            out[lane][side] = [];
+            for (var i = 0; i < MAXDOTS; i++) {
+              out[lane][side].push({ u: r(), v: r(), ph: r() * 6.2832, ph2: r() * 6.2832 });
+            }
+          }
+        }
+        return out;
+      })();
+
+      var crossers = [];
+      var spawnAcc = {};
+      var DUR = 0.75;
+
+      function spawnKey(lane, kind, dir) { return lane + '|' + kind + '|' + dir; }
+
+      function feedSpawns(dt) {
+        var f = fluxes();
+        var jobs = [
+          [0, 'lipid', 1, f.o2.inn], [0, 'lipid', -1, f.o2.out],
+          [1, 'carrier', 1, f.g.inn], [1, 'carrier', -1, f.g.out],
+          [2, 'leak', 1, f.na.leakIn], [2, 'leak', -1, f.na.leakOut],
+          [2, 'pump', -1, f.na.pump]
+        ];
+        for (var i = 0; i < jobs.length; i++) {
+          var j = jobs[i];
+          var k = spawnKey(j[0], j[1], j[2]);
+          var rate = Math.min(j[3] * 0.85, 13);
+          if (rate <= 0.001) { spawnAcc[k] = 0; continue; }
+          spawnAcc[k] = (spawnAcc[k] || 0) + rate * dt;
+          while (spawnAcc[k] >= 1) {
+            spawnAcc[k] -= 1;
+            if (crossers.length < 240) {
+              crossers.push({ lane: j[0], kind: j[1], dir: j[2], p: 0, ph: Math.random() * 6.2832 });
+            }
+          }
+        }
+        for (var q = crossers.length - 1; q >= 0; q--) {
+          crossers[q].p += dt / DUR;
+          if (crossers[q].p >= 1) crossers.splice(q, 1);
+        }
+      }
+
+      function rrect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function laneColor(c, i) { return c.series[LANES[i].ci]; }
+
+      function laneOn(i) {
+        return i === 0 ? S.o2On : i === 1 ? (S.glcOn && S.carriers > 0) : true;
+      }
+
+      // port positions, recomputed each draw
+      function ports(i, cx, laneW) {
+        if (i < 2) return { main: cx };
+        var d = Math.min(26, laneW * 0.24);
+        return { leak: cx - d, pump: cx + d };
+      }
+
+      var memCv = Demo.canvas('#membrane', function (ctx, w, h, c) {
+        var f = fluxes();
+        var narrow = w < 390;
+        var fs = narrow ? 9 : 10;
+        var headH = 32;
+        var memH = narrow ? 32 : 38;
+        var avail = h - headH - 3;
+        var boxH = (avail - memH) / 2;
+        var boxTop = headH;
+        var my0 = boxTop + boxH, my1 = my0 + memH;
+        var laneW = w / 3;
+        var i, k;
+
+        // --- cytosol tint + membrane band ---
+        ctx.fillStyle = c.accentSoft;
+        ctx.fillRect(0, my1, w, h - my1);
+        ctx.fillStyle = c.surface2;
+        ctx.fillRect(0, my0, w, memH);
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, my0 + 0.5); ctx.lineTo(w, my0 + 0.5);
+        ctx.moveTo(0, my1 - 0.5); ctx.lineTo(w, my1 - 0.5);
+        ctx.stroke();
+
+        // --- phospholipids ---
+        var portXs = [];
+        for (i = 0; i < 3; i++) {
+          var p = ports(i, i * laneW + laneW / 2, laneW);
+          for (k in p) if (p.hasOwnProperty(k)) portXs.push({ x: p[k], i: i, k: k });
+        }
+        var hr = 3.2, spacing = 9;
+        var midY = (my0 + my1) / 2;
+        ctx.save();
+        for (var lx = spacing / 2; lx < w; lx += spacing) {
+          var blocked = false;
+          for (i = 0; i < portXs.length; i++) {
+            var half = (portXs[i].i === 0) ? 8 : (portXs[i].k === 'leak' ? 11 : 13);
+            if (Math.abs(lx - portXs[i].x) < half) { blocked = true; break; }
+          }
+          if (blocked) continue;
+          // tails
+          ctx.strokeStyle = c.muted; ctx.globalAlpha = 0.45; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(lx - 1.4, my0 + hr * 2); ctx.quadraticCurveTo(lx + 1.6, midY - 3, lx - 0.6, midY - 0.5);
+          ctx.moveTo(lx + 1.4, my0 + hr * 2); ctx.quadraticCurveTo(lx - 1.6, midY - 3, lx + 0.6, midY - 0.5);
+          ctx.moveTo(lx - 1.4, my1 - hr * 2); ctx.quadraticCurveTo(lx + 1.6, midY + 3, lx - 0.6, midY + 0.5);
+          ctx.moveTo(lx + 1.4, my1 - hr * 2); ctx.quadraticCurveTo(lx - 1.6, midY + 3, lx + 0.6, midY + 0.5);
+          ctx.stroke();
+          // heads
+          ctx.globalAlpha = 0.85;
+          ctx.fillStyle = c.accent;
+          ctx.beginPath(); ctx.arc(lx, my0 + hr + 1, hr, 0, 6.2832); ctx.fill();
+          ctx.beginPath(); ctx.arc(lx, my1 - hr - 1, hr, 0, 6.2832); ctx.fill();
+        }
+        ctx.restore();
+
+        // --- lane separators ---
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        for (i = 1; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(Math.round(i * laneW) + 0.5, headH - 8);
+          ctx.lineTo(Math.round(i * laneW) + 0.5, h);
+          ctx.stroke();
+        }
+
+        // --- proteins ---
+        function protein(x, top, bot, halfW, poreW, col, dashed) {
+          ctx.save();
+          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = col;
+          ctx.fillStyle = c.surface;
+          if (dashed) { ctx.setLineDash([3, 3]); ctx.globalAlpha = 0.5; }
+          rrect(ctx, x - halfW, top, halfW - poreW / 2, bot - top, 4); ctx.fill(); ctx.stroke();
+          rrect(ctx, x + poreW / 2, top, halfW - poreW / 2, bot - top, 4); ctx.fill(); ctx.stroke();
+          ctx.restore();
+        }
+
+        for (i = 1; i < 3; i++) {
+          var cx = i * laneW + laneW / 2;
+          var pp = ports(i, cx, laneW);
+          var col = laneColor(c, i);
+          if (i === 1) {
+            if (S.glcOn) protein(pp.main, my0 - 5, my1 + 5, 12, 7, col, false);
+          } else {
+            protein(pp.leak, my0 - 3, my1 + 3, 10, 6, c.muted, false);
+            if (S.pumpOn) {
+              protein(pp.pump, my0 - 6, my1 + 6, 12, 6, c.warn, false);
+              // ATP bound on the cytosolic flank; brightness = charge of the pool
+              ctx.save();
+              ctx.globalAlpha = 0.2 + 0.8 * (S.atp / 100);
+              ctx.fillStyle = c.warn;
+              ctx.beginPath(); ctx.arc(pp.pump - 7.5, my1 + 1, 2.6, 0, 6.2832); ctx.fill();
+              ctx.restore();
+            }
+          }
+        }
+
+        // --- solute dots ---
+        function drawDots(lane, side, conc, col) {
+          var n = Demo.clamp(Math.round(conc / 8), conc > 0.4 ? 1 : 0, MAXDOTS);
+          if (n <= 0) return;
+          var bx = lane * laneW + 4;
+          var bw = laneW - 8;
+          var by = side === 0 ? boxTop + 13 : my1 + 21;
+          var bh = (side === 0 ? my0 - 4 : h - 3) - by;
+          if (bh < 8) return;
+          ctx.fillStyle = col;
+          for (var q = 0; q < n; q++) {
+            var d = dotBase[lane][side][q];
+            var x = bx + d.u * bw + 2.4 * Math.sin(S.t * 1.7 + d.ph);
+            var y = by + d.v * bh + 2.4 * Math.cos(S.t * 2.1 + d.ph2);
+            ctx.beginPath(); ctx.arc(x, y, 3.1, 0, 6.2832); ctx.fill();
+          }
+        }
+        var concs = [[S.o2Out, S.o2In], [S.glcOut, S.glcIn], [S.naOut, S.naIn]];
+        for (i = 0; i < 3; i++) {
+          drawDots(i, 0, concs[i][0], laneColor(c, i));
+          drawDots(i, 1, concs[i][1], laneColor(c, i));
+        }
+
+        // --- crossing particles ---
+        var yTop = my0 - 15, yBot = my1 + 15;
+        for (i = 0; i < crossers.length; i++) {
+          var cr = crossers[i];
+          var pp2 = ports(cr.lane, cr.lane * laneW + laneW / 2, laneW);
+          var px = cr.kind === 'leak' ? pp2.leak : cr.kind === 'pump' ? pp2.pump : pp2.main;
+          var y = cr.dir > 0 ? Demo.lerp(yTop, yBot, cr.p) : Demo.lerp(yBot, yTop, cr.p);
+          var x = px + 2.6 * Math.sin(cr.p * 6.2832 + cr.ph);
+          ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 6.2832);
+          ctx.fillStyle = laneColor(c, cr.lane); ctx.fill();
+          if (cr.kind === 'pump') {
+            ctx.strokeStyle = c.warn; ctx.lineWidth = 1.8; ctx.stroke();
+          }
+        }
+
+        // --- compartment labels ---
+        ctx.font = '600 ' + (fs - 1.5) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('OUTSIDE', 4, boxTop + 1);
+        ctx.fillText('INSIDE', 4, my1 + 3);
+
+        // --- protein captions ---
+        ctx.font = (fs - 1.5) + FONT;
+        ctx.textAlign = 'center';
+        var g1 = ports(1, laneW + laneW / 2, laneW);
+        var g2 = ports(2, 2 * laneW + laneW / 2, laneW);
+        ctx.fillStyle = S.glcOn ? laneColor(c, 1) : c.muted;
+        ctx.fillText(S.glcOn ? 'carrier' : 'no carrier', g1.main, my1 + 9);
+        ctx.fillStyle = c.muted;
+        ctx.fillText('leak', g2.leak, my1 + 9);
+        ctx.fillStyle = S.pumpOn ? c.warn : c.muted;
+        ctx.fillText(S.pumpOn ? 'pump' : 'no pump', g2.pump, my1 + 9);
+        ctx.fillStyle = S.o2On ? c.muted : c.bad;
+        ctx.fillText(S.o2On ? 'no protein' : 'blocked', laneW / 2, my1 + 9);
+
+        // --- lane headers ---
+        var nets = [f.o2.net, f.g.net, -f.na.pump];
+        var subs = [
+          LANES[0].solute + '  ' + fF(f.o2.net) + (f.o2.net > 0.005 ? ' ↓' : f.o2.net < -0.005 ? ' ↑' : ' —'),
+          LANES[1].solute + '  ' + fF(f.g.net) + (f.g.net > 0.005 ? ' ↓' : f.g.net < -0.005 ? ' ↑' : ' —'),
+          LANES[2].solute + '  pump ' + fF(f.na.pump) + (f.na.pump > 0.005 ? ' ↑' : ' —')
+        ];
+        for (i = 0; i < 3; i++) {
+          var hx = i * laneW + laneW / 2;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = laneOn(i) || i === 2 ? c.text : c.muted;
+          ctx.fillText(narrow ? LANES[i].short : LANES[i].name, hx, 12);
+          ctx.font = (fs - 0.5) + FONT;
+          ctx.fillStyle = i === 2 ? c.warn : (Math.abs(nets[i]) > 0.005 ? laneColor(c, i) : c.muted);
+          ctx.fillText(subs[i], hx, 25);
+        }
+      }, { aspect: 0.7, minHeight: 260, maxHeight: 340 });
+
+      // ==================================================================
+      // CHART CANVAS
+      // ==================================================================
+
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lxp = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lxp = Demo.clamp(lxp, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lxp, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lxp + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+
+      var chartCv = Demo.canvas('#chart', function (ctx, w, h, c) {
+        if (S.view === 'time') drawTime(ctx, w, h, c);
+        else drawFlux(ctx, w, h, c);
+      }, { aspect: 0.5, minHeight: 195, maxHeight: 250 });
+
+      function drawFlux(ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 32 : 40, padR = narrow ? 12 : 16, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9 : 10.5;
+        var i, px;
+        var vmax = S.glcOn ? CARRIER_RATE * S.carriers : 0;
+        var ks = S.o2On ? P_S : 0;
+
+        function X(cn) { return x0 + (x1 - x0) * Demo.clamp(cn, 0, CMAX) / CMAX; }
+        function Y(j) { return y0 - (y0 - y1) * Demo.clamp(j, 0, FMAX) / FMAX; }
+
+        // gridlines
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(FMAX * i / 4), x0 - 5, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT; ctx.fillStyle = c.muted;
+        ctx.fillText('net flux (fmol s⁻¹)', 1, 3);
+
+        // x ticks
+        ctx.font = fs + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var xt = [0, 50, 100, 150, 200];
+        for (i = 0; i < xt.length; i++) {
+          px = X(xt[i]);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted; ctx.fillText(String(xt[i]), px, y0 + 6);
+        }
+        ctx.fillText('[solute] outside (mM)', (x0 + x1) / 2, y0 + 20);
+
+        // carrier ceiling
+        if (vmax > 0) {
+          ctx.strokeStyle = c.muted; ctx.lineWidth = 1.2; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x0, Y(vmax)); ctx.lineTo(x1, Y(vmax)); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1 - 1, x1 - x0, y0 - y1 + 1); ctx.clip();
+        ctx.lineJoin = 'round';
+
+        // simple diffusion — straight line, no ceiling
+        ctx.strokeStyle = c.series[0]; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(CMAX), Y(ks * CMAX));
+        ctx.stroke();
+
+        // facilitated — rectangular hyperbola
+        ctx.strokeStyle = c.series[2]; ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var cn = (px - x0) / (x1 - x0) * CMAX;
+          var yv = Y(vmax * cn / (KM_G + cn));
+          if (px === x0) ctx.moveTo(px, yv); else ctx.lineTo(px, yv);
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        // labels
+        if (vmax > 0) {
+          chip(ctx, c, x1 - 2, Y(vmax) - 5,
+            'ceiling Vₘₐₓ = ' + fF(vmax) + ' — every carrier busy', fs, c.muted, w, 'right');
+        }
+        var lineTop = ks * CMAX;
+        if (ks > 0) {
+          var edgeY = lineTop >= FMAX ? Y(FMAX) + 12 : Y(lineTop) - 6;
+          chip(ctx, c, x1 - 2, edgeY, 'no ceiling — straight line', fs, c.series[0], w, 'right');
+        }
+
+        // current operating points
+        if (ks > 0) {
+          var sy = ks * S.o2Out;
+          if (sy <= FMAX) {
+            dot(ctx, c, X(S.o2Out), Y(sy), 5, c.series[0]);
+            chip(ctx, c, X(S.o2Out), Demo.clamp(Y(sy) - 9, y1 + 11, y0 - 3),
+              'O₂ ' + F.dec(S.o2Out, 0) + ' mM', fs, c.series[0], w, 'center', x0 + 1);
+          }
+        }
+        if (vmax > 0) {
+          var gy2 = vmax * S.glcOut / (KM_G + S.glcOut);
+          dot(ctx, c, X(S.glcOut), Y(gy2), 5, c.series[2]);
+          chip(ctx, c, X(S.glcOut), Demo.clamp(Y(gy2) + 18, y1 + 11, y0 - 3),
+            'glucose ' + F.dec(S.glcOut, 0) + ' mM', fs, c.series[2], w, 'center', x0 + 1);
+        }
+        if (ks === 0 && vmax === 0) {
+          ctx.fillStyle = c.muted; ctx.font = fs + 1 + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Both passive routes are switched off.', (x0 + x1) / 2, (y0 + y1) / 2);
+        }
+      }
+
+      function drawTime(ctx, w, h, c) {
+        var narrow = w < 380;
+        var padL = narrow ? 30 : 38, padR = narrow ? 30 : 38, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var fs = narrow ? 9 : 10.5;
+        var i;
+        var tEnd = S.t;
+        var tStart = tEnd - WINDOW;
+
+        function X(t) { return x0 + (x1 - x0) * Demo.clamp((t - tStart) / WINDOW, 0, 1); }
+        function Y(cn) { return y0 - (y0 - y1) * Demo.clamp(cn, 0, CMAX) / CMAX; }
+
+        ctx.font = fs + FONT; ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(CMAX * i / 4), x0 - 5, gy);
+          ctx.fillStyle = c.warn; ctx.textAlign = 'left';
+          ctx.fillText(String(25 * i) + '%', x1 + 5, gy);
+        }
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT; ctx.fillStyle = c.muted;
+        ctx.fillText('[solute] (mM)', 1, 3);
+        ctx.textAlign = 'right'; ctx.fillStyle = c.warn;
+        ctx.fillText('ATP', w - 1, 3);
+
+        ctx.font = fs + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        for (i = 0; i <= 3; i++) {
+          var tt = tStart + WINDOW * i / 3;
+          var px = X(tt);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(tt - tEnd, 0), px, y0 + 6);
+        }
+        ctx.fillText('time (s, 0 = now)', (x0 + x1) / 2, y0 + 20);
+
+        if (hist.length < 2) {
+          ctx.fillStyle = c.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Collecting… press Run.', (x0 + x1) / 2, (y0 + y1) / 2);
+          return;
+        }
+
+        ctx.save();
+        ctx.beginPath(); ctx.rect(x0, y1 - 1, x1 - x0, y0 - y1 + 2); ctx.clip();
+        ctx.lineJoin = 'round';
+
+        function trace(field, col, dashed, scale) {
+          ctx.strokeStyle = col;
+          ctx.lineWidth = dashed ? 1.4 : 2.2;
+          if (dashed) ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          var started = false;
+          for (var q = 0; q < hist.length; q++) {
+            var p = hist[q];
+            if (p.t < tStart - 1) continue;
+            var xx = X(p.t), yy = Y(p[field] * scale);
+            if (!started) { ctx.moveTo(xx, yy); started = true; } else ctx.lineTo(xx, yy);
+          }
+          if (started) ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        trace('o2o', c.series[0], true, 1);
+        trace('go', c.series[2], true, 1);
+        trace('no', c.series[3], true, 1);
+        trace('atp', c.warn, true, CMAX / 100);
+        trace('o2i', c.series[0], false, 1);
+        trace('gi', c.series[2], false, 1);
+        trace('ni', c.series[3], false, 1);
+        ctx.restore();
+
+        var last = hist[hist.length - 1];
+        dot(ctx, c, X(last.t), Y(last.ni), 4.5, c.series[3]);
+        chip(ctx, c, X(last.t), Y(last.ni) - 8,
+          'Na⁺ in ' + fC(last.ni), fs, c.series[3], w, 'right', x0 + 1);
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {};
+      ['o2Out', 'o2OutVal', 'o2In', 'o2InVal', 'chkO2',
+        'glcOut', 'glcOutVal', 'glcIn', 'glcInVal', 'chkGlc', 'carriers', 'carriersVal',
+        'naOut', 'naOutVal', 'naIn', 'naInVal', 'chkPump', 'atpSup', 'atpSupVal',
+        'rO2Net', 'rO2Dir', 'rO2In', 'rO2Out',
+        'rGlcNet', 'rGlcDir', 'rGlcOcc', 'rGlcOccSub', 'rGlcVmax',
+        'rAtp', 'atpBar', 'rGrad', 'rGradSub', 'rPump', 'rLeak',
+        'tO2', 'tO2z', 'tGlc', 'tGlcz', 'tNa', 'tNaz', 'atpNote',
+        'btnRun', 'btnAtp', 'btnEqualise', 'btnReset',
+        'memCap', 'chartCap', 'chartLabel', 'legFlux', 'legTime',
+        'panelO2', 'panelGlc', 'panelNa'].forEach(function (id) {
+          el[id] = document.getElementById(id);
+        });
+
+      // ---- inside sliders are two-way: the model writes them, the user can grab them ----
+      function bindLevel(id, key) {
+        var node = el[id];
+        var held = false;
+        function grab() { held = true; }
+        function release() { held = false; }
+        node.addEventListener('pointerdown', grab);
+        node.addEventListener('keydown', grab);
+        node.addEventListener('keyup', release);
+        node.addEventListener('blur', release);
+        window.addEventListener('pointerup', release);
+        window.addEventListener('pointercancel', release);
+        node.addEventListener('input', function () {
+          S[key] = parseFloat(node.value);
+          refresh(true);
+        });
+        return { node: node, held: function () { return held; } };
+      }
+      var lvO2 = bindLevel('o2In', 'o2In');
+      var lvGlc = bindLevel('glcIn', 'glcIn');
+      var lvNa = bindLevel('naIn', 'naIn');
+
+      Demo.range('#o2Out', function (v) { S.o2Out = v; refresh(true); });
+      Demo.range('#glcOut', function (v) { S.glcOut = v; refresh(true); });
+      Demo.range('#naOut', function (v) { S.naOut = v; refresh(true); });
+      Demo.range('#carriers', function (v) { S.carriers = v; refresh(true); });
+      Demo.range('#atpSup', function (v) { S.atpSupply = v; refresh(true); });
+
+      el.chkO2.addEventListener('change', function () { S.o2On = this.checked; refresh(true); });
+      el.chkGlc.addEventListener('change', function () { S.glcOn = this.checked; refresh(true); });
+      el.chkPump.addEventListener('change', function () { S.pumpOn = this.checked; refresh(true); });
+
+      // ==================================================================
+      // READOUTS
+      // ==================================================================
+      function refresh(force) {
+        var f = fluxes();
+
+        // slider labels
+        el.o2OutVal.textContent = fC(S.o2Out) + ' mM';
+        el.glcOutVal.textContent = fC(S.glcOut) + ' mM';
+        el.naOutVal.textContent = fC(S.naOut) + ' mM';
+        el.o2InVal.textContent = fC(S.o2In) + ' mM';
+        el.glcInVal.textContent = fC(S.glcIn) + ' mM';
+        el.naInVal.textContent = fC(S.naIn) + ' mM';
+        el.carriersVal.textContent = F.dec(S.carriers, 0);
+        el.atpSupVal.innerHTML = F.dec(S.atpSupply, 1) + ' % s⁻¹';
+
+        if (!lvO2.held()) el.o2In.value = S.o2In;
+        if (!lvGlc.held()) el.glcIn.value = S.glcIn;
+        if (!lvNa.held()) el.naIn.value = S.naIn;
+
+        // route 1
+        el.rO2Net.innerHTML = fF(Math.abs(f.o2.net)) + '<span class="r-unit">fmol s⁻¹</span>';
+        el.rO2Dir.textContent = dirWord(f.o2.net);
+        el.rO2In.textContent = fF(f.o2.inn);
+        el.rO2Out.textContent = fF(f.o2.out);
+        el.panelO2.classList.toggle('route-off', !S.o2On);
+
+        // route 2
+        el.rGlcNet.innerHTML = fF(Math.abs(f.g.net)) + '<span class="r-unit">fmol s⁻¹</span>';
+        el.rGlcDir.textContent = dirWord(f.g.net);
+        el.rGlcOcc.textContent = S.glcOn && S.carriers > 0 ? F.pct(f.g.occ, 1) : '—';
+        el.rGlcOccSub.textContent = 'of ' + F.dec(S.carriers, 0) + ' carriers';
+        el.rGlcVmax.textContent = fF(f.g.vmax);
+        el.panelGlc.classList.toggle('route-off', !S.glcOn);
+
+        // route 3
+        el.rAtp.textContent = F.dec(S.atp, 1) + '%';
+        el.atpBar.style.width = Demo.clamp(S.atp, 0, 100) + '%';
+        el.rPump.textContent = fF(f.na.pump);
+        el.rLeak.textContent = fF(f.na.leakNet);
+        el.rGrad.innerHTML = isFinite(f.na.grad)
+          ? F.dec(f.na.grad, 1) + '&times;'
+          : '—';
+        el.rGradSub.textContent = f.na.grad > 1.05
+          ? fC(S.naOut) + ' mM out vs ' + fC(S.naIn) + ' mM in'
+          : 'no gradient — both sides equal';
+        el.panelNa.classList.toggle('route-off', !S.pumpOn);
+
+        // ATP test table
+        el.tO2.textContent = fF(Math.abs(f.o2.net));
+        el.tO2z.textContent = fF(Math.abs(f.o2.net));
+        el.tGlc.textContent = fF(Math.abs(f.g.net));
+        el.tGlcz.textContent = fF(Math.abs(f.g.net));
+        el.tNa.textContent = fF(f.na.pump);
+        el.tNaz.textContent = '0.00';
+
+        el.atpNote.className = S.atpSupply === 0 ? 'note bad' : 'note';
+        el.atpNote.innerHTML = S.atpSupply === 0
+          ? '<strong>ATP supply is cut.</strong> The charge has fallen to ' + F.dec(S.atp, 1)
+            + '% and the pump is down to ' + fF(f.na.pump) + ' fmol s⁻¹, heading for zero. '
+            + 'The two passive routes have not changed by a single digit. The Na<sup>+</sup> gradient is '
+            + 'draining away through the open leak channel: ' + F.dec(f.na.grad, 1)
+            + '&times; and falling toward 1.0&times;.'
+          : 'The first two rows are <strong>identical in both columns</strong>, and they always will be. '
+            + 'Cutting ATP changes nothing about either passive route — not even the one with a protein '
+            + 'in it. Only the bottom row goes to zero. That is the line between passive and active, and it is '
+            + 'not about whether a protein is involved.';
+
+        // captions
+        el.memCap.innerHTML = memCaption(f);
+        el.chartCap.innerHTML = chartCaption(f);
+
+        el.btnAtp.textContent = S.atpSupply === 0 ? 'Restore ATP supply' : 'Cut ATP supply';
+
+        if (force) { memCv.redraw(); chartCv.redraw(); }
+      }
+
+      function memCaption(f) {
+        var t = 'Fluxes in <strong>fmol s⁻¹</strong> — ↓ into the cell, ↑ out of the cell. '
+          + 'Dot count shows concentration (1 dot ≈ 8 mM). ';
+        var eq = Math.abs(f.o2.net) < 0.05 && S.o2On;
+        if (eq) {
+          t += '<strong>The O<sub>2</sub> lane has reached equilibrium and molecules are still crossing '
+            + 'both ways</strong>, ' + fF(f.o2.inn) + ' fmol s⁻¹ each direction. Net zero is two equal '
+            + 'streams, not a stopped one. ';
+        }
+        if (S.atpSupply === 0) {
+          t += 'ATP is cut: the gold marker under the pump has faded and the Na<sup>+</sup> lane is losing its '
+            + 'gradient through the leak. The other two lanes are running exactly as before.';
+        } else if (S.glcOn && f.g.occ > 0.85) {
+          t += 'The carriers are ' + F.pct(f.g.occ, 0) + ' occupied — close to saturated. Push '
+            + '[glucose] outside higher and the flux barely moves.';
+        } else {
+          t += 'Only the third lane is spending anything.';
+        }
+        return t;
+      }
+
+      function chartCaption(f) {
+        if (S.view === 'time') {
+          return 'Solid lines are the concentration <em>inside</em> the cell; dashed lines of the same colour are '
+            + 'the bath outside. Only Na<sup>+</sup> ever pulls away from its own dashed line and stays there '
+            + '— that separation <em>is</em> the gradient, and it exists only while the gold ATP trace is '
+            + 'above zero. Press <em>Cut ATP supply</em> and watch the purple line climb back up to meet the '
+            + 'dashed one: about 22 s to close half the gap, and it settles at exactly 145 mM with no gradient '
+            + 'at all.';
+        }
+        var vmax = S.glcOn ? CARRIER_RATE * S.carriers : 0;
+        return 'Both curves are drawn for the same hypothetical: an <strong>empty cell</strong> ([inside] = 0), so '
+          + 'everything is flowing inward. Simple diffusion is a <strong>straight line</strong> — no protein '
+          + 'to run out of, so doubling [outside] doubles the flux at any point on the axis. Facilitated diffusion '
+          + 'is a <strong>hyperbola</strong> that flattens against V<sub>max</sub> = ' + fF(vmax) + ' fmol s⁻¹, '
+          + 'because there are only ' + F.dec(S.carriers, 0) + ' carriers and they can only work so fast. '
+          + 'They cross at 65 mM. Drag the <em>Carrier proteins</em> slider and the ceiling moves; the straight '
+          + 'line never gets one.';
+      }
+
+      // ==================================================================
+      // BUTTONS
+      // ==================================================================
+      var anim;
+
+      function setRunning(on) {
+        if (on) { anim.start(); el.btnRun.textContent = 'Pause'; }
+        else { anim.stop(); el.btnRun.textContent = 'Run'; }
+      }
+
+      el.btnRun.addEventListener('click', function () { setRunning(!anim.running); });
+
+      el.btnAtp.addEventListener('click', function () {
+        S.atpSupply = S.atpSupply === 0 ? DEF_SUPPLY : 0;
+        el.atpSup.value = S.atpSupply;
+        if (!anim.running) setRunning(true);
+        refresh(true);
+      });
+
+      el.btnEqualise.addEventListener('click', function () {
+        S.o2In = S.o2Out; S.glcIn = S.glcOut; S.naIn = S.naOut;
+        if (!anim.running) setRunning(true);
+        refresh(true);
+      });
+
+      el.btnReset.addEventListener('click', function () {
+        S.o2On = true; S.o2Out = 100; S.o2In = 10;
+        S.glcOn = true; S.carriers = 100; S.glcOut = 100; S.glcIn = 10;
+        S.pumpOn = true; S.naOut = 145; S.naIn = 145;
+        S.atpSupply = DEF_SUPPLY; S.atp = 100;
+        S.t = 0;
+        hist.length = 0; crossers.length = 0; spawnAcc = {};
+        el.chkO2.checked = true; el.chkGlc.checked = true; el.chkPump.checked = true;
+        el.o2Out.value = 100; el.glcOut.value = 100; el.naOut.value = 145;
+        el.carriers.value = 100; el.atpSup.value = DEF_SUPPLY;
+        el.o2In.value = 10; el.glcIn.value = 10; el.naIn.value = 145;
+        pushHist(true);
+        setRunning(true);
+        refresh(true);
+      });
+
+      // view tabs
+      var segBtns = Array.prototype.slice.call(document.querySelectorAll('#viewSeg button'));
+      segBtns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          segBtns.forEach(function (o) { o.setAttribute('aria-selected', o === b ? 'true' : 'false'); });
+          S.view = b.dataset.view;
+          el.legFlux.hidden = S.view !== 'flux';
+          el.legTime.hidden = S.view !== 'time';
+          el.chartLabel.innerHTML = S.view === 'time'
+            ? 'Concentrations over time <span>&mdash; inside solid, the bath dashed, ATP in gold</span>'
+            : 'Net flux into an empty cell <span>&mdash; a straight line has no ceiling; a hyperbola does</span>';
+          refresh(true);
+        });
+      });
+
+      // ==================================================================
+      // LOOP
+      // ==================================================================
+      var domAcc = 0;
+      anim = Demo.loop(function (dt) {
+        if (dt > 0) {
+          step(dt);
+          feedSpawns(dt);
+          histAcc += dt;
+          pushHist(false);
+        }
+        domAcc += dt;
+        if (domAcc >= 0.1) { domAcc = 0; refresh(false); }
+        memCv.paint();
+        chartCv.paint();
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      el.chartLabel.innerHTML = 'Net flux into an empty cell <span>&mdash; a straight line has no ceiling; a hyperbola does</span>';
+      pushHist(true);
+      refresh(true);
+      setRunning(true);
+    })();
+  </script>
+</body>
+
+</html>

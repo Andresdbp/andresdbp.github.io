@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>VSEPR Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Set the bonding groups and lone pairs on a central atom and watch the electron-pair geometry and the molecular geometry come out as two different names. Hide the lone pairs and see why water is bent.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: stage labels, legend swatches, table highlight */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 18px; height: 12px; display: inline-block; flex: none; position: relative; }
+    .legend .lg i::before { content: ''; position: absolute; left: 0; right: 0; top: 5px; height: 2.5px; background: var(--text-2); border-radius: 2px; }
+    .legend .lg.wedge i::before {
+      height: 0; top: 1px; background: none;
+      border-left: 0; border-right: 9px solid var(--text-2);
+      border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+      width: 0; left: 5px;
+    }
+    .legend .lg.hash i::before { background: none; height: 0; top: 4px; border-top: 3px dotted var(--text-2); }
+    .legend .lg.lp i::before {
+      top: 2px; height: 8px; border-radius: 50% / 50%;
+      background: var(--warn-soft); border: 1.5px solid var(--warn);
+    }
+
+    #gallery { cursor: pointer; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 24px; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.hit { color: var(--warn); font-weight: 600; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .btn-row.six .btn { flex: 1 1 30%; min-width: 74px; }
+
+    .tbl tr.is-on td { background: var(--accent-soft); }
+    .tbl tr.is-on td:first-child { border-radius: 7px 0 0 7px; }
+    .tbl tr.is-on td:last-child { border-radius: 0 7px 7px 0; }
+    .tbl td, .tbl th { white-space: nowrap; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">VSEPR Bench</h1>
+        <p class="demo-sub">You start on water. Read the two shape names &mdash; they are different. Now untick <em>Show lone pairs</em> and watch the tetrahedron turn into a bent molecule without a single atom moving.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Molecular geometry</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="stageLabel">The molecule <span>&mdash; a flat drawing of a three-dimensional arrangement</span></p>
+        <canvas id="plot" role="img"
+                aria-label="A central atom with bonded atoms and lone pairs arranged around it, drawn with wedges and dashes to show which groups point toward and away from the viewer."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i></i>in the screen plane</span>
+          <span class="lg wedge"><i></i>toward you</span>
+          <span class="lg hash"><i></i>away from you</span>
+          <span class="lg lp"><i></i>lone pair</span>
+        </div>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">The six shapes <span>&mdash; atoms only. Each row is one electron-pair geometry. Tap a shape.</span></p>
+        <canvas id="gallery" role="img"
+                aria-label="The six molecular geometries grouped by their electron-pair geometry: linear from two groups; trigonal planar and bent from three groups; tetrahedral, trigonal pyramidal and bent from four groups."></canvas>
+        <p class="stage-caption" id="galCap">Three of these six shapes come out of the <strong>same</strong> tetrahedral electron-pair geometry. That is the whole reason two names are needed.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">The central atom</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="gRange">Electron groups</label>
+                <span class="ctrl-value" id="gOut">4</span>
+              </div>
+              <input type="range" id="gRange" min="2" max="4" step="1" value="4">
+              <p class="ctrl-hint">Every bond and every lone pair counts as <strong>one</strong> group, and a double or triple bond still counts as one. This number &mdash; and only this number &mdash; sets the <strong>electron-pair geometry</strong>.</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="lpRange">How many are lone pairs</label>
+                <span class="ctrl-value" id="lpOut">2</span>
+              </div>
+              <input type="range" id="lpRange" min="0" max="3" step="1" value="2">
+              <p class="ctrl-hint" id="lpHint">The rest are bonding groups &mdash; the ones with an atom on the end. Only those show up in the <strong>molecular geometry</strong>.</p>
+            </div>
+
+            <div class="readouts two">
+              <div class="readout">
+                <div class="r-label">Bonding groups</div>
+                <div class="r-value" id="rBond">2</div>
+                <div class="r-sub">atoms attached</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Lone pairs</div>
+                <div class="r-value" id="rLone">2</div>
+                <div class="r-sub" id="rAXE">AX₂E₂</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Real molecules</div>
+          <div class="btn-row six" id="presets">
+            <button class="btn" data-g="2" data-lp="0">CO₂</button>
+            <button class="btn" data-g="3" data-lp="0">BF₃</button>
+            <button class="btn" data-g="3" data-lp="1">SO₂</button>
+            <button class="btn" data-g="4" data-lp="0">CH₄</button>
+            <button class="btn" data-g="4" data-lp="1">NH₃</button>
+            <button class="btn is-on" data-g="4" data-lp="2">H₂O</button>
+          </div>
+          <div class="btn-row" style="margin-top:8px">
+            <button class="btn" id="btnGeneric">Generic labels (A, X)</button>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Press <strong>NH₃</strong> and then <strong>H₂O</strong>. The top name never changes. The bottom one does.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The two names &mdash; both of them</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Electron-pair geometry <span class="muted">(counts lone pairs)</span></div>
+              <div class="r-value big" id="rElec">Tetrahedral</div>
+              <div class="r-sub" id="rElecSub">4 electron groups around the central atom</div>
+            </div>
+            <div class="readout is-accent span2">
+              <div class="r-label">Molecular geometry <span class="muted">(atoms only)</span></div>
+              <div class="r-value big" id="rMol">Bent</div>
+              <div class="r-sub" id="rMolSub">only the 2 bonded atoms have a position you can see</div>
+            </div>
+          </div>
+          <p class="note" id="noteDiff" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Bond angle</div>
+          <div class="readouts two">
+            <div class="readout">
+              <div class="r-label">Ideal</div>
+              <div class="r-value" id="rIdeal">109.5<span class="r-unit">&deg;</span></div>
+              <div class="r-sub">from the electron geometry alone</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Actual</div>
+              <div class="r-value" id="rActual">104.5<span class="r-unit">&deg;</span></div>
+              <div class="r-sub" id="rActualSub">squeezed 5.0&deg; by 2 lone pairs</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Repulsion ordering in this molecule</div>
+              <div class="r-value" id="rOrder" style="font-size:14px;line-height:1.5">&nbsp;</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Example</div>
+              <div class="r-value" id="rExample" style="font-size:17px">H₂O</div>
+              <div class="r-sub" id="rExampleSub">water &mdash; measured 104.5&deg;</div>
+            </div>
+          </div>
+          <p class="note warn" style="margin-top:11px">
+            <strong>A lone pair is fatter than a bond.</strong> A bonding pair is pulled out between two nuclei; a
+            lone pair is held by one nucleus only, so it spreads wider near the central atom and shoves harder.
+            That is why the real angle sits <em>below</em> the ideal one, and why the angles in the ordering above
+            always run lone&nbsp;pair&ndash;lone&nbsp;pair &gt; lone&nbsp;pair&ndash;bond &gt; bond&ndash;bond.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">View</div>
+          <div class="stack-s">
+            <label class="check"><input type="checkbox" id="chkLP" checked> Show lone pairs</label>
+            <label class="check"><input type="checkbox" id="chkFrame" checked> Show the electron-geometry frame</label>
+            <label class="check"><input type="checkbox" id="chkIdeal"> Show the ideal (uncompressed) bond positions</label>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            The frame joins the tips of <em>all</em> the groups, lone pairs included &mdash; that is the shape
+            named on the first line. Turn the lone pairs off and the frame goes with them; what is left is the
+            shape named on the second line.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The whole set</div>
+          <div class="table-scroll">
+            <table class="tbl" id="vseprTable">
+              <thead>
+                <tr>
+                  <th>Groups</th><th>Bonds</th><th>Lone</th>
+                  <th>Electron geometry</th><th>Molecular geometry</th>
+                  <th>Ideal</th><th>Actual</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-g="2" data-lp="0"><td>2</td><td>2</td><td>0</td><td>Linear</td><td>Linear</td><td>180&deg;</td><td>180&deg;</td></tr>
+                <tr data-g="3" data-lp="0"><td>3</td><td>3</td><td>0</td><td>Trigonal planar</td><td>Trigonal planar</td><td>120&deg;</td><td>120&deg;</td></tr>
+                <tr data-g="3" data-lp="1"><td>3</td><td>2</td><td>1</td><td>Trigonal planar</td><td>Bent</td><td>120&deg;</td><td>&asymp;118&deg;</td></tr>
+                <tr data-g="4" data-lp="0"><td>4</td><td>4</td><td>0</td><td>Tetrahedral</td><td>Tetrahedral</td><td>109.5&deg;</td><td>109.5&deg;</td></tr>
+                <tr data-g="4" data-lp="1"><td>4</td><td>3</td><td>1</td><td>Tetrahedral</td><td>Trigonal pyramidal</td><td>109.5&deg;</td><td>&asymp;107&deg;</td></tr>
+                <tr data-g="4" data-lp="2"><td>4</td><td>2</td><td>2</td><td>Tetrahedral</td><td>Bent</td><td>109.5&deg;</td><td>&asymp;104.5&deg;</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Read the two <em>Bent</em> rows against each other. Same molecular geometry name, different parent,
+            different angle &mdash; about 118&deg; from three groups, about 104.5&deg; from four. &ldquo;Bent&rdquo;
+            on its own does not tell you the angle.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note">
+            <strong>The picture is a projection.</strong> Your screen is flat and these molecules are not. A wedge
+            means the group comes toward you and a dashed bond means it goes away from you, so the angle you could
+            measure with a protractor on the glass is <em>not</em> the angle in the molecule. Every angle printed
+            on this page is the true three-dimensional one. The arc drawn on the molecule is a real 3D arc, swung
+            through space and then projected, which is why it looks like a slice of an ellipse rather than a circle.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. The compressed angles here are the standard teaching values &mdash; about 2&deg;
+            of squeeze per lone pair on four groups, about 2&deg; on three &mdash; and real molecules scatter
+            around them: H<sub>2</sub>O is 104.5&deg; but H<sub>2</sub>S is 92.1&deg;, NH<sub>3</sub> is 107&deg;
+            but PH<sub>3</sub> is 93.5&deg;. VSEPR gets the <em>shape</em> right and the angle only roughly, because
+            it ignores how big the outer atoms are and how tightly the central atom holds its electrons. Groups are
+            all drawn the same length; real bond lengths differ. Five and six electron groups (trigonal
+            bipyramidal, octahedral, see-saw, T-shaped, square planar) are beyond this bench and beyond the AP
+            list. The lone-pair&ndash;lone-pair angles quoted for the four-group cases are model values chosen to
+            keep the ordering honest; lone pairs have no position you can measure with a diffractometer, because
+            there is no nucleus out there to bounce anything off.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students think a molecule has <em>one</em> shape name, so they learn
+        &ldquo;water is bent&rdquo; the way you learn a phone number &mdash; as an unconnected fact. Then the exam
+        asks for the electron-pair geometry of water and they write &ldquo;bent&rdquo; again, or it asks why the
+        angle is 104.5&deg; and they have nothing to say. The fix is not more memorising. It is noticing that
+        <strong>two different questions are being asked</strong>: where do all the electron groups go, and where
+        are the atoms?
+      </p>
+      <p>
+        <strong>What to notice.</strong> Put the bench on H<sub>2</sub>O. Four electron groups, so the four of them
+        push apart into a <strong>tetrahedron</strong> &mdash; that is the electron-pair geometry, and the dashed
+        frame draws it. Two of those four groups are lone pairs. Lone pairs are electrons; they have no nucleus at
+        the far end, so a photograph of the molecule, or a model kit, or an X-ray structure, shows nothing there.
+        Untick <em>Show lone pairs</em>. Not one atom moves. The frame vanishes and what is left is three atoms in
+        a V: <strong>bent</strong>. Same molecule, same instant, two true names. Now press NH<sub>3</sub>: the top
+        line still reads tetrahedral, because four groups is four groups, but with only one lone pair the atoms
+        that survive form a tripod under the central atom &mdash; <strong>trigonal pyramidal</strong>. Press
+        CH<sub>4</sub>: four groups again, and this time nothing is invisible, so both names finally agree.
+        Tetrahedral, trigonal pyramidal and bent are the <em>same</em> electron geometry wearing three different
+        numbers of lone pairs.
+      </p>
+      <p>
+        <strong>Where the missing five degrees go.</strong> A perfect tetrahedron has 109.5&deg; angles, and water
+        measures 104.5&deg;. Tick <em>Show the ideal (uncompressed) bond positions</em> and you can see the gap:
+        the faint lines are where the bonds would sit if all four groups pushed equally, and the real bonds are
+        pinched inside them. A bonding pair is anchored by two nuclei and is drawn out into a narrow sausage
+        between them. A lone pair answers to one nucleus only, so it billows out near the central atom and takes
+        up more angular room. Two of those bullying each other from the top of the molecule squeeze the two O&ndash;H
+        bonds into a smaller angle than they should have. Ammonia has only one lone pair doing the squeezing, so it
+        loses about 2.5&deg; instead of 5&deg; and lands near 107&deg;. Check the ordering readout in any molecule
+        with a lone pair: the lone&nbsp;pair&ndash;lone&nbsp;pair angle is always the widest and the
+        bond&ndash;bond angle is always the narrowest.
+      </p>
+      <p>
+        <strong>&ldquo;Bent&rdquo; is not one shape.</strong> Press SO<sub>2</sub>. Bent again &mdash; but this one
+        came from <em>three</em> electron groups in a flat triangle, not four in a tetrahedron, so its ideal is
+        120&deg; and it settles near 118&deg;, nowhere near water's 104.5&deg;. A student who only knows the word
+        &ldquo;bent&rdquo; cannot tell those two molecules apart and cannot predict either angle. A student who
+        says &ldquo;trigonal planar electron geometry, bent molecular geometry, one lone pair, so a bit under
+        120&deg;&rdquo; has actually said something. That sentence is the answer the question is looking for, and
+        it has three parts for a reason.
+      </p>
+      <p>
+        <strong>Why any of this matters.</strong> If water were linear its two bond dipoles would cancel and the
+        molecule would be nonpolar &mdash; no hydrogen bonding worth the name, no unusually high boiling point, no
+        liquid water at room temperature, no ice floating, no life as we run it. The 104.5&deg; kink is what makes
+        the O&ndash;H dipoles add up instead of cancelling. Shape is not decoration on top of the chemistry; the
+        shape <em>is</em> the chemistry, and it is set by counting electron groups, not by counting atoms.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — VSEPR for 2, 3 and 4 electron groups.
+      //
+      //   Electron-pair geometry depends ONLY on the total number of
+      //   groups g (bonds + lone pairs). Molecular geometry depends on
+      //   how many of those g groups are bonds. They are computed by two
+      //   separate functions below, on purpose: conflating them is the
+      //   single error this whole page exists to kill.
+      //
+      //   Ideal bond angles: g = 2 -> 180, g = 3 -> 120, g = 4 -> 109.47.
+      //   Lone pairs occupy more angular volume than bonding pairs, so
+      //   the real bond angle sits below the ideal. Teaching values:
+      //       g = 3, 1 lone pair   120   -> ~118    (SO2 119.0, O3 116.8)
+      //       g = 4, 1 lone pair   109.5 -> ~107    (NH3 107.0)
+      //       g = 4, 2 lone pairs  109.5 -> ~104.5  (H2O 104.5)
+      //
+      //   GEOMETRY CONSTRUCTION. Each case is a fixed list of 3D unit
+      //   vectors built so the drawn bond-bond angle IS the quoted angle:
+      //     g = 3 : all in the screen plane at the stated angle.
+      //     g = 4, 1 lone pair : lone pair on the axis, three bonds on a
+      //       cone at polar angle t where cos^2 t = (2 cos A + 1) / 3,
+      //       which gives bond-bond = A exactly. A = 107 -> t = 111.84,
+      //       so lone-pair-to-bond = 111.84 > bond-bond = 107. Correct
+      //       ordering, and it falls back to 109.47 for A = 109.47.
+      //     g = 4, 2 lone pairs : bonds in the xy plane at A = 104.5,
+      //       lone pairs in the yz plane at 115. That yields
+      //       lp-lp 115.0 > lp-bond 109.2 > bond-bond 104.5.
+      //
+      //   Nothing here is time-stepped. Every quantity is computed
+      //   directly from (groups, lone pairs) on each render.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var DEG = Math.PI / 180;
+      var TET = 109.4712;                 // exact tetrahedral angle
+
+      // ---------------- vectors ----------------
+      function inPlane(a) { a *= DEG; return [Math.cos(a), Math.sin(a), 0]; }
+      function cone(th, ph) { th *= DEG; ph *= DEG; var s = Math.sin(th); return [s * Math.cos(ph), Math.cos(th), s * Math.sin(ph)]; }
+      function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
+      function ang3(a, b) { return Math.acos(Demo.clamp(dot3(a, b), -1, 1)) / DEG; }
+
+      // polar angle of a 3-fold cone that puts the bond-bond angle at A
+      function coneTheta(A) {
+        var u = (2 * Math.cos(A * DEG) + 1) / 3;
+        if (u < 0) u = 0;
+        return Math.acos(-Math.sqrt(u)) / DEG;
+      }
+
+      // ---------------- names ----------------
+      var IDEAL = { 2: 180, 3: 120, 4: 109.5 };
+
+      function elecName(g) { return g === 2 ? 'Linear' : g === 3 ? 'Trigonal planar' : 'Tetrahedral'; }
+
+      function molName(g, lp) {
+        var b = g - lp;
+        if (b < 2) return 'Linear';                     // diatomic
+        if (g === 2) return 'Linear';
+        if (g === 3) return b === 3 ? 'Trigonal planar' : 'Bent';
+        return b === 4 ? 'Tetrahedral' : b === 3 ? 'Trigonal pyramidal' : 'Bent';
+      }
+
+      function idealAngle(g) { return IDEAL[g]; }
+
+      function actualAngle(g, lp) {
+        if (g - lp < 2) return null;                    // one bond: no angle
+        if (g === 2) return 180;
+        if (g === 3) return lp === 0 ? 120 : 118;
+        return lp === 0 ? 109.5 : lp === 1 ? 107 : 104.5;
+      }
+
+      var EXAMPLES = {
+        '2-0': { f: 'CO₂', n: 'carbon dioxide', a: 180.0, mid: 'C', out: 'O' },
+        '2-1': { f: 'CO', n: 'carbon monoxide', a: null, mid: 'C', out: 'O' },
+        '3-0': { f: 'BF₃', n: 'boron trifluoride', a: 120.0, mid: 'B', out: 'F' },
+        '3-1': { f: 'SO₂', n: 'sulfur dioxide', a: 119.0, mid: 'S', out: 'O' },
+        '3-2': { f: '—', n: 'one bond only, so the molecule is diatomic', a: null, mid: 'A', out: 'X' },
+        '4-0': { f: 'CH₄', n: 'methane', a: 109.5, mid: 'C', out: 'H' },
+        '4-1': { f: 'NH₃', n: 'ammonia', a: 107.0, mid: 'N', out: 'H' },
+        '4-2': { f: 'H₂O', n: 'water', a: 104.5, mid: 'O', out: 'H' },
+        '4-3': { f: 'HF', n: 'hydrogen fluoride', a: null, mid: 'F', out: 'H' }
+      };
+
+      var SUBS = ['₀', '₁', '₂', '₃', '₄'];
+      function axe(g, lp) {
+        var b = g - lp;
+        return 'AX' + (b > 1 ? SUBS[b] : '') + (lp > 0 ? 'E' + (lp > 1 ? SUBS[lp] : '') : '');
+      }
+
+      // ---------------- geometry for one case ----------------
+      // ideal = true builds the same case with the UNCOMPRESSED angles,
+      // used to draw the ghost bonds.
+      function buildCase(g, lp, ideal) {
+        var b = g - lp;
+        var A = ideal ? (g === 4 ? TET : IDEAL[g]) : (actualAngle(g, lp) || (g === 4 ? TET : IDEAL[g]));
+        if (!ideal && g === 4 && lp === 0) A = TET;
+        var d = [], view = { rx: 0, ry: 0 }, i;
+
+        function B(v) { return { v: v, lone: false }; }
+        function L(v) { return { v: v, lone: true }; }
+
+        if (g === 2) {
+          if (b === 2) d = [B(inPlane(180)), B(inPlane(0))];
+          else d = [B(inPlane(0)), L(inPlane(180))];
+        } else if (g === 3) {
+          if (lp === 0) {
+            d = [B(inPlane(90)), B(inPlane(210)), B(inPlane(330))];
+          } else if (lp === 1) {
+            d = [L(inPlane(90)), B(inPlane(270 - A / 2)), B(inPlane(270 + A / 2))];
+          } else {
+            d = [B(inPlane(270)), L(inPlane(30)), L(inPlane(150))];
+          }
+        } else {
+          if (lp === 0) {
+            view.rx = 15;
+            d = [B(cone(0, 0)), B(cone(TET, 90)), B(cone(TET, 210)), B(cone(TET, 330))];
+          } else if (lp === 1) {
+            view.rx = 15;
+            var t = coneTheta(A);
+            d = [L(cone(0, 0)), B(cone(t, 90)), B(cone(t, 210)), B(cone(t, 330))];
+          } else if (lp === 2) {
+            view.ry = 16;
+            var half = A / 2;
+            var lh = ideal ? TET / 2 : 57.5;            // lone-pair half angle
+            d = [
+              B(inPlane(270 - half)), B(inPlane(270 + half)),
+              L([0, Math.cos(lh * DEG), Math.sin(lh * DEG)]),
+              L([0, Math.cos(lh * DEG), -Math.sin(lh * DEG)])
+            ];
+          } else {
+            view.rx = 15;
+            d = [B(cone(0, 0)), L(cone(TET, 90)), L(cone(TET, 210)), L(cone(TET, 330))];
+          }
+        }
+
+        // pairwise angles, split by the type of the two groups
+        var bb = [], lb = [], ll = [];
+        for (i = 0; i < d.length; i++) {
+          for (var j = i + 1; j < d.length; j++) {
+            var a = ang3(d[i].v, d[j].v);
+            if (d[i].lone && d[j].lone) ll.push(a);
+            else if (d[i].lone || d[j].lone) lb.push(a);
+            else bb.push(a);
+          }
+        }
+        function mn(arr) { return arr.length ? Math.min.apply(null, arr) : null; }
+
+        return { g: g, lp: lp, b: b, dirs: d, view: view, bb: mn(bb), lb: mn(lb), ll: mn(ll) };
+      }
+
+      // ---------------- projection ----------------
+      function project(v, view) {
+        var by = view.ry * DEG, ax = view.rx * DEG;
+        var x = v[0] * Math.cos(by) + v[2] * Math.sin(by);
+        var z = -v[0] * Math.sin(by) + v[2] * Math.cos(by);
+        var y = v[1];
+        var y2 = y * Math.cos(ax) - z * Math.sin(ax);
+        var z2 = y * Math.sin(ax) + z * Math.cos(ax);
+        return { x: x, y: y2, z: z2 };
+      }
+
+      // ==================================================================
+      // STATE
+      // ==================================================================
+      var S = { g: 4, lp: 2, showLP: true, showFrame: true, showIdeal: false, real: true };
+
+      function curCase() { return buildCase(S.g, S.lp, false); }
+      function labels() {
+        var e = EXAMPLES[S.g + '-' + S.lp];
+        return S.real && e ? { mid: e.mid, out: e.out } : { mid: 'A', out: 'X' };
+      }
+
+      // ---------------- which two bonds carry the drawn arc ----------------
+      // Pick the pair whose FLAT projected angle is closest to the true 3D
+      // angle, so the arc on screen is as honest as a flat picture allows.
+      // Whatever is left over is reported to the student in the caption.
+      function arcPairOf(K, trueAngle) {
+        var bonds = [], i, j;
+        for (i = 0; i < K.dirs.length; i++) if (!K.dirs[i].lone) bonds.push(i);
+        if (bonds.length < 2 || trueAngle == null) return null;
+        var best = Infinity, pair = null;
+        for (i = 0; i < bonds.length; i++) {
+          for (j = i + 1; j < bonds.length; j++) {
+            var a = projAngle(K, bonds[i], bonds[j]);
+            if (a == null) continue;
+            var err = Math.abs(a - trueAngle);
+            if (err < best - 1e-9) { best = err; pair = [bonds[i], bonds[j]]; }
+          }
+        }
+        return pair;
+      }
+
+      function projAngle(K, i, j) {
+        var p1 = project(K.dirs[i].v, K.view), p2 = project(K.dirs[j].v, K.view);
+        var l1 = Math.sqrt(p1.x * p1.x + p1.y * p1.y);
+        var l2 = Math.sqrt(p2.x * p2.x + p2.y * p2.y);
+        if (l1 < 1e-6 || l2 < 1e-6) return null;
+        return Math.acos(Demo.clamp((p1.x * p2.x + p1.y * p2.y) / (l1 * l2), -1, 1)) / DEG;
+      }
+
+      function drawnAngleOf(K, trueAngle) {
+        var pr = arcPairOf(K, trueAngle);
+        return pr ? projAngle(K, pr[0], pr[1]) : null;
+      }
+
+      // great-circle sweep from a1 to a2, safe when they are antipodal
+      function arcPoints(a1, a2, n) {
+        var d = Demo.clamp(dot3(a1, a2), -1, 1);
+        var om = Math.acos(d);
+        var e2 = [a2[0] - d * a1[0], a2[1] - d * a1[1], a2[2] - d * a1[2]];
+        var L = Math.sqrt(dot3(e2, e2));
+        if (L < 1e-6) {
+          // exactly opposite (a linear molecule): sweep over the top instead
+          var u = Math.abs(a1[1]) < 0.9 ? [0, 1, 0] : [0, 0, 1];
+          var pr = dot3(u, a1);
+          e2 = [u[0] - pr * a1[0], u[1] - pr * a1[1], u[2] - pr * a1[2]];
+          L = Math.sqrt(dot3(e2, e2));
+        }
+        e2 = [e2[0] / L, e2[1] / L, e2[2] / L];
+        var out = [];
+        for (var i = 0; i <= n; i++) {
+          var t = om * i / n, cs = Math.cos(t), sn = Math.sin(t);
+          out.push([a1[0] * cs + e2[0] * sn, a1[1] * cs + e2[1] * sn, a1[2] * cs + e2[2] * sn]);
+        }
+        return out;
+      }
+
+      // ==================================================================
+      // MAIN CANVAS
+      // ==================================================================
+      var mainCv = Demo.canvas('#plot', function (ctx, w, h, c) {
+        drawMolecule(ctx, w, h, c);
+      }, { aspect: 0.72, minHeight: 250, maxHeight: 340 });
+
+      function wedge(ctx, x0, y0, x1, y1, col, end) {
+        var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy) || 1;
+        var nx = -dy / L, ny = dx / L;
+        ctx.beginPath();
+        ctx.moveTo(x0 + nx * 1.1, y0 + ny * 1.1);
+        ctx.lineTo(x1 + nx * end, y1 + ny * end);
+        ctx.lineTo(x1 - nx * end, y1 - ny * end);
+        ctx.lineTo(x0 - nx * 1.1, y0 - ny * 1.1);
+        ctx.closePath();
+        ctx.fillStyle = col;
+        ctx.fill();
+      }
+
+      function hashBond(ctx, x0, y0, x1, y1, col, end) {
+        var dx = x1 - x0, dy = y1 - y0, L = Math.sqrt(dx * dx + dy * dy) || 1;
+        var nx = -dy / L, ny = dx / L, n = 6, i;
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.7;
+        ctx.lineCap = 'round';
+        for (i = 1; i <= n; i++) {
+          var t = i / (n + 0.35);
+          var hw = 1.2 + (end - 1.2) * t;
+          var px = x0 + dx * t, py = y0 + dy * t;
+          ctx.beginPath();
+          ctx.moveTo(px + nx * hw, py + ny * hw);
+          ctx.lineTo(px - nx * hw, py - ny * hw);
+          ctx.stroke();
+        }
+      }
+
+      function atomDisc(ctx, c, x, y, r, col, txt, fs) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = c.surface;
+        ctx.fill();
+        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = col;
+        ctx.stroke();
+        if (txt) {
+          ctx.fillStyle = col;
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(txt, x, y + 0.5);
+        }
+      }
+
+      function lobe(ctx, c, x, y, rot, rx, ry) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, 6.2832);
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = c.warn;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = c.warn;
+        ctx.stroke();
+        var d = Math.min(ry * 0.52, 4);
+        ctx.fillStyle = c.warn;
+        ctx.beginPath(); ctx.arc(0, -d, 1.9, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.arc(0, d, 1.9, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+
+      function drawMolecule(ctx, w, h, c) {
+        var K = curCase();
+        var lab = labels();
+        var narrow = w < 340;
+        var cx = w / 2, cy = h / 2 + 12;
+        var R = Math.min(w * 0.32, (h - 44) * 0.40);
+        var midR = Demo.clamp(R * 0.20, 12, 19);
+        var atR = Demo.clamp(R * 0.17, 10, 16);
+        var fs = narrow ? 10 : 11.5;
+        var i, j;
+
+        // projected screen positions for every group
+        var P = K.dirs.map(function (d) {
+          var p = project(d.v, K.view);
+          var L = Math.sqrt(p.x * p.x + p.y * p.y);
+          return {
+            lone: d.lone, v: d.v, z: p.z,
+            ux: L > 1e-6 ? p.x / L : 0,
+            uy: L > 1e-6 ? -p.y / L : 0,   // canvas y is down
+            len: L * R
+          };
+        });
+
+        // ---- ghost bonds at the ideal, uncompressed angles ----
+        var actual = actualAngle(S.g, S.lp);
+        var ideal = idealAngle(S.g);
+        var compressed = actual != null && Math.abs(actual - ideal) > 0.05;
+        if (S.showIdeal && compressed) {
+          var G = buildCase(S.g, S.lp, true);
+          ctx.save();
+          ctx.strokeStyle = c.series[3];
+          ctx.globalAlpha = 0.85;
+          ctx.lineWidth = 1.4;
+          ctx.setLineDash([5, 4]);
+          G.dirs.forEach(function (d) {
+            if (d.lone) return;
+            var p = project(d.v, G.view);
+            var L = Math.sqrt(p.x * p.x + p.y * p.y) || 1e-6;
+            var ux = p.x / L, uy = -p.y / L, len = L * R * 1.22;
+            ctx.beginPath();
+            ctx.moveTo(cx + ux * (midR + 2), cy + uy * (midR + 2));
+            ctx.lineTo(cx + ux * len, cy + uy * len);
+            ctx.stroke();
+          });
+          ctx.restore();
+          ctx.fillStyle = c.series[3];
+          ctx.font = fs - 1.5 + FONT;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.fillText('dashed rays: where the bonds would sit at the ideal ' + F.dec(ideal, 1) + '°',
+            2, h - fs - 4);
+        }
+
+        // ---- electron-geometry frame: joins EVERY group tip ----
+        if (S.showFrame && S.showLP) {
+          ctx.save();
+          ctx.strokeStyle = c.muted;
+          ctx.globalAlpha = 0.5;
+          ctx.lineWidth = 1.3;
+          ctx.setLineDash([3, 4]);
+          for (i = 0; i < P.length; i++) {
+            for (j = i + 1; j < P.length; j++) {
+              ctx.beginPath();
+              ctx.moveTo(cx + P[i].ux * P[i].len, cy + P[i].uy * P[i].len);
+              ctx.lineTo(cx + P[j].ux * P[j].len, cy + P[j].uy * P[j].len);
+              ctx.stroke();
+            }
+          }
+          ctx.restore();
+        }
+
+        // ---- the bond angle arc: a real 3D arc, then projected ----
+        var arcPair = arcPairOf(K, actual);
+
+        if (arcPair) {
+          var rad = R * 0.44;
+          var N = 40;
+          var pts = arcPoints(K.dirs[arcPair[0]].v, K.dirs[arcPair[1]].v, N).map(function (v) {
+            var p = project(v, K.view);
+            return { x: cx + p.x * rad, y: cy - p.y * rad };
+          });
+          ctx.strokeStyle = c.accentStrong;
+          ctx.lineWidth = 1.7;
+          ctx.beginPath();
+          for (i = 0; i < pts.length; i++) i === 0 ? ctx.moveTo(pts[i].x, pts[i].y) : ctx.lineTo(pts[i].x, pts[i].y);
+          ctx.stroke();
+
+          var mid = pts[Math.round(N / 2)];
+          var mdx = mid.x - cx, mdy = mid.y - cy, ml = Math.sqrt(mdx * mdx + mdy * mdy) || 1;
+          var lx = cx + mdx / ml * (ml + 16), ly = cy + mdy / ml * (ml + 16);
+          var txt = F.dec(actual, 1) + '°';
+          ctx.font = '600 ' + (fs + 1) + FONT;
+          var tw = ctx.measureText(txt).width;
+          lx = Demo.clamp(lx, tw / 2 + 4, w - tw / 2 - 4);
+          ly = Demo.clamp(ly, 12, h - 6);
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          ctx.fillStyle = c.surface;
+          ctx.fillRect(lx - tw / 2 - 4, ly - fs - 2, tw + 8, fs + 7);
+          ctx.restore();
+          ctx.fillStyle = c.accentStrong;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(txt, lx, ly + 1);
+        }
+
+        // ---- groups, back to front ----
+        var order = P.map(function (p, k) { return k; }).sort(function (a, bIdx) { return P[a].z - P[bIdx].z; });
+        var midDrawn = false;
+
+        function drawMid() {
+          if (midDrawn) return;
+          midDrawn = true;
+          atomDisc(ctx, c, cx, cy, midR, c.accentStrong, lab.mid, fs + 1.5);
+        }
+
+        order.forEach(function (k) {
+          var p = P[k];
+          if (p.z > 0 && !midDrawn) drawMid();
+
+          var ux = p.ux, uy = p.uy;
+          var end = Math.max(p.len, midR + 14);
+
+          if (p.lone) {
+            if (!S.showLP) return;
+            var pos = Math.max(p.len * 0.66, midR + 15);
+            var scale = Demo.clamp(1 + 0.14 * p.z, 0.8, 1.2);
+            lobe(ctx, c, cx + ux * pos, cy + uy * pos,
+              Math.atan2(uy, ux), 12 * scale, 7.6 * scale);
+          } else {
+            var x0 = cx + ux * (midR + 1), y0 = cy + uy * (midR + 1);
+            var x1 = cx + ux * (end - atR - 1), y1 = cy + uy * (end - atR - 1);
+            var vis = (end - atR - 1) > (midR + 3);
+            if (vis) {
+              if (p.z > 0.30) wedge(ctx, x0, y0, x1, y1, c.text2, 5);
+              else if (p.z < -0.30) hashBond(ctx, x0, y0, x1, y1, c.text2, 5);
+              else {
+                ctx.strokeStyle = c.text2;
+                ctx.lineWidth = 2.6;
+                ctx.lineCap = 'butt';
+                ctx.beginPath();
+                ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+              }
+            }
+            var sc = Demo.clamp(1 + 0.13 * p.z, 0.82, 1.18);
+            atomDisc(ctx, c, cx + ux * end, cy + uy * end, atR * sc,
+              c.series[0], lab.out, fs);
+          }
+        });
+        drawMid();
+
+        // ---- corner labels: both names, on the picture itself ----
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('electron-pair geometry', 2, 2);
+        ctx.fillStyle = c.text;
+        ctx.font = '600 ' + (fs + 2) + FONT;
+        ctx.fillText(elecName(S.g), 2, 2 + fs + 3);
+
+        ctx.textAlign = 'right';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('molecular geometry', w - 2, 2);
+        ctx.fillStyle = c.text;
+        ctx.font = '600 ' + (fs + 2) + FONT;
+        ctx.fillText(molName(S.g, S.lp), w - 2, 2 + fs + 3);
+      }
+
+      // ==================================================================
+      // GALLERY CANVAS — the six AP shapes, grouped by electron geometry
+      // ==================================================================
+      var GAL = [
+        { head: '2 groups → linear electron geometry', items: [{ g: 2, lp: 0, n: ['Linear'], ex: 'CO₂' }] },
+        {
+          head: '3 groups → trigonal planar electron geometry', items: [
+            { g: 3, lp: 0, n: ['Trigonal', 'planar'], ex: 'BF₃' },
+            { g: 3, lp: 1, n: ['Bent', '(3 groups)'], ex: 'SO₂' }]
+        },
+        {
+          head: '4 groups → tetrahedral electron geometry', items: [
+            { g: 4, lp: 0, n: ['Tetrahedral'], ex: 'CH₄' },
+            { g: 4, lp: 1, n: ['Trigonal', 'pyramidal'], ex: 'NH₃' },
+            { g: 4, lp: 2, n: ['Bent', '(4 groups)'], ex: 'H₂O' }]
+        }
+      ];
+      var galHit = [];
+
+      var galCv = Demo.canvas('#gallery', function (ctx, w, h, c) {
+        galHit = [];
+        var rows = GAL.length;
+        var rowH = h / rows;
+        var cols = 3;
+        var cw = w / cols;
+        var fs = w < 330 ? 8.4 : 9.2;
+
+        GAL.forEach(function (row, ri) {
+          var ry = ri * rowH;
+
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'top';
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(row.head, 2, ry + 2);
+
+          var cellTop = ry + fs + 6;
+          var cellH = rowH - (fs + 8);
+
+          row.items.forEach(function (it, ci) {
+            var cx0 = ci * cw;
+            var on = it.g === S.g && it.lp === S.lp;
+            galHit.push({ x: cx0, y: cellTop, w: cw, h: cellH, g: it.g, lp: it.lp });
+
+            if (on) {
+              ctx.beginPath();
+              var rr = 8, x = cx0 + 2, y = cellTop, ww = cw - 4, hh = cellH - 1;
+              ctx.moveTo(x + rr, y);
+              ctx.arcTo(x + ww, y, x + ww, y + hh, rr);
+              ctx.arcTo(x + ww, y + hh, x, y + hh, rr);
+              ctx.arcTo(x, y + hh, x, y, rr);
+              ctx.arcTo(x, y, x + ww, y, rr);
+              ctx.closePath();
+              ctx.fillStyle = c.accentSoft;
+              ctx.fill();
+              ctx.strokeStyle = c.accentLine;
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            }
+
+            var K = buildCase(it.g, it.lp, false);
+            var lineH = fs + 1.6;
+            var textH = (it.n.length + 1) * lineH + 2;
+            var molH = Math.max(20, cellH - textH);
+            var mcx = cx0 + cw / 2;
+            var mcy = cellTop + molH * 0.5;
+            var R = Math.min(cw * 0.25, molH * 0.40);
+            var col = on ? c.accentStrong : c.series[0];
+
+            var pts = K.dirs.filter(function (d) { return !d.lone; }).map(function (d) {
+              var p = project(d.v, K.view);
+              var L = Math.sqrt(p.x * p.x + p.y * p.y) || 1e-6;
+              return { ux: p.x / L, uy: -p.y / L, len: L * R, z: p.z };
+            });
+            pts.sort(function (a, b) { return a.z - b.z; });
+
+            ctx.lineCap = 'round';
+            pts.forEach(function (p) {
+              ctx.strokeStyle = col;
+              ctx.lineWidth = 1.8;
+              ctx.beginPath();
+              ctx.moveTo(mcx, mcy);
+              ctx.lineTo(mcx + p.ux * p.len, mcy + p.uy * p.len);
+              ctx.stroke();
+            });
+            pts.forEach(function (p) {
+              ctx.beginPath();
+              ctx.arc(mcx + p.ux * p.len, mcy + p.uy * p.len, 3.4, 0, 6.2832);
+              ctx.fillStyle = c.surface; ctx.fill();
+              ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.stroke();
+            });
+            ctx.beginPath();
+            ctx.arc(mcx, mcy, 4.6, 0, 6.2832);
+            ctx.fillStyle = c.surface; ctx.fill();
+            ctx.strokeStyle = col; ctx.lineWidth = 1.8; ctx.stroke();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            var exY = cellTop + cellH - lineH;
+            var ty = exY - it.n.length * lineH;
+            ctx.font = '600 ' + fs + FONT;
+            ctx.fillStyle = on ? c.accentStrong : c.text;
+            it.n.forEach(function (line, li) {
+              ctx.fillText(line, mcx, ty + li * lineH);
+            });
+            ctx.font = fs - 0.6 + FONT;
+            ctx.fillStyle = c.muted;
+            ctx.fillText(it.ex, mcx, exY);
+          });
+        });
+      }, { aspect: 0.95, minHeight: 265, maxHeight: 330 });
+
+      galCv.el.addEventListener('click', function (e) {
+        var r = galCv.el.getBoundingClientRect();
+        var x = e.clientX - r.left, y = e.clientY - r.top;
+        for (var i = 0; i < galHit.length; i++) {
+          var t = galHit[i];
+          if (x >= t.x && x <= t.x + t.w && y >= t.y && y <= t.y + t.h) {
+            setCase(t.g, t.lp, true);
+            return;
+          }
+        }
+      });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        gRange: document.getElementById('gRange'),
+        gOut: document.getElementById('gOut'),
+        lpRange: document.getElementById('lpRange'),
+        lpOut: document.getElementById('lpOut'),
+        lpHint: document.getElementById('lpHint'),
+        rBond: document.getElementById('rBond'),
+        rLone: document.getElementById('rLone'),
+        rAXE: document.getElementById('rAXE'),
+        rElec: document.getElementById('rElec'),
+        rElecSub: document.getElementById('rElecSub'),
+        rMol: document.getElementById('rMol'),
+        rMolSub: document.getElementById('rMolSub'),
+        noteDiff: document.getElementById('noteDiff'),
+        rIdeal: document.getElementById('rIdeal'),
+        rActual: document.getElementById('rActual'),
+        rActualSub: document.getElementById('rActualSub'),
+        rOrder: document.getElementById('rOrder'),
+        rExample: document.getElementById('rExample'),
+        rExampleSub: document.getElementById('rExampleSub'),
+        chkLP: document.getElementById('chkLP'),
+        chkFrame: document.getElementById('chkFrame'),
+        chkIdeal: document.getElementById('chkIdeal'),
+        btnGeneric: document.getElementById('btnGeneric'),
+        plotCap: document.getElementById('plotCap'),
+        galCap: document.getElementById('galCap'),
+        stageLabel: document.getElementById('stageLabel')
+      };
+
+      var presetBtns = Array.prototype.slice.call(document.querySelectorAll('#presets .btn'));
+      var tableRows = Array.prototype.slice.call(document.querySelectorAll('#vseprTable tbody tr'));
+
+      // ==================================================================
+      // RENDER — everything recomputed from (g, lp) every time
+      // ==================================================================
+      function render() {
+        var g = S.g, lp = S.lp, b = g - lp;
+        var K = curCase();
+        var ex = EXAMPLES[g + '-' + lp];
+        var ideal = idealAngle(g);
+        var actual = actualAngle(g, lp);
+        var eName = elecName(g), mName = molName(g, lp);
+
+        el.gOut.textContent = g;
+        el.lpOut.textContent = lp;
+        el.lpRange.max = g - 1;
+        el.rBond.textContent = b;
+        el.rLone.textContent = lp;
+        el.rAXE.textContent = axe(g, lp);
+
+        el.lpHint.innerHTML = lp === 0
+          ? 'No lone pairs, so every group is an atom and the two geometries below are forced to be the same name. Slide this up to break them apart.'
+          : 'The other ' + b + ' ' + (b === 1 ? 'group is' : 'groups are') + ' bonds. Lone pairs still take up room and still push &mdash; they just have no atom on the end, so they never appear in the <strong>molecular</strong> geometry.';
+
+        el.rElec.textContent = eName;
+        el.rElecSub.innerHTML = g + ' electron groups repelling each other';
+        el.rMol.textContent = mName;
+        el.rMolSub.innerHTML = b === 1
+          ? 'a single bonded atom &mdash; any two-atom molecule is linear'
+          : 'the shape of the ' + b + ' bonded atoms alone';
+
+        if (eName === mName) {
+          el.noteDiff.className = 'note';
+          el.noteDiff.innerHTML = '<strong>The two names agree here</strong>, and only because there are no lone '
+            + 'pairs: every electron group has an atom on the end, so the shape of the groups and the shape of '
+            + 'the atoms are the same object. Add one lone pair and they come apart.';
+        } else {
+          el.noteDiff.className = 'note warn';
+          el.noteDiff.innerHTML = '<strong>Two different names, one molecule.</strong> All ' + g + ' groups spread '
+            + 'into a ' + eName.toLowerCase() + ' arrangement, but ' + lp + ' of them '
+            + (lp === 1 ? 'is a lone pair' : 'are lone pairs') + ' with no atom on the end. Delete what you cannot '
+            + 'see and the ' + b + ' remaining atom' + (b === 1 ? '' : 's') + ' spell' + (b === 1 ? 's' : '')
+            + ' <strong>' + mName.toLowerCase() + '</strong>. Untick <em>Show lone pairs</em> and watch it happen '
+            + 'without a single atom moving.';
+        }
+
+        el.rIdeal.innerHTML = F.dec(ideal, 1) + '<span class="r-unit">&deg;</span>';
+
+        if (actual == null) {
+          el.rActual.innerHTML = '&mdash;';
+          el.rActualSub.className = 'r-sub';
+          el.rActualSub.textContent = 'one bond only, so there is no bond angle to quote';
+        } else {
+          el.rActual.innerHTML = F.dec(actual, 1) + '<span class="r-unit">&deg;</span>';
+          if (Math.abs(actual - ideal) < 0.05) {
+            el.rActualSub.className = 'r-sub';
+            el.rActualSub.innerHTML = 'no lone pairs, so nothing squeezes it';
+          } else {
+            el.rActualSub.className = 'r-sub hit';
+            el.rActualSub.innerHTML = 'squeezed ' + F.dec(ideal - actual, 1) + '&deg; by ' + lp + ' lone pair'
+              + (lp === 1 ? '' : 's');
+          }
+        }
+
+        // listed widest first; the separator is ">" only when it really is
+        var vals = [], parts = [];
+        function push(v, name) {
+          if (v == null) return;
+          vals.push(v);
+          parts.push(name + ' <strong>' + F.dec(v, 1) + '&deg;</strong>');
+        }
+        push(K.ll, 'lone&ndash;lone');
+        push(K.lb, 'lone&ndash;bond');
+        push(K.bb, 'bond&ndash;bond');
+        var strict = true;
+        for (var q = 1; q < vals.length; q++) if (vals[q] >= vals[q - 1] - 0.05) strict = false;
+        el.rOrder.innerHTML = parts.length === 0
+          ? '&mdash;'
+          : parts.length === 1
+            ? parts[0] + ' <span class="muted">&mdash; nothing here to compare it with</span>'
+            : parts.join(strict ? ' &gt; ' : ' &middot; ');
+
+        el.rExample.textContent = ex ? ex.f : '—';
+        el.rExampleSub.innerHTML = ex
+          ? (ex.a == null ? ex.n : ex.n + ' &mdash; measured ' + F.dec(ex.a, 1) + '&deg;')
+          : '';
+
+        presetBtns.forEach(function (btn) {
+          var on = S.real && +btn.dataset.g === g && +btn.dataset.lp === lp;
+          btn.classList.toggle('is-on', on);
+        });
+        el.btnGeneric.classList.toggle('is-on', !S.real);
+
+        tableRows.forEach(function (tr) {
+          tr.classList.toggle('is-on', +tr.dataset.g === g && +tr.dataset.lp === lp);
+        });
+
+        el.stageLabel.innerHTML = 'The molecule <span>&mdash; ' + axe(g, lp)
+          + ', a flat drawing of a three-dimensional arrangement</span>';
+
+        mainCv.redraw();
+        galCv.redraw();
+        el.plotCap.innerHTML = caption(K, ideal, actual, eName, mName);
+      }
+
+      function caption(K, ideal, actual, eName, mName) {
+        var g = S.g, lp = S.lp, b = g - lp;
+        var t = '<strong>' + g + ' electron groups → ' + eName.toLowerCase()
+          + ' electron-pair geometry.</strong> ';
+
+        if (b === 1) {
+          t += 'Only one of them is a bond, so the molecule has two atoms and is <strong>linear</strong> '
+            + 'whatever the ' + lp + ' lone pairs are doing. Two points always make a straight line.';
+        } else if (eName === mName) {
+          t += 'Every group is a bond, so the atoms sit exactly where the groups do and the molecular geometry '
+            + 'carries the same name: <strong>' + mName.toLowerCase() + '</strong>, '
+            + F.dec(actual, 1) + '°.';
+        } else {
+          t += 'Hide the ' + lp + ' lone pair' + (lp === 1 ? ' &mdash; it has' : 's &mdash; they have')
+            + ' no atom on the end, so no instrument sees ' + (lp === 1 ? 'it' : 'them')
+            + ' &mdash; and the ' + b + ' atoms that remain make a <strong>'
+            + mName.toLowerCase() + '</strong> molecule at ' + F.dec(actual, 1) + '°, down from the ideal '
+            + F.dec(ideal, 1) + '°.';
+        }
+
+        if (!S.showLP) {
+          t += ' <strong>Lone pairs are hidden right now</strong>, so you are looking at what a model kit or an '
+            + 'X-ray structure would show you: the ' + mName.toLowerCase() + ' molecule. The lone pairs did not '
+            + 'go anywhere &mdash; they are still there, still pushing.';
+        }
+
+        var drawn = drawnAngleOf(K, actual);
+        if (drawn != null && actual != null && Math.abs(drawn - actual) > 3) {
+          t += ' <strong>Careful with your protractor.</strong> Measured on this flat drawing that angle reads '
+            + F.dec(drawn, 0) + '°, because the bonds are tipped toward and away from you. The true '
+            + 'angle in three dimensions is ' + F.dec(actual, 1) + '°, and that is the number printed on the '
+            + 'arc. The arc itself is swung through 3D space and then projected, which is why it looks squashed.';
+        }
+        return t;
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      function setCase(g, lp, real) {
+        S.g = Demo.clamp(Math.round(g), 2, 4);
+        S.lp = Demo.clamp(Math.round(lp), 0, S.g - 1);
+        S.real = !!real;
+        el.gRange.value = S.g;
+        el.lpRange.max = S.g - 1;
+        el.lpRange.value = S.lp;
+        render();
+      }
+
+      Demo.range('#gRange', function (v) {
+        S.g = Math.round(v);
+        if (S.lp > S.g - 1) { S.lp = S.g - 1; el.lpRange.value = S.lp; }
+        el.lpRange.max = S.g - 1;
+        S.real = false;
+        render();
+      });
+
+      Demo.range('#lpRange', function (v) {
+        S.lp = Demo.clamp(Math.round(v), 0, S.g - 1);
+        if (+el.lpRange.value !== S.lp) el.lpRange.value = S.lp;
+        S.real = false;
+        render();
+      });
+
+      presetBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          setCase(+btn.dataset.g, +btn.dataset.lp, true);
+        });
+      });
+
+      el.btnGeneric.addEventListener('click', function () {
+        S.real = false;
+        render();
+      });
+
+      tableRows.forEach(function (tr) {
+        tr.style.cursor = 'pointer';
+        tr.addEventListener('click', function () {
+          setCase(+tr.dataset.g, +tr.dataset.lp, true);
+        });
+      });
+
+      el.chkLP.addEventListener('change', function () { S.showLP = this.checked; render(); });
+      el.chkFrame.addEventListener('change', function () { S.showFrame = this.checked; render(); });
+      el.chkIdeal.addEventListener('change', function () { S.showIdeal = this.checked; render(); });
+
+      // ==================================================================
+      // BOOT — starts on water, lone pairs showing
+      // ==================================================================
+      setCase(4, 2, true);
+    })();
+  </script>
+</body>
+
+</html>

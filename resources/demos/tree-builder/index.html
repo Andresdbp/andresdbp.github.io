@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Tree Builder | Dr. Andres Barboza</title>
+  <meta name="description" content="Build a cladogram for six animals by grouping them on shared derived characters, and score it by parsimony. Rotate any node and watch the step count refuse to change - a tree is a hypothesis about ancestry, not a ranking.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: group chips, the character matrix, the legend */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    #tree { cursor: pointer; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .chip {
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      max-width: 100%;
+      text-align: left;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.4;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+    }
+    .chip:hover { border-color: var(--accent-line); color: var(--accent-strong); }
+    .chip.is-sel {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: var(--accent-strong);
+      font-weight: 600;
+    }
+    .chip .cnt {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 20px;
+      background: var(--ok-soft);
+      color: var(--ok);
+    }
+    .chip .cnt.zero { background: var(--bad-soft); color: var(--bad); }
+    .chip.is-out {
+      background: transparent;
+      border-style: dashed;
+      color: var(--muted);
+      cursor: default;
+    }
+    .chip.is-out:hover { border-color: var(--line); color: var(--muted); }
+
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 1px 7px;
+      border-radius: 20px;
+      white-space: nowrap;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .badge.ok  { background: var(--ok-soft);   border-color: transparent; color: var(--ok); }
+    .badge.bad { background: var(--bad-soft);  border-color: transparent; color: var(--bad); }
+    .badge.wr  { background: var(--warn-soft); border-color: transparent; color: var(--warn); }
+
+    /* character matrix */
+    .mtx { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 340px; }
+    .mtx th, .mtx td { padding: 5px 4px; border-bottom: 1px solid var(--line-soft); text-align: center; }
+    .mtx th {
+      font-size: 9.5px; font-weight: 600; letter-spacing: 0.03em;
+      text-transform: uppercase; color: var(--muted); vertical-align: bottom;
+    }
+    .mtx th.nm, .mtx td.nm { text-align: left; }
+    .mtx td.nm { color: var(--text); line-height: 1.35; }
+    .mtx td.nm .sm { display: block; font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .mtx td.st { width: 22px; }
+    .mtx td.stp { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--text); width: 30px; }
+    .mtx tbody tr { cursor: pointer; }
+    .mtx tbody tr:hover td { background: var(--surface-2); }
+    .mtx tbody tr.is-focus td { background: var(--accent-soft); }
+    .mtx tbody tr.dim td.nm, .mtx tbody tr.dim td.stp { color: var(--muted); }
+    .mtx tr:last-child td { border-bottom: 0; }
+    .dotc {
+      display: inline-block; width: 11px; height: 11px; border-radius: 50%;
+      border: 1.5px solid var(--line); background: transparent; vertical-align: middle;
+    }
+    .dotc.on { background: var(--accent); border-color: var(--accent); }
+    .dotc.out { border-color: var(--muted); }
+    .dotc.out.on { background: var(--muted); border-color: var(--muted); }
+
+    /* these tiles carry real phrases, longer than the shell's one-line default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 11px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+    .legend .lg i { width: 3px; height: 12px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.d i { width: 11px; height: 11px; border-radius: 50%; }
+
+    .trylist { display: flex; flex-direction: column; gap: 5px; }
+    .tryrow {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 12px; padding: 5px 9px; border-radius: 9px;
+      background: var(--surface-2); border: 1px solid var(--line-soft);
+    }
+    .tryrow.now { border-color: var(--accent); background: var(--accent-soft); }
+    .tryrow .nw { font-variant-numeric: tabular-nums; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tryrow .sc { font-weight: 600; color: var(--text); flex: none; }
+    .tryrow.best .sc { color: var(--ok); }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Tree Builder</h1>
+        <p class="demo-sub">Group the five animals on characters they <em>share and inherited from a common ancestor</em>, and the tree is scored by how many evolutionary changes it needs. Then click any node to rotate it and watch the score not move.</p>
+        <div class="tags">
+          <span class="tag is-bio">AP Biology</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Phylogeny &amp; parsimony</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+        <p class="stage-label" id="treeLabel">Your tree <span>&mdash; nothing grouped yet</span></p>
+        <canvas id="tree" role="img"
+                aria-label="A cladogram of six animals. Tick marks on each branch show where a character changes state; the total number of tick marks is the parsimony score."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--accent-strong)"></i>a character changes here (counts 1 step)</span>
+          <span class="lg"><i style="background:var(--bad)"></i>change forced by a conflict (homoplasy)</span>
+          <span class="lg d"><i style="background:var(--accent);border:0"></i>node &mdash; click to rotate</span>
+        </div>
+        <p class="stage-caption" id="cap">Pick two groups in the panel and join them. Every tick mark you see is one change the tree has to assume.</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">1 &middot; Build the tree</div>
+          <div class="stack">
+            <p class="ctrl-hint" style="margin-top:0">
+              Click one group, then a second, to join them into a clade. The lancelet is the
+              <strong>outgroup</strong> and stays outside &mdash; it is what roots the tree.
+            </p>
+            <div class="chips" id="chips"></div>
+            <label class="check"><input type="checkbox" id="hintChk"> Show how many shared derived characters each join would have</label>
+            <div class="btn-row">
+              <button class="btn" id="rotNode">Rotate a node</button>
+              <button class="btn" id="undo">Undo</button>
+              <button class="btn" id="clear">Start over</button>
+            </div>
+            <p class="ctrl-hint" style="margin-top:0">
+              <strong>Rotate a node</strong> turns one branching point through 180&deg; &mdash; same on the
+              tree itself as clicking that node&rsquo;s circle on the drawing. Watch the step count while
+              you do it.
+            </p>
+            <p class="note" id="joinNote">Nothing grouped yet. A group is a hypothesis: &ldquo;these animals share an ancestor that no one else on this tree shares.&rdquo;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">2 &middot; The score</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Steps (changes)</div>
+              <div class="r-value" id="rSteps">25</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Groups left to join</div>
+              <div class="r-value" id="rLeft">5</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Rotations you made</div>
+              <div class="r-value" id="rRot">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Rank of all 105 trees</div>
+              <div class="r-value" id="rRank">&mdash;</div>
+            </div>
+          </div>
+          <p class="note" id="scoreNote" style="margin-top:11px">
+            <strong>Parsimony</strong> counts the changes a tree forces you to assume. Fewer assumed changes
+            means a tree that explains the data with less special pleading.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">3 &middot; Try another arrangement</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn" id="pLadder">The ladder</button>
+              <button class="btn" id="pSwim">Swimmers together</button>
+              <button class="btn" id="pCold">Cold-blooded together</button>
+            </div>
+            <p class="ctrl-hint" style="margin-top:0">
+              Three arrangements students actually draw. Load each one, read the step count, then decide which
+              hypothesis the characters support.
+            </p>
+            <div class="trylist" id="tryList"></div>
+            <div class="btn-row">
+              <button class="btn primary" id="reveal" disabled>Reveal the most parsimonious tree</button>
+            </div>
+            <p class="ctrl-hint" id="revealHint" style="margin-top:0">
+              Unlocks once you have scored two different complete trees. Do the work first.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">4 &middot; The character matrix</div>
+          <p class="ctrl-hint" style="margin-top:0;margin-bottom:9px">
+            Filled circle = <strong>derived</strong> state (different from the outgroup). Open circle =
+            <strong>ancestral</strong> state (the same as the outgroup). Tap a row to trace that one character
+            on the tree.
+          </p>
+          <label class="check" style="margin-bottom:9px"><input type="checkbox" id="infChk"> Show only the parsimony-informative characters</label>
+          <div class="table-scroll">
+            <table class="mtx" id="mtx">
+              <thead>
+                <tr id="mtxHead"></tr>
+              </thead>
+              <tbody id="mtxBody"></tbody>
+            </table>
+          </div>
+          <div class="btn-row" style="margin-top:10px">
+            <button class="btn" id="clearFocus">Show all characters at once</button>
+          </div>
+          <p class="note" id="charNote" style="margin-top:11px">&nbsp;</p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">5 &middot; What the outgroup is doing</div>
+          <p class="note">
+            <strong>The lancelet is not just an extra animal.</strong> It is known from other evidence to have
+            branched off before any of the other five, so it does two jobs at once. It
+            <strong>roots</strong> the tree &mdash; it tells you which end is the past, so &ldquo;shares an
+            ancestor with&rdquo; has a direction. And it <strong>polarises</strong> every character &mdash;
+            whatever state the lancelet has is taken as the <em>ancestral</em> state, so any other state is
+            <em>derived</em>. Without an outgroup you can still see which animals resemble each other, but you
+            cannot tell which resemblances are new and which are leftovers, and only new ones are evidence of
+            a group.
+          </p>
+          <p class="note warn" style="margin-top:10px">
+            <strong>Shared ancestral does not group.</strong> Shark, salamander and lizard all fail to hold a
+            constant body temperature. That is not something they invented together &mdash; it is what the
+            common ancestor of all six already did, so it says nothing about which of them are closest
+            relatives. Load <em>Cold-blooded together</em> and count the cost: the tree jumps from 15 steps
+            to 21.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note bad">
+            <strong>Parsimony is a criterion, not a truth.</strong> The fewest-changes tree is the hypothesis
+            that assumes the least, which is a good reason to prefer it &mdash; not a guarantee that evolution
+            actually took the short route. Evolution has no obligation to be economical, and when change is
+            fast or branches are very unequal, parsimony can confidently pick the wrong tree. Real
+            phylogenetics uses far more data and probabilistic models, and every published tree is provisional.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What is simplified. Fourteen characters and six taxa; a real analysis uses thousands of aligned
+            DNA sites across hundreds of taxa. All characters are two-state and every change costs the same
+            step, in either direction &mdash; real characters have more states and gains and losses are rarely
+            equally likely. Several characters here give exactly the same grouping (bony skeleton, lungs, and
+            limbs with digits all separate the same four animals) only because no ray-finned fish is in the
+            sample; adding a tuna would split them apart. Branch lengths mean nothing here &mdash; this is a
+            cladogram, so the horizontal spacing shows the order of branching, not time or amount of change.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students read a cladogram as a ladder of progress. The animals near
+        the left are &ldquo;primitive&rdquo;, the animals near the right are &ldquo;advanced&rdquo;, humans
+        belong at the top, and two names printed next to each other must be close relatives. Under that reading
+        a tree is a ranking &mdash; a scoreboard of how far each species has climbed.
+      </p>
+      <p>
+        <strong>What to notice, first.</strong> Build the best tree you can, then click the node joining lizard
+        and pigeon. The picture flips; the step count does not move, not by one. Click the node above it and
+        human swaps to the other side. Rotate every node on the page and the score is still the same number,
+        because a node is a free hinge: the only information in a tree is <em>which taxa share which
+        ancestors</em>, and rotating changes nothing about that. So &ldquo;printed next to each other&rdquo; is
+        not a relationship, and there is no top of the tree &mdash; every one of the six tips is a living
+        species with exactly the same amount of evolution behind it.
+      </p>
+      <p>
+        <strong>What to notice, second.</strong> The most parsimonious tree of all 105 possibilities needs 15
+        steps, and in it the human is <em>not</em> the last tip. Human sits on a side branch and lizard and
+        pigeon are more deeply nested. Anyone reading branch position as advancement has just been told that a
+        pigeon out-ranks them. The tree is not saying that, and it never was.
+      </p>
+      <p>
+        <strong>Why the score works.</strong> Only characters that are <em>shared</em> and <em>derived</em>
+        carry grouping information. The amniotic egg is derived (the lancelet and shark do not have it) and
+        shared by human, lizard and pigeon, so it is evidence those three had a common ancestor the others
+        did not. Compare the useless ones. Every animal here has a notochord at some stage, so that character
+        costs 0 steps on every tree and separates nobody &mdash; it is shared <em>ancestral</em>. Feathers are
+        derived but only the pigeon has them, so they cost exactly 1 step on every tree and cannot prefer one
+        tree over another. Nine of the fourteen characters here do real work; five cannot, and knowing which
+        is which is most of the skill.
+      </p>
+      <p>
+        <strong>The interesting conflict.</strong> A constant warm body temperature and a four-chambered heart
+        are both shared by human and pigeon, and both are derived. Group those two and you save 2 steps on
+        those characters &mdash; but you then have to break the skull opening, the uric acid waste and the foot
+        scales that lizard and pigeon share, costing 3. The <em>Ladder</em> tree is exactly that trade, and it
+        lands on 16. The data do not agree with themselves, and parsimony is how you decide which conflict to
+        swallow: the tree keeps the evidence supported by three characters and pays for two independent
+        origins of warm-bloodedness. That is a real result &mdash; mammals and birds did evolve endothermy
+        separately &mdash; and the demonstration got there by counting, not by ranking anybody.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      // Six taxa, fourteen two-state characters. The lancelet is the
+      // outgroup: its state IS the ancestral state, by definition, for
+      // every character. Anything else is derived.
+      //
+      // Scoring is Fitch parsimony, computed directly from the tree the
+      // student has built — nothing is integrated over time, so there is
+      // no transient and no state to drain. Every number on the page is a
+      // pure function of (topology, matrix).
+      //
+      // Fitch downpass, generalised to polytomies so a half-built tree
+      // still scores: at each node take the states occurring in the most
+      // children, and add (number of children − that count) steps. For a
+      // two-child node this reduces exactly to textbook Fitch.
+      //
+      // A second (up) pass assigns one definite state per node so the
+      // changes can be DRAWN. Root ambiguity is resolved to the outgroup's
+      // state, which is the polarity the outgroup exists to provide. The
+      // number of drawn tick marks always equals the Fitch score — that
+      // was checked exhaustively over all 105 topologies before shipping,
+      // and is re-checked live in checkConsistency() below.
+      // ==================================================================
+
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var TAXA = [
+        { id: 'La', name: 'Lancelet', out: true },
+        { id: 'Sh', name: 'Shark', out: false },
+        { id: 'Sa', name: 'Salamander', out: false },
+        { id: 'Hu', name: 'Human', out: false },
+        { id: 'Li', name: 'Lizard', out: false },
+        { id: 'Pi', name: 'Pigeon', out: false }
+      ];
+      var NT = TAXA.length;
+      var OUT = 0;                         // index of the outgroup
+
+      //                                                     La Sh Sa Hu Li Pi
+      var CHARS = [
+        { n: 'Notochord at some stage of life', s: [1, 1, 1, 1, 1, 1] },
+        { n: 'Vertebral column (backbone)', s: [0, 1, 1, 1, 1, 1] },
+        { n: 'Bony (ossified) skeleton', s: [0, 0, 1, 1, 1, 1] },
+        { n: 'Lungs used to breathe air', s: [0, 0, 1, 1, 1, 1] },
+        { n: 'Four limbs with digits', s: [0, 0, 1, 1, 1, 1] },
+        { n: 'Amniotic egg (embryo in membranes)', s: [0, 0, 0, 1, 1, 1] },
+        { n: 'Waterproof keratinised skin', s: [0, 0, 0, 1, 1, 1] },
+        { n: 'Two openings behind the eye socket', s: [0, 0, 0, 0, 1, 1] },
+        { n: 'Uric acid as main nitrogen waste', s: [0, 0, 0, 0, 1, 1] },
+        { n: 'Beta-keratin scales on the feet', s: [0, 0, 0, 0, 1, 1] },
+        { n: 'Constant internally set body temperature', s: [0, 0, 0, 1, 0, 1] },
+        { n: 'Four-chambered heart', s: [0, 0, 0, 1, 0, 1] },
+        { n: 'Feathers', s: [0, 0, 0, 0, 0, 1] },
+        { n: 'Hair', s: [0, 0, 0, 1, 0, 0] }
+      ];
+      var NC = CHARS.length;
+
+      // ---- polarity: derived means "not what the outgroup has" ----
+      CHARS.forEach(function (c) {
+        c.anc = c.s[OUT];
+        c.der = [];                        // taxon indices in the derived state
+        for (var t = 0; t < NT; t++) if (c.s[t] !== c.anc) c.der.push(t);
+        c.derKey = c.der.join(',');
+        // parsimony-informative iff both states occur in at least two taxa
+        var n1 = c.der.length, n0 = NT - n1;
+        c.constant = n1 === 0;
+        c.informative = n1 >= 2 && n0 >= 2;
+        c.minSteps = c.constant ? 0 : 1;
+        if (c.constant) c.why = 'Every animal has it — shared ANCESTRAL. 0 steps on every tree, so it groups nobody.';
+        else if (n1 === 1) c.why = 'Only ' + TAXA[c.der[0]].name + ' has it. 1 step on every tree, so it cannot prefer one tree over another.';
+        else if (n0 === 1) c.why = 'Derived in all five ingroup animals. It defines the ingroup, but costs 1 step on every tree, so it cannot resolve anything inside it.';
+        else c.why = 'Derived and shared by ' + c.der.length + ' animals — this one can tell trees apart.';
+        c.kind = c.constant ? 'ancestral' : (c.informative ? 'informative' : 'unique');
+      });
+
+      // ---------------- tree primitives ----------------
+
+      function leaf(i) { return { leaf: i, children: [] }; }
+      function join2(a, b) { return { leaf: null, children: [a, b] }; }
+      function clone(n) {
+        var o = { leaf: n.leaf, children: n.children.map(clone) };
+        if (n.ing) o.ing = true;
+        return o;
+      }
+
+      function leaves(n, out) {
+        out = out || [];
+        if (n.leaf != null) out.push(n.leaf);
+        else n.children.forEach(function (c) { leaves(c, out); });
+        return out;
+      }
+
+      function keyOf(n) {
+        if (n.leaf != null) return TAXA[n.leaf].id;
+        return '(' + n.children.map(keyOf).sort().join(',') + ')';
+      }
+      function newick(n) {
+        if (n.leaf != null) return TAXA[n.leaf].id;
+        return '(' + n.children.map(newick).join(',') + ')';
+      }
+
+      // ---------------- Fitch downpass (polytomy-safe) ----------------
+      function fitchChar(root, ci) {
+        var st = CHARS[ci].s, steps = 0;
+        (function down(n) {
+          if (n.leaf != null) { n.d = [st[n.leaf]]; return n.d; }
+          var i, j, sets = [];
+          for (i = 0; i < n.children.length; i++) sets.push(down(n.children[i]));
+          var count = [0, 0];
+          for (i = 0; i < sets.length; i++) for (j = 0; j < sets[i].length; j++) count[sets[i][j]]++;
+          var max = Math.max(count[0], count[1]);
+          var set = [];
+          if (count[0] === max) set.push(0);
+          if (count[1] === max) set.push(1);
+          steps += sets.length - max;
+          n.d = set;
+          return set;
+        })(root);
+        return steps;
+      }
+
+      // ---------------- uppass: definite states, so changes can be drawn ----
+      // Returns the list of child-nodes whose branch carries a change.
+      function reconChar(root, ci) {
+        fitchChar(root, ci);
+        var st = CHARS[ci].s, edges = [];
+        root.f = root.d.length === 1 ? root.d[0] : st[OUT];
+        (function up(n) {
+          for (var i = 0; i < n.children.length; i++) {
+            var ch = n.children[i];
+            ch.f = ch.d.indexOf(n.f) >= 0 ? n.f : ch.d[0];
+            if (ch.f !== n.f) edges.push({ node: ch, parent: n, from: n.f, to: ch.f });
+            up(ch);
+          }
+        })(root);
+        return edges;
+      }
+
+      function scoreTree(root) {
+        var t = 0;
+        for (var i = 0; i < NC; i++) t += fitchChar(root, i);
+        return t;
+      }
+      function perChar(root) {
+        var a = [];
+        for (var i = 0; i < NC; i++) a.push(fitchChar(root, i));
+        return a;
+      }
+
+      // ---------------- exhaustive search over every possible tree ----------
+      // 5 ingroup taxa => 105 distinct rooted topologies once the outgroup
+      // is attached at the root. Small enough to enumerate honestly.
+      function allTopologies(items) {
+        if (items.length === 1) return [leaf(items[0])];
+        var out = [], n = items.length, m, i;
+        for (m = 0; m < (1 << (n - 1)); m++) {
+          var A = [items[0]], B = [];
+          for (i = 1; i < n; i++) { if ((m >> (i - 1)) & 1) A.push(items[i]); else B.push(items[i]); }
+          if (!B.length) continue;
+          var TA = allTopologies(A), TB = allTopologies(B);
+          for (i = 0; i < TA.length; i++) for (var j = 0; j < TB.length; j++) out.push(join2(clone(TA[i]), clone(TB[j])));
+        }
+        return out;
+      }
+
+      var ALL = (function () {
+        var ing = [], i;
+        for (i = 0; i < NT; i++) if (i !== OUT) ing.push(i);
+        var seen = {}, list = [];
+        allTopologies(ing).forEach(function (t) {
+          var r = { leaf: null, children: [leaf(OUT), t] };
+          var k = keyOf(r);
+          if (seen[k]) return;
+          seen[k] = 1;
+          list.push({ root: r, key: k, steps: scoreTree(r) });
+        });
+        list.sort(function (a, b) { return a.steps - b.steps; });
+        return list;
+      })();
+      var BEST = ALL[0];
+      var WORST = ALL[ALL.length - 1];
+
+      // A tree's rank among all possible trees (1 = fewest steps).
+      function rankOf(steps) {
+        var better = 0;
+        for (var i = 0; i < ALL.length; i++) if (ALL[i].steps < steps) better++;
+        return better + 1;
+      }
+
+      // Live self-check: the drawn tick marks must total the Fitch score.
+      function checkConsistency(root) {
+        var drawn = 0, fit = 0;
+        for (var i = 0; i < NC; i++) { fit += fitchChar(root, i); drawn += reconChar(root, i).length; }
+        return drawn === fit;
+      }
+
+      // ==================================================================
+      // STATE
+      // ==================================================================
+      var S = {
+        root: null,
+        sel: null,          // index into root.children of the selected group
+        focus: null,        // character index being traced, or null
+        rot: 0,
+        rotIdx: 0,          // which hinge the keyboard-friendly button turns next
+        tried: {},          // topology key -> { steps, label }
+        triedN: 0,
+        revealed: false,
+        hist: []            // undo stack of cloned roots
+      };
+
+      // The outgroup roots the tree, so the other five ARE a group by
+      // construction: they hang off one ingroup node while they are being
+      // sorted out. Without that node an unjoined fan would let parsimony
+      // put the change on the lancelet's own branch — "the lancelet lost
+      // its backbone" — which is an artefact of an unrooted picture and
+      // exactly the wrong thing to show. With it, no change is ever drawn
+      // on the outgroup branch, on any tree. That was checked exhaustively.
+      function freshRoot() {
+        var kids = [];
+        for (var i = 0; i < NT; i++) if (i !== OUT) kids.push(leaf(i));
+        return { leaf: null, children: [leaf(OUT), { leaf: null, ing: true, children: kids }] };
+      }
+
+      // the container holding the not-yet-joined groups, or null once resolved
+      function ingNode() {
+        for (var i = 0; i < S.root.children.length; i++) {
+          if (S.root.children[i].ing) return S.root.children[i];
+        }
+        return null;
+      }
+      function isComplete() { return ingNode() === null; }
+
+      // the joinable groups (live array while unresolved)
+      function groupsView() {
+        var g = ingNode();
+        if (g) return g.children;
+        return S.root.children.filter(function (n) { return n.leaf !== OUT; });
+      }
+
+      function groupLabel(n) {
+        return leaves(n).map(function (t) { return TAXA[t].name; }).join(' + ');
+      }
+      // every hinge in the current tree, in drawing order
+      function hinges() {
+        var out = [];
+        (function walk(n) {
+          if (n.leaf != null) return;
+          if (n.children.length >= 2) out.push(n);
+          n.children.forEach(walk);
+        })(S.root);
+        return out;
+      }
+
+      // characters whose derived set is EXACTLY this taxon set:
+      // the shared derived characters that support this group and only it
+      function synapomorphies(taxonSet) {
+        var k = taxonSet.slice().sort(function (a, b) { return a - b; }).join(',');
+        var out = [];
+        for (var i = 0; i < NC; i++) if (CHARS[i].derKey === k) out.push(i);
+        return out;
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        chips: document.getElementById('chips'),
+        hintChk: document.getElementById('hintChk'),
+        rotNode: document.getElementById('rotNode'),
+        undo: document.getElementById('undo'),
+        clear: document.getElementById('clear'),
+        joinNote: document.getElementById('joinNote'),
+        rSteps: document.getElementById('rSteps'),
+        rLeft: document.getElementById('rLeft'),
+        rRot: document.getElementById('rRot'),
+        rRank: document.getElementById('rRank'),
+        scoreNote: document.getElementById('scoreNote'),
+        pLadder: document.getElementById('pLadder'),
+        pSwim: document.getElementById('pSwim'),
+        pCold: document.getElementById('pCold'),
+        tryList: document.getElementById('tryList'),
+        reveal: document.getElementById('reveal'),
+        revealHint: document.getElementById('revealHint'),
+        infChk: document.getElementById('infChk'),
+        mtxHead: document.getElementById('mtxHead'),
+        mtxBody: document.getElementById('mtxBody'),
+        clearFocus: document.getElementById('clearFocus'),
+        charNote: document.getElementById('charNote'),
+        treeLabel: document.getElementById('treeLabel'),
+        cap: document.getElementById('cap')
+      };
+
+      // ==================================================================
+      // CANVAS
+      // ==================================================================
+      var hits = [];      // {x, y, node} for internal nodes, for rotation clicks
+
+      var cv = Demo.canvas('#tree', function (ctx, w, h, c) {
+        hits = [];
+        drawTree(ctx, w, h, c);
+      }, { aspect: 0.78, minHeight: 270, maxHeight: 400 });
+
+      function drawTree(ctx, w, h, c) {
+        var narrow = w < 380;
+        var fs = narrow ? 10.5 : 11.5;
+        var tickFs = narrow ? 8 : 8.5;
+        var i;
+
+        // ---- how much room the tip labels need ----
+        ctx.font = '500 ' + fs + FONT;
+        var lw = 0;
+        for (i = 0; i < NT; i++) lw = Math.max(lw, ctx.measureText(TAXA[i].name).width);
+        var padR = lw + 16, padL = 18, padT = 30, padB = 20;
+
+        var tipX = w - padR;
+        var y0 = padT, y1 = h - padB;
+        var rowH = (y1 - y0) / (NT - 1);
+
+        // ---- leaf order follows the current (rotated) child order ----
+        var order = leaves(S.root);
+        var rowOf = {};
+        for (i = 0; i < order.length; i++) rowOf[order[i]] = i;
+
+        // ---- geometry ----
+        function height(n) {
+          if (n.leaf != null) { n.hgt = 0; return 0; }
+          var m = 0;
+          for (var k = 0; k < n.children.length; k++) m = Math.max(m, height(n.children[k]) + 1);
+          n.hgt = m;
+          return m;
+        }
+        var H = Math.max(1, height(S.root));
+        var colW = (tipX - padL) / H;
+
+        (function place(n) {
+          if (n.leaf != null) { n.x = tipX; n.y = y0 + rowOf[n.leaf] * rowH; return; }
+          var lo = Infinity, hi = -Infinity;
+          for (var k = 0; k < n.children.length; k++) {
+            place(n.children[k]);
+            lo = Math.min(lo, n.children[k].y);
+            hi = Math.max(hi, n.children[k].y);
+          }
+          n.x = tipX - n.hgt * colW;
+          n.y = (lo + hi) / 2;
+        })(S.root);
+
+        // ---- which branches carry which changes ----
+        var changes = new Map();   // node -> [{ci, from, to, homo}]
+        var steps = perChar(S.root);
+        var show = [];
+        if (S.focus == null) { for (i = 0; i < NC; i++) show.push(i); }
+        else show.push(S.focus);
+        show.forEach(function (ci) {
+          reconChar(S.root, ci).forEach(function (e) {
+            if (!changes.has(e.node)) changes.set(e.node, []);
+            changes.get(e.node).push({ ci: ci, from: e.from, to: e.to, homo: steps[ci] > CHARS[ci].minSteps });
+          });
+        });
+
+        // ---- root stub ----
+        ctx.strokeStyle = c.line;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(2, S.root.y); ctx.lineTo(S.root.x, S.root.y);
+        ctx.stroke();
+
+        // ---- branches ----
+        (function drawEdges(n) {
+          if (n.leaf != null) return;
+          var lo = Infinity, hi = -Infinity, k;
+          for (k = 0; k < n.children.length; k++) {
+            lo = Math.min(lo, n.children[k].y);
+            hi = Math.max(hi, n.children[k].y);
+          }
+          ctx.strokeStyle = c.line;
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(n.x, lo); ctx.lineTo(n.x, hi); ctx.stroke();
+          for (k = 0; k < n.children.length; k++) {
+            var ch = n.children[k];
+            ctx.beginPath(); ctx.moveTo(n.x, ch.y); ctx.lineTo(ch.x, ch.y); ctx.stroke();
+            drawEdges(ch);
+          }
+        })(S.root);
+
+        // ---- change marks ----
+        (function marks(n) {
+          for (var k = 0; k < n.children.length; k++) {
+            var ch = n.children[k];
+            var list = changes.get(ch);
+            if (list && list.length) drawMarks(ctx, c, n.x, ch.x, ch.y, list, tickFs, w);
+            marks(ch);
+          }
+        })(S.root);
+
+        // ---- internal node handles (rotation targets) ----
+        // Only nodes with more than one child are hinges. Rotating one
+        // re-orders its children: a different drawing of the same tree.
+        (function nodes(n) {
+          if (n.leaf != null) return;
+          if (n.children.length >= 2) {
+            hits.push({ x: n.x, y: n.y, node: n });
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 4.6, 0, 6.2832);
+            ctx.fillStyle = c.accent; ctx.fill();
+            ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+          }
+          for (var k = 0; k < n.children.length; k++) nodes(n.children[k]);
+        })(S.root);
+
+        // ---- tip labels ----
+        var fc = S.focus == null ? null : CHARS[S.focus];
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        for (i = 0; i < NT; i++) {
+          var t = order[i];
+          var ty = y0 + i * rowH;
+          var isOut = t === OUT;
+
+          if (fc) {
+            var der = fc.s[t] !== fc.anc;
+            ctx.beginPath();
+            ctx.arc(tipX + 6, ty, 4.2, 0, 6.2832);
+            if (der) { ctx.fillStyle = c.accentStrong; ctx.fill(); }
+            else { ctx.strokeStyle = c.muted; ctx.lineWidth = 1.4; ctx.stroke(); }
+          }
+
+          ctx.font = '500 ' + fs + FONT;
+          ctx.fillStyle = isOut ? c.muted : c.text;
+          ctx.fillText(TAXA[t].name, tipX + (fc ? 14 : 6), ty - (isOut ? 5 : 0));
+          if (isOut) {
+            ctx.font = (fs - 2.5) + FONT;
+            ctx.fillStyle = c.muted;
+            ctx.fillText('outgroup', tipX + (fc ? 14 : 6), ty + 8);
+          }
+        }
+
+        // ---- header line ----
+        ctx.font = '600 ' + (narrow ? 9.5 : 10) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillStyle = c.muted;
+        ctx.fillText('past', 2, 3);
+        ctx.textAlign = 'right';
+        ctx.fillText('present', w - 2, 3);
+
+        if (fc) {
+          ctx.textAlign = 'center';
+          ctx.font = '600 ' + (narrow ? 9.5 : 10.5) + FONT;
+          ctx.fillStyle = c.accentStrong;
+          var room = w - 120;
+          var lbl = (S.focus + 1) + '. ' + fc.n;
+          if (ctx.measureText(lbl).width > room) lbl = (S.focus + 1) + '. ' + fc.n.split(' (')[0];
+          while (lbl.length > 6 && ctx.measureText(lbl + '…').width > room) lbl = lbl.slice(0, -1);
+          if (lbl !== (S.focus + 1) + '. ' + fc.n && lbl !== (S.focus + 1) + '. ' + fc.n.split(' (')[0]) lbl += '…';
+          ctx.fillText(lbl, w / 2, 3);
+        }
+      }
+
+      function drawMarks(ctx, c, px, cx, y, list, fs, w) {
+        var many = S.focus == null;
+        var sp = many ? 13 : 30;
+        var span = Math.abs(cx - px);
+        var start = Math.min(px, cx) + 8;
+        var total = (list.length - 1) * sp;
+        if (total + 10 > span) sp = Math.max(9, (span - 12) / Math.max(1, list.length - 1));
+        var i;
+        for (i = 0; i < list.length; i++) {
+          var m = list[i];
+          var mx = start + i * sp;
+          mx = Demo.clamp(mx, Math.min(px, cx) + 5, Math.max(px, cx) - 3);
+          var col = m.homo ? c.bad : c.accentStrong;
+          ctx.strokeStyle = col;
+          ctx.lineWidth = many ? 2.6 : 3.4;
+          ctx.beginPath();
+          ctx.moveTo(mx, y - (many ? 5.5 : 8)); ctx.lineTo(mx, y + (many ? 5.5 : 8));
+          ctx.stroke();
+
+          ctx.font = '600 ' + fs + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillStyle = col;
+          if (many) {
+            ctx.fillText(String(m.ci + 1), mx, y - 6.5);
+          } else {
+            ctx.font = '600 ' + (fs + 1.5) + FONT;
+            ctx.fillText(m.to === CHARS[m.ci].anc ? 'lost' : 'gained', mx, y - 10);
+          }
+        }
+      }
+
+      // rotation by clicking a node
+      cv.el.addEventListener('click', function (ev) {
+        var r = cv.el.getBoundingClientRect();
+        var mx = ev.clientX - r.left, my = ev.clientY - r.top;
+        var best = null, bd = 1e9;
+        for (var i = 0; i < hits.length; i++) {
+          var d = Math.hypot(hits[i].x - mx, hits[i].y - my);
+          if (d < bd) { bd = d; best = hits[i]; }
+        }
+        if (!best || bd > 20) return;
+        rotate(best.node);
+      });
+
+      function rotate(node) {
+        if (!node || node.children.length < 2) return;
+        S.hist.push(clone(S.root));
+        node.children.reverse();
+        S.rot++;
+        render('rotate');
+      }
+
+      // ==================================================================
+      // ACTIONS
+      // ==================================================================
+      function selectChip(i) {
+        if (S.sel === i) { S.sel = null; render(); return; }
+        if (S.sel == null) { S.sel = i; render(); return; }
+        doJoin(S.sel, i);
+      }
+
+      function doJoin(a, b) {
+        var g = ingNode();
+        if (!g || a === b) return;
+        S.hist.push(clone(S.root));
+        g = ingNode();                       // re-read: hist push does not mutate, but be explicit
+        var arr = g.children;
+        var ka = arr[a], kb = arr[b];
+        var syn = synapomorphies(leaves(ka).concat(leaves(kb)));
+        var lo = Math.min(a, b), hi = Math.max(a, b);
+        var merged = join2(ka, kb);
+        arr.splice(hi, 1);
+        arr.splice(lo, 1, merged);
+        // last join resolves the ingroup: drop the container
+        if (arr.length === 1) {
+          S.root.children[S.root.children.indexOf(g)] = arr[0];
+        }
+        S.sel = null;
+        render('join', { label: groupLabel(merged), syn: syn });
+      }
+
+      function loadTree(root, msg) {
+        S.hist.push(clone(S.root));
+        S.root = clone(root);
+        S.sel = null;
+        render('load', { msg: msg });
+      }
+
+      function specToRoot(spec) {
+        function b(x) { return typeof x === 'number' ? leaf(x) : join2(b(x[0]), b(x[1])); }
+        return { leaf: null, children: [leaf(OUT), b(spec)] };
+      }
+      // taxon indices: 1 Shark, 2 Salamander, 3 Human, 4 Lizard, 5 Pigeon
+      var PRESET = {
+        ladder: [1, [2, [4, [5, 3]]]],                 // shark → salamander → lizard → pigeon → human
+        swim: [[1, 2], [3, [4, 5]]],                   // shark + salamander grouped (both live in water)
+        cold: [[1, [2, 4]], [3, 5]]                    // the three ectotherms grouped
+      };
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(what, info) {
+        var steps = scoreTree(S.root);
+        var pc = perChar(S.root);
+        var complete = isComplete();
+        var groups = groupsView();
+        var nGroups = groups.length;
+
+        // ---- record any complete topology the student lands on ----
+        if (complete) {
+          var k = keyOf(S.root);
+          if (!S.tried[k]) {
+            S.tried[k] = { steps: steps, label: newick(S.root) };
+            S.triedN++;
+          }
+        }
+
+        // ---- chips ----
+        if (S.sel != null && S.sel >= nGroups) S.sel = null;
+        el.chips.innerHTML = '';
+        var og = document.createElement('button');
+        og.type = 'button';
+        og.className = 'chip is-out';
+        og.disabled = true;
+        og.textContent = TAXA[OUT].name + ' — outgroup, stays at the root';
+        el.chips.appendChild(og);
+
+        var selSet = S.sel != null ? leaves(groups[S.sel]) : null;
+        groups.forEach(function (n, i) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'chip' + (S.sel === i ? ' is-sel' : '');
+          b.textContent = groupLabel(n);
+          if (complete) {
+            b.disabled = true;
+            b.className = 'chip is-out';
+          } else {
+            if (el.hintChk.checked && S.sel != null && S.sel !== i) {
+              var cnt = synapomorphies(selSet.concat(leaves(n))).length;
+              var sp = document.createElement('span');
+              sp.className = 'cnt' + (cnt === 0 ? ' zero' : '');
+              sp.textContent = cnt + ' shared derived';
+              b.appendChild(sp);
+            }
+            b.addEventListener('click', function () { selectChip(i); });
+          }
+          el.chips.appendChild(b);
+        });
+
+        // ---- join / status note ----
+        if (what === 'join' && info) {
+          if (info.syn.length) {
+            el.joinNote.className = 'note';
+            el.joinNote.innerHTML = '<strong>' + info.label + '</strong> — supported by ' + info.syn.length +
+              ' shared derived character' + (info.syn.length > 1 ? 's' : '') + ': ' +
+              info.syn.map(function (ci) { return CHARS[ci].n.toLowerCase().split(' (')[0]; }).join(', ') +
+              '. Each of those is a change that now needs to happen only once.';
+          } else {
+            el.joinNote.className = 'note bad';
+            el.joinNote.innerHTML = '<strong>' + info.label + '</strong> — <strong>no character in this matrix ' +
+              'is derived in exactly these animals</strong>, so nothing supports this group. If they resemble ' +
+              'each other it is through traits their ancestor already had, and shared ancestral traits are not evidence.';
+          }
+        } else if (what === 'load' && info && info.msg) {
+          el.joinNote.className = 'note warn';
+          el.joinNote.innerHTML = info.msg + ' <strong>' + steps + ' steps</strong>, against ' +
+            BEST.steps + ' for the best tree on this data.';
+        } else if (what === 'rotate') {
+          el.joinNote.className = 'note';
+          el.joinNote.innerHTML = '<strong>Rotation ' + S.rot + '.</strong> The picture changed, the tree did not. ' +
+            'Step count is still <strong>' + steps + '</strong>, because the only thing a tree says is who shares ' +
+            'an ancestor with whom — and a hinge does not change that.';
+        } else if (S.sel != null) {
+          var sl = groupLabel(groups[S.sel]);
+          el.joinNote.className = 'note';
+          el.joinNote.innerHTML = '<strong>' + sl + '</strong> selected. Pick a second group to join it, or click ' +
+            'it again to deselect. Ask first: what do they share that the lancelet does <em>not</em> have?';
+        } else if (!complete) {
+          el.joinNote.className = 'note';
+          el.joinNote.innerHTML = nGroups + ' groups still unjoined. A group is a hypothesis: &ldquo;these animals ' +
+            'share an ancestor that no one else on this tree shares.&rdquo;';
+        } else {
+          el.joinNote.className = 'note';
+          el.joinNote.innerHTML = 'Tree complete at <strong>' + steps + ' steps</strong>. Now click a node circle ' +
+            'on the tree and watch that number stay exactly where it is.';
+        }
+
+        // ---- readouts ----
+        el.rSteps.textContent = String(steps);
+        el.rLeft.textContent = String(Math.max(0, nGroups - 1));
+        el.rRot.textContent = String(S.rot);
+        el.rRank.innerHTML = complete
+          ? '#' + rankOf(steps) + '<span class="r-unit">of 105</span>'
+          : '&mdash;';
+
+        if (!complete) {
+          el.scoreNote.className = 'note';
+          el.scoreNote.innerHTML = 'This is the score of the picture as drawn, with the unjoined groups fanning ' +
+            'out of the root. Joining groups on shared derived characters is what brings it down. ' +
+            'Every tick mark on the tree is one step — you can count them.';
+        } else if (steps === BEST.steps) {
+          el.scoreNote.className = 'note';
+          el.scoreNote.innerHTML = '<strong>' + steps + ' steps — nothing does better.</strong> Of all 105 possible ' +
+            'trees for these six animals, this is the only one that needs so few changes. That makes it the best ' +
+            'hypothesis available, not a proven fact.';
+        } else {
+          el.scoreNote.className = 'note warn';
+          el.scoreNote.innerHTML = '<strong>' + steps + ' steps.</strong> ' + (steps - BEST.steps) + ' more change' +
+            (steps - BEST.steps > 1 ? 's' : '') + ' than the best tree on this data needs. Every extra step is a ' +
+            'trait this arrangement forces to evolve twice, or to evolve and then be lost. Look for the red tick marks.';
+        }
+
+        // ---- tried list ----
+        el.tryList.innerHTML = '';
+        var keys = Object.keys(S.tried);
+        keys.sort(function (a, b) { return S.tried[a].steps - S.tried[b].steps; });
+        var nowKey = complete ? keyOf(S.root) : null;
+        keys.forEach(function (kk) {
+          var row = document.createElement('div');
+          row.className = 'tryrow' + (kk === nowKey ? ' now' : '') +
+            (S.tried[kk].steps === BEST.steps ? ' best' : '');
+          var a = document.createElement('span');
+          a.className = 'nw';
+          a.textContent = S.tried[kk].label;
+          var b2 = document.createElement('span');
+          b2.className = 'sc';
+          b2.textContent = S.tried[kk].steps + ' steps';
+          row.appendChild(a); row.appendChild(b2);
+          el.tryList.appendChild(row);
+        });
+        if (!keys.length) {
+          var p = document.createElement('p');
+          p.className = 'ctrl-hint';
+          p.style.marginTop = '0';
+          p.textContent = 'Complete trees you have scored will be listed here, best first.';
+          el.tryList.appendChild(p);
+        }
+
+        // ---- reveal gate ----
+        var unlocked = S.triedN >= 2;
+        el.reveal.disabled = !unlocked;
+        if (S.revealed) {
+          el.revealHint.innerHTML = 'Every one of the 105 possible arrangements was scored. Best: ' +
+            BEST.steps + ' steps. Worst: ' + WORST.steps + '. Notice where the human ended up.';
+        } else if (unlocked) {
+          el.revealHint.innerHTML = 'You have scored ' + S.triedN + ' different trees. Unlocked — but predict ' +
+            'the answer before you press it.';
+        } else {
+          el.revealHint.innerHTML = 'Unlocks once you have scored two different complete trees. Do the work first. ' +
+            '(' + S.triedN + ' of 2 so far.)';
+        }
+
+        // ---- character matrix ----
+        renderMatrix(pc);
+
+        // ---- stage label + caption ----
+        el.treeLabel.innerHTML = complete
+          ? 'Your tree <span>&mdash; ' + steps + ' steps, ' + newick(S.root) + '</span>'
+          : 'Your tree <span>&mdash; ' + nGroups + ' groups not yet joined, drawn fanning out of the root</span>';
+
+        if (S.focus != null) {
+          el.cap.innerHTML = 'Tracing character ' + (S.focus + 1) + ', <strong>' + CHARS[S.focus].n +
+            '</strong>. Filled circle = derived, open circle = ancestral. This character needs <strong>' +
+            pc[S.focus] + ' change' + (pc[S.focus] === 1 ? '' : 's') + '</strong> on this tree' +
+            (pc[S.focus] > CHARS[S.focus].minSteps
+              ? ' — more than the one it would need if the animals that have it formed a group, so this tree forces it to evolve more than once.'
+              : '.');
+        } else if (!complete) {
+          el.cap.innerHTML = 'Pick two groups in the panel and join them. Every tick mark is one change the tree ' +
+            'has to assume; the numbers on the ticks are character numbers.';
+        } else {
+          el.cap.innerHTML = 'Count the tick marks: there are ' + steps + ' of them, and that is the score. ' +
+            'Click any blue node circle to rotate it — the drawing changes, the score cannot.';
+        }
+
+        cv.redraw();
+      }
+
+      function renderMatrix(pc) {
+        // header
+        var head = '<th class="nm" style="width:1%">#</th><th class="nm">Character</th>';
+        var order = [];
+        for (var t = 0; t < NT; t++) order.push(t);
+        order.forEach(function (t) { head += '<th>' + TAXA[t].id + '</th>'; });
+        head += '<th>Steps</th>';
+        el.mtxHead.innerHTML = head;
+
+        var body = '';
+        for (var i = 0; i < NC; i++) {
+          var c = CHARS[i];
+          if (el.infChk.checked && !c.informative) continue;
+          var homo = pc[i] > c.minSteps;
+          var badge = c.informative
+            ? '<span class="badge ok">informative</span>'
+            : (c.constant
+              ? '<span class="badge">shared ancestral — groups nobody</span>'
+              : '<span class="badge">uninformative</span>');
+          var cls = 'mtx-row' + (S.focus === i ? ' is-focus' : '') + (c.informative ? '' : ' dim');
+          body += '<tr class="' + cls + '" data-ci="' + i + '">';
+          body += '<td class="nm">' + (i + 1) + '</td>';
+          body += '<td class="nm">' + c.n + '<span class="sm">' + badge +
+            (homo ? ' <span class="badge bad">' + pc[i] + ' changes needed</span>' : '') + '</span></td>';
+          order.forEach(function (t) {
+            var der = c.s[t] !== c.anc;
+            body += '<td class="st"><span class="dotc' + (der ? ' on' : '') + (t === OUT ? ' out' : '') + '"></span></td>';
+          });
+          body += '<td class="stp">' + pc[i] + '</td>';
+          body += '</tr>';
+        }
+        el.mtxBody.innerHTML = body;
+
+        Array.prototype.forEach.call(el.mtxBody.querySelectorAll('tr'), function (tr) {
+          tr.addEventListener('click', function () {
+            var ci = parseInt(tr.getAttribute('data-ci'), 10);
+            S.focus = S.focus === ci ? null : ci;
+            render();
+          });
+        });
+
+        if (S.focus == null) {
+          el.charNote.className = 'note';
+          el.charNote.innerHTML = 'A character is <strong>parsimony-informative</strong> only when at least two ' +
+            'animals share the derived state <em>and</em> at least two share the ancestral state. ' +
+            'The greyed-out rows cost the same number of steps on every possible tree, so they cannot help ' +
+            'you choose between trees — no matter how striking the trait is.';
+        } else {
+          var c2 = CHARS[S.focus];
+          el.charNote.className = 'note' + (c2.informative ? '' : ' warn');
+          el.charNote.innerHTML = '<strong>' + (S.focus + 1) + '. ' + c2.n + '.</strong> ' + c2.why +
+            ' Ancestral state here = the state in the lancelet' +
+            (c2.der.length ? '; derived in ' + c2.der.map(function (t) { return TAXA[t].name; }).join(', ') + '.' : '.');
+        }
+      }
+
+      // ==================================================================
+      // WIRING
+      // ==================================================================
+      el.hintChk.addEventListener('change', function () { render(); });
+      el.infChk.addEventListener('change', function () { render(); });
+
+      el.undo.addEventListener('click', function () {
+        if (!S.hist.length) return;
+        S.root = S.hist.pop();
+        S.sel = null;
+        render();
+      });
+
+      el.clear.addEventListener('click', function () {
+        S.hist.push(clone(S.root));
+        S.root = freshRoot();
+        S.sel = null;
+        S.focus = null;
+        render();
+      });
+
+      el.clearFocus.addEventListener('click', function () { S.focus = null; render(); });
+
+      el.rotNode.addEventListener('click', function () {
+        var hs = hinges();
+        if (!hs.length) return;
+        S.rotIdx = (S.rotIdx + 1) % hs.length;
+        rotate(hs[S.rotIdx]);
+      });
+
+      el.pLadder.addEventListener('click', function () {
+        loadTree(specToRoot(PRESET.ladder),
+          '<strong>The ladder.</strong> Shark, then salamander, then lizard, then pigeon, then human at the ' +
+          'top &mdash; the shape almost everyone draws first. Notice what it quietly claims: in a fully ' +
+          'laddered tree the last two tips are each other&rsquo;s closest relatives, so this tree says a ' +
+          'human is more closely related to a pigeon than a pigeon is to a lizard.');
+      });
+      el.pSwim.addEventListener('click', function () {
+        loadTree(specToRoot(PRESET.swim),
+          '<strong>Swimmers together.</strong> Shark and salamander grouped because both are at home in ' +
+          'water. Living in water is what the ancestor of all six already did &mdash; it is ancestral, not ' +
+          'newly shared &mdash; and this grouping breaks three real characters (bony skeleton, lungs, limbs ' +
+          'with digits) that the salamander shares with the other three.');
+      });
+      el.pCold.addEventListener('click', function () {
+        loadTree(specToRoot(PRESET.cold),
+          '<strong>Cold-blooded together.</strong> Shark, salamander and lizard grouped by what they do ' +
+          '<em>not</em> have. You cannot build a group out of a missing trait: every one of these six ' +
+          'inherited a body temperature that follows the surroundings, so sharing it is evidence of nothing.');
+      });
+
+      el.reveal.addEventListener('click', function () {
+        if (el.reveal.disabled) return;
+        S.revealed = true;
+        loadTree(BEST.root);
+        el.joinNote.className = 'note';
+        el.joinNote.innerHTML = '<strong>The most parsimonious tree: ' + BEST.steps + ' steps.</strong> ' +
+          'Every one of the 105 possible trees was scored; this is the only one at ' + BEST.steps + '. ' +
+          'It is the hypothesis that assumes the fewest changes — which is a reason to prefer it, not proof ' +
+          'that it is right. And look where the human is: on a side branch, with lizard and pigeon nested ' +
+          'deeper. There is no top of a tree.';
+      });
+
+      // ==================================================================
+      // GO
+      // ==================================================================
+      S.root = freshRoot();
+      if (!checkConsistency(S.root) || !checkConsistency(BEST.root)) {
+        // Should never fire: verified exhaustively over all 105 topologies.
+        el.cap.textContent = 'Internal check failed — the drawn changes do not match the score.';
+      }
+      render();
+    })();
+  </script>
+</body>
+
+</html>

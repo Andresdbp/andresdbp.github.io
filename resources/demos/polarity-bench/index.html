@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Polarity Bench | Dr. Andres Barboza</title>
+  <meta name="description" content="Bond dipoles sized by electronegativity difference, added head to tail as real vectors. CO2 has two strongly polar bonds and zero net dipole; water has the same two bonds and is polar. Shape decides it.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: formula subscripts, molecule picker, verdict badge, bond rows */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .mol-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 11px;
+    }
+    .mol-name { font-size: 19px; font-weight: 600; color: var(--text); }
+    .mol-shape { font-size: 12.5px; color: var(--muted); margin-left: 6px; }
+
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .verdict.is-polar {
+      background: var(--accent-soft);
+      border-color: var(--accent-line);
+      color: var(--accent-strong);
+    }
+
+    .mol-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .mol-grid .btn { padding: 8px 6px; text-align: center; }
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    .bondrow {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      font-size: 12.5px;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+    .bondrow + .bondrow { margin-top: 9px; }
+    .bondrow .sw { width: 13px; height: 13px; border-radius: 4px; flex: none; margin-top: 3px; }
+    .bondrow b { color: var(--text); font-weight: 600; }
+    .bondrow .cls { font-weight: 600; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .r-value.big { font-size: 26px; }
+
+    .tbl tr.is-on td { background: var(--accent-soft); }
+    .tbl tr.is-on td:first-child { color: var(--accent-strong); font-weight: 600; }
+    .tbl td.zero { color: var(--muted); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 9px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Polarity Bench</h1>
+        <p class="demo-sub">Start on CO<sub>2</sub>. Drag oxygen&rsquo;s electronegativity as high as it will go &mdash; both bond arrows grow, and the net dipole stays at exactly zero. Then press H<sub>2</sub>O.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 3</span>
+          <span class="tag is-accent">Bonding &amp; molecular geometry</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="mol-head">
+          <div>
+            <span class="mol-name" id="vName">CO<sub>2</sub></span>
+            <span class="mol-shape" id="vShape">linear</span>
+          </div>
+          <span class="verdict" id="vBadge">nonpolar molecule</span>
+        </div>
+
+        <canvas id="mol" role="img"
+                aria-label="The selected molecule drawn in three dimensions, with one arrow per bond whose length is proportional to the electronegativity difference of that bond, and a single thicker arrow for the net molecular dipole."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i id="lgA" style="background:var(--series-2)"></i><span id="lgAText">bond dipole</span></span>
+          <span class="lg" id="lgBWrap" hidden><i id="lgB" style="background:var(--series-4)"></i><span id="lgBText">bond dipole</span></span>
+          <span class="lg"><i style="background:var(--accent-strong);height:5px"></i>net molecular dipole</span>
+        </div>
+        <p class="stage-caption" id="molCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">The vector sum <span>&mdash; the same bond arrows, laid head to tail</span></p>
+        <canvas id="sum" role="img"
+                aria-label="The bond dipole vectors redrawn head to tail from a common starting point, with the resultant drawn from the first tail to the last head."></canvas>
+        <p class="stage-caption" id="sumCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label">Electronegativity difference of each bond <span>&mdash; the boundaries are conventions, not laws</span></p>
+        <canvas id="scale" role="img"
+                aria-label="A continuous electronegativity-difference scale from 0 to 3.3 with soft guide lines at 0.4 and 1.7, and a marker for each bond in the current molecule."></canvas>
+        <p class="stage-caption" id="scaleCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Molecule</div>
+          <div class="mol-grid" id="molGrid"></div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            The two pairs to compare are CO<sub>2</sub> against H<sub>2</sub>O (same two polar bonds, different
+            shape) and CCl<sub>4</sub> against CHCl<sub>3</sub> (same shape, one atom swapped).
+            Picking a molecule resets its electronegativities to the real Pauling values.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Electronegativity (Pauling scale)</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="enC">&chi; of <span id="enCSym">C</span> <span class="muted" id="enCRole">(central)</span></label>
+                <span class="ctrl-value" id="enCOut">2.55</span>
+              </div>
+              <input type="range" id="enC" min="0.7" max="4" step="0.01" value="2.55">
+              <p class="ctrl-hint" id="enCHint">&nbsp;</p>
+            </div>
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="enA">&chi; of <span id="enASym">O</span> <span class="muted" id="enARole">(outer)</span></label>
+                <span class="ctrl-value" id="enAOut">3.44</span>
+              </div>
+              <input type="range" id="enA" min="0.7" max="4" step="0.01" value="3.44">
+              <p class="ctrl-hint" id="enAHint">&nbsp;</p>
+            </div>
+
+            <div class="ctrl" id="bWrap" hidden>
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="enB">&chi; of <span id="enBSym">H</span> <span class="muted" id="enBRole">(outer)</span></label>
+                <span class="ctrl-value" id="enBOut">2.20</span>
+              </div>
+              <input type="range" id="enB" min="0.7" max="4" step="0.01" value="2.20">
+              <p class="ctrl-hint" id="enBHint">&nbsp;</p>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn primary" id="btnReal">Real values</button>
+              <button class="btn" id="btnCrank">Exaggerate</button>
+              <button class="btn" id="btnSame">Make outer atoms identical</button>
+            </div>
+            <p class="ctrl-hint" id="enNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Every bond in this molecule</div>
+          <div id="bondList"></div>
+          <hr class="sep" style="margin:12px 0">
+          <p class="ctrl-hint">
+            Percent ionic character comes from Pauling&rsquo;s own empirical formula,
+            100&thinsp;&times;&thinsp;(1&nbsp;&minus;&nbsp;e<sup>&minus;0.25&nbsp;&Delta;&chi;&sup2;</sup>). It is
+            what the 1.7 line was originally chosen to mark: &Delta;&chi;&nbsp;=&nbsp;1.7 gives 51% ionic
+            character. Nothing snaps at that value &mdash; the curve is smooth all the way across.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">The whole molecule</div>
+          <div class="readouts two">
+            <div class="readout is-accent span2">
+              <div class="r-label">Net molecular dipole &mdash; vector sum of the bond dipoles</div>
+              <div class="r-value big" id="rNet">0.00<span class="r-unit">&Delta;&chi; units</span></div>
+              <div class="r-sub" id="rNetSub">&nbsp;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Shape</div>
+              <div class="r-value" id="rShape" style="font-size:15px">linear</div>
+              <div class="r-sub" id="rAngle">bond angle 180&deg;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Lone pairs on the central atom</div>
+              <div class="r-value" id="rLP" style="font-size:15px">none</div>
+              <div class="r-sub">these set the shape</div>
+            </div>
+            <div class="readout span2">
+              <div class="r-label">Measured dipole moment of the real molecule</div>
+              <div class="r-value" id="rMu">0<span class="r-unit">D</span></div>
+              <div class="r-sub" id="rMuSub">experiment, gas phase</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Drawing</div>
+          <div class="stack">
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="yaw">Rotate the molecule</label>
+                <span class="ctrl-value" id="yawOut">0&deg;</span>
+              </div>
+              <input type="range" id="yaw" min="-180" max="180" step="1" value="0">
+              <p class="ctrl-hint">
+                The picture is a flat projection of a three-dimensional molecule, so arrows pointing towards you
+                look short. Every number on this page is the full three-dimensional magnitude. Spin CCl<sub>4</sub>
+                &mdash; there is no angle at which those four arrows fail to cancel.
+              </p>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btnSpin">Spin</button>
+              <button class="btn" id="btnFlat">Face on</button>
+            </div>
+            <label class="check"><input type="checkbox" id="chkBond" checked> Show bond dipole arrows</label>
+            <label class="check"><input type="checkbox" id="chkNet" checked> Show the net molecular dipole</label>
+            <label class="check"><input type="checkbox" id="chkDelta" checked> Show &delta;+ / &delta;&minus; on the atoms</label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">All seven at their real values</div>
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Molecule</th><th>Shape</th><th>Bond &Delta;&chi;</th><th>Net dipole</th><th>Molecule is</th>
+                </tr>
+              </thead>
+              <tbody id="cmpBody"></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            Read the third column against the fifth. Every molecule on this list has polar bonds. Three of them
+            are nonpolar anyway.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">What this model leaves out</div>
+          <p class="note warn">
+            <strong>These arrows are bond dipoles only.</strong> A lone pair on the central atom is a lump of
+            electron density sitting on one side of the atom, and it has a dipole of its own that this model never
+            adds. That is why the sum here comes out too small for exactly the molecules with lone pairs on the
+            central atom:
+          </p>
+          <div class="table-scroll" style="margin-top:11px">
+            <table class="tbl">
+              <thead>
+                <tr><th>Molecule</th><th>Lone pairs on centre</th><th>This model</th><th>Measured</th></tr>
+              </thead>
+              <tbody id="calBody"></tbody>
+            </table>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            The middle column is the vector sum scaled by one single constant, fixed so that HF comes out right
+            (<span id="calK">1.028</span>&nbsp;D per &Delta;&chi; unit). CHCl<sub>3</sub>, whose central carbon has
+            no lone pairs, lands within 5%. NH<sub>3</sub> is 35% low and it has one lone pair; H<sub>2</sub>O is
+            16% low and it has two. The zeros, though, are exact and need no calibration at all: symmetry cancels
+            the lone pairs for the same reason it cancels the bonds.
+          </p>
+          <hr class="sep" style="margin:12px 0">
+          <p class="ctrl-hint">
+            <strong>Other simplifications.</strong> Arrow length is set proportional to &Delta;&chi;, which is a
+            teaching proxy, not a measurement &mdash; a real bond dipole is charge times distance, so it also
+            depends on how long the bond is. All bonds are drawn the same length here for clarity; in the real
+            molecules they are not (C=O is 116 pm, O&ndash;H is 96 pm). Electronegativities are the standard
+            Pauling values: H 2.20, B 2.04, C 2.55, N 3.04, O 3.44, F 3.98, Cl 3.16. The arrows follow the
+            chemistry convention and point from the &delta;+ end towards the &delta;&minus; end; the physics
+            definition of the dipole moment vector points the other way. Molecules are drawn frozen at their
+            equilibrium geometry, and nothing here is time-dependent &mdash; every number is computed directly
+            from the sliders.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students decide whether a molecule is polar by <em>counting</em>. They
+        check the bonds, find that C=O is a polar bond, and conclude that CO<sub>2</sub> must be a polar molecule.
+        It is not. CO<sub>2</sub> is one of the most stubbornly nonpolar substances in the room, and it contains
+        two genuinely polar bonds &mdash; 18% ionic character each. The bonds are not the answer. <strong>The
+        molecular dipole is a vector sum, and a sum can be zero even when nothing in it is zero.</strong>
+      </p>
+      <p>
+        <strong>What to notice.</strong> On CO<sub>2</sub>, the two bond arrows are 0.89 &Delta;&chi; units long and
+        point in exactly opposite directions, because the molecule is linear. Lay them head to tail in the second
+        panel and the chain comes back to where it started. Now drag oxygen&rsquo;s electronegativity all the way to
+        4.00: both arrows get much longer, each bond becomes far more polar, and the net dipole is still exactly
+        zero. You cannot fix a cancellation by making the things that cancel bigger.
+      </p>
+      <p>
+        <strong>Then press H<sub>2</sub>O.</strong> Same two bonds, both polar, same count. But oxygen has two lone
+        pairs, so the molecule is bent at 104.5&deg; instead of straight, and now the two arrows are not opposite
+        &mdash; they are 104.5&deg; apart, and they add to 1.52 units pointing up through the oxygen. The only thing
+        that changed between the two molecules is the angle. Water is a liquid at room temperature, dissolves salt,
+        and sticks to itself because of that angle.
+      </p>
+      <p>
+        <strong>CCl<sub>4</sub> against CHCl<sub>3</sub> makes the same point without changing the shape at all.</strong>
+        Both are tetrahedral, both have bond angles of 109.5&deg;. In CCl<sub>4</sub> the four identical arrows point
+        at the four corners of a tetrahedron and sum to zero &mdash; spin the molecule and check that it holds from
+        every angle. Swap one Cl for an H and the geometry does not move a degree, but that one arrow is now short
+        and pointing the other way (carbon is more electronegative than hydrogen), so the cancellation fails and you
+        get 0.96 units. Press <em>Make outer atoms identical</em> to turn the H back into a Cl and watch the net
+        dipole collapse to zero in front of you.
+      </p>
+      <p>
+        <strong>Two honest warnings.</strong> First: nonpolar does not mean &ldquo;no charges&rdquo;. Leave the
+        &delta;+ / &delta;&minus; labels switched on while you look at CO<sub>2</sub> &mdash; the carbon really is
+        &delta;+ and both oxygens really are &delta;&minus;. The atoms are charged; the molecule as a whole has no
+        direction. Second: the 0.4 and 1.7 lines on the scale are conventions someone chose, not physics. Select HF
+        and look at where it lands: &Delta;&chi; = 1.78, past the &ldquo;ionic&rdquo; line, and HF is a gas made of
+        discrete covalent molecules, not a salt. The scale underneath is a continuum, which is why it is drawn here
+        as a gradient rather than three boxes.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL
+      //
+      //   Bond dipole i  =  (chi_outer,i - chi_central) * u_i
+      //     u_i = unit vector from the central atom towards substituent i.
+      //     A positive difference means the substituent pulls harder, so the
+      //     vector points at the substituent (towards the delta- end), which
+      //     is the chemistry convention for drawing these arrows.
+      //
+      //   Molecular dipole = SUM of the bond dipoles, as vectors, in 3-D.
+      //     Not a count. Not a majority vote. An honest vector addition, done
+      //     on the real VSEPR geometry of each molecule.
+      //
+      //   Magnitudes are in "delta-chi units": arrow length is proportional
+      //   to the electronegativity difference. That is a teaching proxy - a
+      //   real bond dipole is charge x distance - so no debye values are
+      //   claimed anywhere except the measured ones, which are experiment.
+      //
+      //   Percent ionic character uses Pauling's own empirical relation
+      //     %ionic = 100 (1 - exp(-0.25 * dchi^2))
+      //   which is where the 1.7 "cutoff" comes from: it is the delta-chi
+      //   that gives 51% ionic character, and nothing more than that.
+      //
+      //   Nothing here is integrated over time. Every quantity on the page is
+      //   recomputed from the slider values on every frame.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var PITCH = 16 * Math.PI / 180;   // fixed downward tilt of the camera
+      var ARROW = 0.30;                 // molecule-units of arrow per 1.0 dchi
+      var ZERO = 0.005;                 // |net| below this is zero
+      var DMAX = 3.3;                   // top of the delta-chi scale
+
+      // Real Pauling electronegativities
+      var EN0 = { H: 2.20, B: 2.04, C: 2.55, N: 3.04, O: 3.44, F: 3.98, Cl: 3.16 };
+      // display radii, in bond lengths
+      var RAD = { H: 0.52, B: 0.80, C: 0.80, N: 0.76, O: 0.74, F: 0.68, Cl: 0.92 };
+
+      var NEAR = [['Cs', 0.79], ['K', 0.82], ['Na', 0.93], ['Li', 0.98], ['Ca', 1.00],
+      ['Mg', 1.31], ['Be', 1.57], ['Al', 1.61], ['Si', 1.90], ['B', 2.04], ['P', 2.19],
+      ['H', 2.20], ['C', 2.55], ['S', 2.58], ['I', 2.66], ['Br', 2.96], ['N', 3.04],
+      ['Cl', 3.16], ['O', 3.44], ['F', 3.98]];
+
+      // ---------------- geometry: real VSEPR directions, exact ----------------
+      var T = 2 * Math.SQRT2 / 3, TH = T * Math.sqrt(3) / 2;
+      // tetrahedral, 109.47 deg, one bond straight down
+      var TET = [[0, -1, 0], [T, 1 / 3, 0], [-T / 2, 1 / 3, TH], [-T / 2, 1 / 3, -TH]];
+      // trigonal pyramidal, 107 deg (ammonia), apex up
+      var NC = 0.3720467, NS = Math.sqrt(1 - NC * NC);
+      var PYR = [[NS, -NC, 0], [-NS / 2, -NC, NS * Math.sqrt(3) / 2], [-NS / 2, -NC, -NS * Math.sqrt(3) / 2]];
+      // trigonal planar, 120 deg
+      var TP = [[0, 1, 0], [-Math.sqrt(3) / 2, -0.5, 0], [Math.sqrt(3) / 2, -0.5, 0]];
+      // bent, 104.5 deg (water), oxygen on top
+      var HW = 52.25 * Math.PI / 180;
+      var BENT = [[Math.sin(HW), -Math.cos(HW), 0], [-Math.sin(HW), -Math.cos(HW), 0]];
+
+      function subs(dirs, sym, order) {
+        return dirs.map(function (d) { return { sym: sym, type: 'A', dir: d, order: order || 1 }; });
+      }
+
+      var MOLS = [
+        {
+          id: 'hf', label: 'HF', name: 'hydrogen fluoride', shape: 'diatomic',
+          angle: 'only one bond', lp: 'none on H', center: 'H', mu: 1.83, yaw0: 0,
+          roles: { c: 'left atom', a: 'right atom' },
+          subs: [{ sym: 'F', type: 'A', dir: [1, 0, 0], order: 1 }],
+          note: 'Two atoms, so there is no shape question: with a single bond the molecular dipole <em>is</em> the ' +
+            'bond dipole. Look at where it sits on the scale below. &Delta;&chi; = 1.78 is past the 1.7 line, and ' +
+            'yet HF is a gas of separate covalent molecules, not a salt. The line is a convention with a continuum ' +
+            'underneath it.'
+        },
+        {
+          id: 'co2', label: 'CO<sub>2</sub>', name: 'carbon dioxide', shape: 'linear',
+          angle: 'bond angle 180&deg;', lp: 'none on C', center: 'C', mu: 0, yaw0: 0,
+          roles: { c: 'central atom', a: 'both outer atoms' },
+          subs: [{ sym: 'O', type: 'A', dir: [1, 0, 0], order: 2 },
+          { sym: 'O', type: 'A', dir: [-1, 0, 0], order: 2 }],
+          note: 'Carbon has no lone pairs, so its two bonds go to exactly opposite sides and the two arrows are ' +
+            'equal and opposite. Drag oxygen up to 4.00 and watch: both arrows grow, each bond becomes far more ' +
+            'polar, and the sum stays at 0.00. This is the molecule students get wrong.'
+        },
+        {
+          id: 'h2o', label: 'H<sub>2</sub>O', name: 'water', shape: 'bent',
+          angle: 'bond angle 104.5&deg;', lp: '2 on O', center: 'O', mu: 1.85, yaw0: 0,
+          roles: { c: 'central atom', a: 'both outer atoms' },
+          subs: subs(BENT, 'H'),
+          note: 'The same two-bond count as CO<sub>2</sub>, and the same &ldquo;both bonds are polar&rdquo; answer. ' +
+            'But oxygen carries two lone pairs, which push the bonds down to 104.5&deg;, and two arrows 104.5&deg; ' +
+            'apart do not cancel. The shape is the whole difference between a gas you exhale and the liquid you ' +
+            'are mostly made of.'
+        },
+        {
+          id: 'bf3', label: 'BF<sub>3</sub>', name: 'boron trifluoride', shape: 'trigonal planar',
+          angle: 'bond angle 120&deg;', lp: 'none on B', center: 'B', mu: 0, yaw0: 0,
+          roles: { c: 'central atom', a: 'all three outer atoms' },
+          subs: subs(TP, 'F'),
+          note: 'The most polar bonds on this page: &Delta;&chi; = 1.94, 61% ionic character, three of them. ' +
+            'Boron has no lone pair, so they spread flat at 120&deg; and cancel exactly. Rotate the molecule to ' +
+            'see that it really is flat.'
+        },
+        {
+          id: 'nh3', label: 'NH<sub>3</sub>', name: 'ammonia', shape: 'trigonal pyramidal',
+          angle: 'bond angle 107&deg;', lp: '1 on N', center: 'N', mu: 1.47, yaw0: 30,
+          roles: { c: 'central atom', a: 'all three outer atoms' },
+          subs: subs(PYR, 'H'),
+          note: 'Three bonds again, like BF<sub>3</sub>, but nitrogen has a lone pair that pushes them out of the ' +
+            'plane into a pyramid at 107&deg;. The three arrows now share a component along the vertical axis, so ' +
+            'they add instead of cancelling. Same number of bonds, different shape, opposite answer.'
+        },
+        {
+          id: 'ccl4', label: 'CCl<sub>4</sub>', name: 'carbon tetrachloride', shape: 'tetrahedral',
+          angle: 'bond angle 109.5&deg;', lp: 'none on C', center: 'C', mu: 0, yaw0: 90,
+          roles: { c: 'central atom', a: 'all four outer atoms' },
+          subs: subs(TET, 'Cl'),
+          note: 'Four polar C&ndash;Cl bonds pointing at the four corners of a tetrahedron. In three dimensions ' +
+            'those four vectors sum to exactly zero. Spin it: there is no viewing angle that breaks the ' +
+            'cancellation. This one gets missed because on paper the molecule is usually drawn flat.'
+        },
+        {
+          id: 'chcl3', label: 'CHCl<sub>3</sub>', name: 'chloroform', shape: 'tetrahedral',
+          angle: 'bond angle 109.5&deg;', lp: 'none on C', center: 'C', mu: 1.04, yaw0: 90,
+          roles: { c: 'central atom', a: 'the three Cl', b: 'the single H' },
+          subs: [{ sym: 'H', type: 'B', dir: TET[0], order: 1 },
+          { sym: 'Cl', type: 'A', dir: TET[1], order: 1 },
+          { sym: 'Cl', type: 'A', dir: TET[2], order: 1 },
+          { sym: 'Cl', type: 'A', dir: TET[3], order: 1 }],
+          note: 'Swap one Cl of CCl<sub>4</sub> for an H and the shape does not change by a single degree &mdash; ' +
+            'still tetrahedral, still 109.5&deg;. But carbon is more electronegative than hydrogen, so that one ' +
+            'arrow is short and points the other way, and the cancellation fails. Press <em>Make outer atoms ' +
+            'identical</em> and watch the net dipole fall to zero without the geometry moving.'
+        }
+      ];
+
+      var BYID = {};
+      MOLS.forEach(function (m) {
+        m.hasB = m.subs.some(function (s) { return s.type === 'B'; });
+        m.symA = (m.subs.filter(function (s) { return s.type === 'A'; })[0] || {}).sym;
+        m.symB = (m.subs.filter(function (s) { return s.type === 'B'; })[0] || {}).sym;
+        m.nA = m.subs.filter(function (s) { return s.type === 'A'; }).length;
+        m.nB = m.subs.filter(function (s) { return s.type === 'B'; }).length;
+        // draw the molecule about the centroid of its atoms rather than about the
+        // central atom, so a lopsided molecule (water, ammonia) sits in the frame
+        var g = [0, 0, 0], n = m.subs.length + 1;
+        m.subs.forEach(function (s) { g[0] += s.dir[0]; g[1] += s.dir[1]; g[2] += s.dir[2]; });
+        m.shift = [-g[0] / n, -g[1] / n, -g[2] / n];
+        BYID[m.id] = m;
+      });
+
+      var S = {
+        id: 'co2', enC: 2.55, enA: 3.44, enB: 2.20,
+        yaw: 0, bond: true, net: true, delta: true
+      };
+
+      // ---------------- the arithmetic ----------------
+
+      function bondsOf(m, enC, enA, enB) {
+        return m.subs.map(function (s, i) {
+          var en = s.type === 'B' ? enB : enA;
+          return { i: i, sym: s.sym, type: s.type, dir: s.dir, order: s.order, d: en - enC };
+        });
+      }
+      function netOf(bs) {
+        var v = [0, 0, 0];
+        for (var i = 0; i < bs.length; i++) {
+          v[0] += bs[i].d * bs[i].dir[0];
+          v[1] += bs[i].d * bs[i].dir[1];
+          v[2] += bs[i].d * bs[i].dir[2];
+        }
+        return v;
+      }
+      function mag(v) { return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]); }
+      function realOf(m) { return bondsOf(m, EN0[m.center], EN0[m.symA], m.symB ? EN0[m.symB] : 0); }
+
+      function cur() { return BYID[S.id]; }
+      function curBonds() { return bondsOf(cur(), S.enC, S.enA, S.enB); }
+
+      function ionic(d) { return 1 - Math.exp(-0.25 * d * d); }
+      function bondClass(d) {
+        var a = Math.abs(d);
+        if (a < 0.4) return 'nonpolar covalent';
+        if (a < 1.7) return 'polar covalent';
+        return 'usually called ionic';
+      }
+      function classVar(d) {
+        var a = Math.abs(d);
+        return a < 0.4 ? '--ok' : a < 1.7 ? '--warn' : '--bad';
+      }
+      function nearest(x) {
+        var best = NEAR[0], bd = 9;
+        for (var i = 0; i < NEAR.length; i++) {
+          var dd = Math.abs(NEAR[i][1] - x);
+          if (dd < bd) { bd = dd; best = NEAR[i]; }
+        }
+        return { sym: best[0], en: best[1], exact: bd < 0.005 };
+      }
+
+      // ---------------- projection (linear, so vector sums survive it) -------
+      function proj(v) {
+        var cf = Math.cos(S.yaw), sf = Math.sin(S.yaw);
+        var x1 = v[0] * cf + v[2] * sf;
+        var z1 = -v[0] * sf + v[2] * cf;
+        var ct = Math.cos(PITCH), st = Math.sin(PITCH);
+        return { x: x1, y: v[1] * ct - z1 * st, z: v[1] * st + z1 * ct };
+      }
+      function sc3(v, k) { return [v[0] * k, v[1] * k, v[2] * k]; }
+      function add3(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
+
+      // ---------------- canvas helpers ----------------
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor, minX) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lo = minX == null ? 2 : minX;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, lo, Math.max(lo, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function arrowSeg(ctx, c, ax, ay, bx, by, col, lw, head, cross) {
+        var dx = bx - ax, dy = by - ay, L = Math.sqrt(dx * dx + dy * dy);
+        if (L < 1.2) return;
+        var ux = dx / L, uy = dy / L, px = -uy, py = ux;
+        var hl = Math.min(head, L * 0.6), hw = hl * 0.52;
+        var bxs = bx - ux * hl, bys = by - uy * hl;
+
+        ctx.save();
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.globalAlpha = 0.85; ctx.strokeStyle = c.surface; ctx.lineWidth = lw + 3.4;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bxs, bys); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(bx, by); ctx.lineTo(bxs + px * hw, bys + py * hw); ctx.lineTo(bxs - px * hw, bys - py * hw);
+        ctx.closePath(); ctx.lineWidth = 3.4; ctx.stroke(); ctx.fillStyle = c.surface; ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.lineCap = 'butt'; ctx.lineJoin = 'round';
+        ctx.strokeStyle = col; ctx.lineWidth = lw;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bxs, bys); ctx.stroke();
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(bx, by); ctx.lineTo(bxs + px * hw, bys + py * hw); ctx.lineTo(bxs - px * hw, bys - py * hw);
+        ctx.closePath(); ctx.fill();
+        if (cross) {
+          var cw = lw * 2.1;
+          ctx.lineWidth = Math.max(1.2, lw * 0.85);
+          ctx.beginPath();
+          ctx.moveTo(ax + px * cw, ay + py * cw); ctx.lineTo(ax - px * cw, ay - py * cw);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      function colFor(c, type) { return type === 'B' ? c.series[3] : c.series[1]; }
+
+      // ==================================================================
+      // MOLECULE CANVAS
+      // ==================================================================
+      var molCv = Demo.canvas('#mol', function (ctx, w, h, c) {
+        var m = cur(), B = curBonds(), N = netOf(B), nm = mag(N);
+        var s = Math.min((w / 2 - 6) / 1.45, (h / 2 - 8) / 1.45);
+        var cx = w / 2, cy = h / 2;
+        var sh = m.shift || [0, 0, 0];
+        var fs = w < 360 ? 10 : 11;
+        var i;
+
+        function P(v) {
+          var p = proj(add3(v, sh));
+          return { x: cx + s * p.x, y: cy - s * p.y, z: p.z };
+        }
+
+        var O = P([0, 0, 0]);
+        var pts = B.map(function (b) { return P(b.dir); });
+
+        // ---- bonds (drawn first, behind everything) ----
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = 0.45;
+        for (i = 0; i < B.length; i++) {
+          var p = pts[i];
+          var dx = p.x - O.x, dy = p.y - O.y, L = Math.sqrt(dx * dx + dy * dy) || 1;
+          var nx = -dy / L, ny = dx / L;
+          var off = B[i].order === 2 ? s * 0.082 : 0;
+          ctx.strokeStyle = c.muted;
+          ctx.lineWidth = Math.max(2.5, s * (off ? 0.05 : 0.085));
+          if (off) {
+            ctx.beginPath();
+            ctx.moveTo(O.x + nx * off, O.y + ny * off); ctx.lineTo(p.x + nx * off, p.y + ny * off);
+            ctx.moveTo(O.x - nx * off, O.y - ny * off); ctx.lineTo(p.x - nx * off, p.y - ny * off);
+            ctx.stroke();
+          } else {
+            ctx.beginPath(); ctx.moveTo(O.x, O.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+          }
+        }
+        ctx.restore();
+
+        // ---- atoms, painter-sorted back to front ----
+        var sumd = 0;
+        for (i = 0; i < B.length; i++) sumd += B[i].d;
+        var list = [{ p: O, sym: m.center, role: 'c', q: -sumd }];
+        for (i = 0; i < B.length; i++) list.push({ p: pts[i], sym: B[i].sym, role: B[i].type, q: B[i].d });
+        list.sort(function (a, b) { return a.p.z - b.p.z; });
+
+        var rCen = 0;
+        for (i = 0; i < list.length; i++) {
+          var a = list[i];
+          var r = (RAD[a.sym] || 0.75) * s * 0.36 * (1 + 0.10 * a.p.z);
+          if (a.role === 'c') rCen = r;
+          ctx.beginPath(); ctx.arc(a.p.x, a.p.y, r, 0, 6.2832);
+          ctx.fillStyle = c.surface2; ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = a.role === 'c' ? c.text2 : colFor(c, a.role);
+          ctx.stroke();
+          ctx.fillStyle = c.text;
+          ctx.font = '600 ' + Math.max(9, Math.round(r * (a.sym.length > 1 ? 0.74 : 0.98))) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(a.sym, a.p.x, a.p.y);
+
+          if (S.delta && Math.abs(a.q) > 0.05) {
+            var ux = a.p.x - cx, uy = a.p.y - cy, uL = Math.sqrt(ux * ux + uy * uy);
+            // the central atom always sends its label up and left, clear of the net
+            // dipole arrow, which leaves the central atom along the molecular axis
+            if (a.role === 'c' || uL < 1) { ux = -0.707; uy = -0.707; uL = 1; }
+            var lx = a.p.x + (ux / uL) * (r + 10), ly = a.p.y + (uy / uL) * (r + 10);
+            chip(ctx, c, lx, Demo.clamp(ly + fs * 0.36, fs + 4, h - 3),
+              a.q > 0 ? 'δ−' : 'δ+', fs, c.muted, w, 'center');
+          }
+        }
+
+        // ---- bond dipole arrows, on top, centred on each bond ----
+        if (S.bond) {
+          for (i = 0; i < B.length; i++) {
+            var b = B[i];
+            if (Math.abs(b.d) < 0.02) continue;
+            var t0 = P(sc3(b.dir, 0.5 - ARROW * b.d / 2));
+            var t1 = P(sc3(b.dir, 0.5 + ARROW * b.d / 2));
+            arrowSeg(ctx, c, t0.x, t0.y, t1.x, t1.y, colFor(c, b.type), 2.6, 9, true);
+          }
+        }
+
+        // ---- net molecular dipole ----
+        if (S.net) {
+          if (nm > ZERO) {
+            // A dipole moment is a free vector, so slide the whole arrow back by the
+            // radius of the central atom: same length, same direction, but the shaft
+            // is no longer buried inside the circle it starts from.
+            var e = P(sc3(N, ARROW));
+            var adx = e.x - O.x, ady = e.y - O.y, aL = Math.sqrt(adx * adx + ady * ady) || 1;
+            var back = Math.max(0, Math.min(rCen + 5, aL - rCen - 6));
+            var tx = O.x - (adx / aL) * back, ty = O.y - (ady / aL) * back;
+            arrowSeg(ctx, c, tx, ty, tx + adx, ty + ady, c.accentStrong, 4.6, 12, true);
+            // label past the tip, along the arrow, so it never covers the shaft
+            chip(ctx, c, tx + adx + (adx / aL) * (fs + 10),
+              Demo.clamp(ty + ady + (ady / aL) * (fs + 10) + fs * 0.36, fs + 4, h - 3),
+              'μ = ' + F.dec(nm, 2), fs, c.accentStrong, w, 'center');
+          } else {
+            // nothing to draw: say so in words rather than leaving the eye hunting
+            chip(ctx, c, w / 2, h - 6, 'net molecular dipole = 0 — the bond arrows cancel',
+              fs, c.accentStrong, w, 'center');
+          }
+        }
+
+        // ---- footer note ----
+        ctx.font = fs - 1 + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('arrow length ∝ Δχ · bonds drawn equal length', 2, 2);
+      }, { aspect: 0.66, minHeight: 290, maxHeight: 340 });
+
+      // ==================================================================
+      // VECTOR-SUM CANVAS — the same arrows, head to tail
+      // ==================================================================
+      var sumCv = Demo.canvas('#sum', function (ctx, w, h, c) {
+        var B = curBonds(), N = netOf(B), nm = mag(N);
+        var fs = w < 360 ? 9.5 : 10.5;
+        var i;
+
+        var maxd = 0;
+        for (i = 0; i < B.length; i++) maxd = Math.max(maxd, Math.abs(B[i].d));
+        if (maxd < 0.02) {
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + 1 + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('Every atom pulls equally hard, so there are no bond', w / 2, h / 2 - 9);
+          ctx.fillText('dipoles to add. Nothing to sum, and nothing left over.', w / 2, h / 2 + 9);
+          return;
+        }
+
+        // partial sums, projected (projection is linear, so this is exact)
+        var pts = [{ x: 0, y: 0 }], acc = [0, 0, 0];
+        for (i = 0; i < B.length; i++) {
+          acc = add3(acc, sc3(B[i].dir, B[i].d));
+          var q = proj(acc);
+          pts.push({ x: q.x, y: q.y });
+        }
+        var minx = 0, maxx = 0, miny = 0, maxy = 0;
+        for (i = 0; i < pts.length; i++) {
+          minx = Math.min(minx, pts[i].x); maxx = Math.max(maxx, pts[i].x);
+          miny = Math.min(miny, pts[i].y); maxy = Math.max(maxy, pts[i].y);
+        }
+        var pad = 44;
+        var bw = Math.max(maxx - minx, 1e-6), bh = Math.max(maxy - miny, 1e-6);
+        var k = Math.min((w - 2 * pad) / bw, (h - 2 * pad) / bh);
+        k = Math.min(k, 220);
+        var bcx = (minx + maxx) / 2, bcy = (miny + maxy) / 2;
+        function X(p) { return w / 2 + k * (p.x - bcx); }
+        function Y(p) { return h / 2 - k * (p.y - bcy); }
+
+        // Two antiparallel arrows (CO2) would land exactly on top of one another and
+        // read as a single arrow, which is precisely the thing that has to be visible.
+        // Nudge each arrow sideways by OFF perpendicular to its own direction: an
+        // there-and-back pair separates into two lanes, and everything else barely moves.
+        var OFF = 7;
+        var lane = [];
+        for (i = 0; i < B.length; i++) {
+          var vx = X(pts[i + 1]) - X(pts[i]), vy = Y(pts[i + 1]) - Y(pts[i]);
+          var vl = Math.sqrt(vx * vx + vy * vy);
+          lane.push(vl < 0.5 ? { x: 0, y: 0 } : { x: (-vy / vl) * OFF, y: (vx / vl) * OFF });
+        }
+
+        // faint guide from the start point
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(X(pts[0]) - 14, Y(pts[0])); ctx.lineTo(X(pts[0]) + 14, Y(pts[0]));
+        ctx.moveTo(X(pts[0]), Y(pts[0]) - 14); ctx.lineTo(X(pts[0]), Y(pts[0]) + 14);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // the dotted jogs that show where one arrow really hands over to the next
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        for (i = 0; i < B.length - 1; i++) {
+          ctx.beginPath();
+          ctx.moveTo(X(pts[i + 1]) + lane[i].x, Y(pts[i + 1]) + lane[i].y);
+          ctx.lineTo(X(pts[i + 1]) + lane[i + 1].x, Y(pts[i + 1]) + lane[i + 1].y);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // the chain
+        for (i = 0; i < B.length; i++) {
+          if (Math.abs(B[i].d) < 0.02) continue;
+          var ax = X(pts[i]) + lane[i].x, ay = Y(pts[i]) + lane[i].y;
+          var bx = X(pts[i + 1]) + lane[i].x, by = Y(pts[i + 1]) + lane[i].y;
+          arrowSeg(ctx, c, ax, ay, bx, by, colFor(c, B[i].type), 2.4, 9, true);
+          ctx.font = '600 ' + fs + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          var ddx = bx - ax, ddy = by - ay, dl = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+          ctx.fillText(String(i + 1), (ax + bx) / 2 - (ddy / dl) * 13, (ay + by) / 2 + (ddx / dl) * 13);
+        }
+
+        // the resultant
+        var last = pts[pts.length - 1];
+        if (nm > ZERO) {
+          arrowSeg(ctx, c, X(pts[0]), Y(pts[0]), X(last), Y(last), c.accentStrong, 4.2, 12, true);
+          chip(ctx, c, (X(pts[0]) + X(last)) / 2, (Y(pts[0]) + Y(last)) / 2 - 10,
+            'sum = ' + F.dec(nm, 2), fs + 0.5, c.accentStrong, w, 'center');
+        } else {
+          ctx.beginPath(); ctx.arc(X(pts[0]), Y(pts[0]), 9, 0, 6.2832);
+          ctx.fillStyle = c.accentStrong; ctx.fill();
+          chip(ctx, c, X(pts[0]), Y(pts[0]) - 14, 'back to the start — sum = 0',
+            fs + 0.5, c.accentStrong, w, 'center');
+        }
+
+        ctx.font = fs - 0.5 + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('same arrows, same directions, moved tail to head', 2, 2);
+        ctx.fillText('nudged a few pixels sideways so overlapping ones stay visible', 2, 2 + fs + 3);
+      }, { aspect: 0.55, minHeight: 200, maxHeight: 280 });
+
+      // ==================================================================
+      // ELECTRONEGATIVITY-DIFFERENCE SCALE
+      // ==================================================================
+      var scaleCv = Demo.canvas('#scale', function (ctx, w, h, c) {
+        var B = curBonds();
+        var pad = 14, x0 = pad, x1 = w - pad, yb = 46, bh = 15;
+        var fs = w < 360 ? 9.5 : 10.5;
+        var i;
+        function X(d) { return x0 + (x1 - x0) * Demo.clamp(d, 0, DMAX) / DMAX; }
+
+        // the continuum
+        var g = ctx.createLinearGradient(x0, 0, x1, 0);
+        g.addColorStop(0, c.ok); g.addColorStop(0.32, c.warn); g.addColorStop(1, c.bad);
+        ctx.save(); ctx.globalAlpha = 0.5; ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(x0 + 4, yb); ctx.arcTo(x1, yb, x1, yb + bh, 4); ctx.arcTo(x1, yb + bh, x0, yb + bh, 4);
+        ctx.arcTo(x0, yb + bh, x0, yb, 4); ctx.arcTo(x0, yb, x1, yb, 4); ctx.closePath();
+        ctx.fill(); ctx.restore();
+
+        // the two conventional boundaries, drawn soft on purpose
+        ctx.font = '600 ' + (fs - 1) + FONT;
+        [0.4, 1.7].forEach(function (v) {
+          var px = X(v);
+          ctx.strokeStyle = c.text2; ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(px, yb - 3); ctx.lineTo(px, yb + bh + 3); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = c.muted; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText(F.dec(v, 1), px, yb + bh + 5);
+        });
+
+        // axis ticks
+        ctx.font = fs - 1 + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        [0, 1, 2, 3].forEach(function (v) {
+          var px = X(v);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, yb + bh); ctx.lineTo(px, yb + bh + 3); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(String(v), px, yb + bh + 5);
+        });
+
+        // one marker per distinct bond type
+        var seen = {}, marks = [];
+        for (i = 0; i < B.length; i++) {
+          var key = B[i].type;
+          if (seen[key]) continue;
+          seen[key] = 1;
+          marks.push(B[i]);
+        }
+        marks.sort(function (a, b) { return Math.abs(a.d) - Math.abs(b.d); });
+        for (i = 0; i < marks.length; i++) {
+          var b = marks[i];
+          var px2 = X(Math.abs(b.d));
+          var col = colFor(c, b.type);
+          ctx.fillStyle = col;
+          ctx.beginPath();
+          ctx.moveTo(px2, yb - 2); ctx.lineTo(px2 - 5, yb - 10); ctx.lineTo(px2 + 5, yb - 10);
+          ctx.closePath(); ctx.fill();
+          chip(ctx, c, px2, yb - 13 - i * 15,
+            cur().center + '–' + b.sym + '  ' + F.dec(Math.abs(b.d), 2), fs, col, w, 'center');
+        }
+
+        ctx.font = fs - 1 + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+        ctx.fillText('Δχ (Pauling scale)', w - 2, yb + bh + 19);
+      }, { height: 100 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        molGrid: document.getElementById('molGrid'),
+        enC: document.getElementById('enC'), enCOut: document.getElementById('enCOut'),
+        enCSym: document.getElementById('enCSym'), enCRole: document.getElementById('enCRole'),
+        enCHint: document.getElementById('enCHint'),
+        enA: document.getElementById('enA'), enAOut: document.getElementById('enAOut'),
+        enASym: document.getElementById('enASym'), enARole: document.getElementById('enARole'),
+        enAHint: document.getElementById('enAHint'),
+        enB: document.getElementById('enB'), enBOut: document.getElementById('enBOut'),
+        enBSym: document.getElementById('enBSym'), enBRole: document.getElementById('enBRole'),
+        enBHint: document.getElementById('enBHint'),
+        bWrap: document.getElementById('bWrap'),
+        btnReal: document.getElementById('btnReal'),
+        btnCrank: document.getElementById('btnCrank'),
+        btnSame: document.getElementById('btnSame'),
+        enNote: document.getElementById('enNote'),
+        bondList: document.getElementById('bondList'),
+        vName: document.getElementById('vName'), vShape: document.getElementById('vShape'),
+        vBadge: document.getElementById('vBadge'),
+        rNet: document.getElementById('rNet'), rNetSub: document.getElementById('rNetSub'),
+        rShape: document.getElementById('rShape'), rAngle: document.getElementById('rAngle'),
+        rLP: document.getElementById('rLP'),
+        rMu: document.getElementById('rMu'), rMuSub: document.getElementById('rMuSub'),
+        yaw: document.getElementById('yaw'), yawOut: document.getElementById('yawOut'),
+        btnSpin: document.getElementById('btnSpin'), btnFlat: document.getElementById('btnFlat'),
+        chkBond: document.getElementById('chkBond'), chkNet: document.getElementById('chkNet'),
+        chkDelta: document.getElementById('chkDelta'),
+        molCap: document.getElementById('molCap'), sumCap: document.getElementById('sumCap'),
+        scaleCap: document.getElementById('scaleCap'),
+        lgAText: document.getElementById('lgAText'), lgBText: document.getElementById('lgBText'),
+        lgBWrap: document.getElementById('lgBWrap'),
+        cmpBody: document.getElementById('cmpBody'), calBody: document.getElementById('calBody'),
+        calK: document.getElementById('calK')
+      };
+
+      // ---- molecule picker ----
+      MOLS.forEach(function (m) {
+        var b = document.createElement('button');
+        b.className = 'btn';
+        b.type = 'button';
+        b.innerHTML = m.label;
+        b.setAttribute('data-id', m.id);
+        b.addEventListener('click', function () { selectMol(m.id); });
+        el.molGrid.appendChild(b);
+      });
+
+      // ---- static comparison table, computed from the same model ----
+      (function () {
+        var rows = '';
+        MOLS.forEach(function (m) {
+          var bs = realOf(m), nm = mag(netOf(bs));
+          var ds = [], seen = {};
+          bs.forEach(function (b) {
+            var t = F.dec(Math.abs(b.d), 2);
+            if (!seen[t]) { seen[t] = 1; ds.push(t); }
+          });
+          ds.sort(function (a, b) { return b - a; });
+          rows += '<tr data-id="' + m.id + '"><td>' + m.label + '</td><td>' + m.shape + '</td><td>'
+            + ds.join(' / ') + '</td><td' + (nm < ZERO ? ' class="zero"' : '') + '>' + F.dec(nm, 2)
+            + '</td><td>' + (nm < ZERO ? 'nonpolar' : 'polar') + '</td></tr>';
+        });
+        el.cmpBody.innerHTML = rows;
+
+        // lone-pair calibration table
+        var kcal = 1.83 / mag(netOf(realOf(BYID.hf)));
+        el.calK.textContent = F.dec(kcal, 3);
+        var order = ['co2', 'ccl4', 'bf3', 'hf', 'chcl3', 'nh3', 'h2o'];
+        var lp = { co2: '0', ccl4: '0', bf3: '0', hf: '0', chcl3: '0', nh3: '1', h2o: '2' };
+        var crows = '';
+        order.forEach(function (id) {
+          var m = BYID[id], nm = mag(netOf(realOf(m)));
+          crows += '<tr><td>' + m.label + '</td><td>' + lp[id] + '</td><td'
+            + (nm < ZERO ? ' class="zero"' : '') + '>' + F.dec(nm * kcal, 2) + ' D</td><td>'
+            + F.dec(m.mu, 2) + ' D</td></tr>';
+        });
+        el.calBody.innerHTML = crows;
+      })();
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render(fast) {
+        var m = cur(), B = curBonds(), N = netOf(B), nm = mag(N);
+        var polar = nm > ZERO;
+        var i;
+
+        // --- header ---
+        el.vName.innerHTML = m.label;
+        el.vShape.textContent = m.shape;
+        el.vBadge.textContent = polar ? 'polar molecule' : 'nonpolar molecule';
+        el.vBadge.className = 'verdict' + (polar ? ' is-polar' : '');
+
+        // --- slider chrome ---
+        el.enCSym.textContent = m.center;
+        el.enCRole.textContent = '(' + m.roles.c + ')';
+        el.enCOut.textContent = F.dec(S.enC, 2);
+        el.enCHint.innerHTML = hint(S.enC, EN0[m.center], m.center);
+
+        el.enASym.textContent = m.symA;
+        el.enARole.textContent = '(' + m.roles.a + ')';
+        el.enAOut.textContent = F.dec(S.enA, 2);
+        el.enAHint.innerHTML = hint(S.enA, EN0[m.symA], m.symA);
+
+        el.bWrap.hidden = !m.hasB;
+        if (m.hasB) {
+          el.enBSym.textContent = m.symB;
+          el.enBRole.textContent = '(' + m.roles.b + ')';
+          el.enBOut.textContent = F.dec(S.enB, 2);
+          el.enBHint.innerHTML = hint(S.enB, EN0[m.symB], m.symB);
+        }
+        el.btnSame.disabled = !m.hasB;
+        el.enNote.innerHTML = m.hasB
+          ? '<em>Exaggerate</em> pushes every outer atom further from the centre in the direction it already '
+          + 'leans. <em>Make outer atoms identical</em> gives the ' + m.symB + ' the same electronegativity as '
+          + 'the ' + m.symA + ', without touching the geometry.'
+          : 'This molecule has only one kind of outer atom, so there is nothing to make identical. '
+          + '<em>Exaggerate</em> pushes the outer atoms as far from the centre as the Pauling scale goes.';
+
+        // --- bond list ---
+        var seen = {}, html = '';
+        for (i = 0; i < B.length; i++) {
+          if (seen[B[i].type]) continue;
+          seen[B[i].type] = 1;
+          var b = B[i];
+          var n = B.filter(function (x) { return x.type === b.type; }).length;
+          var v = b.type === 'B' ? '--series-4' : '--series-2';
+          html += '<div class="bondrow"><span class="sw" style="background:var(' + v + ')"></span><div>'
+            + '<b>' + n + ' × ' + m.center + '–' + b.sym + '</b> &nbsp; '
+            + 'Δχ = ' + F.dec(Math.abs(b.d), 2) + '<br>'
+            + '<span class="cls" style="color:var(' + classVar(b.d) + ')">' + bondClass(b.d) + '</span>'
+            + ' &middot; ' + F.dec(100 * ionic(b.d), 1) + '% ionic character<br>'
+            + '<span class="muted">' + arrowWord(b, m) + '</span>'
+            + '</div></div>';
+        }
+        el.bondList.innerHTML = html;
+
+        // --- readouts ---
+        el.rNet.innerHTML = F.dec(nm, 2) + '<span class="r-unit">Δχ units</span>';
+        el.rNetSub.innerHTML = polar
+          ? 'the bond arrows do not cancel'
+          : 'the bond arrows cancel exactly';
+        el.rShape.textContent = m.shape;
+        el.rAngle.innerHTML = m.angle;
+        el.rLP.innerHTML = m.lp;
+
+        var real = Math.abs(S.enC - EN0[m.center]) < 0.005
+          && Math.abs(S.enA - EN0[m.symA]) < 0.005
+          && (!m.hasB || Math.abs(S.enB - EN0[m.symB]) < 0.005);
+        if (real) {
+          el.rMu.innerHTML = F.dec(m.mu, 2) + '<span class="r-unit">D</span>';
+          el.rMuSub.textContent = m.mu === 0
+            ? 'experiment: exactly zero, by symmetry'
+            : 'experiment, gas phase';
+        } else {
+          el.rMu.innerHTML = '—';
+          el.rMuSub.textContent = 'you changed an electronegativity, so this is no longer a real molecule';
+        }
+
+        // --- captions ---
+        el.molCap.innerHTML = capMol(m, B, nm, polar);
+        el.sumCap.innerHTML = capSum(m, B, nm, polar);
+        el.scaleCap.innerHTML = capScale(B);
+
+        // --- legend ---
+        el.lgAText.textContent = m.center + '–' + m.symA + ' bond dipole';
+        el.lgBWrap.hidden = !m.hasB;
+        if (m.hasB) el.lgBText.textContent = m.center + '–' + m.symB + ' bond dipole';
+
+        // --- picker + table highlight ---
+        Array.prototype.forEach.call(el.molGrid.children, function (b) {
+          b.classList.toggle('is-on', b.getAttribute('data-id') === m.id);
+        });
+        Array.prototype.forEach.call(el.cmpBody.children, function (r) {
+          r.classList.toggle('is-on', r.getAttribute('data-id') === m.id);
+        });
+
+        if (fast) { molCv.paint(); sumCv.paint(); scaleCv.paint(); }
+        else { molCv.redraw(); sumCv.redraw(); scaleCv.redraw(); }
+      }
+
+      function hint(v, realv, sym) {
+        var n = nearest(v);
+        if (Math.abs(v - realv) < 0.005) {
+          return 'The real Pauling value for ' + sym + ' is ' + F.dec(realv, 2) + '. That is what is set now.';
+        }
+        return 'Real ' + sym + ' is ' + F.dec(realv, 2) + '. You are pretending it is ' + F.dec(v, 2)
+          + ' — about the pull of ' + n.sym + ' (' + F.dec(n.en, 2) + ').';
+      }
+
+      function arrowWord(b, m) {
+        if (Math.abs(b.d) < 0.02) return 'no bond dipole: the two atoms pull equally';
+        return b.d > 0
+          ? 'arrow points from ' + m.center + ' towards ' + b.sym + ' (' + b.sym + ' is δ−)'
+          : 'arrow points from ' + b.sym + ' towards ' + m.center + ' (' + m.center + ' is δ−)';
+      }
+
+      function maxD(B) {
+        var x = 0;
+        for (var i = 0; i < B.length; i++) x = Math.max(x, Math.abs(B[i].d));
+        return x;
+      }
+
+      function capMol(m, B, nm, polar) {
+        var md = maxD(B);
+        var head;
+        if (md < 0.02) {
+          head = 'Every atom now pulls on the shared electrons equally hard, so there are no bond dipoles at all '
+            + 'and nothing to add. This is the boring way to be nonpolar.';
+        } else if (!polar) {
+          head = '<strong>Every bond here is polar</strong> (Δχ up to ' + F.dec(md, 2)
+            + ', ' + F.dec(100 * ionic(md), 0) + '% ionic character) and the molecule is <strong>nonpolar</strong>. '
+            + 'The ' + m.shape + ' geometry aims the bond dipoles so that they cancel exactly. Turn the outer '
+            + 'electronegativity up as far as you like: the arrows get longer, the sum stays 0.00.';
+        } else {
+          head = 'The bond dipoles <strong>do not cancel</strong>. The ' + m.shape + ' geometry leaves a net '
+            + 'dipole of <strong>' + F.dec(nm, 2) + ' Δχ units</strong>, drawn as the thick blue arrow '
+            + 'from the ' + m.center + '.';
+        }
+        return head + ' ' + m.note;
+      }
+
+      function capSum(m, B, nm, polar) {
+        if (maxD(B) < 0.02) return 'No arrows to lay end to end.';
+        var names = [];
+        for (var i = 0; i < B.length; i++) names.push(m.center + '–' + B[i].sym);
+        var chain = names.join(' + ');
+        if (!polar) {
+          return chain + ' = <strong>0</strong>. Each arrow starts where the last one finished, and the chain '
+            + 'walks straight back to the point it began from. That closed loop <em>is</em> the cancellation — '
+            + 'it is not a rule to memorise, it is arithmetic you can see. Rotate the molecule and the loop stays '
+            + 'closed, because a projection of a zero vector is zero from every direction.';
+        }
+        return chain + ' = <strong>' + F.dec(nm, 2) + '</strong>. Each arrow starts where the last one finished. '
+          + 'The blue arrow runs from the very first tail to the very last head — that gap is the molecular '
+          + 'dipole, and the reason it is not zero is the angles between the arrows, not their number.';
+      }
+
+      function capScale(B) {
+        var parts = [], seen = {};
+        for (var i = 0; i < B.length; i++) {
+          if (seen[B[i].type]) continue;
+          seen[B[i].type] = 1;
+          parts.push('<strong>' + cur().center + '–' + B[i].sym + '</strong> at Δχ = '
+            + F.dec(Math.abs(B[i].d), 2) + ', ' + bondClass(B[i].d));
+        }
+        return parts.join('; ') + '. Below about 0.4 the sharing is near-even; above about 1.7 the transfer is '
+          + 'lopsided enough that people call it ionic. Both numbers are conventions, which is why the colour '
+          + 'blends instead of stepping — real compounds sit on a continuum and some of them straddle the '
+          + 'lines (HF is at 1.78 and is a covalent gas).';
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      function selectMol(id) {
+        stopSpin();
+        S.id = id;
+        var m = cur();
+        S.enC = EN0[m.center];
+        S.enA = EN0[m.symA];
+        S.enB = m.hasB ? EN0[m.symB] : 2.20;
+        S.yaw = (m.yaw0 || 0) * Math.PI / 180;
+        el.enC.value = S.enC;
+        el.enA.value = S.enA;
+        el.enB.value = S.enB;
+        el.yaw.value = Math.round(S.yaw * 180 / Math.PI);
+        el.yawOut.innerHTML = Math.round(S.yaw * 180 / Math.PI) + '&deg;';
+        render(false);
+      }
+
+      Demo.range('#enC', function (v) { S.enC = v; render(false); });
+      Demo.range('#enA', function (v) { S.enA = v; render(false); });
+      Demo.range('#enB', function (v) { S.enB = v; render(false); });
+      Demo.range('#yaw', function (v) {
+        S.yaw = v * Math.PI / 180;
+        el.yawOut.innerHTML = F.dec(v, 0) + '&deg;';
+        render(false);
+      });
+
+      el.btnReal.addEventListener('click', function () {
+        var m = cur();
+        S.enC = EN0[m.center]; S.enA = EN0[m.symA];
+        if (m.hasB) S.enB = EN0[m.symB];
+        el.enC.value = S.enC; el.enA.value = S.enA; el.enB.value = S.enB;
+        render(false);
+      });
+
+      el.btnCrank.addEventListener('click', function () {
+        var m = cur();
+        S.enA = S.enA >= S.enC ? 4 : 0.7;
+        if (m.hasB) S.enB = S.enB >= S.enC ? 4 : 0.7;
+        el.enA.value = S.enA; el.enB.value = S.enB;
+        render(false);
+      });
+
+      el.btnSame.addEventListener('click', function () {
+        if (!cur().hasB) return;
+        S.enB = S.enA;
+        el.enB.value = S.enB;
+        render(false);
+      });
+
+      el.btnFlat.addEventListener('click', function () {
+        stopSpin();
+        S.yaw = 0;
+        el.yaw.value = 0;
+        el.yawOut.innerHTML = '0&deg;';
+        render(false);
+      });
+
+      el.chkBond.addEventListener('change', function () { S.bond = this.checked; render(false); });
+      el.chkNet.addEventListener('change', function () { S.net = this.checked; render(false); });
+      el.chkDelta.addEventListener('change', function () { S.delta = this.checked; render(false); });
+
+      // rotation is purely cosmetic: it moves the camera, never the model
+      var spin = Demo.loop(function (dt) {
+        S.yaw += dt * 0.7;
+        while (S.yaw > Math.PI) S.yaw -= 2 * Math.PI;
+        while (S.yaw < -Math.PI) S.yaw += 2 * Math.PI;
+        var deg = Math.round(S.yaw * 180 / Math.PI);
+        el.yaw.value = deg;
+        el.yawOut.innerHTML = deg + '&deg;';
+        molCv.paint(); sumCv.paint();
+      });
+
+      function stopSpin() {
+        if (!spin.running) return;
+        spin.stop();
+        el.btnSpin.textContent = 'Spin';
+        el.btnSpin.classList.remove('is-on');
+      }
+
+      el.btnSpin.addEventListener('click', function () {
+        if (spin.running) { stopSpin(); return; }
+        spin.start();
+        el.btnSpin.textContent = 'Stop';
+        el.btnSpin.classList.add('is-on');
+      });
+
+      // ==================================================================
+      // BOOT
+      // ==================================================================
+      selectMol('co2');
+    })();
+  </script>
+</body>
+
+</html>

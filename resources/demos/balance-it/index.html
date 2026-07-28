@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Balance It | Dr. Andres Barboza</title>
+  <meta name="description" content="Balance twelve reactions by changing only the coefficients. A live atom-count table and a particle view show what a coefficient actually does, and the check tests both conditions: balanced and in lowest whole-number terms.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: the equation strip, the locked-subscript styling,
+       the atom table states, and the success variant of .note */
+    sub { font-size: 0.68em; line-height: 0; vertical-align: -0.28em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    /* ---- the equation ---- */
+    .eqn {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 8px 7px;
+      padding: 4px 0 2px;
+    }
+    .term { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
+
+    .coef {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 2px;
+    }
+    .coef button {
+      font: inherit;
+      width: 26px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .coef button:hover:not(:disabled) { background: var(--accent-soft); color: var(--accent-strong); }
+    .coef button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cval {
+      min-width: 22px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent-strong);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .formula {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      padding: 1px 3px 3px;
+      border-bottom: 2px dotted var(--line);
+    }
+    .formula sub { color: var(--muted); font-weight: 700; }
+
+    .op { font-size: 16px; color: var(--muted); padding-bottom: 5px; }
+    .op.arrow { font-size: 21px; color: var(--text-2); padding: 0 2px 3px; }
+
+    .lockline {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      font-size: 11.5px; color: var(--muted);
+      margin-top: 8px; text-align: center;
+    }
+    .lockline i { color: var(--warn); font-size: 12px; flex: none; }
+
+    /* ---- atom table ---- */
+    .tbl td.n { font-variant-numeric: tabular-nums; }
+    .tbl tr.match td { background: var(--ok-soft); }
+    .tbl tr.match td.st { color: var(--ok); font-weight: 700; }
+    .tbl tr.miss td.st { color: var(--bad); font-weight: 700; }
+    .tbl th.st, .tbl td.st { text-align: center; width: 34px; }
+    .eldot {
+      display: inline-block;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      margin-right: 7px;
+      vertical-align: -1px;
+      flex: none;
+    }
+
+    /* these tile labels are longer than the shell's single-line default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+
+    .note.ok { border-left-color: var(--ok); background: var(--ok-soft); }
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .pick-row { display: flex; gap: 8px; align-items: center; }
+    .pick-row select { flex: 1 1 auto; min-width: 0; }
+    .pick-row .btn { flex: none; padding: 8px 11px; }
+
+    @media (max-width: 430px) {
+      .formula { font-size: 15.5px; }
+      .coef button { width: 24px; }
+      .eqn { gap: 7px 5px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Balance It</h1>
+        <p class="demo-sub">Change the number <em>in front of</em> each formula until every row of the atom table turns green. The small numbers inside the formulas cannot be touched &mdash; that is the whole point.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 4</span>
+          <span class="tag is-accent">Chemical reactions</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label" id="rxnLabel">Reaction <span>&mdash; synthesis</span></p>
+
+        <div class="eqn" id="eqn"></div>
+
+        <p class="lockline">
+          <i class="bi bi-lock-fill"></i>
+          <span>The subscripts are locked. H<sub>2</sub>O is water; H<sub>2</sub>O<sub>2</sub> is bleach-strength
+            hydrogen peroxide. Change a subscript and you have changed the substance, not the equation.</span>
+        </p>
+
+        <hr class="sep" style="margin:14px 0">
+
+        <p class="stage-label">Atom count <span>&mdash; a row turns green only when both sides match</span></p>
+        <div class="table-scroll">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Element</th>
+                <th>Left</th>
+                <th>Right</th>
+                <th class="st">&nbsp;</th>
+              </tr>
+            </thead>
+            <tbody id="atomBody"></tbody>
+          </table>
+        </div>
+
+        <hr class="sep" style="margin:14px 0">
+
+        <p class="stage-label">Particle view <span>&mdash; every formula unit the coefficients ask for, drawn atom by atom</span></p>
+        <canvas id="pv" role="img"
+                aria-label="Particle diagram: the reactant side and the product side, each drawn as the exact number of formula units the current coefficients call for, with every atom shown as a coloured circle."></canvas>
+        <p class="stage-caption" id="pvCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Reaction</div>
+          <div class="stack">
+            <div class="pick-row">
+              <button class="btn" id="btnPrev" aria-label="Previous reaction"><i class="bi bi-chevron-left"></i></button>
+              <select id="rxnSel" aria-label="Choose a reaction"></select>
+              <button class="btn" id="btnNext" aria-label="Next reaction"><i class="bi bi-chevron-right"></i></button>
+            </div>
+            <p class="ctrl-hint" id="rxnNote">&nbsp;</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Check your answer</div>
+          <div class="stack">
+            <div class="btn-row">
+              <button class="btn primary" id="btnCheck">Check</button>
+              <button class="btn" id="btnOnes">All back to 1</button>
+            </div>
+            <p class="note" id="verdict">Set the coefficients, then press <strong>Check</strong>. It tests two
+              separate things: that every element balances, <em>and</em> that your coefficients are the lowest
+              whole numbers that do it.</p>
+            <div class="btn-row">
+              <button class="btn" id="btnDouble">Double every coefficient</button>
+              <button class="btn" id="btnAnswer">Show the answer</button>
+            </div>
+            <p class="ctrl-hint">
+              <strong>Double every coefficient</strong> is a trap on purpose. Balance a reaction, press it, then
+              press Check again &mdash; the atoms still match perfectly and the answer is still wrong.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Where you stand</div>
+          <div class="readouts">
+            <div class="readout is-accent">
+              <div class="r-label">Elements matched</div>
+              <div class="r-value" id="rMatch">0 / 0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Atoms left</div>
+              <div class="r-value" id="rLeft">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Atoms right</div>
+              <div class="r-value" id="rRight">0</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Balanced so far</div>
+              <div class="r-value" id="rSolved">0 / 12</div>
+            </div>
+          </div>
+          <p class="ctrl-hint" style="margin-top:10px">
+            &ldquo;Atoms left&rdquo; and &ldquo;atoms right&rdquo; being equal is <em>not</em> the test. Equal totals
+            with the wrong elements still fails &mdash; the table is the test, element by element.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Why the subscripts are locked</div>
+          <p class="note warn">
+            <strong>A subscript is part of the substance&rsquo;s name.</strong> The 2 in H<sub>2</sub>O says a water
+            molecule contains two hydrogen atoms bonded to one oxygen. That number came from the chemistry, from what
+            actually bonds to what &mdash; it is not yours to adjust. If you &ldquo;balanced&rdquo;
+            H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O by writing H<sub>2</sub>O<sub>2</sub>, you did not
+            balance anything: you replaced water with hydrogen peroxide, which is a different chemical that will
+            bleach your hair and disinfect a cut.
+          </p>
+          <p class="note" style="margin-top:10px">
+            <strong>A coefficient is a count.</strong> The 2 in <strong>2</strong> H<sub>2</sub>O means two whole
+            water molecules. It multiplies <em>every</em> atom in the formula unit: 2 H<sub>2</sub>O is 4 H and 2 O.
+            With brackets it is easy to undercount &mdash; 2 Ca(NO<sub>3</sub>)<sub>2</sub> is 2 Ca, 4 N and
+            <strong>12</strong> O, because the 3 and the 2 multiply before the coefficient does. Set that reaction up
+            and count the circles in the particle view.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            This is atom bookkeeping and nothing else. It shows that mass is conserved &mdash; the same atoms come out
+            that went in, rearranged &mdash; but it says nothing about whether a reaction happens, how fast, how far,
+            or how much energy it takes or gives off. States of matter (s, l, g, aq) and charges are left off so the
+            counting stays visible. The particle boxes are drawn as tidy grids; real molecules are in constant
+            disordered motion and, for the metals here, zinc and copper are not loose single atoms but atoms packed in
+            a lattice. &ldquo;Formula unit&rdquo; is used instead of &ldquo;molecule&rdquo; for the ionic compounds,
+            because NaNO<sub>3</sub> in a solid is a repeating array, not a discrete particle. Every reaction shipped
+            here has exactly one lowest-terms answer.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students who cannot get an equation to balance start editing the little
+        numbers. H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O will not balance, so they write
+        H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O<sub>2</sub> and it does &mdash; two hydrogens, two
+        oxygens, done. It is the single most common error in this unit, and it is not a small slip. Balancing is
+        supposed to be a statement that <em>atoms are conserved</em>. Changing a subscript quietly swaps in a
+        different substance and then claims the books balance. That is not conservation of mass; it is cooking the
+        books.
+      </p>
+      <p>
+        <strong>What to notice.</strong> The subscripts on this page cannot be edited at all. There is no control for
+        them, because in real chemistry there is no such control either &mdash; the formula of a compound is
+        determined before you ever write the equation. The only thing you may change is the big number in front,
+        which is a <em>count of whole units</em>. Watch the particle view as you press the plus button: nothing about
+        any molecule changes shape, another identical copy simply appears. That is what a coefficient means, and it
+        is why a coefficient can never break a substance.
+      </p>
+      <p>
+        <strong>Two conditions, not one.</strong> Press <em>Double every coefficient</em> on an equation you have
+        already balanced. Every row of the table stays green &mdash; the atoms really do still match &mdash; and the
+        Check button still rejects it. 4 H<sub>2</sub> + 2 O<sub>2</sub> &rarr; 4 H<sub>2</sub>O is a true
+        statement about atoms, but 2 H<sub>2</sub> + O<sub>2</sub> &rarr; 2 H<sub>2</sub>O says the same thing with
+        nothing wasted, and it is the answer chemists agree to write. The test is a greatest common divisor: if every
+        coefficient divides by the same whole number, divide through.
+      </p>
+      <p>
+        <strong>Where students lose atoms.</strong> Brackets. In 3 Ca(NO<sub>3</sub>)<sub>2</sub> the oxygen count is
+        3 &times; 2 &times; 3 = 18, not 3 &times; 3 = 9 and not 6. The subscript inside the bracket, the subscript
+        outside it, and the coefficient all multiply together. That is why the double-replacement reaction with
+        calcium nitrate and sodium phosphate is on this page: build it, then count the oxygen circles on the left of
+        the particle view and check them against the table. Twenty-six oxygen atoms on each side, in two chemically
+        different homes &mdash; nitrate and phosphate &mdash; and the equation does not care which home, only how
+        many.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — pure atom bookkeeping.
+      //
+      // Nothing here is time-stepped: every number on screen is computed
+      // directly from the current coefficients, so there is no state that
+      // can drift or fail to decay.
+      //
+      //   count(element, side) = SUM over species of  coefficient * atoms
+      //                          in one formula unit of that species
+      //
+      // "atoms in one formula unit" comes from parsing the formula string
+      // itself, brackets included, so a coefficient structurally multiplies
+      // every atom — including the ones inside (NO3)2 — and cannot be made
+      // to do anything else.
+      //
+      //   balanced      <=>  count(e, L) === count(e, R) for every element e
+      //   lowest terms  <=>  gcd(all coefficients) === 1
+      //
+      // Both are tested, separately, and the failure message names which one
+      // failed. Subscripts are read-only data; there is no code path that
+      // writes to a formula string.
+      // ==================================================================
+
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var CMIN = 1, CMAX = 12;   // a coefficient of 0 would delete the substance
+
+      // ---------------- reactions (every one hand-verified) ----------------
+      var RXN = [
+        {
+          type: 'Synthesis', title: 'Hydrogen burns to water',
+          L: ['H2', 'O2'], R: ['H2O'], ans: { L: [2, 1], R: [2] },
+          note: 'Two elements combine into one compound. Start here: the oxygen is the awkward one, because O₂ only comes in twos.'
+        },
+        {
+          type: 'Synthesis', title: 'Ammonia from nitrogen and hydrogen',
+          L: ['N2', 'H2'], R: ['NH3'], ans: { L: [1, 3], R: [2] },
+          note: 'The Haber process, which feeds roughly half the world. Both reactants are diatomic, so the product has to come in twos.'
+        },
+        {
+          type: 'Synthesis', title: 'Aluminum corrodes in air',
+          L: ['Al', 'O2'], R: ['Al2O3'], ans: { L: [4, 3], R: [2] },
+          note: 'The oxide layer this makes is what stops an aluminum can from dissolving. Odd against even: the answer needs a 4 and a 3.'
+        },
+        {
+          type: 'Decomposition', title: 'Hydrogen peroxide breaks down',
+          L: ['H2O2'], R: ['H2O', 'O2'], ans: { L: [2], R: [2, 1] },
+          note: 'One compound falls apart into two. This is the fizzing when peroxide hits a cut — the enzyme catalase speeds it up thousands of times.'
+        },
+        {
+          type: 'Decomposition', title: 'Potassium chlorate heated',
+          L: ['KClO3'], R: ['KCl', 'O2'], ans: { L: [2], R: [2, 3] },
+          note: 'A classic lab source of pure oxygen. Three oxygens on the left have to be rebuilt into O₂ pairs on the right.'
+        },
+        {
+          type: 'Single replacement', title: 'Zinc in hydrochloric acid',
+          L: ['Zn', 'HCl'], R: ['ZnCl2', 'H2'], ans: { L: [1, 2], R: [1, 1] },
+          note: 'Zinc kicks hydrogen out of the acid and takes its place. One element in, a different element out.'
+        },
+        {
+          type: 'Single replacement', title: 'Aluminum in copper(II) chloride',
+          L: ['Al', 'CuCl2'], R: ['AlCl3', 'Cu'], ans: { L: [2, 3], R: [2, 3] },
+          note: 'Aluminum displaces copper, and the blue solution fades as bare copper metal appears. AlCl₃ against CuCl₂ is a 3-against-2 problem.'
+        },
+        {
+          type: 'Double replacement', title: 'Lead(II) nitrate and potassium iodide',
+          L: ['Pb(NO3)2', 'KI'], R: ['PbI2', 'KNO3'], ans: { L: [1, 2], R: [1, 2] },
+          note: 'The partners swap, and brilliant yellow lead iodide drops out of solution. Count the nitrate as a unit and it is easy.'
+        },
+        {
+          type: 'Double replacement', title: 'Calcium nitrate and sodium phosphate',
+          L: ['Ca(NO3)2', 'Na3PO4'], R: ['Ca3(PO4)2', 'NaNO3'], ans: { L: [3, 2], R: [1, 6] },
+          note: 'The bracket problem, twice over. Twenty-six oxygen atoms per side when it is right — do not try to count them one at a time, count nitrates and phosphates.'
+        },
+        {
+          type: 'Combustion', title: 'Methane burns',
+          L: ['CH4', 'O2'], R: ['CO2', 'H2O'], ans: { L: [1, 2], R: [1, 2] },
+          note: 'Natural gas. Every hydrocarbon combustion works the same way: carbon to CO₂, hydrogen to H₂O, oxygen last.'
+        },
+        {
+          type: 'Combustion', title: 'Propane burns',
+          L: ['C3H8', 'O2'], R: ['CO2', 'H2O'], ans: { L: [1, 5], R: [3, 4] },
+          note: 'Grill and camping-stove fuel. Do carbon first, then hydrogen, then count up the oxygen you have committed to and match it.'
+        },
+        {
+          type: 'Combustion', title: 'Ethane burns',
+          L: ['C2H6', 'O2'], R: ['CO2', 'H2O'], ans: { L: [2, 7], R: [4, 6] },
+          note: 'The hard one. Balancing C and H first leaves an odd number of oxygen atoms on the right, so the whole equation has to be doubled.'
+        }
+      ];
+
+      var ELNAME = {
+        H: 'Hydrogen', C: 'Carbon', N: 'Nitrogen', O: 'Oxygen', Na: 'Sodium',
+        Al: 'Aluminum', P: 'Phosphorus', S: 'Sulfur', Cl: 'Chlorine', K: 'Potassium',
+        Ca: 'Calcium', Cu: 'Copper', Zn: 'Zinc', I: 'Iodine', Pb: 'Lead'
+      };
+
+      // ---------------- formula parsing ----------------
+      // expand('Ca(NO3)2') -> ['Ca','N','O','O','O','N','O','O','O']
+      var EXP = {};
+      function expand(f) {
+        if (EXP[f]) return EXP[f];
+        var i = 0;
+        function num() {
+          var s = '';
+          while (i < f.length && f[i] >= '0' && f[i] <= '9') { s += f[i]; i++; }
+          return s === '' ? 1 : parseInt(s, 10);
+        }
+        function group() {
+          var out = [], j, q;
+          while (i < f.length) {
+            var ch = f[i];
+            if (ch === '(') {
+              i++;
+              var inner = group();          // consumes the ')'
+              var m = num();
+              for (q = 0; q < m; q++) out = out.concat(inner);
+            } else if (ch === ')') {
+              i++;
+              return out;
+            } else if (ch >= 'A' && ch <= 'Z') {
+              var el = ch; i++;
+              while (i < f.length && f[i] >= 'a' && f[i] <= 'z') { el += f[i]; i++; }
+              var k = num();
+              for (j = 0; j < k; j++) out.push(el);
+            } else { i++; }
+          }
+          return out;
+        }
+        EXP[f] = group();
+        return EXP[f];
+      }
+
+      function formulaHTML(f) { return f.replace(/(\d+)/g, '<sub>$1</sub>'); }
+
+      function gcd2(a, b) { while (b) { var t = a % b; a = b; b = t; } return a; }
+
+      // ==================================================================
+      // STATE
+      // ==================================================================
+      var S = { idx: 0, cL: [], cR: [], solved: {}, revealed: {} };
+
+      function R() { return RXN[S.idx]; }
+
+      function loadRxn(i, keep) {
+        S.idx = ((i % RXN.length) + RXN.length) % RXN.length;
+        var r = R();
+        if (!keep) {
+          S.cL = r.L.map(function () { return 1; });
+          S.cR = r.R.map(function () { return 1; });
+        }
+        buildEqn();
+        el.rxnSel.value = String(S.idx);
+        el.rxnLabel.innerHTML = 'Reaction ' + (S.idx + 1) + ' of ' + RXN.length
+          + ' <span>&mdash; ' + r.type.toLowerCase() + ': ' + r.title.toLowerCase() + '</span>';
+        el.rxnNote.textContent = r.note;
+        resetVerdict();
+        refresh();
+      }
+
+      // ---------------- element order and colours ----------------
+      function elementOrder() {
+        var r = R(), seen = {}, out = [];
+        r.L.concat(r.R).forEach(function (f) {
+          expand(f).forEach(function (e) { if (!seen[e]) { seen[e] = 1; out.push(e); } });
+        });
+        return out;
+      }
+      var ELVAR = ['--series-1', '--series-2', '--series-3', '--series-4', '--accent-strong',
+                   '--text-2', '--muted', '--warn'];
+      function paletteOf(c) {
+        return [c.series[0], c.series[1], c.series[2], c.series[3], c.accentStrong,
+                c.text2, c.muted, c.warn];
+      }
+
+      // ---------------- counting ----------------
+      function sideCounts(side) {
+        var r = R();
+        var sp = side === 'L' ? r.L : r.R;
+        var co = side === 'L' ? S.cL : S.cR;
+        var tot = {};
+        sp.forEach(function (f, i) {
+          expand(f).forEach(function (e) { tot[e] = (tot[e] || 0) + co[i]; });
+        });
+        return tot;
+      }
+      function sideAtoms(side) {
+        var r = R();
+        var sp = side === 'L' ? r.L : r.R;
+        var co = side === 'L' ? S.cL : S.cR;
+        var n = 0;
+        sp.forEach(function (f, i) { n += expand(f).length * co[i]; });
+        return n;
+      }
+      function allCoefs() { return S.cL.concat(S.cR); }
+
+      function analyze() {
+        var L = sideCounts('L'), Rt = sideCounts('R');
+        var order = elementOrder();
+        var miss = [], matched = 0;
+        order.forEach(function (e) {
+          var a = L[e] || 0, b = Rt[e] || 0;
+          if (a === b) matched++; else miss.push({ el: e, l: a, r: b });
+        });
+        var cs = allCoefs(), g = cs[0];
+        for (var i = 1; i < cs.length; i++) g = gcd2(g, cs[i]);
+        return { L: L, R: Rt, order: order, miss: miss, matched: matched, gcd: g };
+      }
+
+      // ==================================================================
+      // PARTICLE CANVAS
+      // ==================================================================
+      function rrect(ctx, x, y, w, h, r) {
+        r = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      var pv = Demo.canvas('#pv', function (ctx, w, h, c) {
+        var r = R();
+        var order = elementOrder();
+        var pal = paletteOf(c);
+        var colOf = {};
+        order.forEach(function (e, i) { colOf[e] = pal[i % pal.length]; });
+
+        var narrow = w < 380;
+        var fs = narrow ? 9.4 : 10.4;
+
+        // ---- legend across the top ----
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.font = '600 ' + fs + FONT;
+        var lx = 1, ly = 8;
+        order.forEach(function (e) {
+          var tw = ctx.measureText(e).width;
+          if (lx + tw + 22 > w) { lx = 1; ly += 15; }
+          ctx.beginPath();
+          ctx.arc(lx + 4.5, ly, 4.5, 0, 6.2832);
+          ctx.fillStyle = colOf[e]; ctx.fill();
+          ctx.fillStyle = c.text2;
+          ctx.fillText(e, lx + 12, ly + 0.5);
+          lx += tw + 22;
+        });
+
+        var top = ly + 13;
+        var gap = narrow ? 16 : 24;
+        var half = (w - gap) / 2;
+
+        // One atom radius for the whole picture. An atom must not shrink just
+        // because it sits in a bigger molecule — equal circles on both sides
+        // are what makes "the same atoms, rearranged" visible.
+        var gl = layoutSide(0, top, half, h - top, 'L', fs);
+        var gr = layoutSide(half + gap, top, half, h - top, 'R', fs);
+        var rad = Demo.clamp(Math.min(gl.rad, gr.rad), 1.5, 13);
+
+        renderSide(ctx, c, gl, colOf, fs, rad);
+        renderSide(ctx, c, gr, colOf, fs, rad);
+
+        // ---- the arrow, in the gap ----
+        ctx.fillStyle = c.text2;
+        ctx.font = '600 ' + (narrow ? 14 : 17) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('→', half + gap / 2, top + (h - top) / 2);
+      }, { aspect: 0.8, minHeight: 250, maxHeight: 400 });
+
+      // Geometry only — no drawing, so both sides can agree on one atom radius.
+      function layoutSide(x, y, w, h, side, fs) {
+        var r = R();
+        var sp = side === 'L' ? r.L : r.R;
+        var co = side === 'L' ? S.cL : S.cR;
+
+        // the flat list of formula units the coefficients call for
+        var units = [];
+        sp.forEach(function (f, i) {
+          for (var k = 0; k < co[i]; k++) units.push(expand(f));
+        });
+
+        var by = y + fs * 2 + 8;
+        var bh = h - (by - y) - 2;
+        var pad = 6;
+        var iw = w - pad * 2, ih = bh - pad * 2;
+        var n = units.length;
+        var cols = Math.max(1, Math.round(Math.sqrt(n * iw / Math.max(ih, 1))));
+        cols = Math.min(cols, Math.max(1, n));
+        var rows = Math.ceil(n / cols);
+        var cw = iw / cols, chh = ih / rows;
+
+        var rad = 13;
+        units.forEach(function (list) {
+          var mcols = Math.ceil(Math.sqrt(list.length));
+          var mrows = Math.ceil(list.length / mcols);
+          rad = Math.min(rad, (cw - 6) / (mcols * 2.25), (chh - 6) / (mrows * 2.25));
+        });
+
+        return {
+          x: x, y: y, w: w, side: side, units: units, atoms: sideAtoms(side),
+          by: by, bh: bh, pad: pad, n: n, cols: cols, rows: rows, cw: cw, chh: chh,
+          rad: rad
+        };
+      }
+
+      function renderSide(ctx, c, g, colOf, fs, rad) {
+        // header
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.text;
+        ctx.fillText(g.side === 'L' ? 'Reactants' : 'Products', g.x + 1, g.y);
+        ctx.font = (fs - 0.6) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText(g.units.length + (g.units.length === 1 ? ' unit' : ' units') + ' · '
+          + g.atoms + ' atoms', g.x + 1, g.y + fs + 3);
+
+        if (g.bh < 20) return;
+
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        rrect(ctx, g.x + 0.5, g.by + 0.5, g.w - 1, g.bh - 1, 10);
+        ctx.stroke();
+
+        g.units.forEach(function (list, idx) {
+          var row = Math.floor(idx / g.cols), col = idx % g.cols;
+          var inRow = row === g.rows - 1 ? (g.n - (g.rows - 1) * g.cols) : g.cols;
+          var cx = g.x + g.pad + (g.cw * (g.cols - inRow)) / 2 + g.cw * col + g.cw / 2;
+          var cy = g.by + g.pad + g.chh * row + g.chh / 2;
+          drawUnit(ctx, c, cx, cy, list, colOf, rad);
+        });
+      }
+
+      function drawUnit(ctx, c, cx, cy, list, colOf, rad) {
+        var k = list.length;
+        var mcols = Math.ceil(Math.sqrt(k));
+        var mrows = Math.ceil(k / mcols);
+        var step = rad * 2.15;
+
+        // faint outline so a student can count units, not just atoms
+        var bw = mcols * step + rad * 1.1, bh2 = mrows * step + rad * 1.1;
+        ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+        rrect(ctx, cx - bw / 2, cy - bh2 / 2, bw, bh2, Math.min(7, rad + 2));
+        ctx.stroke();
+
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (var a = 0; a < k; a++) {
+          var row = Math.floor(a / mcols), col = a % mcols;
+          var inRow = row === mrows - 1 ? (k - (mrows - 1) * mcols) : mcols;
+          var ax = cx + (col - (inRow - 1) / 2) * step;
+          var ay = cy + (row - (mrows - 1) / 2) * step;
+          ctx.beginPath();
+          ctx.arc(ax, ay, rad, 0, 6.2832);
+          ctx.fillStyle = colOf[list[a]] || c.muted;
+          ctx.fill();
+          ctx.strokeStyle = c.surface; ctx.lineWidth = 1.1; ctx.stroke();
+          if (rad >= 7.5) {
+            ctx.fillStyle = c.surface;
+            ctx.font = '600 ' + (rad * 1.05) + FONT;
+            ctx.fillText(list[a], ax, ay + 0.5);
+          }
+        }
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        eqn: document.getElementById('eqn'),
+        atomBody: document.getElementById('atomBody'),
+        rxnSel: document.getElementById('rxnSel'),
+        rxnLabel: document.getElementById('rxnLabel'),
+        rxnNote: document.getElementById('rxnNote'),
+        btnPrev: document.getElementById('btnPrev'),
+        btnNext: document.getElementById('btnNext'),
+        btnCheck: document.getElementById('btnCheck'),
+        btnOnes: document.getElementById('btnOnes'),
+        btnDouble: document.getElementById('btnDouble'),
+        btnAnswer: document.getElementById('btnAnswer'),
+        verdict: document.getElementById('verdict'),
+        rMatch: document.getElementById('rMatch'),
+        rLeft: document.getElementById('rLeft'),
+        rRight: document.getElementById('rRight'),
+        rSolved: document.getElementById('rSolved'),
+        pvCap: document.getElementById('pvCap')
+      };
+
+      // ---------------- reaction picker ----------------
+      (function buildSelect() {
+        var lastType = null, grp = null;
+        RXN.forEach(function (r, i) {
+          if (r.type !== lastType) {
+            grp = document.createElement('optgroup');
+            grp.label = r.type;
+            el.rxnSel.appendChild(grp);
+            lastType = r.type;
+          }
+          var o = document.createElement('option');
+          o.value = String(i);
+          o.textContent = r.title;
+          grp.appendChild(o);
+        });
+      })();
+
+      function refreshSelectLabels() {
+        var opts = el.rxnSel.querySelectorAll('option');
+        for (var i = 0; i < opts.length; i++) {
+          var j = parseInt(opts[i].value, 10);
+          opts[i].textContent = RXN[j].title + (S.solved[j] ? '  — balanced' : '');
+        }
+      }
+
+      // ---------------- the equation strip ----------------
+      function buildEqn() {
+        var r = R();
+        el.eqn.innerHTML = '';
+
+        function addTerm(side, i) {
+          var f = (side === 'L' ? r.L : r.R)[i];
+          var t = document.createElement('div');
+          t.className = 'term';
+
+          var box = document.createElement('div');
+          box.className = 'coef';
+
+          var minus = document.createElement('button');
+          minus.type = 'button';
+          minus.textContent = '−';
+          minus.setAttribute('aria-label', 'Decrease the coefficient on ' + f);
+          minus.addEventListener('click', function () { bump(side, i, -1); });
+
+          var val = document.createElement('span');
+          val.className = 'cval';
+          val.setAttribute('aria-live', 'off');
+
+          var plus = document.createElement('button');
+          plus.type = 'button';
+          plus.textContent = '+';
+          plus.setAttribute('aria-label', 'Increase the coefficient on ' + f);
+          plus.addEventListener('click', function () { bump(side, i, 1); });
+
+          box.appendChild(minus); box.appendChild(val); box.appendChild(plus);
+
+          var fm = document.createElement('div');
+          fm.className = 'formula';
+          fm.innerHTML = formulaHTML(f);
+          fm.title = 'Subscripts are fixed — they define the substance';
+
+          t.appendChild(box); t.appendChild(fm);
+          el.eqn.appendChild(t);
+
+          terms.push({ side: side, i: i, val: val, minus: minus, plus: plus });
+        }
+
+        function addOp(txt, arrow) {
+          var s = document.createElement('span');
+          s.className = 'op' + (arrow ? ' arrow' : '');
+          s.innerHTML = txt;
+          el.eqn.appendChild(s);
+        }
+
+        var terms = [];
+        r.L.forEach(function (f, i) { if (i) addOp('+'); addTerm('L', i); });
+        addOp('&rarr;', true);
+        r.R.forEach(function (f, i) { if (i) addOp('+'); addTerm('R', i); });
+        el.terms = terms;
+      }
+
+      function bump(side, i, d) {
+        var arr = side === 'L' ? S.cL : S.cR;
+        arr[i] = Demo.clamp(arr[i] + d, CMIN, CMAX);
+        resetVerdict();
+        refresh();
+      }
+
+      function resetVerdict() {
+        el.verdict.className = 'note';
+        el.verdict.innerHTML = 'Set the coefficients, then press <strong>Check</strong>. It tests two separate '
+          + 'things: that every element balances, <em>and</em> that your coefficients are the lowest whole '
+          + 'numbers that do it.';
+      }
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function refresh() {
+        var A = analyze();
+
+        // coefficient displays
+        el.terms.forEach(function (t) {
+          var v = (t.side === 'L' ? S.cL : S.cR)[t.i];
+          t.val.textContent = String(v);
+          t.minus.disabled = v <= CMIN;
+          t.plus.disabled = v >= CMAX;
+        });
+
+        // atom table
+        var rows = '';
+        A.order.forEach(function (e, i) {
+          var a = A.L[e] || 0, b = A.R[e] || 0;
+          var ok = a === b;
+          rows += '<tr class="' + (ok ? 'match' : 'miss') + '">'
+            + '<td><span class="eldot" style="background:var(' + ELVAR[i % ELVAR.length] + ')"></span>'
+            + (ELNAME[e] || e) + ' (' + e + ')</td>'
+            + '<td class="n">' + a + '</td>'
+            + '<td class="n">' + b + '</td>'
+            + '<td class="st">' + (ok ? '✓' : '≠') + '</td>'
+            + '</tr>';
+        });
+        el.atomBody.innerHTML = rows;
+
+        // readouts
+        el.rMatch.textContent = A.matched + ' / ' + A.order.length;
+        el.rLeft.textContent = String(sideAtoms('L'));
+        el.rRight.textContent = String(sideAtoms('R'));
+        el.rSolved.textContent = Object.keys(S.solved).length + ' / ' + RXN.length;
+
+        // caption
+        var cs = allCoefs();
+        el.pvCap.innerHTML = 'Coefficients now: ' + cs.join(', ') + '. Each one is a count of whole formula '
+          + 'units — pressing + adds another identical copy and never changes a molecule. '
+          + (A.miss.length === 0
+            ? 'Every element matches.'
+            : A.miss.length + ' element' + (A.miss.length === 1 ? '' : 's') + ' still off.');
+
+        pv.redraw();
+      }
+
+      // ==================================================================
+      // CHECK — two conditions, reported separately
+      // ==================================================================
+      el.btnCheck.addEventListener('click', function () {
+        var A = analyze();
+
+        if (A.miss.length > 0) {
+          var bits = A.miss.map(function (m) {
+            return '<strong>' + (ELNAME[m.el] || m.el) + '</strong>: ' + m.l + ' on the left, '
+              + m.r + ' on the right';
+          });
+          el.verdict.className = 'note bad';
+          el.verdict.innerHTML = '<strong>Not balanced.</strong> ' + bits.join('; ') + '. '
+            + 'Atoms cannot appear or vanish, so those two numbers have to be equal. Adjust a coefficient '
+            + '— and remember it changes every atom in that formula unit at once'
+            + (A.miss.length > 1 ? ', so fixing one element usually knocks another one out.' : '.');
+          return;
+        }
+
+        if (A.gcd > 1) {
+          var dl = S.cL.map(function (v) { return v / A.gcd; });
+          var dr = S.cR.map(function (v) { return v / A.gcd; });
+          el.verdict.className = 'note warn';
+          el.verdict.innerHTML = '<strong>Balanced, but not in lowest terms.</strong> Every element matches '
+            + '— that part is right. But all ' + allCoefs().length + ' coefficients divide by <strong>'
+            + A.gcd + '</strong>, so you are describing ' + A.gcd + ' copies of the same reaction. Divide '
+            + 'through: <strong>' + eqnText(dl, dr) + '</strong>.';
+          return;
+        }
+
+        S.solved[S.idx] = true;
+        refreshSelectLabels();
+        el.verdict.className = 'note ok';
+        el.verdict.innerHTML = '<strong>Balanced, and in lowest terms.</strong> ' + eqnText(S.cL, S.cR)
+          + '. Every element matches and no whole number divides all the coefficients, so this is the form '
+          + 'a chemist writes. Note what you never touched: not one subscript.';
+        refresh();
+      });
+
+      function eqnText(cl, cr) {
+        var r = R();
+        function part(sp, co) {
+          return sp.map(function (f, i) {
+            return (co[i] === 1 ? '' : co[i] + ' ') + formulaHTML(f);
+          }).join(' + ');
+        }
+        return part(r.L, cl) + ' &rarr; ' + part(r.R, cr);
+      }
+
+      // ---------------- buttons ----------------
+      el.btnOnes.addEventListener('click', function () {
+        S.cL = S.cL.map(function () { return 1; });
+        S.cR = S.cR.map(function () { return 1; });
+        resetVerdict();
+        refresh();
+      });
+
+      el.btnDouble.addEventListener('click', function () {
+        var capped = false;
+        function dbl(v) { if (v * 2 > CMAX) { capped = true; return v; } return v * 2; }
+        S.cL = S.cL.map(dbl);
+        S.cR = S.cR.map(dbl);
+        refresh();
+        if (capped) {
+          el.verdict.className = 'note warn';
+          el.verdict.innerHTML = 'Doubling would push a coefficient past ' + CMAX + ', so nothing was doubled. '
+            + 'Reduce the coefficients first, or try this on a smaller reaction.';
+        } else {
+          el.verdict.className = 'note';
+          el.verdict.innerHTML = 'Every coefficient doubled. If the table was green it is still green — '
+            + 'doubling both sides of a true statement keeps it true. Press <strong>Check</strong> and see '
+            + 'why that is still not the answer.';
+        }
+      });
+
+      el.btnAnswer.addEventListener('click', function () {
+        var r = R();
+        S.cL = r.ans.L.slice();
+        S.cR = r.ans.R.slice();
+        S.revealed[S.idx] = true;
+        refresh();
+        el.verdict.className = 'note';
+        el.verdict.innerHTML = '<strong>Answer shown:</strong> ' + eqnText(S.cL, S.cR)
+          + '. This one does not count towards your total. Press <strong>All back to 1</strong> and rebuild it '
+          + 'yourself — the order that works is carbon and metals first, hydrogen next, oxygen last.';
+      });
+
+      el.rxnSel.addEventListener('change', function () { loadRxn(parseInt(this.value, 10), false); });
+      el.btnPrev.addEventListener('click', function () { loadRxn(S.idx - 1, false); });
+      el.btnNext.addEventListener('click', function () { loadRxn(S.idx + 1, false); });
+
+      // ---------------- go ----------------
+      refreshSelectLabels();
+      loadRxn(0, false);
+    })();
+  </script>
+</body>
+
+</html>

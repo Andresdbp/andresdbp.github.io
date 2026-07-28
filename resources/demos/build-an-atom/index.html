@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Build an Atom | Dr. Andres Barboza</title>
+  <meta name="description" content="Add and remove protons, neutrons and electrons and watch the element, the isotope and the charge follow. Then mix isotope abundances and see where the periodic table's decimal atomic mass actually comes from.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: nuclide symbol, legend swatches, isotope rows */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i {
+      width: 12px; height: 12px; border-radius: 50%;
+      display: inline-block; flex: none; border: 1px solid var(--line);
+    }
+    .legend .lg.avg i { width: 17px; height: 0; border-radius: 0; border: 0; border-top: 2px dashed var(--accent-strong); }
+
+    /* the big identity card */
+    .idcard {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 13px;
+      padding: 12px 14px;
+    }
+    .idcard .sym {
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent-strong);
+      font-variant-numeric: tabular-nums;
+      flex: none;
+      min-width: 62px;
+      text-align: center;
+    }
+    .idcard .sym.none { color: var(--muted); font-size: 26px; }
+    .idcard .idtext { min-width: 0; }
+    .idcard .nm { font-size: 17px; font-weight: 600; color: var(--text); line-height: 1.25; }
+    .idcard .nuc { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .idcard .nuc b { color: var(--text-2); font-weight: 600; }
+
+    .statechip {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 3px 9px;
+      border-radius: 20px;
+      margin-top: 6px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+    .statechip.neutral { background: var(--ok-soft); border-color: transparent; color: var(--ok); }
+    .statechip.cation  { background: var(--bad-soft); border-color: transparent; color: var(--bad); }
+    .statechip.anion   { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .r-value.big { font-size: 26px; }
+
+    /* per-isotope abundance mixer rows */
+    .isorow + .isorow { margin-top: 9px; }
+    .isorow .ctrl-label b { font-weight: 700; }
+
+    .expr {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-2);
+      font-variant-numeric: tabular-nums;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: nowrap;
+      padding-bottom: 2px;
+    }
+    .expr b { color: var(--accent-strong); font-weight: 600; }
+
+    .tbl td.hi, .tbl th.hi { color: var(--accent-strong); }
+    .tbl tr.built td { background: var(--accent-soft); }
+    .tbl tfoot td { border-top: 1px solid var(--line); border-bottom: 0; font-weight: 600; }
+
+    .btn.is-on { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent-strong); }
+    .cnt {
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--accent-strong);
+      min-width: 30px;
+      text-align: center;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Build an Atom</h1>
+        <p class="demo-sub">Add a neutron and watch the element name refuse to change. Then open the isotopes panel and find out why chlorine is 35.45 and not 35 or 37.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 2</span>
+          <span class="tag is-accent">Atomic structure</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <p class="stage-label">The atom you have built <span>&mdash; nucleus and electron shells</span></p>
+        <canvas id="atom" role="img"
+                aria-label="A nucleus of packed protons and neutrons surrounded by electron shells that fill in the order two, eight, eight, two."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--bad)"></i>proton, charge +1, in the nucleus</span>
+          <span class="lg"><i style="background:var(--muted)"></i>neutron, charge 0, in the nucleus</span>
+          <span class="lg"><i style="background:var(--accent)"></i>electron, charge &minus;1, in the shells</span>
+        </div>
+        <p class="stage-caption" id="atomCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label" id="isoLabel">Natural isotopes of this element <span>&mdash; and where the average lands</span></p>
+        <canvas id="iso" role="img"
+                aria-label="Bar chart of the naturally occurring isotopes of the current element, bar height showing natural abundance, with a dashed line marking the abundance-weighted average atomic mass."></canvas>
+
+        <div class="legend">
+          <span class="lg"><i style="background:var(--accent)"></i>isotope abundance (%)</span>
+          <span class="lg avg"><i></i>weighted average atomic mass (u)</span>
+        </div>
+        <p class="stage-caption" id="isoCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <div class="panel">
+          <div class="panel-title">Identity</div>
+          <div class="idcard">
+            <div class="sym" id="idSym">C</div>
+            <div class="idtext">
+              <div class="nm" id="idName">Carbon</div>
+              <div class="nuc" id="idNuc">carbon-12</div>
+              <span class="statechip neutral" id="idState">neutral atom</span>
+            </div>
+          </div>
+
+          <div class="readouts two" style="margin-top:12px">
+            <div class="readout is-accent">
+              <div class="r-label">Atomic number Z</div>
+              <div class="r-value" id="rZ">6</div>
+              <div class="r-sub">= protons &mdash; sets the element</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Mass number A</div>
+              <div class="r-value" id="rA">12</div>
+              <div class="r-sub">= protons + neutrons, a count &mdash; <strong>no units</strong></div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Net charge</div>
+              <div class="r-value" id="rQ">0</div>
+              <div class="r-sub" id="rQSub">6 p&#8314; &minus; 6 e&#8315;</div>
+            </div>
+            <div class="readout">
+              <div class="r-label">Valence electrons</div>
+              <div class="r-value" id="rVal">4</div>
+              <div class="r-sub" id="rShells">shells 2, 4</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Particles</div>
+          <div class="stack">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="pRange">Protons</label>
+                <span class="ctrl-value"><span class="cnt" id="pOut">6</span></span>
+              </div>
+              <input type="range" id="pRange" min="0" max="20" step="1" value="6">
+              <div class="btn-row" style="margin-top:6px">
+                <button class="btn" data-adj="p" data-d="-1" aria-label="Remove a proton">&minus; proton</button>
+                <button class="btn" data-adj="p" data-d="1" aria-label="Add a proton">+ proton</button>
+              </div>
+              <p class="ctrl-hint">Protons set the <strong>element</strong>. Change this and the name changes &mdash; nothing else on this page can do that.</p>
+            </div>
+
+            <hr class="sep">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="nRange">Neutrons</label>
+                <span class="ctrl-value"><span class="cnt" id="nOut">6</span></span>
+              </div>
+              <input type="range" id="nRange" min="0" max="28" step="1" value="6">
+              <div class="btn-row" style="margin-top:6px">
+                <button class="btn" data-adj="n" data-d="-1" aria-label="Remove a neutron">&minus; neutron</button>
+                <button class="btn" data-adj="n" data-d="1" aria-label="Add a neutron">+ neutron</button>
+              </div>
+              <p class="ctrl-hint">Neutrons set the <strong>isotope</strong>. Watch the element name and the symbol hold perfectly still while you drag this.</p>
+            </div>
+
+            <hr class="sep">
+
+            <div class="ctrl">
+              <div class="ctrl-row">
+                <label class="ctrl-label" for="eRange">Electrons</label>
+                <span class="ctrl-value"><span class="cnt" id="eOut">6</span></span>
+              </div>
+              <input type="range" id="eRange" min="0" max="20" step="1" value="6">
+              <div class="btn-row" style="margin-top:6px">
+                <button class="btn" data-adj="e" data-d="-1" aria-label="Remove an electron">&minus; electron</button>
+                <button class="btn" data-adj="e" data-d="1" aria-label="Add an electron">+ electron</button>
+              </div>
+              <p class="ctrl-hint">Electrons set the <strong>charge</strong>. They also change nothing about the element or the mass number.</p>
+            </div>
+
+            <div class="btn-row" style="margin-top:2px">
+              <button class="btn" id="btnNeutral">Make it neutral</button>
+              <button class="btn" id="btnStable">Most common isotope</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Try these</div>
+          <div class="btn-row" id="presets">
+            <button class="btn" data-p="6" data-n="6" data-e="6">carbon-12</button>
+            <button class="btn" data-p="6" data-n="8" data-e="6">carbon-14</button>
+            <button class="btn" data-p="17" data-n="18" data-e="17">chlorine-35</button>
+            <button class="btn" data-p="17" data-n="20" data-e="17">chlorine-37</button>
+            <button class="btn" data-p="17" data-n="18" data-e="18">chloride Cl&#8315;</button>
+            <button class="btn" data-p="11" data-n="12" data-e="10">sodium Na&#8314;</button>
+            <button class="btn" data-p="8" data-n="8" data-e="10">oxide O&#178;&#8315;</button>
+            <button class="btn" data-p="2" data-n="1" data-e="2">helium-3</button>
+          </div>
+          <p class="ctrl-hint" style="margin-top:9px">
+            Compare <em>carbon-12</em> with <em>carbon-14</em>: two extra neutrons, same element, same symbol,
+            same chemistry. Then compare <em>chlorine-35</em> with <em>chloride</em>: same nucleus, one extra
+            electron, and now it is an ion &mdash; still chlorine.
+          </p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Isotopes &mdash; where 35.45 comes from</div>
+          <div class="stack" id="isoPanel">
+
+            <p class="note" id="isoIntro">&nbsp;</p>
+
+            <div class="table-scroll">
+              <table class="tbl" id="isoTable">
+                <thead>
+                  <tr>
+                    <th>Isotope</th>
+                    <th>Mass (u)</th>
+                    <th>Abundance</th>
+                    <th class="hi">mass &times; fraction</th>
+                  </tr>
+                </thead>
+                <tbody id="isoBody"></tbody>
+                <tfoot id="isoFoot"></tfoot>
+              </table>
+            </div>
+
+            <p class="expr" id="isoExpr">&nbsp;</p>
+
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Weighted average atomic mass, your mix</div>
+                <div class="r-value big" id="rAvg">12.011<span class="r-unit">u</span></div>
+                <div class="r-sub" id="rAvgSub">natural abundances &mdash; matches the periodic table</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Periodic table value</div>
+                <div class="r-value" id="rTable">12.011<span class="r-unit">u</span></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Mass number A of your atom</div>
+                <div class="r-value" id="rA2">12</div>
+                <div class="r-sub">a whole number of particles</div>
+              </div>
+            </div>
+
+            <div id="mixWrap">
+              <div class="panel-title" style="margin:4px 0 8px">Mix the abundances</div>
+              <div id="isoMix"></div>
+              <div class="btn-row" style="margin-top:10px">
+                <button class="btn" id="btnNat">Back to natural abundances</button>
+              </div>
+              <p class="ctrl-hint" id="mixHint">
+                Move any one slider and the others share out what is left, so the abundances always add up to
+                exactly 100%. That constraint is the whole reason the average is a real average.
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="note warn">
+            <strong>The picture is nowhere near to scale.</strong> If the nucleus drawn here were really this
+            size, the innermost electron shell would be about a kilometre away. An atom is overwhelmingly empty
+            space, and essentially all of its mass is in that tiny dot in the middle.
+          </p>
+          <p class="note" style="margin-top:10px">
+            <strong>Shells fill 2, 8, 8 only up to calcium.</strong> That is why this page stops at Z = 20. From
+            scandium onward the 3d subshell starts filling <em>before</em> the fourth shell is finished, so the
+            third shell holds up to 18 and the simple 2, 8, 8 rule breaks. The rule is a bookkeeping shortcut for
+            the first twenty elements, not a law.
+          </p>
+          <p class="ctrl-hint" style="margin-top:11px">
+            What else is simplified. Electrons do not orbit in circles &mdash; the rings stand in for energy
+            levels, not paths. Isotope masses are real measured values in unified atomic mass units (u), where
+            1 u is defined as exactly one twelfth of the mass of a carbon-12 atom, which is why carbon-12 reads
+            12.000000 exactly. The listed isotopes are the ones found in nature; you can build nuclei here that
+            do not occur naturally or would fly apart in microseconds, and the page will tell you when you have.
+            Potassium-40 is naturally occurring but radioactive, with a half-life of 1.25 billion years, which is
+            long enough that it is still around and still counted in the average.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students read 35.45 under chlorine on the periodic table and take it
+        to be a measurement &mdash; the mass of a chlorine atom, weighed. It is not. <strong>No chlorine atom
+        anywhere has a mass of 35.45 u.</strong> Every single one is either about 34.97 u or about 36.97 u. The
+        35.45 is a bookkeeping average across a population, weighted by how common each kind is, and averages of
+        populations routinely land on values that no individual member has &mdash; the same way a class can
+        average 2.3 siblings when nobody has 2.3 siblings.
+      </p>
+      <p>
+        <strong>What to notice.</strong> Set the element to chlorine and read the table: 34.969 &times; 0.7576 =
+        26.492, and 36.966 &times; 0.2424 = 8.961. Add them and you get 35.453 u. The answer sits much closer to
+        35 than to 37, and it sits there for one reason only: three quarters of all chlorine atoms are the light
+        one. Now drag the mixer to 50 / 50 and the average slides to 35.97 &mdash; nothing about either nucleus
+        changed, only how many of each you counted. Drag Cl-35 to 100% and the average snaps to 34.969, the mass
+        of one actual atom. That is the test: a number that moves when you change proportions is an average, not
+        a measurement of an object.
+      </p>
+      <p>
+        <strong>Three different jobs, three different particles.</strong> Add a neutron to carbon-12 and you get
+        carbon-13. The name stays carbon, the symbol stays C, the square on the periodic table stays put &mdash;
+        because the element is defined by the proton count and by nothing else. Take an electron away from sodium
+        and you get Na<sup>+</sup>: same element, same mass number, different charge. The only way to change the
+        element is to change the number of protons, which chemistry cannot do. That is the difference between a
+        chemical reaction and a nuclear one.
+      </p>
+      <p>
+        <strong>Mass number is not atomic mass.</strong> Mass number A is an integer &mdash; you are counting
+        particles, and you cannot have 35.45 particles. Atomic mass is a measured quantity in u, and it is never
+        quite the integer either: chlorine-35 is 34.969 u, not 35.000, because binding the nucleus together
+        converts a little of the mass into energy. Two numbers, two units, two meanings. Keep the tiles side by
+        side on this page until they stop looking like the same thing.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // DATA — elements 1..20 (the range where shells fill 2, 8, 8, 2)
+      //
+      //   iso: [ mass number A, isotopic mass in u, natural abundance % ]
+      //   Masses are measured atomic masses (AME/IUPAC), abundances are the
+      //   representative terrestrial values. Every element's abundances sum
+      //   to exactly 100.000, and the weighted average reproduces the
+      //   published standard atomic weight to the digits shown.
+      //
+      //   Verified by hand for chlorine, the case the lesson turns on:
+      //     34.968853 x 0.7576 = 26.492403
+      //     36.965903 x 0.2424 =  8.960535
+      //                          ----------
+      //                          35.452938, which rounds to the 35.45 printed
+      //                          on the periodic table.
+      // ==================================================================
+
+      var ELEMENTS = [
+        null,
+        { s: 'H',  name: 'Hydrogen',   w: 1.008,   iso: [[1, 1.007825, 99.9885], [2, 2.014102, 0.0115]] },
+        { s: 'He', name: 'Helium',     w: 4.0026,  iso: [[3, 3.016029, 0.000134], [4, 4.002603, 99.999866]] },
+        { s: 'Li', name: 'Lithium',    w: 6.94,    iso: [[6, 6.015123, 7.59], [7, 7.016003, 92.41]] },
+        { s: 'Be', name: 'Beryllium',  w: 9.0122,  iso: [[9, 9.012183, 100]] },
+        { s: 'B',  name: 'Boron',      w: 10.81,   iso: [[10, 10.012937, 19.9], [11, 11.009305, 80.1]] },
+        { s: 'C',  name: 'Carbon',     w: 12.011,  iso: [[12, 12.000000, 98.93], [13, 13.003355, 1.07]] },
+        { s: 'N',  name: 'Nitrogen',   w: 14.007,  iso: [[14, 14.003074, 99.636], [15, 15.000109, 0.364]] },
+        { s: 'O',  name: 'Oxygen',     w: 15.999,  iso: [[16, 15.994915, 99.757], [17, 16.999132, 0.038], [18, 17.999160, 0.205]] },
+        { s: 'F',  name: 'Fluorine',   w: 18.998,  iso: [[19, 18.998403, 100]] },
+        { s: 'Ne', name: 'Neon',       w: 20.180,  iso: [[20, 19.992440, 90.48], [21, 20.993847, 0.27], [22, 21.991385, 9.25]] },
+        { s: 'Na', name: 'Sodium',     w: 22.990,  iso: [[23, 22.989770, 100]] },
+        { s: 'Mg', name: 'Magnesium',  w: 24.305,  iso: [[24, 23.985042, 78.99], [25, 24.985837, 10.00], [26, 25.982593, 11.01]] },
+        { s: 'Al', name: 'Aluminium',  w: 26.982,  iso: [[27, 26.981538, 100]] },
+        { s: 'Si', name: 'Silicon',    w: 28.085,  iso: [[28, 27.976927, 92.223], [29, 28.976495, 4.685], [30, 29.973770, 3.092]] },
+        { s: 'P',  name: 'Phosphorus', w: 30.974,  iso: [[31, 30.973762, 100]] },
+        { s: 'S',  name: 'Sulfur',     w: 32.06,   iso: [[32, 31.972071, 94.99], [33, 32.971459, 0.75], [34, 33.967867, 4.25], [36, 35.967081, 0.01]] },
+        { s: 'Cl', name: 'Chlorine',   w: 35.45,   iso: [[35, 34.968853, 75.76], [37, 36.965903, 24.24]] },
+        { s: 'Ar', name: 'Argon',      w: 39.948,  iso: [[36, 35.967545, 0.3336], [38, 37.962732, 0.0629], [40, 39.962383, 99.6035]] },
+        { s: 'K',  name: 'Potassium',  w: 39.098,  iso: [[39, 38.963707, 93.2581], [40, 39.963998, 0.0117], [41, 40.961826, 6.7302]] },
+        { s: 'Ca', name: 'Calcium',    w: 40.078,  iso: [[40, 39.962591, 96.941], [42, 41.958618, 0.647], [43, 42.958766, 0.135], [44, 43.955482, 2.086], [46, 45.953689, 0.004], [48, 47.952523, 0.187]] }
+      ];
+
+      var ZMAX = 20;
+      var NMAX = 28;
+      var CAP = [2, 8, 8, 2];          // 2, 8, 8, 2 — valid only to Z = 20
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+      var MINUS = '−';
+
+      // ------------------------------------------------------------------
+      // STATE. Directly computed from these three counts on every render —
+      // nothing is integrated over time, so there is no pool to drain and no
+      // steady state to drift away from. Set all three to zero and every
+      // readout reads zero.
+      // ------------------------------------------------------------------
+      var S = { p: 6, n: 6, e: 6 };
+      var mix = {};                    // Z -> array of abundances (%), user-editable
+
+      function natural(Z) { return ELEMENTS[Z].iso.map(function (i) { return i[2]; }); }
+      function getMix(Z) {
+        if (!Z) return [];
+        if (!mix[Z]) mix[Z] = natural(Z);
+        return mix[Z];
+      }
+      function isNatural(Z) {
+        if (!Z) return true;
+        var a = getMix(Z), nat = natural(Z);
+        for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - nat[i]) > 1e-6) return false;
+        return true;
+      }
+      function avgMass(Z) {
+        if (!Z) return 0;
+        var a = getMix(Z), iso = ELEMENTS[Z].iso, s = 0;
+        for (var i = 0; i < iso.length; i++) s += iso[i][1] * a[i] / 100;
+        return s;
+      }
+
+      // ---------------- electron shells: 2, 8, 8, 2 ----------------
+      function shells(e) {
+        var out = [0, 0, 0, 0], left = e;
+        for (var i = 0; i < 4; i++) { var t = Math.min(CAP[i], left); out[i] = t; left -= t; }
+        return out;
+      }
+      function occupied(sh) {
+        var k = 0;
+        for (var i = 0; i < 4; i++) if (sh[i] > 0) k = i + 1;
+        return k;
+      }
+
+      // ---------------- formatting ----------------
+      function fmtAb(v) {
+        if (v <= 0) return '0';
+        if (v >= 10) return F.dec(v, 3);
+        if (v >= 1) return F.dec(v, 3);
+        if (v >= 0.01) return F.dec(v, 4);
+        return F.sig(v, 3);
+      }
+      function chargeText(q) {
+        if (q === 0) return '0';
+        return (q > 0 ? '' : MINUS) + Math.abs(q) + (q > 0 ? '+' : '');
+      }
+      function chargeSup(q) {
+        if (q === 0) return '';
+        var mag = Math.abs(q) === 1 ? '' : String(Math.abs(q));
+        return mag + (q > 0 ? '+' : MINUS);
+      }
+
+      // ---------------- current isotope lookup ----------------
+      function isoIndex(Z, A) {
+        if (!Z) return -1;
+        var iso = ELEMENTS[Z].iso;
+        for (var i = 0; i < iso.length; i++) if (iso[i][0] === A) return i;
+        return -1;
+      }
+
+      // ==================================================================
+      // NUCLEUS PACKING — sunflower (Vogel) spiral.
+      //
+      //   r_i = sqrt(i),  theta_i = i * golden angle
+      //
+      // Every nucleon is exactly 1 unit from its nearest neighbour whatever
+      // the count, the blob stays round instead of growing lopsided corners,
+      // and it is fully deterministic — the same p and n always draw the
+      // same picture, and adding one nucleon never rearranges the others.
+      // ==================================================================
+      var PACK = (function () {
+        var GOLD = Math.PI * (3 - Math.sqrt(5)), pts = [], i;
+        for (i = 0; i < 60; i++) {
+          var r = Math.sqrt(i), a = i * GOLD;
+          pts.push([r * Math.cos(a), r * Math.sin(a)]);
+        }
+        return pts;
+      })();
+
+      // Spread protons evenly through the packing order so the nucleus looks
+      // mixed rather than striped. Bresenham-style, so it is reproducible.
+      function nucleonKinds(p, n) {
+        var total = p + n, out = [], done = 0, i;
+        for (i = 0; i < total; i++) {
+          var want = Math.floor((i + 1) * p / total);
+          if (want > done) { out.push('p'); done = want; }
+          else out.push('n');
+        }
+        return out;
+      }
+
+      // ==================================================================
+      // CANVAS HELPERS
+      // ==================================================================
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, 2, Math.max(2, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function disc(ctx, x, y, r, fill, stroke, lw) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = fill; ctx.fill();
+        if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+      }
+
+      // ==================================================================
+      // ATOM CANVAS
+      // ==================================================================
+      var atomCv = Demo.canvas('#atom', function (ctx, w, h, c) {
+        var cx = w / 2, cy = h / 2;
+        var narrow = w < 360;
+        var fs = narrow ? 9.5 : 10.5;
+        var R = Math.min(w, h) / 2 - (narrow ? 10 : 14);
+        var sh = shells(S.e);
+        var nOcc = occupied(sh);
+        var i, k;
+
+        // ---- electron shells ----
+        var ringR = [];
+        for (i = 0; i < 4; i++) ringR.push(R * (0.40 + 0.20 * i));
+
+        // The next shell is only drawn once the current outermost one is full,
+        // so the picture never implies an electron skipped a level.
+        var outerFull = nOcc === 0 || sh[nOcc - 1] === CAP[nOcc - 1];
+        var showNext = outerFull && nOcc < 4 ? nOcc : -1;
+
+        for (i = 0; i < 4; i++) {
+          var filled = sh[i] > 0;
+          if (!filled && i !== showNext) continue;
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringR[i], 0, 6.2832);
+          ctx.strokeStyle = filled ? c.line : c.lineSoft;
+          ctx.lineWidth = 1;
+          if (!filled) ctx.setLineDash([2, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // electrons, evenly spaced, first one at the top
+        for (i = 0; i < 4; i++) {
+          if (sh[i] === 0) continue;
+          var er = Math.max(3.2, Math.min(6, R * 0.035));
+          for (k = 0; k < sh[i]; k++) {
+            var ang = -Math.PI / 2 + 2 * Math.PI * k / sh[i];
+            disc(ctx, cx + ringR[i] * Math.cos(ang), cy + ringR[i] * Math.sin(ang), er,
+              c.accent, c.surface, 1.4);
+          }
+        }
+
+        // ring numbers, tucked against the left of each ring
+        ctx.font = '600 ' + (fs - 1) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (i = 0; i < 4; i++) {
+          if (sh[i] === 0 && i !== showNext) continue;
+          var lx = cx - ringR[i], ly = cy;
+          ctx.save();
+          ctx.globalAlpha = 0.92;
+          ctx.fillStyle = c.surface;
+          ctx.fillRect(lx - 7, ly - 7, 14, 14);
+          ctx.restore();
+          ctx.fillStyle = sh[i] > 0 ? c.accentStrong : c.muted;
+          ctx.fillText(String(i + 1), lx, ly);
+        }
+
+        // ---- nucleus ----
+        var total = S.p + S.n;
+        var Rnuc = R * 0.26;
+        if (total === 0) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, Rnuc * 0.6, 0, 6.2832);
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.setLineDash([3, 4]); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = c.muted;
+          ctx.font = fs + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText('empty nucleus', cx, cy + Rnuc * 0.6 + 5);
+        } else {
+          var used = PACK.slice(0, total);
+          var extent = 0.5;
+          for (i = 0; i < used.length; i++) extent = Math.max(extent, Math.hypot(used[i][0], used[i][1]) + 0.5);
+          var scale = Rnuc / extent;
+          var nr = 0.47 * scale;
+          var kinds = nucleonKinds(S.p, S.n);
+          for (i = 0; i < used.length; i++) {
+            disc(ctx, cx + used[i][0] * scale, cy + used[i][1] * scale, nr,
+              kinds[i] === 'p' ? c.bad : c.muted, c.surface, Math.min(1.3, nr * 0.28));
+          }
+        }
+
+        // ---- shell occupancy legend, bottom-left (never collides) ----
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        var lines = [];
+        for (i = 3; i >= 0; i--) {
+          if (sh[i] === 0 && i !== showNext) continue;
+          lines.push({ t: 'shell ' + (i + 1) + ':  ' + sh[i] + ' / ' + CAP[i], on: sh[i] > 0 });
+        }
+        if (!lines.length) lines.push({ t: 'no electrons', on: false });
+        for (i = 0; i < lines.length; i++) {
+          ctx.font = (lines[i].on ? '600 ' : '') + (fs - 0.8) + FONT;
+          ctx.fillStyle = lines[i].on ? c.text2 : c.muted;
+          ctx.fillText(lines[i].t, 1, h - 2 - i * (fs + 3));
+        }
+
+        // ---- corner annotations ----
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('NOT TO SCALE', 1, 2);
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.fillText('a real nucleus is ~1/100,000 the atom', 1, 2 + fs + 4);
+
+        ctx.textAlign = 'right';
+        ctx.font = '600 ' + (fs + 3) + FONT;
+        ctx.fillStyle = c.text;
+        var Z = S.p, A = S.p + S.n, q = S.p - S.e;
+        var lab = Z ? ELEMENTS[Z].s : '?';
+        ctx.fillText(lab + chargeSup(q), w - 2, 2);
+        ctx.font = (fs - 0.4) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('A = ' + A + '   Z = ' + Z, w - 2, 2 + fs + 7);
+        ctx.fillText(S.p + ' p, ' + S.n + ' n, ' + S.e + ' e', w - 2, 2 + 2 * (fs + 7));
+      }, { aspect: 0.80, minHeight: 250, maxHeight: 360 });
+
+      // ==================================================================
+      // ISOTOPE CANVAS — abundance bars + the weighted average marker
+      // ==================================================================
+      var isoCv = Demo.canvas('#iso', function (ctx, w, h, c) {
+        var narrow = w < 360;
+        var fs = narrow ? 9.2 : 10.2;
+        var padL = narrow ? 30 : 36, padR = narrow ? 10 : 14, padT = 30, padB = 46;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var Z = S.p, i;
+
+        if (!Z) {
+          ctx.fillStyle = c.muted;
+          ctx.font = (fs + 1) + FONT;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText('No protons, so no element yet.', w / 2, h / 2 - 9);
+          ctx.fillText('Add a proton to see its isotopes.', w / 2, h / 2 + 9);
+          return;
+        }
+
+        var iso = ELEMENTS[Z].iso, ab = getMix(Z);
+        var lo = iso[0][0] - 1.2, hi = iso[iso.length - 1][0] + 1.2;
+        var avg = avgMass(Z);
+
+        function X(m) { return x0 + (x1 - x0) * (m - lo) / (hi - lo); }
+        function Y(pc) { return y0 - (y0 - y1) * Demo.clamp(pc, 0, 100) / 100; }
+
+        // gridlines at 0/25/50/75/100 %
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 4; i++) {
+          var gy = y0 - (y0 - y1) * i / 4;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(String(25 * i), x0 - 4, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('abundance (%)', 1, 2);
+
+        // minor ticks at every whole mass number, unlabelled
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        for (var m = Math.ceil(lo); m <= Math.floor(hi); m++) {
+          var mx = X(m);
+          ctx.beginPath(); ctx.moveTo(mx, y0); ctx.lineTo(mx, y0 + 3); ctx.stroke();
+        }
+
+        // bars, drawn at the isotope's real mass (not its mass number)
+        var bw = Math.max(5, Math.min(30, (x1 - x0) / (hi - lo) * 0.44));
+        var builtA = S.p + S.n;
+        for (i = 0; i < iso.length; i++) {
+          var bx = X(iso[i][1]);
+          var by = Y(ab[i]);
+          var isBuilt = iso[i][0] === builtA;
+          ctx.fillStyle = isBuilt ? c.accentStrong : c.accent;
+          ctx.globalAlpha = isBuilt ? 1 : 0.6;
+          ctx.fillRect(bx - bw / 2, by, bw, Math.max(1, y0 - by));
+          ctx.globalAlpha = 1;
+          if (ab[i] >= 4) {
+            // A chip, not bare text: bars can be narrower than the label, so
+            // the background has to come from the chip and not from the bar.
+            // Clamped down into the plot when a tall bar leaves no headroom.
+            chip(ctx, c, bx, Math.max(by - 3, y1 + fs + 5),
+              F.dec(ab[i], 1) + '%', fs - 0.8, c.text2, w, 'center');
+          }
+        }
+
+        // Mass-number labels under the bars. Most abundant gets first refusal
+        // of the space, so crowded elements (Ca) stay readable instead of
+        // printing six overlapping strings.
+        ctx.font = '600 ' + (fs - 0.4) + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var order = iso.map(function (it, k) { return k; }).sort(function (a, b) { return ab[b] - ab[a]; });
+        var taken = [];
+        for (i = 0; i < order.length; i++) {
+          var k2 = order[i], lx = X(iso[k2][1]);
+          var txt = ELEMENTS[Z].s + '-' + iso[k2][0];
+          var half = ctx.measureText(txt).width / 2 + 3;
+          var clash = false;
+          for (var t = 0; t < taken.length; t++) {
+            if (Math.abs(taken[t][0] - lx) < taken[t][1] + half) { clash = true; break; }
+          }
+          if (clash) continue;
+          taken.push([lx, half]);
+          ctx.fillStyle = iso[k2][0] === builtA ? c.accentStrong : c.muted;
+          ctx.fillText(txt, Demo.clamp(lx, x0 + half, x1 - half), y0 + 6);
+        }
+
+        ctx.font = fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('atomic mass (u)', (x0 + x1) / 2, y0 + 24);
+
+        // the weighted average — the number printed on the periodic table
+        var ax = X(avg);
+        ctx.strokeStyle = c.accentStrong; ctx.lineWidth = 1.8;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(ax, y0); ctx.lineTo(ax, y1); ctx.stroke();
+        ctx.setLineDash([]);
+        // label rides ABOVE the plot area, in the top margin, so it can never
+        // land on top of a tall bar's percentage
+        chip(ctx, c, ax, y1 - 9, 'average = ' + F.dec(avg, 3) + ' u', fs + 0.5, c.accentStrong, w, 'center');
+      }, { aspect: 0.56, minHeight: 215, maxHeight: 270 });
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        pRange: document.getElementById('pRange'), pOut: document.getElementById('pOut'),
+        nRange: document.getElementById('nRange'), nOut: document.getElementById('nOut'),
+        eRange: document.getElementById('eRange'), eOut: document.getElementById('eOut'),
+        idSym: document.getElementById('idSym'),
+        idName: document.getElementById('idName'),
+        idNuc: document.getElementById('idNuc'),
+        idState: document.getElementById('idState'),
+        rZ: document.getElementById('rZ'),
+        rA: document.getElementById('rA'),
+        rA2: document.getElementById('rA2'),
+        rQ: document.getElementById('rQ'),
+        rQSub: document.getElementById('rQSub'),
+        rVal: document.getElementById('rVal'),
+        rShells: document.getElementById('rShells'),
+        rAvg: document.getElementById('rAvg'),
+        rAvgSub: document.getElementById('rAvgSub'),
+        rTable: document.getElementById('rTable'),
+        isoIntro: document.getElementById('isoIntro'),
+        isoBody: document.getElementById('isoBody'),
+        isoFoot: document.getElementById('isoFoot'),
+        isoExpr: document.getElementById('isoExpr'),
+        isoTable: document.getElementById('isoTable'),
+        isoMix: document.getElementById('isoMix'),
+        mixWrap: document.getElementById('mixWrap'),
+        mixHint: document.getElementById('mixHint'),
+        btnNat: document.getElementById('btnNat'),
+        btnNeutral: document.getElementById('btnNeutral'),
+        btnStable: document.getElementById('btnStable'),
+        atomCap: document.getElementById('atomCap'),
+        isoCap: document.getElementById('isoCap'),
+        isoLabel: document.getElementById('isoLabel')
+      };
+
+      // ==================================================================
+      // ISOTOPE MIXER — rebuilt only when the element changes
+      // ==================================================================
+      var builtZ = -1;
+      var mixRows = [];
+
+      function setAbundance(Z, idx, v) {
+        var a = getMix(Z).slice();
+        v = Demo.clamp(v, 0, 100);
+        var others = 0, i;
+        for (i = 0; i < a.length; i++) if (i !== idx) others += a[i];
+        var rest = 100 - v;
+        var out = a.slice();
+        out[idx] = v;
+        for (i = 0; i < a.length; i++) {
+          if (i === idx) continue;
+          out[i] = others > 1e-9 ? a[i] / others * rest : rest / (a.length - 1);
+        }
+        mix[Z] = out;
+      }
+
+      function buildMixer(Z) {
+        el.isoMix.innerHTML = '';
+        mixRows = [];
+        if (!Z || ELEMENTS[Z].iso.length < 2) {
+          el.mixWrap.hidden = true;
+          return;
+        }
+        el.mixWrap.hidden = false;
+        var iso = ELEMENTS[Z].iso;
+        iso.forEach(function (it, idx) {
+          var row = document.createElement('div');
+          row.className = 'ctrl isorow';
+          var id = 'ab' + Z + '_' + idx;
+          row.innerHTML =
+            '<div class="ctrl-row">' +
+            '<label class="ctrl-label" for="' + id + '"><b>' + ELEMENTS[Z].s + '-' + it[0] + '</b>' +
+            ' <span class="muted">' + F.dec(it[1], 4) + ' u</span></label>' +
+            '<span class="ctrl-value"><span class="abOut"></span>%</span>' +
+            '</div>' +
+            '<input type="range" id="' + id + '" min="0" max="100" step="0.01">';
+          el.isoMix.appendChild(row);
+          var input = row.querySelector('input');
+          var out = row.querySelector('.abOut');
+          input.addEventListener('input', function () {
+            setAbundance(Z, idx, parseFloat(input.value));
+            render();
+          });
+          mixRows.push({ input: input, out: out });
+        });
+      }
+
+      function syncMixer(Z) {
+        if (!mixRows.length) return;
+        var a = getMix(Z);
+        for (var i = 0; i < mixRows.length; i++) {
+          if (document.activeElement !== mixRows[i].input) mixRows[i].input.value = a[i];
+          mixRows[i].out.textContent = fmtAb(a[i]);
+        }
+      }
+
+      // ==================================================================
+      // RENDER — everything is a pure function of S.p, S.n, S.e and mix
+      // ==================================================================
+      function render() {
+        var Z = S.p, A = S.p + S.n, q = S.p - S.e;
+        var E = Z ? ELEMENTS[Z] : null;
+        var sh = shells(S.e);
+        var nOcc = occupied(sh);
+        var i;
+
+        // ---- particle counts ----
+        el.pOut.textContent = S.p;
+        el.nOut.textContent = S.n;
+        el.eOut.textContent = S.e;
+        if (document.activeElement !== el.pRange) el.pRange.value = S.p;
+        if (document.activeElement !== el.nRange) el.nRange.value = S.n;
+        if (document.activeElement !== el.eRange) el.eRange.value = S.e;
+
+        // ---- identity card ----
+        if (!E) {
+          el.idSym.textContent = 'none';
+          el.idSym.className = 'sym none';
+          el.idName.textContent = 'No element';
+          el.idNuc.innerHTML = 'Zero protons is not an element. Add one.';
+          el.idState.className = 'statechip';
+          el.idState.textContent = 'not an atom';
+        } else {
+          el.idSym.className = 'sym';
+          el.idSym.innerHTML = E.s + (q ? '<sup>' + chargeSup(q) + '</sup>' : '');
+          el.idName.textContent = E.name;
+          el.idNuc.innerHTML =
+            '<sup>' + A + '</sup><sub>' + Z + '</sub>' + E.s +
+            (q ? '<sup>' + chargeSup(q) + '</sup>' : '') +
+            ' &nbsp;&middot;&nbsp; <b>' + E.name.toLowerCase() + '-' + A + '</b>';
+          if (q === 0) {
+            el.idState.className = 'statechip neutral';
+            el.idState.textContent = 'neutral atom';
+          } else if (q > 0) {
+            el.idState.className = 'statechip cation';
+            el.idState.textContent = 'cation, charge ' + chargeText(q);
+          } else {
+            el.idState.className = 'statechip anion';
+            el.idState.textContent = 'anion, charge ' + chargeText(q);
+          }
+        }
+
+        // ---- readouts ----
+        el.rZ.textContent = Z;
+        el.rA.textContent = A;
+        el.rA2.textContent = A;
+        el.rQ.textContent = chargeText(q);
+        el.rQ.parentNode.className = 'readout' + (q === 0 ? ' is-ok' : q > 0 ? ' is-bad' : ' is-accent');
+        el.rQSub.innerHTML = S.p + ' p&#8314; ' + MINUS + ' ' + S.e + ' e&#8315;';
+        el.rVal.textContent = nOcc ? sh[nOcc - 1] : 0;
+        el.rShells.textContent = nOcc
+          ? 'shells ' + sh.slice(0, nOcc).join(', ')
+          : 'no electrons';
+
+        // ---- stage captions ----
+        if (!E) {
+          el.atomCap.textContent = 'Nothing built yet. Protons make the element, neutrons make the isotope, electrons make the charge.';
+        } else {
+          var idx = isoIndex(Z, A);
+          var natTxt = idx >= 0
+            ? 'This nuclide occurs in nature (' + fmtAb(natural(Z)[idx]) + '% of all ' + E.name.toLowerCase() + ' atoms).'
+            : 'No naturally occurring ' + E.name.toLowerCase() + ' isotope has ' + S.n + ' neutron' + (S.n === 1 ? '' : 's') + ' — you have built an artificial or unstable nuclide.';
+          el.atomCap.textContent =
+            E.name + ' has ' + Z + ' proton' + (Z === 1 ? '' : 's') + ', and it would still be ' +
+            E.name.toLowerCase() + ' with any number of neutrons. ' + natTxt;
+        }
+
+        // ---- isotope panel ----
+        if (!E) {
+          el.isoLabel.innerHTML = 'Natural isotopes <span>&mdash; pick an element first</span>';
+          el.isoIntro.className = 'note warn';
+          el.isoIntro.innerHTML = 'Add at least one proton. With zero protons there is no element, so there is nothing to average.';
+          el.isoBody.innerHTML = '';
+          el.isoFoot.innerHTML = '';
+          el.isoExpr.innerHTML = '&nbsp;';
+          el.isoTable.hidden = true;
+          el.rAvg.innerHTML = '&mdash;';
+          el.rAvgSub.textContent = 'no element';
+          el.rTable.innerHTML = '&mdash;';
+          el.isoCap.textContent = 'Isotope chart appears once the atom has a proton.';
+          if (builtZ !== 0) { builtZ = 0; buildMixer(0); }
+          isoCv.redraw();
+          atomCv.redraw();
+          return;
+        }
+
+        el.isoTable.hidden = false;
+        if (builtZ !== Z) { builtZ = Z; buildMixer(Z); }
+        syncMixer(Z);
+
+        var iso = E.iso, ab = getMix(Z), avg = avgMass(Z);
+        var nat = isNatural(Z);
+
+        el.isoLabel.innerHTML = 'Natural isotopes of ' + E.name.toLowerCase() +
+          ' <span>&mdash; bar height is how common, dashed line is the average</span>';
+
+        // table
+        var rows = '', sum = 0, absum = 0;
+        for (i = 0; i < iso.length; i++) {
+          var contrib = iso[i][1] * ab[i] / 100;
+          sum += contrib; absum += ab[i];
+          rows += '<tr' + (iso[i][0] === A ? ' class="built"' : '') + '>' +
+            '<td>' + E.s + '-' + iso[i][0] + '</td>' +
+            '<td>' + F.dec(iso[i][1], 4) + '</td>' +
+            '<td>' + fmtAb(ab[i]) + '%</td>' +
+            '<td class="hi">' + F.dec(contrib, 4) + '</td>' +
+            '</tr>';
+        }
+        el.isoBody.innerHTML = rows;
+        el.isoFoot.innerHTML =
+          '<tr><td>Total</td><td></td><td>' + F.dec(absum, 2) + '%</td>' +
+          '<td class="hi">' + F.dec(sum, 4) + ' u</td></tr>';
+
+        // the arithmetic, spelled out when it fits on one line
+        if (iso.length <= 3) {
+          var parts = [];
+          for (i = 0; i < iso.length; i++) {
+            parts.push(F.dec(iso[i][1], 3) + ' &times; ' + F.dec(ab[i] / 100, 4));
+          }
+          el.isoExpr.innerHTML = parts.join(' &nbsp;+&nbsp; ') + ' &nbsp;=&nbsp; <b>' + F.dec(avg, 3) + ' u</b>';
+        } else {
+          el.isoExpr.innerHTML = 'Add the last column: <b>' + F.dec(avg, 3) + ' u</b>. ' +
+            'Every term is one isotope&rsquo;s mass times its fraction of the population.';
+        }
+
+        el.rAvg.innerHTML = F.dec(avg, 3) + '<span class="r-unit">u</span>';
+        el.rTable.innerHTML = String(E.w) + '<span class="r-unit">u</span>';
+        el.rAvgSub.innerHTML = nat
+          ? 'natural abundances &mdash; matches the periodic table value of ' + E.w + ' u'
+          : 'your mix, not nature&rsquo;s &mdash; ' +
+            (avg > E.w ? 'heavier' : 'lighter') + ' than the real ' + E.w + ' u by ' +
+            F.dec(Math.abs(avg - E.w), 3) + ' u';
+
+        if (iso.length === 1) {
+          el.isoIntro.className = 'note';
+          el.isoIntro.innerHTML = '<strong>' + E.name + ' has only one natural isotope.</strong> ' +
+            'With nothing to average against, the periodic table simply prints that isotope&rsquo;s own mass, ' +
+            F.dec(iso[0][1], 4) + ' u. Notice it is <em>still</em> not the whole number ' + iso[0][0] +
+            ' &mdash; binding the nucleus together converts a little of the mass into energy. ' +
+            'Switch to chlorine to see the real point.';
+        } else if (Z === 17) {
+          el.isoIntro.className = 'note';
+          el.isoIntro.innerHTML = '<strong>The chlorine check.</strong> No chlorine atom weighs 35.45 u. ' +
+            'Every one is either ' + F.dec(iso[0][1], 3) + ' u or ' + F.dec(iso[1][1], 3) + ' u. ' +
+            'The 35.45 on the periodic table is what you get when you weight those two by how common they are, ' +
+            'and it lands near 35 because about three quarters of chlorine is the light one.';
+        } else {
+          el.isoIntro.className = 'note';
+          el.isoIntro.innerHTML = '<strong>' + E.name + ' comes in ' + iso.length + ' natural isotopes.</strong> ' +
+            'Each row is a real, different kind of atom with its own measured mass. The periodic table value ' +
+            'of ' + E.w + ' u is the abundance-weighted average of them &mdash; a property of the mixture, ' +
+            'not of any single atom.';
+        }
+
+        var builtIdx = isoIndex(Z, A);
+        el.isoCap.textContent = builtIdx >= 0
+          ? 'Your atom is ' + E.name.toLowerCase() + '-' + A + ', the highlighted bar: mass ' +
+            F.dec(iso[builtIdx][1], 4) + ' u, mass number ' + A + '. The dashed line at ' + F.dec(avg, 3) +
+            ' u is the average over all of them, and it sits on no bar at all.'
+          : E.name + '-' + A + ' is not one of the natural isotopes, so it has no bar and contributes nothing ' +
+            'to the average. The average over the natural mixture is ' + F.dec(avg, 3) + ' u.';
+
+        el.btnNat.disabled = nat;
+        el.btnNat.textContent = nat ? 'Natural abundances (current)' : 'Back to natural abundances';
+
+        isoCv.redraw();
+        atomCv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      function setCounts(p, n, e) {
+        S.p = Demo.clamp(Math.round(p), 0, ZMAX);
+        S.n = Demo.clamp(Math.round(n), 0, NMAX);
+        S.e = Demo.clamp(Math.round(e), 0, ZMAX);
+        render();
+      }
+
+      Demo.range('#pRange', function (v) { S.p = Demo.clamp(Math.round(v), 0, ZMAX); render(); });
+      Demo.range('#nRange', function (v) { S.n = Demo.clamp(Math.round(v), 0, NMAX); render(); });
+      Demo.range('#eRange', function (v) { S.e = Demo.clamp(Math.round(v), 0, ZMAX); render(); });
+
+      Array.prototype.forEach.call(document.querySelectorAll('[data-adj]'), function (b) {
+        b.addEventListener('click', function () {
+          var k = b.getAttribute('data-adj');
+          var d = parseInt(b.getAttribute('data-d'), 10);
+          if (k === 'p') setCounts(S.p + d, S.n, S.e);
+          else if (k === 'n') setCounts(S.p, S.n + d, S.e);
+          else setCounts(S.p, S.n, S.e + d);
+        });
+      });
+
+      Array.prototype.forEach.call(document.querySelectorAll('#presets .btn'), function (b) {
+        b.addEventListener('click', function () {
+          setCounts(+b.getAttribute('data-p'), +b.getAttribute('data-n'), +b.getAttribute('data-e'));
+        });
+      });
+
+      el.btnNeutral.addEventListener('click', function () { setCounts(S.p, S.n, S.p); });
+
+      el.btnStable.addEventListener('click', function () {
+        if (!S.p) return;
+        var iso = ELEMENTS[S.p].iso, best = 0;
+        for (var i = 1; i < iso.length; i++) if (iso[i][2] > iso[best][2]) best = i;
+        setCounts(S.p, iso[best][0] - S.p, S.e);
+      });
+
+      el.btnNat.addEventListener('click', function () {
+        if (!S.p) return;
+        mix[S.p] = natural(S.p);
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>

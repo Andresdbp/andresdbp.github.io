@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
+
+  <title>Molarity and Dilution | Dr. Andres Barboza</title>
+  <meta name="description" content="Build a potassium permanganate solution until it saturates, then dilute it and watch the moles of solute refuse to change. M1V1 = M2V2 falls out of that one fact.">
+
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+
+  <style>
+    /* demo-specific only: subscripts, unit-bearing readout tiles, the invariant tile */
+    sub { font-size: 0.72em; line-height: 0; vertical-align: -0.25em; }
+    sup { font-size: 0.72em; line-height: 0; vertical-align: 0.45em; }
+
+    .stage-label {
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 9px;
+    }
+    .stage-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
+    .readouts.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .readouts.two .span2 { grid-column: 1 / -1; }
+    .r-value.big { font-size: 26px; }
+
+    /* real units are longer than the shell's single-line label default */
+    .readout .r-label { white-space: normal; overflow: visible; text-overflow: clip; }
+    .readout .r-label sub { text-transform: none; }
+    .readout .r-sub { font-size: 10.5px; line-height: 1.4; color: var(--muted); margin-top: 3px; }
+    .readout .r-sub.hold { color: var(--ok); font-weight: 600; }
+    .readout .r-sub.moved { color: var(--warn); font-weight: 600; }
+
+    /* the tile that must not move while everything else does */
+    .readout.locked {
+      border-color: var(--ok);
+      background: var(--ok-soft);
+    }
+    .readout.locked .r-value { color: var(--ok); }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 13px; margin-top: 10px; font-size: 11.5px; color: var(--muted); }
+    .legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+    .legend .lg i { width: 17px; height: 3px; border-radius: 2px; display: inline-block; flex: none; }
+    .legend .lg.dot i { width: 9px; height: 9px; border-radius: 50%; }
+
+    .eqline {
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      text-align: center;
+      color: var(--text);
+      padding: 9px 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      border-radius: 11px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .eqline b { color: var(--ok); font-weight: 600; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+
+    <header class="demo-head">
+      <div class="dh-body">
+        <a class="back-link" href="../index.html">Science Demonstrations</a>
+        <h1 class="demo-title">Molarity and Dilution</h1>
+        <p class="demo-sub">Make a solution first: pour in solute until the beaker cannot take any more. Then switch to <em>Dilute it</em>, add water, and keep one eye on the moles tile the whole time.</p>
+        <div class="tags">
+          <span class="tag is-chem">AC Chemistry</span>
+          <span class="tag">Unit 7</span>
+          <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
+        </div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
+        <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
+      </button>
+    </header>
+
+    <div class="demo-grid wide-controls">
+
+      <!-- ---------------- stage ---------------- -->
+      <div class="stage">
+
+        <div class="seg" role="tablist" aria-label="Mode" id="modeSeg">
+          <button role="tab" aria-selected="true" data-mode="make">Make a solution</button>
+          <button role="tab" aria-selected="false" data-mode="dilute">Dilute it</button>
+        </div>
+
+        <p class="stage-label" style="margin-top:12px" id="beakerLabel">The beaker <span>&mdash; potassium permanganate, KMnO<sub>4</sub>, in water</span></p>
+        <canvas id="beaker" role="img"
+                aria-label="A beaker of potassium permanganate solution. The colour deepens as the concentration rises, dots show individual dissolved solute particles, and undissolved crystals collect on the bottom once the solution is saturated."></canvas>
+
+        <div class="legend">
+          <span class="lg dot"><i id="lgDot"></i><span>each dot = 0.004 mol of dissolved KMnO<sub>4</sub></span></span>
+          <span class="lg dot"><i id="lgCry" style="border-radius:2px"></i><span>undissolved solid</span></span>
+        </div>
+        <p class="stage-caption" id="beakerCap">&nbsp;</p>
+
+        <hr class="sep" style="margin:16px 0">
+
+        <p class="stage-label" id="plotLabel">Concentration against how much solute you added</p>
+        <canvas id="plot" role="img"
+                aria-label="A plot of molarity. In make-a-solution mode it rises in a straight line with added solute and then flattens at the solubility limit. In dilution mode it is a falling curve of moles divided by volume, with a shaded rectangle whose area is the constant number of moles."></canvas>
+        <p class="stage-caption" id="plotCap">&nbsp;</p>
+      </div>
+
+      <!-- ---------------- controls ---------------- -->
+      <div class="controls">
+
+        <!-- ============ MODE 1 ============ -->
+        <div id="panelMake">
+
+          <div class="panel">
+            <div class="panel-title">Make a solution</div>
+            <div class="stack">
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="molRange">Solute added, n</label>
+                  <span class="ctrl-value" id="molOut">0.100 mol</span>
+                </div>
+                <input type="range" id="molRange" min="0" max="0.2" step="0.002" value="0.1">
+                <p class="ctrl-hint" id="molHint">0 to 0.200 mol of KMnO<sub>4</sub>. That is 0 to 31.61 g on a balance.</p>
+              </div>
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="volRange">Volume of <em>solution</em>, V</label>
+                  <span class="ctrl-value" id="volOut">0.500 L</span>
+                </div>
+                <input type="range" id="volRange" min="0.1" max="1" step="0.005" value="0.5">
+                <p class="ctrl-hint">This is the total volume of what is in the beaker after the solid goes in &mdash; the level you read off the flask &mdash; not the volume of water you started with.</p>
+              </div>
+
+              <div class="btn-row">
+                <button class="btn" id="btnDilutePreset">Unsaturated</button>
+                <button class="btn" id="btnSatPreset">Saturate it</button>
+                <button class="btn" id="btnResetMake">Reset</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">What the solution is</div>
+            <div class="readouts two">
+              <div class="readout is-accent span2">
+                <div class="r-label">Molarity in solution</div>
+                <div class="r-value big" id="mkConc">0.200<span class="r-unit">mol L⁻¹</span></div>
+                <div class="r-sub" id="mkConcSub">n divided by V, all of it dissolved</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Dissolved</div>
+                <div class="r-value" id="mkDiss">0.100</div>
+                <div class="r-sub">mol in solution</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Undissolved</div>
+                <div class="r-value" id="mkUndiss">0</div>
+                <div class="r-sub" id="mkUndissSub">mol sitting on the bottom</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Mass weighed out</div>
+                <div class="r-value" id="mkMass">15.80<span class="r-unit">g</span></div>
+                <div class="r-sub">at 158.03 g mol⁻¹</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Percent of the limit</div>
+                <div class="r-value" id="mkPct">50.0%</div>
+                <div class="r-sub">of 0.40 mol L⁻¹</div>
+              </div>
+            </div>
+            <p class="note" id="mkNote" style="margin-top:11px">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">The definition, exactly</div>
+            <p class="note warn">
+              <strong>Molarity is moles of solute per litre of solution, not per litre of solvent.</strong>
+              The V slider above is the volume of the finished mixture. In a lab you do not measure out
+              0.500 L of water and then add the solid &mdash; you put the solid in the flask first, then add
+              water <em>up to the 0.500 L mark</em>. The solid takes up room, so those two recipes give
+              different concentrations, and only the second one is 0.200 mol L⁻¹.
+            </p>
+          </div>
+        </div>
+
+        <!-- ============ MODE 2 ============ -->
+        <div id="panelDilute" hidden>
+
+          <div class="panel">
+            <div class="panel-title">Start from a stock solution</div>
+            <div class="stack">
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="stockRange">Stock concentration, M<sub>1</sub></label>
+                  <span class="ctrl-value" id="stockOut">0.400 mol L⁻¹</span>
+                </div>
+                <input type="range" id="stockRange" min="0.05" max="0.4" step="0.005" value="0.4">
+              </div>
+
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="v1Range">Stock volume taken, V<sub>1</sub></label>
+                  <span class="ctrl-value" id="v1Out">0.100 L</span>
+                </div>
+                <input type="range" id="v1Range" min="0.05" max="0.25" step="0.005" value="0.1">
+                <p class="ctrl-hint">These two set how much solute is in the beaker. Once you start adding water, they stop mattering &mdash; nothing you do next changes that amount.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Now add water</div>
+            <div class="stack">
+              <div class="ctrl">
+                <div class="ctrl-row">
+                  <label class="ctrl-label" for="waterRange">Water added</label>
+                  <span class="ctrl-value" id="waterOut">0.300 L</span>
+                </div>
+                <input type="range" id="waterRange" min="0" max="0.95" step="0.005" value="0.3">
+                <p class="ctrl-hint">Pure solvent. It contains no KMnO<sub>4</sub> at all, so it cannot add any.</p>
+              </div>
+              <div class="btn-row">
+                <button class="btn" id="btnNoWater">No water yet</button>
+                <button class="btn" id="btnAdd100">Add 100 mL</button>
+                <button class="btn" id="btnFillUp">Fill to 1.000 L</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Watch which numbers move</div>
+            <div class="readouts two">
+              <div class="readout locked span2">
+                <div class="r-label">Moles of solute in the beaker</div>
+                <div class="r-value big" id="dlMoles">0.0400<span class="r-unit">mol</span></div>
+                <div class="r-sub hold" id="dlMolesSub">UNCHANGED &mdash; you added water, not solute</div>
+              </div>
+              <div class="readout is-accent">
+                <div class="r-label">Concentration now, M<sub>2</sub></div>
+                <div class="r-value" id="dlConc">0.100</div>
+                <div class="r-sub">mol L⁻¹</div>
+              </div>
+              <div class="readout is-accent">
+                <div class="r-label">Total volume now, V<sub>2</sub></div>
+                <div class="r-value" id="dlVol">0.400</div>
+                <div class="r-sub">L of solution</div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Dilution factor</div>
+                <div class="r-value" id="dlFactor">4.00&times;</div>
+                <div class="r-sub" id="dlFactorSub">V<sub>2</sub> / V<sub>1</sub></div>
+              </div>
+              <div class="readout">
+                <div class="r-label">Mass of solute</div>
+                <div class="r-value" id="dlMass">6.32<span class="r-unit">g</span></div>
+                <div class="r-sub hold">also unchanged</div>
+              </div>
+            </div>
+
+            <hr class="sep" style="margin:12px 0">
+
+            <div class="stack-s">
+              <div class="eqline" id="eqStart">M<sub>1</sub>V<sub>1</sub> = 0.400 &times; 0.100 = <b>0.0400 mol</b></div>
+              <div class="eqline" id="eqNow">M<sub>2</sub>V<sub>2</sub> = 0.100 &times; 0.400 = <b>0.0400 mol</b></div>
+            </div>
+            <p class="note" id="dlNote" style="margin-top:11px">&nbsp;</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-title">Where the formula comes from</div>
+            <p class="note">
+              Both lines above are the same sentence: <strong>moles of solute = concentration &times; volume</strong>.
+              The top line counts the solute before you added water. The bottom line counts it after. Adding
+              water cannot create or destroy KMnO<sub>4</sub>, so the two counts have to match &mdash; and
+              &ldquo;the two counts match&rdquo; written in symbols is M<sub>1</sub>V<sub>1</sub> = M<sub>2</sub>V<sub>2</sub>.
+              The formula is a bookkeeping statement, not a new law.
+            </p>
+          </div>
+        </div>
+
+        <!-- ============ shared ============ -->
+        <div class="panel">
+          <div class="panel-title">Honest limits</div>
+          <p class="ctrl-hint">
+            <strong>Volumes are treated as additive</strong> here: 0.100 L of stock plus 0.300 L of water is
+            called 0.400 L. For dilute aqueous solutions that is very close to true, but it is an
+            approximation &mdash; mixing liquids can shrink or expand the total slightly, which is exactly why
+            real dilutions are done in a volumetric flask filled <em>to a mark</em> rather than by measuring
+            out solvent. The solubility ceiling of 0.40 mol L⁻¹ comes from 6.4 g per 100 mL of water at
+            20 &deg;C (6.4 g / 158.03 g mol⁻¹ per 0.100 L = 0.405 mol L⁻¹), rounded. <strong>It is a
+            temperature-dependent number</strong>: warm the water and more dissolves, which this model does not
+            let you do. The colour on screen deepens with concentration and then stops when the solution
+            saturates; it is drawn to be readable, not calibrated against a real absorbance measurement.
+            KMnO<sub>4</sub> is also an oxidiser that slowly decomposes in water and stains everything it
+            touches; none of that chemistry is modelled.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ---------------- the point ---------------- -->
+    <section class="why">
+      <h2>What this is for</h2>
+      <p>
+        <strong>The misconception:</strong> students meet M<sub>1</sub>V<sub>1</sub> = M<sub>2</sub>V<sub>2</sub>
+        as a formula to be memorised and plugged into, and a formula is a thing you can misremember. Turn it
+        upside down, use it when it does not apply, forget which V is which. Underneath it there is no formula
+        at all &mdash; there is one physical fact: <strong>when you add water to a solution, the amount of
+        solute does not change.</strong> Not a little. Not at all. Water is not solute.
+      </p>
+      <p>
+        <strong>What to notice.</strong> In <em>Dilute it</em>, set the stock to 0.400 mol L⁻¹ and take
+        0.100 L of it. The beaker holds 0.0400 mol. Now drag the water slider from 0 to 0.300 L. The
+        concentration falls from 0.400 to 0.100 mol L⁻¹, the volume climbs from 0.100 to 0.400 L, the colour
+        visibly fades &mdash; and the green moles tile reads <strong>0.0400 mol the entire time</strong>. Count
+        the dots in the beaker while you drag: the same dots spread over more space. Not one of them leaves.
+        That is why the product M &times; V, printed on both lines, is the same number: it <em>is</em> the moles.
+      </p>
+      <p>
+        <strong>The other trap: molarity is per litre of solution, not per litre of solvent.</strong>
+        In <em>Make a solution</em>, the V slider is the volume of the finished mixture. If you weigh out
+        15.80 g of KMnO<sub>4</sub> and add it to 0.500 L of water, the result is <em>more</em> than 0.500 L of
+        liquid, so it is not a 0.200 mol L⁻¹ solution. That is what a volumetric flask is for: solid first,
+        then solvent up to the mark. The distinction is small for dilute solutions and large for concentrated
+        ones, and it is the reason the definition says &ldquo;solution&rdquo;.
+      </p>
+      <p>
+        <strong>And concentration has a ceiling.</strong> Press <em>Saturate it</em>. You have added 0.200 mol
+        of solid to 0.250 L, which would be 0.800 mol L⁻¹ if arithmetic were the only thing in charge. It is
+        not: only 0.100 mol dissolves, the concentration stops dead at 0.40 mol L⁻¹, and the other 0.100 mol
+        &mdash; 15.80 g of it &mdash; lies on the bottom of the beaker as purple crystals. Keep dragging the
+        solute slider and the number on screen refuses to move while the pile grows. A saturated solution is
+        at equilibrium: solid is still dissolving, and dissolved ions are still crystallising back out, at
+        exactly the same rate. Undissolved solid is not part of the solution, so it does not count toward the
+        molarity &mdash; which is also why the dilution rule only ever applies to what is actually dissolved.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ==================================================================
+      // MODEL — potassium permanganate, KMnO4, in water at 20 °C
+      //
+      // Everything on this page is computed directly from the slider
+      // positions. There is no integration and no stored pool, so there is
+      // no state that can drift or fail to drain: set every input to zero
+      // and every output is exactly zero.
+      //
+      //   MODE "make":
+      //     requested = n / V                    mol L^-1
+      //     M         = min(requested, SAT)      the ceiling is real
+      //     n_dissolved   = M * V
+      //     n_undissolved = n - n_dissolved      >= 0 by construction
+      //
+      //   MODE "dilute":
+      //     n  = M1 * V1                         fixed the moment you pour
+      //     V2 = V1 + V_water                    volumes assumed additive
+      //     M2 = n / V2                          so M2*V2 = n = M1*V1
+      //
+      //   SAT = 0.40 mol L^-1, from 6.4 g KMnO4 per 100 mL water at 20 °C:
+      //     6.4 / 158.03 = 0.0405 mol per 0.100 L = 0.405 mol L^-1.
+      //
+      //   Molarity is moles of solute per litre of SOLUTION. V in both
+      //   modes is the total volume in the beaker, which is why the dilute
+      //   mode adds water to the volume rather than replacing it.
+      // ==================================================================
+
+      var F = Demo.fmt;
+      var FONT = 'px Poppins, system-ui, -apple-system, sans-serif';
+
+      var SAT = 0.40;          // mol L^-1, solubility ceiling
+      var MM = 158.03;         // g mol^-1, KMnO4
+      var CAP = 1.25;          // L, beaker capacity — larger than any reachable volume
+      var PER_DOT = 0.004;     // mol represented by one drawn particle
+
+      var S = {
+        mode: 'make',
+        n: 0.100, V: 0.500,                 // make
+        M1: 0.400, V1: 0.100, Vw: 0.300     // dilute
+      };
+
+      function makeModel() {
+        var req = S.V > 0 ? S.n / S.V : 0;
+        var M = Math.min(req, SAT);
+        var diss = M * S.V;
+        var un = Math.max(0, S.n - diss);
+        return {
+          mode: 'make', req: req, M: M, V: S.V, nTotal: S.n,
+          nDiss: diss, nUn: un, sat: req > SAT + 1e-9,
+          headroom: Math.max(0, SAT * S.V - diss),
+          frac: SAT > 0 ? M / SAT : 0
+        };
+      }
+
+      function diluteModel() {
+        var n = S.M1 * S.V1;
+        var V2 = S.V1 + S.Vw;
+        var M2 = V2 > 0 ? n / V2 : 0;
+        return {
+          mode: 'dilute', M: M2, V: V2, nTotal: n, nDiss: n, nUn: 0,
+          sat: false, frac: SAT > 0 ? M2 / SAT : 0,
+          M1: S.M1, V1: S.V1, Vw: S.Vw, factor: S.V1 > 0 ? V2 / S.V1 : 1
+        };
+      }
+
+      function model() { return S.mode === 'make' ? makeModel() : diluteModel(); }
+
+      // ---------------- colour intensity ----------------
+      // Deepens with concentration and flattens out, so a saturated solution
+      // looks saturated. Illustrative, not a calibrated absorbance.
+      function intensity(M) {
+        return 0.05 + 0.90 * (1 - Math.exp(-M / 0.22));
+      }
+
+      // ---------------- stable particle positions ----------------
+      // One fixed cloud of unit coordinates, reused every frame, so that
+      // adding water spreads the SAME dots instead of shuffling them.
+      var DOTS = (function () {
+        var r = Demo.rng(20250725), a = [], i;
+        for (i = 0; i < 140; i++) a.push({ x: r(), y: r(), j: r() });
+        return a;
+      })();
+      var CRY = (function () {
+        var r = Demo.rng(97), a = [], i;
+        for (i = 0; i < 60; i++) a.push({ x: r(), y: r(), s: 0.6 + 0.8 * r(), rot: r() * 1.6 - 0.8 });
+        return a;
+      })();
+
+      function dotCount(mol) {
+        if (mol <= 0) return 0;
+        return Math.max(1, Math.min(DOTS.length, Math.round(mol / PER_DOT)));
+      }
+
+      // ---------------- formatting ----------------
+      function fmtM(x) { return F.dec(x, 3); }
+      function fmtMol(x) { return x >= 0.1 ? F.dec(x, 3) : F.dec(x, 4); }
+      function fmtV(x) { return F.dec(x, 3); }
+
+      // ---------------- small canvas helpers ----------------
+      function chip(ctx, c, x, y, txt, fs, col, w, anchor) {
+        ctx.font = '600 ' + fs + FONT;
+        var tw = ctx.measureText(txt).width;
+        var lx = anchor === 'right' ? x - tw - 8 : anchor === 'center' ? x - tw / 2 - 4 : x;
+        lx = Demo.clamp(lx, 2, Math.max(2, w - tw - 10));
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = c.surface;
+        ctx.fillRect(lx, y - fs - 3, tw + 8, fs + 7);
+        ctx.restore();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = col;
+        ctx.fillText(txt, lx + 4, y);
+      }
+
+      function dot(ctx, c, x, y, r, col) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = col; ctx.fill();
+        ctx.strokeStyle = c.surface; ctx.lineWidth = 1.6; ctx.stroke();
+      }
+
+      // ==================================================================
+      // BEAKER CANVAS
+      // ==================================================================
+      var beakerCv = Demo.canvas('#beaker', function (ctx, w, h, c) {
+        var M = model();
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var solute = c.series[3];          // purple — KMnO4
+
+        // geometry: beaker on the left, annotation column on the right
+        var bw = Demo.clamp(w * 0.34, 92, 150);
+        var bx = narrow ? 8 : 14;
+        var ty = 14, by = h - 24;
+        var inner = by - ty - 12;          // usable liquid column height
+        var i, d;
+
+        // ---- graduations, drawn behind the glass ----
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        for (i = 1; i <= 5; i++) {
+          var gv = i * 0.25;
+          var gy = by - inner * (gv / CAP);
+          ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(bx + bw * 0.55, gy); ctx.lineTo(bx + bw, gy); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(gv, 2), bx + bw + 4, gy);
+        }
+
+        // ---- liquid ----
+        var vol = Demo.clamp(M.V, 0, CAP);
+        var lh = inner * (vol / CAP);
+        var lty = by - lh;
+        if (lh > 0.5) {
+          ctx.save();
+          ctx.globalAlpha = intensity(M.M);
+          ctx.fillStyle = solute;
+          ctx.fillRect(bx + 1, lty, bw - 2, lh);
+          ctx.restore();
+          // meniscus
+          ctx.strokeStyle = solute; ctx.lineWidth = 1.6;
+          ctx.globalAlpha = 0.85;
+          ctx.beginPath(); ctx.moveTo(bx + 1, lty); ctx.lineTo(bx + bw - 1, lty); ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+
+        // ---- dissolved particles: count is set by MOLES, not by concentration ----
+        var nd = dotCount(M.nDiss);
+        ctx.fillStyle = solute;
+        for (i = 0; i < nd; i++) {
+          d = DOTS[i];
+          var px = bx + 5 + d.x * (bw - 10);
+          var py = lty + 4 + d.y * Math.max(1, lh - 8);
+          ctx.globalAlpha = 0.55 + 0.4 * d.j;
+          ctx.beginPath(); ctx.arc(px, py, narrow ? 1.9 : 2.2, 0, 6.2832); ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // ---- undissolved crystals heaped on the bottom ----
+        var nc = M.nUn > 0 ? Math.max(1, Math.min(CRY.length, Math.round(M.nUn / 0.0035))) : 0;
+        if (nc > 0) {
+          ctx.fillStyle = solute;
+          for (i = 0; i < nc; i++) {
+            var q = CRY[i];
+            var row = Math.floor(i / 10);
+            var cxp = bx + 6 + q.x * (bw - 12);
+            var cyp = by - 3 - row * 5 - q.y * 3;
+            var sz = (narrow ? 2.6 : 3.1) * q.s;
+            ctx.save();
+            ctx.translate(cxp, cyp);
+            ctx.rotate(q.rot);
+            ctx.globalAlpha = 0.9;
+            ctx.fillRect(-sz / 2, -sz / 2, sz, sz);
+            ctx.restore();
+          }
+          ctx.globalAlpha = 1;
+        }
+
+        // ---- glass ----
+        ctx.strokeStyle = c.line; ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(bx, ty); ctx.lineTo(bx, by); ctx.lineTo(bx + bw, by); ctx.lineTo(bx + bw, ty);
+        ctx.stroke();
+
+        ctx.font = (fs - 0.8) + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText('litres of solution', bx + bw / 2, h - 6);
+
+        // ---- annotation column ----
+        var ax = bx + bw + (narrow ? 30 : 38);
+        var aw = w - ax - 4;
+        var y = ty + 4;
+
+        // one block = small grey label, big coloured value, optional small note
+        function put(label, value, col, note, noteCol) {
+          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+          ctx.font = (fs - 1) + FONT;
+          ctx.fillStyle = c.muted;
+          ctx.fillText(label, ax, y);
+          y += fs + 3;
+          ctx.font = '600 ' + (fs + 2.5) + FONT;
+          ctx.fillStyle = col;
+          ctx.fillText(value, ax, y);
+          y += fs + 6;
+          if (note) {
+            ctx.font = '600 ' + (fs - 1.5) + FONT;
+            ctx.fillStyle = noteCol || c.muted;
+            ctx.fillText(note, ax, y);
+            y += fs + 1;
+          }
+          y += 6;
+        }
+
+        if (aw > 70) {
+          if (M.mode === 'make') {
+            put('Solute added', fmtMol(M.nTotal) + ' mol', c.text);
+            put('Volume of solution', fmtV(M.V) + ' L', c.text);
+            put('Concentration', fmtM(M.M) + ' mol L⁻¹', c.accentStrong,
+              M.sat ? 'SATURATED — capped' : null, c.warn);
+            if (M.sat) put('Undissolved solid', fmtMol(M.nUn) + ' mol', c.warn,
+              F.dec(M.nUn * MM, 2) + ' g on the bottom', c.muted);
+          } else {
+            put('Moles of solute', fmtMol(M.nTotal) + ' mol', c.ok, 'DOES NOT MOVE', c.ok);
+            put('Total volume', fmtV(M.V) + ' L', c.text);
+            put('Concentration', fmtM(M.M) + ' mol L⁻¹', c.accentStrong,
+              dotCount(M.nDiss) + ' dots, always', c.muted);
+          }
+        }
+      }, { aspect: 0.62, minHeight: 235, maxHeight: 320 });
+
+      // ==================================================================
+      // PLOT CANVAS
+      // ==================================================================
+      var plotCv = Demo.canvas('#plot', function (ctx, w, h, c) {
+        var M = model();
+        if (M.mode === 'make') drawMake(ctx, w, h, c, M);
+        else drawDilute(ctx, w, h, c, M);
+      }, { aspect: 0.55, minHeight: 210, maxHeight: 300 });
+
+      // ---- Mode 1: M against moles added, at the current volume ----
+      function drawMake(ctx, w, h, c, M) {
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 36 : 44, padR = narrow ? 12 : 16, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var NMAX = 0.2, YMAX = 0.5;
+        var col = c.series[3];
+        var i, px;
+
+        function Xn(n) { return x0 + (x1 - x0) * Demo.clamp(n, 0, NMAX) / NMAX; }
+        function Ym(m) { return y0 - (y0 - y1) * Demo.clamp(m, 0, YMAX) / YMAX; }
+
+        // gridlines
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 5; i++) {
+          var gy = y0 - (y0 - y1) * i / 5;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(YMAX * i / 5, 1), x0 - 5, gy);
+        }
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('M (mol L⁻¹)', 1, 2);
+
+        // x ticks
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (i = 0; i <= 4; i++) {
+          var tv = NMAX * i / 4;
+          px = Xn(tv);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(tv, 2), px, y0 + 6);
+        }
+        ctx.fillText('moles of KMnO₄ added (mol)', (x0 + x1) / 2, y0 + 20);
+
+        // the solubility ceiling
+        ctx.strokeStyle = c.warn; ctx.lineWidth = 1.4;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath(); ctx.moveTo(x0, Ym(SAT)); ctx.lineTo(x1, Ym(SAT)); ctx.stroke();
+        ctx.setLineDash([]);
+        chip(ctx, c, x1 - 2, Ym(SAT) - 5, 'solubility limit 0.40 mol L⁻¹', fs, c.warn, w, 'right');
+
+        // the curve: rises as n/V, then flat
+        ctx.strokeStyle = col; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (px = x0; px <= x1; px++) {
+          var nn = (px - x0) / (x1 - x0) * NMAX;
+          var mm = Math.min(S.V > 0 ? nn / S.V : 0, SAT);
+          if (px === x0) ctx.moveTo(px, Ym(mm)); else ctx.lineTo(px, Ym(mm));
+        }
+        ctx.stroke();
+
+        // where saturation begins, if it is on this axis
+        var nSat = SAT * S.V;
+        if (nSat <= NMAX) {
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.setLineDash([2, 3]);
+          ctx.beginPath(); ctx.moveTo(Xn(nSat), y0); ctx.lineTo(Xn(nSat), Ym(SAT)); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // current point
+        var cx = Xn(M.nTotal), cy = Ym(M.M);
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath(); ctx.moveTo(cx, y0); ctx.lineTo(cx, cy); ctx.stroke();
+        ctx.setLineDash([]);
+        dot(ctx, c, cx, cy, 5.5, M.sat ? c.warn : c.accentStrong);
+        // when saturated the point sits ON the solubility line, so the label
+        // has to go below it or the two collide
+        chip(ctx, c, cx, M.sat ? cy + 20 : cy - 11, fmtM(M.M) + ' mol L⁻¹', fs,
+          M.sat ? c.warn : c.accentStrong, w, 'center');
+
+        if (M.sat) {
+          chip(ctx, c, (x0 + x1) / 2, y0 - 8,
+            'past here, extra solid just sits on the bottom', fs, c.muted, w, 'center');
+        }
+      }
+
+      // ---- Mode 2: M against total volume, with the constant-area rectangle ----
+      function drawDilute(ctx, w, h, c, M) {
+        var narrow = w < 380;
+        var fs = narrow ? 9.5 : 10.5;
+        var padL = narrow ? 36 : 44, padR = narrow ? 14 : 18, padT = 22, padB = 36;
+        var x0 = padL, x1 = w - padR, y1 = padT, y0 = h - padB;
+        var VMAX = 1.25, YMAX = 0.5;
+        var col = c.series[3];
+        var i, px;
+
+        function Xv(v) { return x0 + (x1 - x0) * Demo.clamp(v, 0, VMAX) / VMAX; }
+        function Ym(m) { return y0 - (y0 - y1) * Demo.clamp(m, 0, YMAX) / YMAX; }
+
+        ctx.font = fs + FONT;
+        ctx.textBaseline = 'middle';
+        for (i = 0; i <= 5; i++) {
+          var gy = y0 - (y0 - y1) * i / 5;
+          if (i > 0) {
+            ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+          }
+          ctx.fillStyle = c.muted; ctx.textAlign = 'right';
+          ctx.fillText(F.dec(YMAX * i / 5, 1), x0 - 5, gy);
+        }
+
+        // the rectangle whose AREA is the moles of solute
+        var rx = Xv(M.V), ry = Ym(M.M);
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = c.ok;
+        ctx.fillRect(x0, ry, Math.max(0, rx - x0), Math.max(0, y0 - ry));
+        ctx.restore();
+        ctx.strokeStyle = c.ok; ctx.lineWidth = 1.4;
+        ctx.strokeRect(x0, ry, Math.max(0, rx - x0), Math.max(0, y0 - ry));
+
+        // the starting rectangle, for comparison
+        var sx = Xv(M.V1), sy = Ym(M.M1);
+        ctx.strokeStyle = c.muted; ctx.lineWidth = 1.1;
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(x0, sy, Math.max(0, sx - x0), Math.max(0, y0 - sy));
+        ctx.setLineDash([]);
+
+        ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x0, y1); ctx.lineTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.font = '600 ' + fs + FONT;
+        ctx.fillStyle = c.muted;
+        ctx.fillText('M (mol L⁻¹)', 1, 2);
+
+        ctx.font = fs + FONT;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        for (i = 0; i <= 5; i++) {
+          var tv = VMAX * i / 5;
+          px = Xv(tv);
+          ctx.strokeStyle = c.line; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y0 + 4); ctx.stroke();
+          ctx.fillStyle = c.muted;
+          ctx.fillText(F.dec(tv, 2), px, y0 + 6);
+        }
+        ctx.fillText('total volume of solution (L)', (x0 + x1) / 2, y0 + 20);
+
+        // M = n / V, drawn only from V1 rightwards (you cannot un-dilute)
+        ctx.strokeStyle = col; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+        ctx.beginPath();
+        var started = false;
+        for (px = Math.round(Xv(M.V1)); px <= x1; px++) {
+          var vv = (px - x0) / (x1 - x0) * VMAX;
+          if (vv <= 0) continue;
+          var mm = M.nTotal / vv;
+          var yy = Ym(mm);
+          if (!started) { ctx.moveTo(px, yy); started = true; } else ctx.lineTo(px, yy);
+        }
+        if (started) ctx.stroke();
+
+        // start and current points
+        dot(ctx, c, sx, sy, 4.5, c.muted);
+        chip(ctx, c, sx, sy - 9, 'start ' + fmtM(M.M1), fs, c.muted, w, 'center');
+        dot(ctx, c, rx, ry, 5.5, c.accentStrong);
+        chip(ctx, c, rx, ry - 10, fmtM(M.M) + ' mol L⁻¹', fs, c.accentStrong, w, 'center');
+
+        // the label that makes the point
+        chip(ctx, c, (x0 + rx) / 2, y0 - 8,
+          'area = M × V = ' + fmtMol(M.nTotal) + ' mol', fs, c.ok, w, 'center');
+      }
+
+      // ==================================================================
+      // DOM
+      // ==================================================================
+      var el = {
+        panelMake: document.getElementById('panelMake'),
+        panelDilute: document.getElementById('panelDilute'),
+        modeSeg: document.getElementById('modeSeg'),
+        beakerLabel: document.getElementById('beakerLabel'),
+        beakerCap: document.getElementById('beakerCap'),
+        plotLabel: document.getElementById('plotLabel'),
+        plotCap: document.getElementById('plotCap'),
+        lgDot: document.getElementById('lgDot'),
+        lgCry: document.getElementById('lgCry'),
+
+        molRange: document.getElementById('molRange'),
+        molOut: document.getElementById('molOut'),
+        molHint: document.getElementById('molHint'),
+        volRange: document.getElementById('volRange'),
+        volOut: document.getElementById('volOut'),
+        mkConc: document.getElementById('mkConc'),
+        mkConcSub: document.getElementById('mkConcSub'),
+        mkDiss: document.getElementById('mkDiss'),
+        mkUndiss: document.getElementById('mkUndiss'),
+        mkUndissSub: document.getElementById('mkUndissSub'),
+        mkMass: document.getElementById('mkMass'),
+        mkPct: document.getElementById('mkPct'),
+        mkNote: document.getElementById('mkNote'),
+
+        stockRange: document.getElementById('stockRange'),
+        stockOut: document.getElementById('stockOut'),
+        v1Range: document.getElementById('v1Range'),
+        v1Out: document.getElementById('v1Out'),
+        waterRange: document.getElementById('waterRange'),
+        waterOut: document.getElementById('waterOut'),
+        dlMoles: document.getElementById('dlMoles'),
+        dlMolesSub: document.getElementById('dlMolesSub'),
+        dlConc: document.getElementById('dlConc'),
+        dlVol: document.getElementById('dlVol'),
+        dlFactor: document.getElementById('dlFactor'),
+        dlMass: document.getElementById('dlMass'),
+        eqStart: document.getElementById('eqStart'),
+        eqNow: document.getElementById('eqNow'),
+        dlNote: document.getElementById('dlNote')
+      };
+
+      el.lgDot.style.background = 'var(--series-4)';
+      el.lgCry.style.background = 'var(--series-4)';
+
+      // ==================================================================
+      // RENDER
+      // ==================================================================
+      function render() {
+        // ---------- mode 1 ----------
+        var K = makeModel();
+
+        el.molOut.textContent = fmtMol(S.n) + ' mol';
+        el.volOut.textContent = fmtV(S.V) + ' L';
+        el.molHint.innerHTML = '0 to 0.200 mol of KMnO<sub>4</sub>. Right now that is '
+          + F.dec(S.n * MM, 2) + ' g on a balance.';
+
+        el.mkConc.innerHTML = fmtM(K.M) + '<span class="r-unit">mol L⁻¹</span>';
+        el.mkDiss.textContent = fmtMol(K.nDiss);
+        el.mkUndiss.textContent = fmtMol(K.nUn);
+        el.mkMass.innerHTML = F.dec(S.n * MM, 2) + '<span class="r-unit">g</span>';
+        el.mkPct.textContent = F.pct(Demo.clamp(K.frac, 0, 1), 1);
+
+        if (S.n === 0) {
+          el.mkConcSub.className = 'r-sub';
+          el.mkConcSub.textContent = 'no solute yet — pure water is 0 mol L⁻¹';
+          el.mkUndissSub.className = 'r-sub';
+          el.mkUndissSub.textContent = 'mol sitting on the bottom';
+          el.mkNote.className = 'note';
+          el.mkNote.innerHTML = 'The beaker holds ' + fmtV(S.V) + ' L of water and nothing else. '
+            + 'Drag the solute slider up and watch the colour arrive.';
+        } else if (!K.sat) {
+          el.mkConcSub.className = 'r-sub';
+          el.mkConcSub.innerHTML = fmtMol(S.n) + ' mol &divide; ' + fmtV(S.V) + ' L &mdash; all of it dissolved';
+          el.mkUndissSub.className = 'r-sub';
+          el.mkUndissSub.textContent = 'nothing left undissolved';
+          el.mkNote.className = 'note';
+          el.mkNote.innerHTML = '<strong>Unsaturated.</strong> Every particle you added is in solution, so '
+            + 'the molarity really is just n &divide; V = <strong>' + fmtM(K.M) + ' mol L⁻¹</strong>. '
+            + 'You could still dissolve another ' + fmtMol(K.headroom) + ' mol in this volume before it '
+            + 'gives up.';
+        } else {
+          el.mkConcSub.className = 'r-sub moved';
+          el.mkConcSub.innerHTML = 'CAPPED &mdash; n &divide; V would be ' + fmtM(K.req)
+            + ' mol L⁻¹, but the water cannot hold it';
+          el.mkUndissSub.className = 'r-sub moved';
+          el.mkUndissSub.innerHTML = 'mol on the bottom &mdash; ' + F.dec(K.nUn * MM, 2) + ' g of solid';
+          el.mkNote.className = 'note warn';
+          el.mkNote.innerHTML = '<strong>Saturated.</strong> Arithmetic says ' + fmtM(K.req)
+            + ' mol L⁻¹; the beaker says ' + fmtM(SAT) + '. Only ' + fmtMol(K.nDiss)
+            + ' mol dissolved and the other ' + fmtMol(K.nUn) + ' mol is lying on the bottom as crystals. '
+            + 'Keep adding solid and the concentration will not move &mdash; only the pile grows. '
+            + 'Undissolved solid is not part of the solution, so it does not count.';
+        }
+
+        // ---------- mode 2 ----------
+        var n2 = S.M1 * S.V1;
+        var V2 = S.V1 + S.Vw;
+        var M2 = n2 / V2;
+
+        el.stockOut.innerHTML = fmtM(S.M1) + ' mol L⁻¹';
+        el.v1Out.textContent = fmtV(S.V1) + ' L';
+        el.waterOut.textContent = fmtV(S.Vw) + ' L';
+
+        el.dlMoles.innerHTML = F.dec(n2, 4) + '<span class="r-unit">mol</span>';
+        el.dlConc.textContent = fmtM(M2);
+        el.dlVol.textContent = fmtV(V2);
+        el.dlFactor.textContent = F.dec(V2 / S.V1, 2) + '×';
+        el.dlMass.innerHTML = F.dec(n2 * MM, 2) + '<span class="r-unit">g</span>';
+
+        el.dlMolesSub.className = S.Vw > 0 ? 'r-sub hold' : 'r-sub';
+        el.dlMolesSub.innerHTML = S.Vw > 0
+          ? 'UNCHANGED by ' + fmtV(S.Vw) + ' L of water'
+          : 'set by M<sub>1</sub> &times; V<sub>1</sub>, then fixed';
+
+        el.eqStart.innerHTML = 'M<sub>1</sub>V<sub>1</sub> = ' + fmtM(S.M1) + ' &times; ' + fmtV(S.V1)
+          + ' = <b>' + F.dec(n2, 4) + ' mol</b>';
+        el.eqNow.innerHTML = 'M<sub>2</sub>V<sub>2</sub> = ' + fmtM(M2) + ' &times; ' + fmtV(V2)
+          + ' = <b>' + F.dec(M2 * V2, 4) + ' mol</b>';
+
+        if (S.Vw === 0) {
+          el.dlNote.className = 'note';
+          el.dlNote.innerHTML = 'Nothing added yet, so M<sub>2</sub> is still M<sub>1</sub>. '
+            + 'Start dragging the water slider and keep your eye on the green tile.';
+        } else {
+          el.dlNote.className = 'note';
+          el.dlNote.innerHTML = 'You added <strong>' + fmtV(S.Vw) + ' L of water</strong>. The volume went up '
+            + F.dec(V2 / S.V1, 2) + '&times; and the concentration went down by exactly the same factor, '
+            + 'from ' + fmtM(S.M1) + ' to ' + fmtM(M2) + ' mol L⁻¹. The moles did not move at all, because '
+            + 'water is not KMnO<sub>4</sub>. That is the whole of M<sub>1</sub>V<sub>1</sub> = M<sub>2</sub>V<sub>2</sub>.';
+        }
+
+        // ---------- stage text ----------
+        if (S.mode === 'make') {
+          el.plotLabel.textContent = 'Concentration against how much solute you added';
+          el.beakerCap.innerHTML = K.sat
+            ? 'The colour has stopped deepening. Extra solid now collects on the bottom instead of joining the solution.'
+            : 'Colour intensity tracks concentration. The dots are dissolved KMnO<sub>4</sub>; the number of dots is set by moles, the shade by moles per litre.';
+          el.plotCap.innerHTML = 'At V = ' + fmtV(S.V) + ' L the line is M = n &divide; ' + fmtV(S.V)
+            + ', straight until it hits the ceiling at n = ' + fmtMol(SAT * S.V) + ' mol. After that, adding '
+            + 'solute changes nothing about the solution.';
+        } else {
+          el.plotLabel.innerHTML = 'Concentration against total volume &mdash; the shaded area is the moles of solute';
+          el.beakerCap.innerHTML = 'Count the dots as you add water: the same particles, spread through more '
+            + 'solution. The level rises, the colour fades, the dot count holds at ' + dotCount(n2) + '.';
+          el.plotCap.innerHTML = 'Every point on this curve has a rectangle of the same area, because the area '
+            + 'is M &times; V = moles = ' + F.dec(n2, 4) + ' mol. The dashed rectangle is where you started. '
+            + 'Equal areas is M<sub>1</sub>V<sub>1</sub> = M<sub>2</sub>V<sub>2</sub>.';
+        }
+
+        beakerCv.redraw();
+        plotCv.redraw();
+      }
+
+      // ==================================================================
+      // CONTROLS
+      // ==================================================================
+      Demo.range('#molRange', function (v) { S.n = v; render(); });
+      Demo.range('#volRange', function (v) { S.V = v; render(); });
+      Demo.range('#stockRange', function (v) { S.M1 = v; render(); });
+      Demo.range('#v1Range', function (v) { S.V1 = v; render(); });
+      Demo.range('#waterRange', function (v) { S.Vw = v; render(); });
+
+      function setSlider(id, value, key) {
+        var input = document.getElementById(id);
+        input.value = value;
+        S[key] = parseFloat(input.value);
+      }
+
+      document.getElementById('btnDilutePreset').addEventListener('click', function () {
+        setSlider('molRange', 0.1, 'n');
+        setSlider('volRange', 0.5, 'V');
+        render();
+      });
+      document.getElementById('btnSatPreset').addEventListener('click', function () {
+        setSlider('molRange', 0.2, 'n');
+        setSlider('volRange', 0.25, 'V');
+        render();
+      });
+      document.getElementById('btnResetMake').addEventListener('click', function () {
+        setSlider('molRange', 0.1, 'n');
+        setSlider('volRange', 0.5, 'V');
+        render();
+      });
+
+      document.getElementById('btnNoWater').addEventListener('click', function () {
+        setSlider('waterRange', 0, 'Vw');
+        render();
+      });
+      document.getElementById('btnAdd100').addEventListener('click', function () {
+        setSlider('waterRange', Math.min(0.95, S.Vw + 0.1), 'Vw');
+        render();
+      });
+      document.getElementById('btnFillUp').addEventListener('click', function () {
+        setSlider('waterRange', Demo.clamp(1 - S.V1, 0, 0.95), 'Vw');
+        render();
+      });
+
+      // mode switch
+      Array.prototype.forEach.call(el.modeSeg.querySelectorAll('button'), function (b) {
+        b.addEventListener('click', function () {
+          Array.prototype.forEach.call(el.modeSeg.querySelectorAll('button'), function (o) {
+            o.setAttribute('aria-selected', o === b ? 'true' : 'false');
+          });
+          S.mode = b.dataset.mode;
+          el.panelMake.hidden = S.mode !== 'make';
+          el.panelDilute.hidden = S.mode !== 'dilute';
+          el.beakerLabel.innerHTML = S.mode === 'make'
+            ? 'The beaker <span>&mdash; potassium permanganate, KMnO<sub>4</sub>, in water</span>'
+            : 'The beaker <span>&mdash; same solute, more and more water</span>';
+          render();
+        });
+      });
+
+      render();
+    })();
+  </script>
+</body>
+
+</html>
