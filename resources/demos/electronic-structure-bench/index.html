@@ -322,7 +322,7 @@
           <p class="small muted">
             The clean two-dip pattern is a <strong>main-group</strong> story. Across the d-block
             (Sc&ndash;Zn) first ionization energy is nearly flat and wobbles for its own reasons, and by
-            period 4 the group-16 dip has shrunk to 3&nbsp;kJ/mol &mdash; about 0.3%. A real trend can be
+            period 4 the group-16 dip has shrunk to 6&nbsp;kJ/mol &mdash; about 0.6%. A real trend can be
             real and still be small.
           </p>
         </div>
@@ -423,7 +423,7 @@
         ['Co', 'Cobalt', 9, 4, 760.4], ['Ni', 'Nickel', 10, 4, 737.1],
         ['Cu', 'Copper', 11, 4, 745.5], ['Zn', 'Zinc', 12, 4, 906.4],
         ['Ga', 'Gallium', 13, 4, 578.8], ['Ge', 'Germanium', 14, 4, 762.0],
-        ['As', 'Arsenic', 15, 4, 944.0], ['Se', 'Selenium', 16, 4, 941.0],
+        ['As', 'Arsenic', 15, 4, 947.0], ['Se', 'Selenium', 16, 4, 941.0],
         ['Br', 'Bromine', 17, 4, 1139.9], ['Kr', 'Krypton', 18, 4, 1350.8]
       ].map(function (r, i) {
         return { z: i + 1, sym: r[0], name: r[1], group: r[2], period: r[3], ie1: r[4] };
@@ -1326,9 +1326,12 @@
         var cfgEl = document.getElementById('sCfg');
         if (e.z <= 20) {
           cfgEl.innerHTML = configHTML(e.z) + ' &nbsp;<span class="core small">(blue = outermost shell)</span>';
-        } else {
+        } else if (e.z <= 30) {
           cfgEl.innerHTML = '<span class="core">[Ar] plus 4s and 3d electrons — the d-block, ' +
             'where the filling order is not simply outward.</span>';
+        } else {
+          cfgEl.innerHTML = '<span class="core">[Ar] 3d' + Demo.fmt.sup(10) + ' 4s' + Demo.fmt.sup(2) +
+            ' plus 4p electrons — the p-block of period 4, filling the 4p sub-shell.</span>';
         }
 
         var note = document.getElementById('sNote');

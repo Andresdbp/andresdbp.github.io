@@ -266,7 +266,7 @@
         <strong>The second half of the point:</strong> the half-equivalence pH is the acid's pK<sub>a</sub>,
         which is how pK<sub>a</sub> values are actually measured in a lab. And the indicator has to be
         chosen to match the curve, not out of habit. Put methyl orange on the weak-acid titration and it
-        finishes changing colour around 2 mL — a 90 % error — because its range sits in the buffer region
+        changes colour around 2 mL — a 90 % error — because its range sits in the buffer region
         instead of on the vertical jump.
       </p>
       <p>
@@ -770,7 +770,7 @@
           pn.classList.remove('is-hidden');
           pn.innerHTML = '<strong>No equivalence point.</strong> You are adding ' +
             (state.titrant === 'sb' ? 'a base to a base' : 'an acid to an acid') +
-            ', so nothing is being neutralised — the pH only drifts as the solution is diluted. ' +
+            ', so nothing is being neutralised — the pH just slides towards that of the reagent you are adding. ' +
             'Switch the burette to the other reagent.';
         } else {
           pn.classList.add('is-hidden');
@@ -844,7 +844,7 @@
         } else {
           inote.className = 'note bad';
           inote.innerHTML = '<strong>Wrong indicator.</strong> pH ' + ind.lo.toFixed(1) + '–' +
-            ind.hi.toFixed(1) + ' is off the vertical jump, so the colour finishes changing at ' +
+            ind.hi.toFixed(1) + ' is off the vertical jump, so the colour changes at ' +
             Demo.fmt.dec(d.endV, 2) + ' mL instead of ' + Demo.fmt.dec(d.Ve, 2) +
             ' mL — you would report the concentration ' + Demo.fmt.dec(Math.abs(d.err), 0) + ' % ' +
             (d.err < 0 ? 'too low' : 'too high') + '.';

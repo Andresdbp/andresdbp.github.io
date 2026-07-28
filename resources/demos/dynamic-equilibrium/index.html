@@ -259,7 +259,7 @@
           </div>
           <p class="ctrl-hint" id="instHint">Conversion numbers are averaged over the last 40 steps.</p>
           <hr class="sep" style="margin:11px 0">
-          <p class="note" id="pNote">Right now the forward count is far bigger than the reverse count, so the
+          <p class="note" id="pNote">Right now the forward and reverse counts are far apart, so the
             amounts are still changing. That is <strong>not</strong> equilibrium yet.</p>
         </div>
 
@@ -343,7 +343,7 @@
         <strong>The second tab is the proof:</strong> start from pure reactant and start from pure product.
         The concentration curves come from opposite directions and land on the same two heights, so both runs
         report the same K. K belongs to the reaction, not to where you started it. Only the
-        <em>k</em> sliders can change K &mdash; and in the lab, only temperature changes those.
+        <em>k</em> sliders can change K &mdash; and in the lab, only temperature changes their ratio.
       </p>
       <p>
         <strong>Where the model stops being true:</strong> the box holds 400 particles, so the counts jitter by
@@ -712,7 +712,7 @@
         var note = document.getElementById('pNote');
         if (S.step < 12) {
           note.className = 'note';
-          note.innerHTML = 'Right now the forward count is far bigger than the reverse count, so the amounts ' +
+          note.innerHTML = 'Right now the forward and reverse counts are far apart, so the amounts ' +
             'are still changing. That is <strong>not</strong> equilibrium yet.';
         } else if (Math.abs(f - r) <= Math.max(1.0, 0.22 * Math.max(f, r))) {
           note.className = 'note';

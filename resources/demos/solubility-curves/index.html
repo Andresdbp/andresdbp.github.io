@@ -734,7 +734,7 @@
         } else {
           var cw2 = (w - 3 * g) / 2;
           var headA = '(a) Mixed at ' + Math.round(st.T) + ' °C';
-          var headB = '(b) Cooled from hot, undisturbed';
+          var headB = gas ? '(b) Warmed from cold, undisturbed' : '(b) Cooled from hot, undisturbed';
           ctx.font = '600 ' + fs + 'px Poppins, system-ui, sans-serif';
           var rows = Math.max(
             wrapLines(ctx, headA, cw2 - 8).slice(0, 2).length,
@@ -787,7 +787,7 @@
         if (superNow) {
           cls = 'is-super';
           text = 'Supersaturated (metastable)';
-          note = '<strong>You could only get here by cooling.</strong> ' +
+          note = '<strong>You could only get here by ' + (gas ? 'heating' : 'cooling') + '.</strong> ' +
                  Demo.fmt.dec(st.dissolved - capNow, 1) + ' g more is dissolved than the ceiling allows. ' +
                  'This state is fragile — stir it, scratch the glass or add a seed and it collapses.';
         } else if (st.total > capNow + t) {

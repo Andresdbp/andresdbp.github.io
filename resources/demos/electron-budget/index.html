@@ -878,7 +878,9 @@
         var bad = [], i;
         for (i = 0; i < SP.atoms.length; i++) {
           var s = statusOf(i);
-          if (s.k === 'bad') bad.push(SP.atoms[i].el + ' has ' + shell(i) + ' e⁻, and period-2 atoms can never hold more than 8');
+          if (s.k === 'bad') bad.push(SP.atoms[i].el + ' has ' + shell(i) + ' e⁻, and ' +
+            (targetShell(SP.atoms[i].el) === 2 ? 'hydrogen and helium can never hold more than 2'
+              : 'period-2 atoms can never hold more than 8'));
         }
         if (bad.length) { say('<strong>Not yet.</strong> ' + bad.join('; ') + '.', 'bad'); board.redraw(); return; }
         var sh = shortList();

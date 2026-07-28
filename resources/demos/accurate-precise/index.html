@@ -685,7 +685,7 @@
 
         $('capConv').innerHTML = 'Running mean of the first n weighings. The shaded band is the predicted ' +
           '95 % range, ±1.96·σ/√n. It narrows as 1/√n, and it is centred on what the balance aims at — ' +
-          (acc
+          (Math.abs(state.bias) <= 0.004
             ? 'here that is the truth, so averaging really does walk you toward 10.000 g.'
             : 'here that is <strong>' + (MU + state.bias).toFixed(3) +
               ' g</strong>, so the band closes onto the red dashed line and never reaches 10.000 g.');
