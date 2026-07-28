@@ -17,7 +17,7 @@
    reports honestly which path it is on.
    ========================================================= */
 
-import { normalizeElements, diameterFromH } from './astro.js?v=14';
+import { normalizeElements, diameterFromH } from './astro.js?v=15';
 
 const CACHE_KEY = 'neo.cache.v1';
 const KEY_KEY = 'neo.apikey';

@@ -14,16 +14,18 @@
    ========================================================= */
 
 import * as THREE from 'three';
-import { OBLIQUITY } from './astro.js?v=14';
+import { OBLIQUITY } from './astro.js?v=15';
 
 const DEG = Math.PI / 180;
 
 /* ---------------------------------------------------------
    Physical and display data
 
-   Radii are equatorial, in km (IAU 2015). `tint` is the body's
-   real approximate colour; these survive the phosphor collapse
-   so the planets read as planets in every scheme.
+   Radii are VOLUMETRIC MEAN radii, in km — the gas giants are
+   oblate enough that quoting an equatorial figure would overstate
+   Saturn by 6 000 km. `tint` is the body's real approximate
+   colour; these survive the phosphor collapse via the chroma
+   mask, so the planets read as planets in every scheme.
    --------------------------------------------------------- */
 export const BODY_INFO = {
   Mercury: {
@@ -52,6 +54,16 @@ export const BODY_INFO = {
   Saturn: {
     radiusKm: 58232, tint: 0xe3d3a8, day: '10 h 34 m', moons: 274,
     blurb: 'Less dense than water. The rings are mostly water ice, and are likely far younger than the planet.'
+  },
+  Uranus: {
+    radiusKm: 25362, tint: 0x9fe3ec, day: '17 h 14 m retrograde', moons: 28,
+    blurb: 'Rotates on its side — the axis is tilted 98°, so each pole spends 42 years in continuous ' +
+           'sunlight and the next 42 in darkness.'
+  },
+  Neptune: {
+    radiusKm: 24622, tint: 0x3f66d6, day: '16 h 06 m', moons: 16,
+    blurb: 'Found by prediction rather than by looking: its position was calculated from unexplained ' +
+           'wobbles in Uranus\'s orbit. Winds reach 2 000 km/h, the fastest in the solar system.'
   },
   Moon: {
     radiusKm: 1737.4, tint: 0xa8a49c, day: '27.3 d (tidally locked)', moons: 0,

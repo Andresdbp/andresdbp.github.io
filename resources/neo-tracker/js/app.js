@@ -2,18 +2,18 @@
    APP — boot, data flow, controls, animation loop.
    ========================================================= */
 
-import { Viewport, HELIO_SCALE, GEO_SCALE } from './scene.js?v=14';
-import { Terminal, writeDataSheet, feedLine, liveDistText, sleep, fmtInt, fmtNum } from './terminal.js?v=14';
+import { Viewport, HELIO_SCALE, GEO_SCALE } from './scene.js?v=15';
+import { Terminal, writeDataSheet, feedLine, liveDistText, sleep, fmtInt, fmtNum } from './terminal.js?v=15';
 import {
   loadSnapshots, fetchNeoWs, probeJpl, mergeSources, getApiKey, setApiKey,
   clearCache, isoDate, addDays, DEMO_KEY, RateLimitError, loadSpacecraft
-} from './data.js?v=14';
+} from './data.js?v=15';
 import {
   jdFromDate, dateFromJd, positionAt, planetPosition, planetElements,
   moonPosition, moonPhase, distance, AU_KM, LD_KM
-} from './astro.js?v=14';
-import { loadLandMask, BODY_INFO } from './bodies.js?v=14';
-import { fetchSatellites, loadSatelliteFallback, satState } from './satellites.js?v=14';
+} from './astro.js?v=15';
+import { loadLandMask, BODY_INFO } from './bodies.js?v=15';
+import { fetchSatellites, loadSatelliteFallback, satState } from './satellites.js?v=15';
 
 const $ = (s) => document.querySelector(s);
 const reduceMotion = window.matchMedia &&
@@ -37,6 +37,7 @@ const RANGES = {
     { v: 1.1, l: '1 AU' },      // Earth's orbit
     { v: 2.2, l: '2 AU' },      // out past Mars
     { v: 5.5, l: '5 AU' },      // Jupiter
+    { v: 31, l: '31 AU' },      // the full planetary system, out to Neptune
     { v: 190, l: 'DEEP' }       // the Voyagers
   ],
   geo: [
@@ -110,7 +111,7 @@ const state = {
   feedIdx: 0,
   feedTimer: 0,
   sources: { neows: null, jpl: null },
-  scheme: 'green',
+  scheme: 'spectrum',
   craft: [],
   sats: [],
   bootDone: false
@@ -138,9 +139,9 @@ async function main() {
   wireControls();
   wireViewportKeys();
 
-  let savedScheme = 'green';
-  try { savedScheme = localStorage.getItem('neo.scheme') || 'green'; } catch (e) { }
-  setScheme(SCHEMES[savedScheme] ? savedScheme : 'green');
+  let savedScheme = 'spectrum';
+  try { savedScheme = localStorage.getItem('neo.scheme') || 'spectrum'; } catch (e) { }
+  setScheme(SCHEMES[savedScheme] ? savedScheme : 'spectrum');
   const schemeBtn = document.querySelector(`#segPhosphor button[data-p="${state.scheme}"]`);
   if (schemeBtn) {
     [...schemeBtn.parentNode.children].forEach(c => c.setAttribute('aria-pressed', String(c === schemeBtn)));
@@ -181,7 +182,7 @@ async function main() {
   const satP = fetchSatellites().then(r => r, () => loadSatelliteFallback().catch(() => null));
 
   await term.boot([
-    ['NEO TERMINAL v2.0', 'ok', 60],
+    ['NEO TERMINAL v2.1', 'ok', 60],
     [`DISPLAY — ${SCHEMES[state.scheme].label}`, 'dim', 30],
     ['> mounting data sources', 'sys', 30]
   ]);

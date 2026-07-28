@@ -26,11 +26,11 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import {
   positionAt, orbitPath, planetPosition, planetElements, PLANET_NAMES,
   moonPosition, gmst, AU_KM, LD_KM, EARTH_R_KM, GEO_ALT_KM
-} from './astro.js?v=14';
+} from './astro.js?v=15';
 import {
   BODY_INFO, globeGeometry, globeMaterial, globeEdges, earthAxis
-} from './bodies.js?v=14';
-import { satPositionEci } from './satellites.js?v=14';
+} from './bodies.js?v=15';
+import { satPositionEci } from './satellites.js?v=15';
 
 export const HELIO_SCALE = 8;      // scene units per AU
 export const GEO_SCALE = 6;        // scene units per lunar distance
@@ -494,31 +494,25 @@ export class Viewport {
 
     const grid = new THREE.Group();
     this.gridMats = [];
-    for (const au of [0.5, 1, 1.5, 2, 3, 4, 5]) {
+    for (const au of [0.5, 1, 1.5, 2, 3, 5, 10, 20, 30]) {
       const m = this._lineMat(au === 1 ? 0.20 : 0.075);
       this.gridMats.push(m);
       grid.add(new THREE.LineSegments(ringGeometry(au * HELIO_SCALE), m));
     }
     const spokeMat = this._lineMat(0.05);
     this.gridMats.push(spokeMat);
-    grid.add(new THREE.LineSegments(spokeGeometry(0.2 * HELIO_SCALE, 5 * HELIO_SCALE, 12), spokeMat));
+    grid.add(new THREE.LineSegments(spokeGeometry(0.2 * HELIO_SCALE, 31 * HELIO_SCALE, 12), spokeMat));
     G.add(grid);
     this.helioGrid = grid;
 
-    // Sun: a shaded globe plus vector rays.
+    // Sun: just the shaded globe. It used to carry a ring of radiating
+    // ticks, but the Sun is the one object on the plot that is genuinely
+    // self-luminous — drawing spokes around it made it read as another
+    // annotated marker rather than as the light source everything else
+    // is lit by.
     this.sunGlobe = this._makeGlobe('Sun', 3, null);
     this.sunGlobe.scale.setScalar(0.30);
     G.add(this.sunGlobe);
-
-    this.sunRayMat = this._lineMat(0.45);
-    const rays = [];
-    for (let k = 0; k < 16; k++) {
-      const a = (k / 16) * Math.PI * 2;
-      rays.push(0.42 * Math.cos(a), 0, 0.42 * Math.sin(a), 0.72 * Math.cos(a), 0, 0.72 * Math.sin(a));
-    }
-    const rg = new THREE.BufferGeometry();
-    rg.setAttribute('position', new THREE.Float32BufferAttribute(rays, 3));
-    G.add(new THREE.LineSegments(rg, this.sunRayMat));
 
     // Planet orbits + globes.
     this.planetOrbits = new THREE.Group();
@@ -666,7 +660,6 @@ export class Viewport {
     for (const m of this.gridMats) m.color.setHex(s.grid);
     for (const m of this.geoRingMats) m.color.setHex(s.grid);
     for (const m of this.planetOrbitMats) m.color.setHex(s.planetOrbit);
-    this.sunRayMat.color.setHex(s.sun);
     this.craftTrailMat.color.setHex(s.craft);
     this.moonTrailMat.color.setHex(s.grid);
     this.selOrbitMat.color.setHex(s.selected);
