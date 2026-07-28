@@ -8,7 +8,9 @@ still HTML5, and (b) hunted for places where a naively-built simulation would te
 
 - 152 candidate demos evaluated across 16 units
 - 51 external simulations proposed; **11 failed verification** (dead Java, wrong slug, or content mismatch)
-- Recommendation: **44 custom builds, 34 verified external links, 38 topics deliberately left without a demo**
+- Final state: **54 custom builds, 2 external animations kept as links, 38 topics deliberately left without a demo**
+- The 34 external simulations originally shortlisted were later removed: every interactive one was either
+  discarded as redundant with a build, or replaced by a build. Only two animations were kept.
 
 The live inventory is at [`resources/demos/`](resources/demos/index.html), filterable by course, unit, and
 whether an item is built here or linked out.
