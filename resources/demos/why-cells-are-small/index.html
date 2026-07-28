@@ -331,8 +331,8 @@
             streaming their cytoplasm, which beats diffusion outright. C<sub>s</sub> is pinned at the membrane, so
             the outside is assumed well mixed; an unstirred layer would lower it. The cylinder is solved for radial
             diffusion only, ignoring flux in through its two ends, and the sheet ignores flux through its rim
-            &mdash; both are good once the elongation slider is above about 5&times;, which is why the slider starts
-            there. The drawing is rescaled to fill the panel, so read the size off the scale bar, not off the
+            &mdash; both are good once the elongation slider is above about 5&times;, which is why it starts at
+            20&times;. The drawing is rescaled to fill the panel, so read the size off the scale bar, not off the
             picture. And oxygen is only one of the things a cell has to move: this is the diffusion constraint, not
             a complete theory of cell size.
           </p>
@@ -350,7 +350,7 @@
         cell <em>&ldquo;does not have enough surface to absorb the nutrients it needs&rdquo;</em>. That sentence is
         wrong, and this page is built to break it. Look at the two flux numbers in the
         <em>Does the membrane fail?</em> panel. They are equal. They are equal at 10 &micro;m, at 120 &micro;m, and
-        at 1000 &micro;m with a third of the cell already dead. The membrane delivers <strong>100% of demand, always</strong>.
+        at 1000 &micro;m with nearly three quarters of the cell already dead. The membrane delivers <strong>100% of demand, always</strong>.
         A cell in trouble is not a cell whose surface stopped keeping up.
       </p>
       <p>
@@ -365,21 +365,22 @@
       </p>
       <p>
         <strong>Watch the shape change do what SA:V cannot explain.</strong> With the starting settings, a sphere of
-        radius 250 &micro;m has a dead core 128 &micro;m across &mdash; 13.5% of it is anoxic. Now tick
+        radius 250 &micro;m has a dead core of radius 128 &micro;m &mdash; 13.5% of it is anoxic. Now tick
         <em>keep the volume fixed</em> and press <em>Flat sheet</em>. Not one molecule of cytoplasm was removed: the
         cell is now 55 &micro;m thick and about 1.1 mm across, and its centre sits at <strong>92.5 &micro;M</strong>,
         essentially the outside value. Its SA:V rose by a factor of 3.4, but its centre concentration went from dead
         to full. Those two things are nowhere near proportional, because SA:V was never the cause. What actually
         changed was the trip from the surface to the deepest point: 250 &micro;m became 27 &micro;m, and the drop
-        goes as the square of that, so the deficit fell by roughly eighty-fold. This is why genuinely large cells
+        goes as the square of that &mdash; eighty-fold from the distance alone, about twenty-eight-fold once the
+        sheet&rsquo;s geometry constant of 2, instead of the sphere&rsquo;s 6, gives part of it back. This is why genuinely large cells
         are long and thin or flat and wide &mdash; a nerve fibre a metre long is still only micrometres thick, and
         every point in it is a few micrometres from the outside.
       </p>
       <p>
         <strong>Do not blame the clock.</strong> The other popular wrong answer is &ldquo;diffusion is too slow to
         reach the middle of a big cell&rdquo;. Check the timing panel. A real 10 &micro;m cell equilibrates with
-        oxygen in about 8 <em>milliseconds</em>; even a 100 &micro;m giant does it in under a second, and a 1 mm one
-        in a minute and a half. Compare that with a cell cycle measured in hours. The transient is over almost
+        oxygen in about 2 <em>milliseconds</em>; even a 100 &micro;m giant does it in under a second, and a 1 mm one
+        in about twenty seconds. Compare that with a cell cycle measured in hours. The transient is over almost
         instantly on any biological clock &mdash; and once it is over, it stays over. The problem is not that oxygen
         takes too long to arrive. The problem is that when it gets there, in the steady state, there is none left.
         (Turn D down to 25 &micro;m&sup2; s⁻¹ with the <em>large protein</em> preset and the timing does become

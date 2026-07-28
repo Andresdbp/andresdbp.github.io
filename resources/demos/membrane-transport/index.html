@@ -237,7 +237,7 @@
             <div class="readouts two">
               <div class="readout is-accent span2">
                 <div class="r-label">Net flux</div>
-                <div class="r-value" id="rGlcNet">6.26<span class="r-unit">fmol s⁻¹</span></div>
+                <div class="r-value" id="rGlcNet">5.76<span class="r-unit">fmol s⁻¹</span></div>
                 <div class="r-sub" id="rGlcDir">into the cell</div>
               </div>
               <div class="readout">
@@ -334,7 +334,7 @@
               </thead>
               <tbody>
                 <tr><td>Simple &mdash; O<sub>2</sub></td><td id="tO2">9.00</td><td id="tO2z">9.00</td></tr>
-                <tr><td>Facilitated &mdash; glucose</td><td id="tGlc">6.26</td><td id="tGlcz">6.26</td></tr>
+                <tr><td>Facilitated &mdash; glucose</td><td id="tGlc">5.76</td><td id="tGlcz">5.76</td></tr>
                 <tr><td>Na<sup>+</sup> pump</td><td id="tNa">0.00</td><td id="tNaz">0.00</td></tr>
               </tbody>
             </table>
@@ -1128,7 +1128,7 @@
         el.rGrad.innerHTML = isFinite(f.na.grad)
           ? F.dec(f.na.grad, 1) + '&times;'
           : '—';
-        el.rGradSub.textContent = f.na.grad > 1.05
+        el.rGradSub.textContent = Math.abs(f.na.grad - 1) > 0.05
           ? fC(S.naOut) + ' mM out vs ' + fC(S.naIn) + ' mM in'
           : 'no gradient — both sides equal';
         el.panelNa.classList.toggle('route-off', !S.pumpOn);
@@ -1198,8 +1198,17 @@
           + 'to run out of, so doubling [outside] doubles the flux at any point on the axis. Facilitated diffusion '
           + 'is a <strong>hyperbola</strong> that flattens against V<sub>max</sub> = ' + fF(vmax) + ' fmol s⁻¹, '
           + 'because there are only ' + F.dec(S.carriers, 0) + ' carriers and they can only work so fast. '
-          + 'They cross at 65 mM. Drag the <em>Carrier proteins</em> slider and the ceiling moves; the straight '
+          + crossText(vmax) + 'Drag the <em>Carrier proteins</em> slider and the ceiling moves; the straight '
           + 'line never gets one.';
+      }
+
+      // where the straight line overtakes the hyperbola: ks·C = Vmax·C/(Km + C)
+      function crossText(vmax) {
+        var ks = S.o2On ? P_S : 0;
+        if (ks <= 0 || vmax <= 0) return '';
+        var cross = vmax / ks - KM_G;
+        if (cross <= 0 || cross > CMAX) return '';
+        return 'They cross at ' + F.dec(cross, 0) + ' mM. ';
       }
 
       // ==================================================================

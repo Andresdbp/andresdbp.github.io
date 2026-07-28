@@ -488,7 +488,12 @@
         var A = cd.al.A.a, B = cd.al.B.a;
         return !((A === 'A' && B === 'B') || (A === 'a' && B === 'b'));
       }
-      function inInterval(p) { return p > GENES[1][0].pos && p < GENES[1][1].pos; }
+      // A locus is swapped iff its position is strictly distal to p (g.pos > p),
+      // so exactly one of A, B is swapped — i.e. the chromatids are recombinant —
+      // when GENES[1][0].pos <= p < GENES[1][1].pos. The lower bound must be
+      // inclusive to match crossOver(), or p = 0.30 draws recombinants while the
+      // readouts report none.
+      function inInterval(p) { return p >= GENES[1][0].pos && p < GENES[1][1].pos; }
       function alleleString(cd) {
         return GENES[cd.chrom].map(function (g) { return cd.al[g.id].a; }).join(' ');
       }
@@ -1076,8 +1081,12 @@
             + 'number halves.';
         }
         if (s === 6) {
-          return 'Metaphase II, in both daughter cells at once. Each cell is already haploid; the dyads line up '
-            + 'individually on their own plates. Nothing about ploidy changes here.';
+          return 'Metaphase II, in both daughter cells at once. '
+            + (S.nd === 'mi'
+              ? 'The anaphase I failure has already left one cell with an extra chromosome and the other one '
+                + 'short, so neither is haploid; '
+              : 'Each cell is already haploid; ')
+            + 'the dyads line up individually on their own plates. Nothing about ploidy changes here.';
         }
         if (s === 7) {
           if (S.nd === 'mii') {

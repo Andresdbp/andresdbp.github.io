@@ -913,10 +913,13 @@
       });
 
       el.btnDouble.addEventListener('click', function () {
-        var capped = false;
-        function dbl(v) { if (v * 2 > CMAX) { capped = true; return v; } return v * 2; }
-        S.cL = S.cL.map(dbl);
-        S.cR = S.cR.map(dbl);
+        // all or nothing: doubling only some coefficients would unbalance a
+        // balanced equation, which is the opposite of the point being made
+        var capped = allCoefs().some(function (v) { return v * 2 > CMAX; });
+        if (!capped) {
+          S.cL = S.cL.map(function (v) { return v * 2; });
+          S.cR = S.cR.map(function (v) { return v * 2; });
+        }
         refresh();
         if (capped) {
           el.verdict.className = 'note warn';

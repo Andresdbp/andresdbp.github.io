@@ -514,7 +514,7 @@
             { h: 'CO<sub>2</sub>', t: 'CO₂', v: 1, side: 1, c0: 0.000 },
             { h: 'H<sub>2</sub>', t: 'H₂', v: 1, side: 1, c0: 0.000 }
           ],
-          K: 5.10, T: 700, dH: -41.2, cmax: 0.40,
+          K: 5.10, T: 800, dH: -41.2, cmax: 0.40,
           fact: 'Every coefficient is 1 and Δn = 0. This is the forgiving reaction — ignoring coefficients costs nothing here, which is exactly why the habit survives.'
         }
       ];
@@ -1340,7 +1340,7 @@
               'and no root to reject. Nudge K and the x<sup>2</sup> term comes back.';
           } else {
             pl.className = 'note';
-            pl.innerHTML = '<strong>Degree ' + deg + ' &mdash; there is no formula for this one.</strong> ' + txt +
+            pl.innerHTML = '<strong>Degree ' + deg + ' &mdash; there is no formula worth using here.</strong> ' + txt +
               '<br>It is solved here by squeezing in on the answer numerically. Only one root can sit inside the ' +
               'allowed window ' + fx(s.win.lo) + ' &le; x &le; ' + fx(s.win.hi) +
               ' mol L<sup>&minus;1</sup>, because outside that window some concentration would be negative. ' +
@@ -1524,8 +1524,9 @@
               'concentration was multiplied by ' + F.dec(f, 2) + '&times;. Because Δn of gas is ' +
               (dn > 0 ? '+' : '') + dn + ', Q was multiplied by ' + F.dec(Math.pow(f, dn), 3) +
               ' and landed at ' + fK(d.qAfter) + ' against an unchanged K of ' + fK(d.K0) + '. The system ' +
-              'shifts ' + (d.shift === 'right' ? 'right' : 'left') + ', toward the side with ' +
-              (Math.pow(f, dn) > 1 ? 'fewer' : 'more') + ' moles of gas.' + eqTxt;
+              'shifts ' + (d.shift === 'none' ? 'nowhere' :
+                (d.shift === 'right' ? 'right' : 'left') + ', toward the side with ' +
+                (f > 1 ? 'fewer' : 'more') + ' moles of gas') + '.' + eqTxt;
           }
           cap.innerHTML = 'K does not care about volume. Only Q moves, and only when the two sides of the ' +
             'equation hold different numbers of moles of gas. Adding an unreactive gas at fixed volume would ' +

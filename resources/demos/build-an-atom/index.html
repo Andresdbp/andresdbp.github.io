@@ -352,8 +352,8 @@
             What else is simplified. Electrons do not orbit in circles &mdash; the rings stand in for energy
             levels, not paths. Isotope masses are real measured values in unified atomic mass units (u), where
             1 u is defined as exactly one twelfth of the mass of a carbon-12 atom, which is why carbon-12 reads
-            12.000000 exactly. The listed isotopes are the ones found in nature; you can build nuclei here that
-            do not occur naturally or would fly apart in microseconds, and the page will tell you when you have.
+            12.000000 exactly. The listed isotopes are the ones that make up natural samples in weighable
+            amounts; you can build nuclei here that do not occur naturally or would fly apart in microseconds, and the page will tell you when you have.
             Potassium-40 is naturally occurring but radioactive, with a half-life of 1.25 billion years, which is
             long enough that it is still around and still counted in the average.
           </p>
@@ -967,7 +967,7 @@
           var idx = isoIndex(Z, A);
           var natTxt = idx >= 0
             ? 'This nuclide occurs in nature (' + fmtAb(natural(Z)[idx]) + '% of all ' + E.name.toLowerCase() + ' atoms).'
-            : 'No naturally occurring ' + E.name.toLowerCase() + ' isotope has ' + S.n + ' neutron' + (S.n === 1 ? '' : 's') + ' — you have built an artificial or unstable nuclide.';
+            : 'No stable ' + E.name.toLowerCase() + ' isotope has ' + S.n + ' neutron' + (S.n === 1 ? '' : 's') + ' — you have built a radioactive nuclide. Some of these, carbon-14 among them, do occur in nature, but in traces far too small to count in the average.';
           el.atomCap.textContent =
             E.name + ' has ' + Z + ' proton' + (Z === 1 ? '' : 's') + ', and it would still be ' +
             E.name.toLowerCase() + ' with any number of neutrons. ' + natTxt;
@@ -1044,7 +1044,8 @@
           el.isoIntro.innerHTML = '<strong>' + E.name + ' has only one natural isotope.</strong> ' +
             'With nothing to average against, the periodic table simply prints that isotope&rsquo;s own mass, ' +
             F.dec(iso[0][1], 4) + ' u. Notice it is <em>still</em> not the whole number ' + iso[0][0] +
-            ' &mdash; binding the nucleus together converts a little of the mass into energy. ' +
+            ' &mdash; only carbon-12 comes out exactly whole, because that is what defines the u. ' +
+            'Every other nuclide lands a little above or below, depending on how tightly its nucleus is bound. ' +
             'Switch to chlorine to see the real point.';
         } else if (Z === 17) {
           el.isoIntro.className = 'note';
@@ -1065,7 +1066,8 @@
           ? 'Your atom is ' + E.name.toLowerCase() + '-' + A + ', the highlighted bar: mass ' +
             F.dec(iso[builtIdx][1], 4) + ' u, mass number ' + A + '. The dashed line at ' + F.dec(avg, 3) +
             ' u is the average over all of them, and it sits on no bar at all.'
-          : E.name + '-' + A + ' is not one of the natural isotopes, so it has no bar and contributes nothing ' +
+          : E.name + '-' + A + ' is not one of the isotopes that make up natural ' + E.name.toLowerCase() +
+            ' in weighable amounts, so it has no bar and contributes nothing ' +
             'to the average. The average over the natural mixture is ' + F.dec(avg, 3) + ' u.';
 
         el.btnNat.disabled = nat;

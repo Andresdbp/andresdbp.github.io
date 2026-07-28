@@ -225,7 +225,7 @@
                 <span class="ctrl-value" id="gfOut">100%</span>
               </div>
               <input type="range" id="gfR" min="0" max="100" step="1" value="100">
-              <p class="ctrl-hint">Sets how fast cyclin&nbsp;D is made. Below about <strong>32%</strong> the cell never phosphorylates Rb, so it sits in G<sub>0</sub> and never divides &mdash; drag it down and see.</p>
+              <p class="ctrl-hint">Sets how fast cyclin&nbsp;D is made. Below about <strong>34%</strong> the cell never phosphorylates Rb, so it sits in G<sub>0</sub> and never divides &mdash; drag it down and see.</p>
             </div>
 
             <div class="ctrl">
@@ -394,7 +394,7 @@
         Cyclin D is made only while growth factors are present, and it is what frees cyclin E&ndash;CDK2 by mopping
         up p27. Cyclin E accumulating past its threshold is what starts S phase, which is why removing growth
         factors early sends the cell back to G<sub>0</sub> but removing them after the restriction point does
-        nothing at all &mdash; drag the growth-factor slider to zero at 5&nbsp;h and then try again at 9&nbsp;h.
+        not stop it &mdash; drag the growth-factor slider to zero at 5&nbsp;h and then try again at 9&nbsp;h.
         Cyclin A drives the forks. Cyclin B builds all the way through S and G<sub>2</sub>, and the moment
         CDK1&ndash;cyclin B activity is allowed to cross its threshold, mitosis begins. Every checkpoint on this
         page works by interfering with a cyclin&ndash;CDK complex: p21 blocks CDK2, Chk1 keeps CDK1
@@ -450,7 +450,7 @@
       // Checkpoints act by INHIBITING a cyclin-CDK complex, which is how
       // real checkpoints work:
       //   G1  : p53 -> p21 -| cyclin E-CDK2      (checks damage + mitogen)
-      //   G2  : ATR -> Chk1 -| Cdc25 -| CDK1     (checks replication + damage)
+      //   G2  : ATR -> Chk1 -| Cdc25 -> CDK1     (checks replication + damage)
       //   SAC : MCC -| APC/C-Cdc20               (checks kinetochore attachment)
       //
       // Damage handling. Repair is much faster when p53 is present, because
@@ -615,7 +615,7 @@
 
         if (!S.committed && S.p27 < 0.45) {
           S.committed = true;
-          S.gfAtR = d.m;
+          S.gfAtR = IN.gf;      // the OUTSIDE signal, not the self-made one
         }
 
         // ---- replication ----
@@ -1297,7 +1297,8 @@
         }
         if (d.inG1 && d.aE < 0.02 && d.m < 0.32) {
           return '<strong>G<sub>0</sub>.</strong> Without growth factors, cyclin D never accumulates, Rb is '
-            + 'never phosphorylated, and the cell simply does not enter the cycle. Every cyclin here is at zero.';
+            + 'never phosphorylated, and the cell simply does not enter the cycle. Cyclin E, A and B all '
+            + 'stay at zero.';
         }
         if (d.inM && (S.sub === 'ana' || S.sub === 'telo')) {
           return 'Cyclin B is being destroyed by APC/C right now. <strong>That destruction is what ends '
@@ -1331,7 +1332,7 @@
             + ' h</strong> while p53 drove repair, and only ' + F.dec(L.mut * 100, 1)
             + '% of the genome was copied while damaged. That delay is the checkpoint doing its job.');
         }
-        if (L.mut > 0.05 && L.holdG1 <= 0.2) {
+        if (L.mut > 0.05 && L.holdG1 <= 0.2 && !IN.g1ok) {
           bits.push('<strong>The G<sub>1</sub> checkpoint failure showed up here.</strong> '
             + F.dec(L.mut * 100, 1) + '% of the genome was replicated while it still carried lesions. Those '
             + 'lesions are now permanent base changes in <em>both</em> daughters, and no checkpoint can ever '
@@ -1375,7 +1376,8 @@
         if (tally.mut) {
           rows.push(['hit', tally.mut + ' division' + (tally.mut > 1 ? 's' : '')
             + ' replicated damaged DNA — up to ' + F.dec(tally.worstMut * 100, 0)
-            + '% of the genome mutated in one cycle (G<sub>1</sub> checkpoint)']);
+            + '% of the genome mutated in one cycle'
+            + (IN.g1ok ? '' : ' (G<sub>1</sub> checkpoint)')]);
         }
         if (tally.under) {
           rows.push(['hit', tally.under + ' division' + (tally.under > 1 ? 's' : '')

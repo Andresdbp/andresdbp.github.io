@@ -269,7 +269,7 @@
             through space and then projected, which is why it looks like a slice of an ellipse rather than a circle.
           </p>
           <p class="ctrl-hint" style="margin-top:11px">
-            What is simplified. The compressed angles here are the standard teaching values &mdash; about 2&deg;
+            What is simplified. The compressed angles here are the standard teaching values &mdash; about 2.5&deg;
             of squeeze per lone pair on four groups, about 2&deg; on three &mdash; and real molecules scatter
             around them: H<sub>2</sub>O is 104.5&deg; but H<sub>2</sub>S is 92.1&deg;, NH<sub>3</sub> is 107&deg;
             but PH<sub>3</sub> is 93.5&deg;. VSEPR gets the <em>shape</em> right and the angle only roughly, because
@@ -1006,9 +1006,13 @@
 
         if (eName === mName) {
           el.noteDiff.className = 'note';
-          el.noteDiff.innerHTML = '<strong>The two names agree here</strong>, and only because there are no lone '
-            + 'pairs: every electron group has an atom on the end, so the shape of the groups and the shape of '
-            + 'the atoms are the same object. Add one lone pair and they come apart.';
+          el.noteDiff.innerHTML = lp === 0
+            ? '<strong>The two names agree here</strong>, and only because there are no lone '
+              + 'pairs: every electron group has an atom on the end, so the shape of the groups and the shape of '
+              + 'the atoms are the same object. Add one lone pair and they come apart.'
+            : '<strong>The two names agree here</strong>, but not because the lone pair is absent &mdash; it is '
+              + 'there, and it has no atom on the end. Only one group is a bond, so the molecule has two atoms in '
+              + 'total, and two atoms always lie on a straight line. Both names come out linear anyway.';
         } else {
           el.noteDiff.className = 'note warn';
           el.noteDiff.innerHTML = '<strong>Two different names, one molecule.</strong> All ' + g + ' groups spread '
