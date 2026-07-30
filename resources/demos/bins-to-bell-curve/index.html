@@ -520,7 +520,7 @@
             Demo.fmt.pct(h2, 0) + ' of the variation, but you can no longer read genotype off height.';
         } else {
           cap = 'Environmental variance now outweighs genetic variance (h² = ' + Demo.fmt.dec(h2, 2) +
-            '). Two offspring at the same height can be ' + cls + ' different genotypes apart.';
+            '). Two offspring at the same height can be ' + (2 * n) + ' phenotype classes apart.';
         }
         document.getElementById('caption').textContent = cap;
 
