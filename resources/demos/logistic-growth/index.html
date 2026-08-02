@@ -293,7 +293,7 @@
         &mdash; not because K is a wall, but because dN/dt = rN(1 &minus; N/K) goes to zero exactly when N
         reaches K. Nothing pushes it over, and nothing ever can: that is a fact about the equation, so any
         textbook figure showing the smooth continuous logistic curve poking above K is simply drawn wrong.
-        Now drag the lag to 2.0 days. The population sails past K to about 1,276 &mdash; a 28% overshoot
+        Now drag the lag to 2.0 days. The population sails past K to about 1,275 &mdash; a 28% overshoot
         &mdash; and then falls back and settles. Take the lag to 3.5 days and it never settles at all: it
         cycles between roughly 260 and 2,130 forever. The reason is the whole point. With a lag, the
         population is responding to the crowding of &tau; days ago. At the moment it crosses K it still
@@ -927,7 +927,7 @@
 
         // --- captions ---
         var capBits = 'Solid line: logistic. Dashed line: the same population with no limit at all, N₀e^(rt).';
-        if (st.tHalf != null && st.tHalf <= 0) {
+        if (st.tHalf != null && st.tHalf < 0) {
           capBits += ' N₀ already sits above K/2, so this population is past its steepest point on day 0 and only ever slows down.';
         } else if (st.tHalf != null && st.tHalf <= S.T) {
           capBits += ' The logistic passes K/2 on day ' + F.dec(st.tHalf, 2) + ', which is where it is steepest.';

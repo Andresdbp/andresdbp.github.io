@@ -540,7 +540,7 @@
         el('plotLabelMode').textContent = state.axis === 'log' ? 'logarithmic y-axis' : 'linear y-axis';
         el('plotCap').innerHTML = state.axis === 'log'
           ? 'Log y-axis, survivors per 1000 born, 1 to 1000 in three decades. Each gridline is 10&times; the one below it, so equal height means equal <em>proportion</em> lost. Type II lands on the dashed straight line. Now press Linear — the numbers behind these curves do not change.'
-          : 'Linear y-axis, survivors per 1000 born, 0 to 1000 in equal steps of 200. Identical data. Type II now plunges and hugs the floor, looking much like Type III, and nothing is straight. The dashed line is still a straight line on screen — no curve is near it.';
+          : 'Linear y-axis, survivors per 1000 born, 0 to 1000 in equal steps of 200. Identical data. Type II now plunges and hugs the floor, looking much like Type III, and nothing is straight. The dashed line is still a straight line on screen — but no curve follows it now.';
         el('mortCap').textContent = flat
           ? 'Ten identical bars. That flatness is the definition of Type II, and the reason its log plot is a straight line.'
           : 'The bars are not equal, so the proportion dying depends on age and no log axis can straighten this curve.';

@@ -389,7 +389,7 @@
       var START_POP = 100;        // millions, arbitrary scale
 
       // l(x): survivors to exact age 5j out of 1 birth. A moderate-mortality
-      // schedule; life expectancy at birth works out near 77 years.
+      // schedule; life expectancy at birth works out near 79 years.
       var LX_SURV = [1.0000, 0.9900, 0.9890, 0.9880, 0.9865, 0.9835, 0.9800,
                      0.9755, 0.9700, 0.9625, 0.9515, 0.9355, 0.9125, 0.8800,
                      0.8330, 0.7640, 0.6650, 0.5250, 0.3400];
@@ -513,12 +513,18 @@
         var baseIdx = Math.round(St.change / STEP);
         var base = tot[baseIdx];
 
-        // level-off = first step after the change with growth < 0.1 %/yr
+        // level-off = first step after the change whose growth has settled inside
+        // +/-0.1 %/yr. The test is on the MAGNITUDE whenever the new fertility
+        // implies a settling level: a pyramid with negative momentum shrinks from
+        // the very first step, so a one-sided test would call it settled at once and
+        // report a five-year dip instead of the decades-long decline. When fertility
+        // implies perpetual decline there is no level, and the one-sided test is what
+        // correctly locates the peak.
         var levelIdx = null;
         if (!permanent) {
           for (k = baseIdx + 1; k < tot.length; k++) {
             var g = Math.pow(tot[k] / tot[k - 1], 1 / STEP) - 1;
-            if (g < 0.001) { levelIdx = k; break; }
+            if ((declining ? g : Math.abs(g)) < 0.001) { levelIdx = k; break; }
           }
           if (levelIdx === null) levelIdx = tot.length - 1;
         }
@@ -1077,6 +1083,11 @@
           el.popCap.textContent = 'Fertility falls to ' + F.dec(St.tfr, 2) + ' at year ' + St.change
             + ', but the population keeps growing until year ' + (St.change + RES.levelYr)
             + ' and ends ' + F.dec(RES.gain / RES.base * 100, 1) + '% larger than it was at the change.';
+        } else if (RES.gain / RES.base * 100 < -5) {
+          el.popCap.textContent = 'Fertility is ' + F.dec(St.tfr, 2) + ' from year ' + St.change
+            + ', but this old pyramid keeps shrinking until year ' + (St.change + RES.levelYr)
+            + ' and ends ' + F.dec(Math.abs(RES.gain / RES.base * 100), 1)
+            + '% smaller than it was at the change.';
         } else {
           el.popCap.textContent = 'This pyramid has little or no stored growth, so the population responds to '
             + 'the fertility change almost at once.';

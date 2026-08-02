@@ -138,7 +138,7 @@
             <span class="lg"><i style="background:var(--series-1)"></i>HNF-4&alpha;</span>
             <span class="lg"><i style="background:var(--series-3)"></i>C/EBP&alpha;</span>
             <span class="lg"><i style="background:var(--series-2)"></i>Sp1</span>
-            <span class="lg"><i style="background:var(--bad)"></i>REST (repressor)</span>
+            <span class="lg"><i style="background:var(--bad)"></i>MeCP2 (repressor)</span>
             <span class="lg"><i style="background:var(--series-4)"></i>MyoD</span>
           </div>
           <p class="stage-caption" id="eukCap">&nbsp;</p>
@@ -291,7 +291,7 @@
                 <span class="tf-tag" id="tagSP1">GC box</span>
               </div>
               <div class="tf-line">
-                <label class="check"><input type="checkbox" id="tfREST"><span class="tfdot" style="background:var(--bad)"></span>REST</label>
+                <label class="check"><input type="checkbox" id="tfREST"><span class="tfdot" style="background:var(--bad)"></span>MeCP2</label>
                 <span class="tf-tag" id="tagREST">Silencer</span>
               </div>
               <div class="tf-line">
@@ -302,7 +302,7 @@
             <p class="ctrl-hint" style="margin-top:11px">
               Tick a box that the cell type did not give you and you have built a cell that does not exist &mdash;
               which is exactly the experiment. Put HNF-4&alpha; and C/EBP&alpha; into the neuron and the gene
-              still barely moves; now untick REST as well.
+              still barely moves; now untick MeCP2 as well.
             </p>
             <div class="btn-row" style="margin-top:11px">
               <button class="btn" id="btnCellReset">Back to the real cell</button>
@@ -333,7 +333,7 @@
             <div class="panel-title">How the number is built</div>
             <p class="ctrl-hint">
               Basal promoter 2.0 units. Each bound activator <em>multiplies</em>: Sp1 &times;1.5, HNF-4&alpha;
-              &times;5, C/EBP&alpha; &times;6. REST on the silencer divides by 12. Full activation is
+              &times;5, C/EBP&alpha; &times;6. MeCP2 on the silencer divides by 12. Full activation is
               2.0 &times; 1.5 &times; 5 &times; 6 = 90.0 units, and the readout is that raw figure as a
               percentage of 90.0. Multiplying, not adding, is the point: two activators together give far more
               than the two of them separately, which is why enhancers behave as combinations rather than as a
@@ -343,7 +343,7 @@
               <strong>What is simplified.</strong> The horizontal axis of the map is not to scale; the enhancers
               really are thousands of base pairs away and their positions here are squashed so they fit. Real
               enhancers also work in either orientation and from either side of the gene. Chromatin is left out
-              entirely &mdash; in a real neuron REST does not just sit there, it recruits histone deacetylases
+              entirely &mdash; in a real neuron MeCP2 does not just sit there, it recruits histone deacetylases
               and the region is packed away, which is a far more durable off switch than the twelve-fold
               division used here. The factor names are real proteins; the numbers attached to them are
               illustrative.
@@ -402,9 +402,10 @@
         a half kilobases upstream, the same silencer. The gene reads 100% in the hepatocyte and
         <strong>0.278%</strong> in the neuron, and not one base pair differs between them. What differs is which
         transcription factor <em>proteins</em> are in the nucleus: HNF-4&alpha; and C/EBP&alpha; are made in liver
-        and not in neurons, REST is made in neurons and not in liver. Note the third cell too. The muscle cell
+        and not in neurons, while MeCP2 is stockpiled in neurons at a level no other cell comes close to. Note
+        the third cell too. The muscle cell
         sits at 3.33%, off simply because nobody is there to switch it on, while the neuron is pushed down to
-        0.278% because REST is actively holding it shut. &ldquo;Off by absence&rdquo; and &ldquo;off by
+        0.278% because MeCP2 is actively holding it shut. &ldquo;Off by absence&rdquo; and &ldquo;off by
         repression&rdquo; are different states, and MyoD makes the last point: it is abundant in muscle, it is a
         powerful activator, and it does nothing here, because this gene has no site for it to bind. Having the
         protein is not enough. The DNA has to have the address.
@@ -445,7 +446,7 @@
       //
       // TAB 2 — eukaryotic enhancers, multiplicative (enhancer synergy).
       //
-      //   raw = 2.0 * (Sp1 ? 1.5) * (HNF4 ? 5) * (CEBP ? 6) / (REST ? 12)
+      //   raw = 2.0 * (Sp1 ? 1.5) * (HNF4 ? 5) * (CEBP ? 6) / (MeCP2 ? 12)
       //   level(%) = 100 * raw / 90.0        (90.0 = all three activators)
       //
       //     hepatocyte 2*1.5*5*6      = 90.00 -> 100.0%   ON
@@ -1045,7 +1046,7 @@
       function tfColor(id, c) {
         return { hnf4: c.series[0], cebp: c.series[2], sp1: c.series[1], rest: c.bad, myod: c.series[3] }[id];
       }
-      var TF_SHORT = { hnf4: 'HNF4', cebp: 'C/EBP', sp1: 'Sp1', rest: 'REST', myod: 'MyoD' };
+      var TF_SHORT = { hnf4: 'HNF4', cebp: 'C/EBP', sp1: 'Sp1', rest: 'MeCP2', myod: 'MyoD' };
 
       var eukCv = Demo.canvas('#euk', function (ctx, w, h, c) {
         var narrow = w < 380;
@@ -1616,7 +1617,7 @@
             + 'promoter to RNA polymerase II. 100% of maximum.';
         } else if (S.cell === 'neuron') {
           note = '<strong>Neuron — off by repression.</strong> The liver activators are simply not made here, '
-            + 'and on top of that REST occupies the silencer. ' + fmtLevel(L) + '% of maximum, which is '
+            + 'and on top of that MeCP2 occupies the silencer. ' + fmtLevel(L) + '% of maximum, which is '
             + '<em>below</em> the muscle cell. Same DNA sequence as the hepatocyte, letter for letter.';
           cls = 'note bad';
         } else {
@@ -1629,13 +1630,13 @@
         el.eukNote.innerHTML = note;
 
         el.eukCap.innerHTML = 'Bound activators are carried to Mediator by looping the DNA, which is how a site '
-          + '12,000 base pairs away can touch a promoter. REST on the silencer works in the opposite direction '
+          + '12,000 base pairs away can touch a promoter. MeCP2 on the silencer works in the opposite direction '
           + '(dashed line). <strong>The horizontal axis is not to scale.</strong>';
 
         el.cells3Cap.innerHTML = 'Three cells from one person: 100.0%, 3.33% and 0.278%, with '
           + '<strong>identical DNA</strong> in all three. Nothing here is a mutation. The only difference is which '
           + 'transcription factor proteins each nucleus contains — and note that muscle is off because nobody '
-          + 'switched it on, while the neuron is pushed lower still because REST is actively holding it shut.';
+          + 'switched it on, while the neuron is pushed lower still because MeCP2 is actively holding it shut.';
 
         eukCv.redraw();
         cellsCv.redraw();
