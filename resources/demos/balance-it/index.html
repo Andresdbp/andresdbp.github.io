@@ -262,7 +262,7 @@
           <p class="note" style="margin-top:10px">
             <strong>A coefficient is a count.</strong> The 2 in <strong>2</strong> H<sub>2</sub>O means two whole
             water molecules. It multiplies <em>every</em> atom in the formula unit: 2 H<sub>2</sub>O is 4 H and 2 O.
-            With brackets it is easy to undercount &mdash; 2 Ca(NO<sub>3</sub>)<sub>2</sub> is 2 Ca, 4 N and
+            Brackets are where the count slips &mdash; 2 Ca(NO<sub>3</sub>)<sub>2</sub> is 2 Ca, 4 N and
             <strong>12</strong> O, because the 3 and the 2 multiply before the coefficient does. Set that reaction up
             and count the circles in the particle view.
           </p>
@@ -289,13 +289,14 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students who cannot get an equation to balance start editing the little
-        numbers. H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O will not balance, so they write
-        H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O<sub>2</sub> and it does &mdash; two hydrogens, two
-        oxygens, done. It is the single most common error in this unit, and it is not a small slip. Balancing is
-        supposed to be a statement that <em>atoms are conserved</em>. Changing a subscript quietly swaps in a
-        different substance and then claims the books balance. That is not conservation of mass; it is cooking the
-        books.
+        <strong>The misconception.</strong> When an equation refuses to balance, the tempting repair is the little
+        numbers. H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O will not balance, so
+        H<sub>2</sub> + O<sub>2</sub> &rarr; H<sub>2</sub>O<sub>2</sub> gets written instead &mdash; and it does
+        balance: two hydrogens, two oxygens, done. The instinct is a reasonable one, because the subscripts are the
+        only numbers in sight that make the count come out. It is also the most common error in this unit, and it is
+        not a small slip. Balancing is supposed to be a statement that <em>atoms are conserved</em>. Editing a
+        subscript quietly swaps in a different substance and then claims the books balance. That is not conservation
+        of mass; it is cooking the books.
       </p>
       <p>
         <strong>What to notice.</strong> The subscripts on this page cannot be edited at all. There is no control for
@@ -314,7 +315,7 @@
         coefficient divides by the same whole number, divide through.
       </p>
       <p>
-        <strong>Where students lose atoms.</strong> Brackets. In 3 Ca(NO<sub>3</sub>)<sub>2</sub> the oxygen count is
+        <strong>Where atoms go missing.</strong> Brackets. In 3 Ca(NO<sub>3</sub>)<sub>2</sub> the oxygen count is
         3 &times; 2 &times; 3 = 18, not 3 &times; 3 = 9 and not 6. The subscript inside the bracket, the subscript
         outside it, and the coefficient all multiply together. That is why the double-replacement reaction with
         calcium nitrate and sodium phosphate is on this page: build it, then count the oxygen circles on the left of
@@ -395,7 +396,7 @@
         {
           type: 'Double replacement', title: 'Lead(II) nitrate and potassium iodide',
           L: ['Pb(NO3)2', 'KI'], R: ['PbI2', 'KNO3'], ans: { L: [1, 2], R: [1, 2] },
-          note: 'The partners swap, and brilliant yellow lead iodide drops out of solution. Count the nitrate as a unit and it is easy.'
+          note: 'The partners swap, and brilliant yellow lead iodide drops out of solution. Count nitrate as a single unit rather than atom by atom.'
         },
         {
           type: 'Double replacement', title: 'Calcium nitrate and sodium phosphate',
@@ -666,7 +667,7 @@
         var mrows = Math.ceil(k / mcols);
         var step = rad * 2.15;
 
-        // faint outline so a student can count units, not just atoms
+        // faint outline so units can be counted, not just atoms
         var bw = mcols * step + rad * 1.1, bh2 = mrows * step + rad * 1.1;
         ctx.strokeStyle = c.lineSoft; ctx.lineWidth = 1;
         rrect(ctx, cx - bw / 2, cy - bh2 / 2, bw, bh2, Math.min(7, rad + 2));

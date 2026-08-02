@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Airbag Designer — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 5 &middot; Gases</div>
+      <h1>Airbag Designer</h1>
+      <p class="ws-sub">Grams of a solid to litres of a gas &mdash; and what the last step of that chain
+        actually depends on.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/airbag-designer/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know, on paper, before the screen tells you anything.
+        The point is to have a number to compare against later.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>An inflator holds 100.0&nbsp;g of sodium azide, which decomposes completely:
+          2&nbsp;NaN<sub>3</sub> &rarr; 2&nbsp;Na + 3&nbsp;N<sub>2</sub>. The gas in a deployed bag reaches
+          roughly 300&nbsp;&deg;C at 1.50&nbsp;atm. How many litres of N<sub>2</sub> does the bag hold under
+          those conditions? Commit to a number.
+          (M(NaN<sub>3</sub>) = 65.01&nbsp;g/mol.)</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+        <p style="margin-top:8px">In one sentence, say what conversion you used for the last step &mdash; moles
+          of N<sub>2</sub> to litres &mdash; and where that number came from.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading the chain</h2>
+      <p class="ws-intro">Open the demonstration and press <span class="ws-set">Reset</span>. The four cards
+        under the bag are one dimensional-analysis chain, left to right. The panels on the right report the
+        same result two ways.</p>
+
+      <ol class="ws-steps">
+        <li>Check that <span class="ws-set">Sodium azide weighed out</span> reads 100.0&nbsp;g,
+          <span class="ws-set">Gas temperature</span> reads 25&nbsp;&deg;C,
+          <span class="ws-set">Pressure in the bag</span> reads 1.00&nbsp;atm, and
+          <span class="ws-set">Driver bag &mdash; 60 L</span> is the selected target.</li>
+        <li>Copy the four card values, in order, into the table.</li>
+        <li>Then copy the four numbers from the two panels on the right.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:56%">Where it appears on screen</th><th>What it reads</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Card 1 &mdash; NaN<sub>3</sub> weighed out (g)</td><td></td></tr>
+          <tr><td class="filled">Card 2 &mdash; NaN<sub>3</sub> (mol)</td><td></td></tr>
+          <tr><td class="filled">Card 3 &mdash; N<sub>2</sub> produced (mol)</td><td></td></tr>
+          <tr><td class="filled">Card 4 &mdash; N<sub>2</sub> gas in the bag (L)</td><td></td></tr>
+          <tr><td class="filled">Molar volume (L/mol)</td><td></td></tr>
+          <tr><td class="filled">Gas volume (L)</td><td></td></tr>
+          <tr><td class="filled">Shortcut answer (L)</td><td></td></tr>
+          <tr><td class="filled">Off by (%)</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Card 2 to card 3 multiplies by 3/2. Point at the exact place that
+          fraction comes from &mdash; not &ldquo;the equation&rdquo; but which two numbers in it.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The header on card 4 names a molar volume <em>and</em> two conditions.
+          Write the header exactly as it appears, then say why the conditions are printed there at all when
+          cards 1&ndash;3 needed no conditions.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Switch the target to <span class="ws-set">Passenger &mdash; 150 L</span>
+          and back, watching your eight numbers. Do any of them change? Say what that tells you about the
+          difference between how much gas you made and how much gas the bag wants.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What the last step actually depends on</h2>
+      <p class="ws-intro">Keep the mass and the pressure fixed. Only the temperature moves, so the number of
+        moles of N<sub>2</sub> is identical in every row.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. Confirm the mass is 100.0&nbsp;g and the pressure is
+          1.00&nbsp;atm; do not touch either again during this part.</li>
+        <li>Drag <span class="ws-set">Gas temperature</span> to each value in the first column.</li>
+        <li>Record <span class="ws-set">Molar volume</span> and <span class="ws-set">Gas volume</span>. Fill the
+          T&nbsp;(K) and the last column yourself &mdash; the demonstration does not print them.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:15%">Gas temperature</th><th style="width:15%">T (K)</th>
+              <th>Molar volume (L/mol)</th><th>Gas volume (L)</th>
+              <th>Gas volume &divide; T (K)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0 &deg;C</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">100 &deg;C</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">200 &deg;C</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">300 &deg;C</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">400 &deg;C</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> State the relationship between gas volume and temperature in your own
+          words, in one sentence, and say which temperature scale your sentence is true on.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> From 100&nbsp;&deg;C to 200&nbsp;&deg;C the Celsius reading doubled.
+          By what factor did the gas volume actually grow? Use your T&nbsp;(K) column to account for the
+          difference.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Press <span class="ws-set">Hot deploy</span> (300&nbsp;&deg;C,
+          1.50&nbsp;atm) and record <span class="ws-set">Gas volume</span>: __________&nbsp;L. Compare it with
+          your part&nbsp;1 prediction. If they differ, name the specific assumption that caused the gap.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Every molar volume on this page is RT/P for an <em>ideal</em> gas. The demonstration says where that
+        stops being safe, in the panel below the chart &mdash; read it, including the part about what else is
+        packed into a real inflator alongside the azide.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Running the chain backwards</h2>
+      <p class="ws-intro">A design question rarely gives you the mass. It gives you the bag and asks what to
+        weigh out. <span class="ws-set">Weigh out exactly enough</span> solves the chain in reverse, for the
+        conditions currently set.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>, then press
+          <span class="ws-set">Weigh out exactly enough</span>. Record the mass and the fill percentage
+          (row 1).</li>
+        <li><strong>On paper first:</strong> work out how many grams the same 60&nbsp;L bag needs at
+          300&nbsp;&deg;C and 1.50&nbsp;atm. Show it in the space below. Then press
+          <span class="ws-set">Hot deploy</span>, press <span class="ws-set">Weigh out exactly enough</span>
+          again, and fill row 2.</li>
+        <li>Select <span class="ws-set">Passenger &mdash; 150 L</span>, press
+          <span class="ws-set">Room temperature</span>, press the button once more, and fill row 3.</li>
+      </ol>
+
+      <div class="lines"><i></i><i></i><i></i><i></i></div>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Conditions</th><th>Target bag</th><th>Sodium azide weighed out (g)</th>
+              <th>Fill of the bag (%)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">25 &deg;C, 1.00 atm</td><td class="filled">60 L</td><td></td><td></td></tr>
+          <tr><td class="filled">300 &deg;C, 1.50 atm</td><td class="filled">60 L</td><td></td><td></td></tr>
+          <tr><td class="filled">25 &deg;C, 1.00 atm</td><td class="filled">150 L</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Rows 1 and 2 fill the same bag with the same gas. Why does the hot one
+          need <em>less</em> azide? Answer in terms of litres per mole, not in terms of &ldquo;heat makes it
+          bigger&rdquo;.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Here is the same backwards calculation done with the memorised
+          shortcut: 60&nbsp;L &divide; 22.4&nbsp;L/mol = 2.679&nbsp;mol N<sub>2</sub>, &times;&nbsp;2/3 =
+          1.786&nbsp;mol NaN<sub>3</sub>, &times;&nbsp;65.01&nbsp;g/mol = 116.1&nbsp;g. Set
+          <span class="ws-set">Gas temperature</span> to 300&nbsp;&deg;C,
+          <span class="ws-set">Pressure in the bag</span> to 1.50&nbsp;atm,
+          <span class="ws-set">Driver bag &mdash; 60 L</span> as the target, and drag the mass to
+          <span class="ws-set">116.1&nbsp;g</span>.</p>
+        <p>Gas volume: __________&nbsp;L &nbsp;&nbsp; Fill: __________% &nbsp;&nbsp; The verdict says:</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:6px">The arithmetic in that shortcut calculation contains no mistakes. Say
+          precisely what is wrong with it anyway.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Press <span class="ws-set">Textbook STP</span> (0&nbsp;&deg;C,
+          1.00&nbsp;atm). Record <span class="ws-set">Off by</span>: __________%. The panel note changes
+          wording here. Using RT/P, explain why 22.4&nbsp;L/mol is the right factor at this one setting.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Use
+        R = 0.0821&nbsp;L&middot;atm/(mol&middot;K), M(NaN<sub>3</sub>) = 65.01&nbsp;g/mol, and the balanced
+        equation 2&nbsp;NaN<sub>3</sub> &rarr; 2&nbsp;Na + 3&nbsp;N<sub>2</sub>. Then reopen the demonstration,
+        dial in each problem, and check yourself.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> 45.0&nbsp;g of NaN<sub>3</sub> decomposes completely. Find the moles of
+          N<sub>2</sub> produced and the volume that gas occupies at 27&nbsp;&deg;C and 1.00&nbsp;atm.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A 150&nbsp;L passenger bag has to be filled at 150&nbsp;&deg;C and
+          1.20&nbsp;atm. What mass of NaN<sub>3</sub> does the inflator need?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Two inflators hold identical masses of NaN<sub>3</sub> and both deploy
+          at 1.00&nbsp;atm &mdash; one on a &minus;20&nbsp;&deg;C morning, one at 40&nbsp;&deg;C. Without
+          calculating either volume, find the factor by which the second bag is larger, and explain why that
+          factor is not 40 &divide; (&minus;20).</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> 100.0&nbsp;g of NaN<sub>3</sub> is to exactly fill the 60&nbsp;L driver
+          bag at 1.00&nbsp;atm. At what temperature, in &deg;C to the nearest degree, does that happen?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does more than this worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>0&nbsp;&deg;C and 1.00&nbsp;atm is not the only setting where the shortcut is right. Leave the
+          pressure at 1.50&nbsp;atm and hunt for a temperature that drives <em>Off by</em> under 0.5%. Then find
+          another pair. What do all of them have in common?</li>
+        <li>The lower chart plots litres per mole across five fixed conditions plus your current setting. Before
+          you move anything, predict where your bar will land relative to the
+          <em>300&nbsp;&deg;C, 2.00&nbsp;atm</em> row, then set the sliders and see.</li>
+        <li>The bag outline is drawn to scale, and width grows as the cube root of volume. Find two settings
+          whose gas volumes differ by a factor of 2 and judge by eye how much wider the second bag is. Check
+          your eye against 2<sup>1/3</sup>.</li>
+        <li>Select the passenger bag, press <span class="ws-set">Cold morning</span>, and press
+          <span class="ws-set">Weigh out exactly enough</span>. Watch what the mass slider does at its upper
+          end, and work out what the design would need instead.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Airbag Designer &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

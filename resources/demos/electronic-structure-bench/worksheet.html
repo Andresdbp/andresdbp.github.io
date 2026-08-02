@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Electronic Structure Bench &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 2 &middot; Atomic Structure &amp; Periodic Table</div>
+      <h1>Electronic Structure Bench</h1>
+      <p class="ws-sub">Where an electron actually is, and how measured ionization energies hand you the
+        shell structure without anyone having to assert it.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/electronic-structure-bench/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The value of this page is having something on
+        paper to argue with later.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A magnesium atom has 12 electrons. Pull them off one at a time and measure the energy each
+          removal costs. At some point the next electron will suddenly cost several times more than the
+          one before it. <strong>After how many removals does that first jump happen?</strong> Give a
+          whole number, and a rough guess at the factor (&times;2? &times;5? &times;20?).</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what you reasoned from.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Getting your bearings: where the electron is</h2>
+      <p class="ws-intro">Open the demonstration and stay on tab 1, <span class="ws-set">Where is the
+        electron?</span> The left canvas is a slice through the nucleus, one dot per sampled position;
+        the right canvas is the radial distribution. Four readouts sit under
+        <span class="ws-set">Numbers for this orbital</span>.</p>
+
+      <ol class="ws-steps">
+        <li>Tick <span class="ws-set">Mark the radial nodes</span> and
+          <span class="ws-set">Overlay the Bohr orbit</span>. Leave
+          <span class="ws-set">Same zoom for every orbital</span> unticked for now.</li>
+        <li>Press each orbital button in turn: <span class="ws-set">1s, 2s, 2p, 3s, 3p, 3d&nbsp;z&sup2;</span>.</li>
+        <li>For each one, copy the four readouts into the table. The
+          <span class="ws-set">Nodes (r / ang)</span> box gives two numbers separated by a slash: radial
+          nodes first, angular second.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">Orbital</th><th>Most likely (pm)</th><th>90% within (pm)</th>
+              <th>Bohr&rsquo;s answer (pm)</th><th style="width:13%">Radial nodes</th>
+              <th style="width:13%">Angular nodes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1s</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2s</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2p</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3s</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3p</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3d z&sup2;</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> In three rows the <em>Most likely</em> distance matches
+          <em>Bohr&rsquo;s answer</em> exactly. Which three? Write down n and &#8467; for each, and state
+          what those three have in common.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Using the last two columns, write a formula for the number of
+          radial nodes in terms of n and &#8467;. Check it against all six rows.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Select <span class="ws-set">3s</span> and press
+          <span class="ws-set">Draw the cloud again</span> three or four times. Name one thing that
+          changes and one thing that does not, and say what that distinction tells you about what the
+          dots represent.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Tick <span class="ws-set">Same zoom for every orbital</span> and
+          step from 1s to 3s. Describe what the fixed scale reveals that the automatic scale hid.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Every radius in this table is for a <strong>hydrogen</strong> atom &mdash; the exact one-electron
+        wavefunctions. A real sodium 3s orbital has the same shape and the same node count, but is pulled
+        far closer to the nucleus by the larger nuclear charge. Do not quote 375.6&nbsp;pm as a sodium
+        radius.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>The core relationship: where the cliff falls</h2>
+      <p class="ws-intro">Go to tab 2, <span class="ws-set">Why ionization energy jumps</span>. These bars
+        are measured laboratory values, on a logarithmic axis &mdash; one gridline is a factor of ten.</p>
+
+      <ol class="ws-steps">
+        <li>In <span class="ws-set">Choose an element</span>, click <span class="ws-set">Na</span>.</li>
+        <li>Drag <span class="ws-set">First big jump comes after removing</span> to the number you want to
+          commit to, then press <span class="ws-set">Reveal the measurements</span>.</li>
+        <li>Record <span class="ws-set">Group / period</span>, <span class="ws-set">First cliff at</span>
+          and <span class="ws-set">Cost multiplier</span> in the table.</li>
+        <li>Repeat for <span class="ws-set">Mg</span>, <span class="ws-set">Al</span>,
+          <span class="ws-set">Si</span> and <span class="ws-set">P</span>. Set the slider each time
+          before revealing.</li>
+      </ol>
+
+      <div class="ws-note warn">
+        Touching the slider after you reveal hides the chart again, on purpose. Set your number first,
+        then reveal. Switching elements also re-hides.
+      </div>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">Element</th><th>Group / period</th><th>Your prediction</th>
+              <th>First cliff at (e&#8315;)</th><th>Cost multiplier</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Na</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Mg</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Al</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Si</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">P</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> State the rule connecting the <em>First cliff at</em> number to
+          the group number, in your own words. Your rule has to work for group 1 and 2 as well as for
+          groups 13&ndash;15.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The <em>Cost multiplier</em> shrinks steadily from Na to P.
+          Nothing about the shell boundary is getting weaker. Suggest what else is changing that makes the
+          <em>ratio</em> smaller.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Compare the Mg row with your prediction on page 1. If the number
+          or the factor was off, say precisely which assumption produced it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Now click <span class="ws-set">Ca</span>, set the slider to
+          <span class="ws-set">2</span>, reveal, and read the <span class="ws-set">Read the fine
+          print</span> panel. Record the largest single multiplier in the whole chart, which electron it
+          belongs to, and how many occupied shells calcium has.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">The first cliff is therefore not the tallest one. Explain in one or two
+          sentences why the <em>first</em> cliff is still the one that gives you the valence count.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Where the quick answer fails</h2>
+      <p class="ws-intro">&ldquo;First ionization energy increases across a period&rdquo; is the standard
+        one-line trend, and it is mostly right. Tab 3, <span class="ws-set">The sawtooth</span>, shows
+        exactly where it is not. Use the <span class="ws-set">Straight through, H to Kr</span> view with
+        <span class="ws-set">Colour every step that goes <em>down</em></span> ticked.</p>
+
+      <ol class="ws-steps">
+        <li>Select each element below by tapping its point on the chart, or with
+          <span class="ws-set">Next &rarr;</span> and <span class="ws-set">&larr; Previous</span>.</li>
+        <li>Record <span class="ws-set">Group</span>, <span class="ws-set">First IE</span> and
+          <span class="ws-set">Step from prev</span>. The step is negative for every one of these.</li>
+        <li>For the last column you need the previous element&rsquo;s value: it is
+          (First IE) &minus; (Step from prev), or press <span class="ws-set">&larr; Previous</span> once
+          and read it.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">Element</th><th>Group</th><th>First IE (kJ/mol)</th>
+              <th>Step from prev (kJ/mol)</th><th>Step as % of the previous element&rsquo;s IE</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">B</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">O</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Al</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">S</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Ga</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Se</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Only two group numbers appear in that table. Using the
+          <span class="ws-set">Selected element</span> note and the configuration shown beneath it, give
+          the structural reason for each of the two drops. They are not the same reason.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Tick <span class="ws-set">Shade groups 13 and 16</span>. Does
+          every shaded column sit at a drop, in all three periods shown? Quote one value that makes the
+          drop hard to see by eye.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> An exam asks: &ldquo;Does first ionization energy increase across
+          period 4?&rdquo; Write an answer of two or three sentences that is both correct and honest about
+          the exceptions, using your Ga and Se numbers.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Switch to <span class="ws-set">Rows stacked on each other</span>.
+          Periods 2 and 3 are plotted against group number. Describe what lines up between them, and what
+          the vertical offset between the two curves tells you.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it and check
+        yourself &mdash; and where you were wrong, write down which step went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> An unknown element gives these successive ionization energies in
+          kJ/mol: 786.5, 1&thinsp;577.1, 3&thinsp;231.6, 4&thinsp;355.5, 16&thinsp;091, 19&thinsp;805.
+          Work out the ratio of each value to the one before it. State after which removal the first cliff
+          falls, how many valence electrons the atom has, and which group it is in. Given that it is in
+          period 3, name it.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Write the full electron configuration of calcium. From the
+          configuration alone, predict (i) after how many removals the first cliff appears and (ii) how
+          many large multipliers appear in the complete chart of all twenty ionization energies. Justify
+          each answer from the configuration, not from memory of the chart.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Using your node formula from part 2: which orbital in the tab-1
+          picker has exactly one radial node and exactly one angular node? Then, for a 4d orbital, give the
+          number of radial nodes and the number of angular nodes, and the radius the Bohr model would
+          assign to n = 4 (take a<sub>0</sub> = 52.9&nbsp;pm).</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Boron has one more proton than beryllium, and sulfur has one more
+          proton than phosphorus. Both have a <em>lower</em> first ionization energy than the element
+          before them. Explain each drop. Your two explanations must differ from each other, and both must
+          be consistent with increasing nuclear charge.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration holds more than this worksheet
+        used.</p>
+
+      <ul style="padding-left:18px">
+        <li>In tab 1, compare <span class="ws-set">3d xz</span> with
+          <span class="ws-set">3d z&sup2;</span>. The clouds look nothing alike and the graph on the right
+          is identical. Work out why, then predict whether 2p and 2s would do the same.</li>
+        <li>In tab 2, hunt for the element between Li and Ca with the largest first-cliff
+          <em>Cost multiplier</em>. Before you check, argue from configurations which one it ought to
+          be.</li>
+        <li>In tab 3, step through Sc to Zn and read the note each time. First ionization energy barely
+          moves across the whole d-block. Say what that flatness implies about which sub-shell the
+          outermost electron is sitting in.</li>
+        <li>Use <span class="ws-set">Hide again</span> in tab 2 to quiz someone else: name an element,
+          have them commit to a cliff position, then reveal.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Electronic Structure Bench &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Gas Law Bench &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 5 &middot; Gases</div>
+      <h1>Gas Law Bench</h1>
+      <p class="ws-sub">Four named gas laws, one equation, and the one scale on which a temperature
+        ratio is allowed to mean anything.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/gas-law-bench/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know, with the page closed. The point is to have a
+        committed number on paper that the demonstration can later confirm or overturn.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A sealed sample of gas occupies 24.0 L at 20.0 &deg;C. You warm it to 40.0 &deg;C, holding the
+          pressure and the amount of gas constant. What volume does it now occupy?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write the reasoning you used in one sentence &mdash; including the
+          arithmetic you did with the two temperatures.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Setting three variables and letting the fourth follow</h2>
+      <p class="ws-intro">Open the demonstration. It starts on the <span class="ws-set">Charles: V&ndash;T</span>
+        preset, so volume is on the vertical axis. Whichever variable sits on the vertical axis is the
+        <em>dependent</em> one: it is solved from the other three, and its slider is locked.</p>
+
+      <ol class="ws-steps">
+        <li>Click <span class="ws-set">Set to STP</span>. Read the five boxes in the
+          <span class="ws-set">This state</span> panel and fill in row 1.</li>
+        <li>Drag the <span class="ws-set">Pressure P</span> slider to <span class="ws-set">2.00 atm</span>
+          (arrow keys nudge it 0.01 at a time). Fill in row 2.</li>
+        <li>Drag the same slider to its far right end, <span class="ws-set">4.00 atm</span>. Fill in row 3.</li>
+        <li>Click <span class="ws-set">Set to STP</span> again, then drag the
+          <span class="ws-set">Amount n</span> slider to <span class="ws-set">2.00 mol</span>. Fill in row 4.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:24%">Setting</th><th>Volume (L)</th><th>Temp (K)</th>
+              <th>Temp (&deg;C)</th><th>Molar volume V/n</th><th>PV / (nT)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">STP</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">P = 2.00 atm</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">P = 4.00 atm</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">n = 2.00 mol</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Which slider was locked the whole time, and what tag appeared next
+          to its label? Say in one sentence why that variable could not be set independently.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> One column is identical in all four rows. Name it, give its value
+          and units, and say what that number is called.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Doubling the pressure from 1.00 to 2.00 atm did one thing to the
+          volume; doubling the amount from 1.00 to 2.00 mol did another. State both effects using the numbers
+          from your table.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The <span class="ws-set">Set to STP</span> button uses 0 &deg;C and 1 atm, the convention still used in
+        most high-school courses, which is why the molar volume comes out near 22.41 L/mol. IUPAC has defined
+        STP as 0 &deg;C and exactly 1 bar since 1982, where the ideal molar volume is 22.71 L/mol instead.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>The relationship between volume and temperature</h2>
+      <p class="ws-intro">Stay on the <span class="ws-set">Charles: V&ndash;T</span> preset and click
+        <span class="ws-set">Set to STP</span> first, so P = 1.000 atm and n = 1.000 mol are the two held
+        variables. The Temperature slider is always in kelvin; you do not have to land on the target exactly,
+        so record whatever the <span class="ws-set">Temp (K)</span> box actually reads.</p>
+
+      <ol class="ws-steps">
+        <li>Drag the <span class="ws-set">Temperature T</span> slider until the
+          <span class="ws-set">Temp</span> box in kelvin reads close to 150 K. Record the reading, the
+          <span class="ws-set">Temp</span> box in &deg;C, and the <span class="ws-set">Volume</span> box.</li>
+        <li>Repeat near 250 K, 350 K, 450 K and 550 K.</li>
+        <li>Fill the last two columns with your own division. Carry four significant figures.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">Target</th><th>Temp (K) as read</th><th>Temp (&deg;C)</th>
+              <th>Volume (L)</th><th>V &divide; T(K)</th><th>V &divide; T(&deg;C)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">150 K</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">250 K</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">350 K</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">450 K</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">550 K</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One of your two computed columns is constant and one is not. State
+          the rule relating V and T in your own words, and say which temperature scale it requires.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The <span class="ws-set">Temperature axis</span> control opens on
+          <span class="ws-set">Celsius (&deg;C)</span>. Looking at the plot, read off the temperature at which
+          the line reaches V = 0, and copy the label the demonstration prints on the dashed red line.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Now click <span class="ws-set">Kelvin (K)</span>. The gas has not
+          changed. Describe what changed about the line's position relative to the origin, and explain why
+          that makes the kelvin scale the one that ratios are allowed on.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Return to your Part 1 prediction. Recalculate it using your rule
+          from (a). If your prediction was different, identify the specific assumption that failed.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Two states, and where the Celsius shortcut breaks</h2>
+      <p class="ws-intro">The <span class="ws-set">Two points on the same curve</span> panel at the bottom of
+        the page holds two real states of the same gas: state 1 is the filled dot, state 2 the open dot.</p>
+
+      <ol class="ws-steps">
+        <li>With the <span class="ws-set">Charles: V&ndash;T</span> preset selected, click
+          <span class="ws-set">Set to STP</span>. State 1 is now at 0.00 &deg;C.</li>
+        <li>Check that the <span class="ws-set">Second state: T<sub>2</sub></span> readout is near
+          373 K (about 100 &deg;C), and drag it there if it is not. Copy both rows of the comparison table.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>State</th><th>P (atm)</th><th>V (L)</th><th>n (mol)</th><th>T (K)</th>
+              <th>T (&deg;C)</th><th>PV/nT</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">State 1</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">State 2</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Below the table, record the values given for
+          <span class="ws-set">V / T, state 1</span> and <span class="ws-set">V / T, state 2</span>, with units.
+          Then say what the row labelled <span class="ws-set">Held constant between the two states</span> reports.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Read the panel that begins <span class="ws-set">Now redo it in
+          Celsius.</span> Copy exactly what it gives for V / T(&deg;C) at state 1, then explain in one sentence
+          why that is the answer and not a number.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p style="margin-top:16px">Now work the equation backwards, the way a question would ask you to.</p>
+
+      <ol class="ws-steps">
+        <li>Click <span class="ws-set">Set to STP</span> once more.</li>
+        <li>In <span class="ws-set">Vertical axis</span>, choose <span class="ws-set">T &mdash; temperature</span>.
+          Temperature is now the dependent variable and its slider locks; volume becomes settable.</li>
+        <li>Drag the <span class="ws-set">Volume V</span> slider to <span class="ws-set">30.0 L</span>.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Record the <span class="ws-set">Temp</span> readings in K and in
+          &deg;C. Then, on paper, show the rearrangement of PV = nRT that produces that temperature from
+          P = 1.000 atm, V = 30.0 L and n = 1.000 mol.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> A common shortcut is to reach for a named law by matching the two
+          quantities a problem mentions. Which of the four presets would you have reached for in step (c), and
+          why does going back to PV = nRT work when no named law fits the wording?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away from it. Use R = 0.08206 L&middot;atm/(mol&middot;K) and show
+        your working. Afterwards, reopen the demonstration and check yourself; where you disagree, find the
+        step that went wrong rather than just correcting the answer.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Find the volume occupied by 1.00 mol of an ideal gas at 0.500 atm and
+          350.0 K. Give your answer to four significant figures.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A sample of 0.500 mol of gas is held at a constant 2.00 atm. Find its
+          volume at 350.0 K, then find its volume after it is cooled to 250.0 K. Do the second part twice: once
+          from PV = nRT directly, and once as a ratio from your first answer. The two methods must agree.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Someone argues: &ldquo;A gas at 20.0 &deg;C is warmed to 40.0 &deg;C at
+          constant pressure and amount, so the temperature doubled and the volume doubles.&rdquo; Explain what
+          is wrong with the argument, and give the factor by which the volume actually changes.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A rigid sealed steel cylinder reads 3.00 atm at 25.0 &deg;C. It is left
+          in a vehicle and warms to 60.0 &deg;C. Find the new pressure. Then state which variable being fixed by
+          the word &ldquo;rigid&rdquo; makes this a two-variable problem at all.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does considerably more than this
+        worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Select <span class="ws-set">Boyle: P&ndash;V</span> and read the note the two-state panel prints for
+          that view. It is the only preset with no temperature in it anywhere. Work out what that means for how
+          long a Celsius habit can go undetected.</li>
+        <li>Select <span class="ws-set">Avogadro: V&ndash;n</span> and watch the <span class="ws-set">Molar
+          volume V/n</span> readout as you move the Amount slider. Decide what the slope of that line is,
+          physically, and check it against the readout.</li>
+        <li>Shrink the volume until the note at the bottom of <span class="ws-set">This state</span> changes
+          colour and wording. Record the molar volume at which it first warns you, and read what it says about
+          CO<sub>2</sub> and NH<sub>3</sub> against He and N<sub>2</sub>.</li>
+        <li>Use <span class="ws-set">Pause particles</span> and the cartoon cylinder: raise T at fixed V, then
+          shrink V at fixed T, and describe the two different reasons the walls get hit more often.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Gas Law Bench &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

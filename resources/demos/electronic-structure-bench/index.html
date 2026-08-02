@@ -333,11 +333,12 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> most students take &ldquo;electrons are arranged in shells,
-        2 then 8 then 8&rdquo; on the teacher&rsquo;s word, and picture those shells as solid tracks the
-        electron runs along, like planets. Two wrong things are bundled together there: that the
-        shells are a rule someone made up, and that an electron has a definite location we simply
-        draw as a circle.
+        <strong>The claim being tested:</strong> &ldquo;electrons are arranged in shells, 2 then 8
+        then 8&rdquo; usually arrives as an assertion, and the natural image to hang on it is a set of
+        solid tracks the electron runs along, like planets. That is a reasonable first picture, and it
+        bundles two separate claims: that the shells are a convention someone chose, and that an
+        electron has a definite location which a circle records. Both are testable here, and neither
+        survives.
       </p>
       <p>
         <strong>What to notice in tab 1:</strong> the cloud is <em>densest at the nucleus</em> for a 1s
@@ -984,7 +985,7 @@
           ctx.beginPath(); ctx.moveTo(vx, y0 + 4); ctx.lineTo(vx, y1); ctx.stroke();
         }
 
-        // the student's prediction — label sits in its own lane above the plot
+        // the reader's prediction — label sits in its own lane above the plot
         var px = Xg(ieState.guess);
         ctx.strokeStyle = c.warn; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]);
         ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y1 - 12); ctx.stroke();

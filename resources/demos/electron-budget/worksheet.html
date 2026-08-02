@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Electron Budget — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 3 &middot; Nomenclature, Bonding &amp; Molecular Geometry</div>
+      <h1>Electron Budget</h1>
+      <p class="ws-sub">Where the electrons in a Lewis structure come from, why the total is settled before
+        you draw anything, and what to do when an atom is still short.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/electron-budget/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Being right is not the point &mdash; the point is
+        having something on paper that the demonstration can settle.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>Ammonia, NH<sub>3</sub>, and the ammonium ion, NH<sub>4</sub><sup>+</sup>. Which of the two has
+          <em>more</em> valence electrons to place in its Lewis structure, and by how many?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying how you got that.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Where the number comes from, and where it goes</h2>
+      <p class="ws-intro">Open the demonstration. The <span class="ws-set">Molecule</span> menu loads a
+        skeleton; the <span class="ws-set">Where the budget comes from</span> panel shows the arithmetic;
+        the <span class="ws-set">Atom by atom</span> panel reports each atom as you draw.</p>
+
+      <ol class="ws-steps">
+        <li>From the <span class="ws-set">Molecule</span> menu choose
+          <span class="ws-set">H&#8322;O &mdash; Water</span>.</li>
+        <li>Copy the arithmetic out of the <span class="ws-set">Where the budget comes from</span> table into
+          the table below &mdash; its columns are <span class="ws-set">Source</span>,
+          <span class="ws-set">each</span> and <span class="ws-set">e&#8315;</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:34%">Source</th><th style="width:22%">each</th><th>e&#8315;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1 &times; O</td><td></td><td></td></tr>
+          <tr><td class="filled">2 &times; H</td><td></td><td></td></tr>
+          <tr><td class="filled">Budget</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <ol class="ws-steps" start="3">
+        <li>Now draw it. Click each dashed line once to make the two O&ndash;H single bonds.</li>
+        <li>Click the oxygen once to add a lone pair, then once more for a second lone pair.</li>
+        <li>Fill in a row of the table below after each of those stages, reading
+          <span class="ws-set">Placed</span> and <span class="ws-set">Left</span> from the readouts, and the
+          oxygen's <span class="ws-set">shell e&#8315;</span>, <span class="ws-set">formal charge</span> and
+          <span class="ws-set">status</span> from <span class="ws-set">Atom by atom</span>.</li>
+        <li>Press <span class="ws-set">Check</span> and write down what it tells you.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:28%">After this stage</th><th>Placed (e&#8315;)</th><th>Left (e&#8315;)</th>
+              <th>O shell e&#8315;</th><th>O formal charge</th><th>O status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Nothing drawn yet</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Both O&ndash;H bonds made</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">One lone pair on O</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Two lone pairs on O</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One column stays constant no matter what you draw, and one column
+          reaches zero exactly when you are finished. Name them.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Click the oxygen a third time. What does the message under the drawing
+          say, and what does it tell you to do instead?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>The rule behind the number</h2>
+      <p class="ws-intro">Two separate things set the budget: which atoms are present, and the charge. Vary
+        them one at a time.</p>
+
+      <ol class="ws-steps">
+        <li>Load each molecule below from the <span class="ws-set">Molecule</span> menu and read
+          <span class="ws-set">Budget</span>.</li>
+        <li>In the last column write out the valence-electron sum yourself, the way the
+          <span class="ws-set">Where the budget comes from</span> table does it.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:26%">Molecule</th><th style="width:18%">Budget (e&#8315;)</th>
+              <th>Your arithmetic</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">CH&#8322;O &mdash; Formaldehyde</td><td></td><td></td></tr>
+          <tr><td class="filled">N&#8322; &mdash; Nitrogen</td><td></td><td></td></tr>
+          <tr><td class="filled">NH&#8323; &mdash; Ammonia</td><td></td><td></td></tr>
+          <tr><td class="filled">NH&#8324;&#8314; &mdash; Ammonium ion</td><td></td><td></td></tr>
+          <tr><td class="filled">PCl&#8325; &mdash; Phosphorus pentachloride</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <p>Now hold the atoms fixed and change only the charge. Type each of the following into the
+        <span class="ws-set">Or type any formula</span> box, exactly as written, and read the
+        <span class="ws-set">Budget</span> row at the foot of the <span class="ws-set">Where the budget comes
+        from</span> table. The line just under that table restates it &mdash; for water it reads
+        <em>for H&#8322;O &mdash; 8 e&#8315; = 4 pairs</em>.</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">You type</th><th style="width:22%">Budget (e&#8315;)</th>
+              <th>What the line under the table says after the &ldquo;=&rdquo;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">SO4+</td><td></td><td></td></tr>
+          <tr><td class="filled">SO4</td><td></td><td></td></tr>
+          <tr><td class="filled">SO4-</td><td></td><td></td></tr>
+          <tr><td class="filled">SO4^2-</td><td></td><td></td></tr>
+          <tr><td class="filled">SO4^3-</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-note warn">
+        <strong>Read the right number.</strong> The three large readouts &mdash; Budget, Placed, Left &mdash;
+        always describe the molecule currently drawn on the board. Typing a formula the demonstration has no
+        skeleton for updates the arithmetic table and the line beneath it, and leaves the board alone. Of the
+        five species above only SO<sub>4</sub><sup>2&minus;</sup> is one you will meet; the other four are
+        there to isolate what the charge alone does to the count.
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Write the rule for the budget in your own words, in one sentence,
+          covering both the atoms and the charge.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Two of the five rows in the first table have the same budget. Which
+          two, and why does adding a hydrogen atom <em>and</em> a positive charge leave the total unchanged?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your prediction in part 1. Was it right? If not, say
+          exactly what you assumed that turned out not to hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Two of your five typed rows report a number of pairs <em>plus one left
+          over</em>. What has to be true of the budget for that to happen, and what does it force you to draw?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>When &ldquo;give everyone an octet&rdquo; runs out</h2>
+      <p class="ws-intro">The usual shortcut is to hand every atom eight electrons and hope the total works
+        out. Here is a molecule where it does not, and the repair that a test question expects.</p>
+
+      <ol class="ws-steps">
+        <li>Choose <span class="ws-set">CO&#8322; &mdash; Carbon dioxide</span>. Record the budget.</li>
+        <li>Click each dashed line once, giving two single bonds.</li>
+        <li>Click each oxygen three times, giving each one three lone pairs. Fill in the first row below.</li>
+        <li>Repair it: right-click (or press and hold) one oxygen once to take a lone pair back, then click the
+          bond to that oxygen to make it a double bond. Do the same on the other side. Fill in the second row.</li>
+        <li>Press <span class="ws-set">Check</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:34%">Stage</th><th>Placed (e&#8315;)</th><th>Left (e&#8315;)</th>
+              <th>C shell e&#8315;</th><th>C status</th><th>C formal charge</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Single bonds, 3 lone pairs per O</td>
+              <td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">After both repairs</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> At the first stage the budget was fully spent and carbon was still
+          short. Adding two more pairs would have fixed carbon. Why is that not allowed?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Compare <span class="ws-set">Placed</span> before and after the repair.
+          Where did the electrons in the second C&ndash;O bond come from?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <p>Now a case where the octet is reachable and still rejected.</p>
+
+      <ol class="ws-steps" start="6">
+        <li>Choose <span class="ws-set">BF&#8323; &mdash; Boron trifluoride</span>, press
+          <span class="ws-set">Show accepted answer</span>, and tick
+          <span class="ws-set">Show formal charges on the drawing</span>. Record boron's
+          <span class="ws-set">shell e&#8315;</span> and <span class="ws-set">status</span>.</li>
+        <li>Take one lone pair back from one fluorine and spend it as a second B&ndash;F bond. Press
+          <span class="ws-set">Check</span>.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Boron in the accepted answer: shell e&#8315; = __________ ,
+          status = __________ . After you made the double bond, what formal charges does the message report,
+          and on which atoms?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Both drawings use all 24 electrons. Give the reason the electron-poor
+          boron is the accepted structure anyway.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Then reopen it, check
+        yourself, and if a number is off, write down where the count went wrong.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Find the electron budget for the chlorate ion,
+          ClO<sub>3</sub><sup>&minus;</sup>. State how many pairs that is.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> The phosphate ion, PO<sub>4</sub><sup>3&minus;</sup>, is drawn with
+          phosphorus in the centre, four single P&ndash;O bonds and three lone pairs on every oxygen. Find the
+          budget, show that this drawing spends it exactly, and give the formal charge on phosphorus and on
+          each oxygen. Check that they add to the ion's charge.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Hydrogen cyanide is HCN, with carbon in the middle. Find the budget,
+          then give a structure in which carbon and nitrogen both reach eight and hydrogen reaches two. State
+          how many of the electrons end up in bonds and how many end up as lone pairs.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> In the demonstration, phosphorus in PCl<sub>5</sub> is labelled
+          <em>expanded, 10</em> and is accepted. A drawing that put 10 electrons on nitrogen would be labelled
+          <em>impossible</em>. Explain the difference between the two atoms, and state the counting rule that
+          never bends.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration holds more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Load <span class="ws-set">NO &mdash; Nitric oxide</span>. Its budget is odd, and
+          <span class="ws-set">Place single electrons</span> switches itself on. Work out for yourself why no
+          arrangement of pairs can ever total 11, and why a triple bond does not rescue it.</li>
+        <li>Build the accepted structure for <span class="ws-set">O&#8322; &mdash; Oxygen</span> and read the
+          message. It satisfies every rule in this unit and still disagrees with a laboratory magnet. Decide
+          what that costs the model.</li>
+        <li>Load <span class="ws-set">NO&#8323;&#8315; &mdash; Nitrate ion</span> and build it three times,
+          putting the double bond on a different oxygen each time. Turn on
+          <span class="ws-set">Show formal charges on the drawing</span> and compare. Which drawing is the
+          real ion?</li>
+        <li>Type a formula containing a transition metal, such as <span class="ws-set">FeCl3</span>. Read what
+          the demonstration refuses to do, and work out why counting valence electrons this way stops working
+          outside the main group.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Electron Budget &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

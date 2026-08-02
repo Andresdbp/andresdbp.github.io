@@ -289,12 +289,12 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students think a molecule has <em>one</em> shape name, so they learn
-        &ldquo;water is bent&rdquo; the way you learn a phone number &mdash; as an unconnected fact. Then the exam
-        asks for the electron-pair geometry of water and they write &ldquo;bent&rdquo; again, or it asks why the
-        angle is 104.5&deg; and they have nothing to say. The fix is not more memorising. It is noticing that
-        <strong>two different questions are being asked</strong>: where do all the electron groups go, and where
-        are the atoms?
+        <strong>Where this goes wrong.</strong> A molecule looks like it ought to have <em>one</em> shape, so
+        &ldquo;water is bent&rdquo; gets stored as a single unconnected fact. That reading is reasonable &mdash;
+        bent is exactly what you would see if you could look at the molecule. It is also incomplete. Asked for the
+        electron-pair geometry of water, &ldquo;bent&rdquo; is the wrong answer, and it leaves nothing to say about
+        why the angle is 104.5&deg; rather than 180&deg; or 109.5&deg;. <strong>Two different questions are being
+        asked</strong>: where do all the electron groups go, and where are the atoms?
       </p>
       <p>
         <strong>What to notice.</strong> Put the bench on H<sub>2</sub>O. Four electron groups, so the four of them
@@ -324,11 +324,10 @@
       <p>
         <strong>&ldquo;Bent&rdquo; is not one shape.</strong> Press SO<sub>2</sub>. Bent again &mdash; but this one
         came from <em>three</em> electron groups in a flat triangle, not four in a tetrahedron, so its ideal is
-        120&deg; and it settles near 118&deg;, nowhere near water's 104.5&deg;. A student who only knows the word
-        &ldquo;bent&rdquo; cannot tell those two molecules apart and cannot predict either angle. A student who
-        says &ldquo;trigonal planar electron geometry, bent molecular geometry, one lone pair, so a bit under
-        120&deg;&rdquo; has actually said something. That sentence is the answer the question is looking for, and
-        it has three parts for a reason.
+        120&deg; and it settles near 118&deg;, nowhere near water's 104.5&deg;. If &ldquo;bent&rdquo; is all you carry,
+        those two molecules are indistinguishable and neither angle is predictable. &ldquo;Trigonal planar electron
+        geometry, bent molecular geometry, one lone pair, so a bit under 120&deg;&rdquo; is a statement with
+        content. That sentence is what the question is asking for, and it has three parts for a reason.
       </p>
       <p>
         <strong>Why any of this matters.</strong> If water were linear its two bond dipoles would cancel and the
@@ -520,7 +519,7 @@
       // ---------------- which two bonds carry the drawn arc ----------------
       // Pick the pair whose FLAT projected angle is closest to the true 3D
       // angle, so the arc on screen is as honest as a flat picture allows.
-      // Whatever is left over is reported to the student in the caption.
+      // Whatever is left over is reported to the reader in the caption.
       function arcPairOf(K, trueAngle) {
         var bonds = [], i, j;
         for (i = 0; i < K.dirs.length; i++) if (!K.dirs[i].lone) bonds.push(i);

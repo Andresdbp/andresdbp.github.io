@@ -200,12 +200,13 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students think a measurement is a number the instrument hands you,
-        and that the last digit is either printed on the glass or a mistake. On a worksheet every reading
-        arrives already written — <span class="num">24.7 mL</span> — so the only thing left to practise is
-        arithmetic. Then, at the bench, they write <span class="num">25 mL</span> and throw away a digit they
-        were entitled to, or write <span class="num">24.73 mL</span> and claim a digit no mark on that tube
-        could support.
+        <strong>The misconception:</strong> that a measurement is a number the instrument hands you, and that
+        the last digit is either printed on the glass or a mistake. It is a reasonable reading of the
+        evidence, because on a worksheet every measurement arrives already written —
+        <span class="num">24.7 mL</span> — so the only part left to practise is the arithmetic. At the bench
+        the number has to be produced, and then <span class="num">25 mL</span> discards a digit the glassware
+        entitled you to, while <span class="num">24.73 mL</span> claims a digit no mark on that tube could
+        support.
       </p>
       <p>
         <strong>What to notice:</strong> nothing on this tube says <span class="num">.7</span>. The marks give
@@ -592,7 +593,7 @@
           var onMark = Math.abs(val / d - Math.round(val / d)) < 1e-9;
           return merge(marks, {
             cls: 'bad', ok: false,
-            head: 'Too few digits — you threw information away.',
+            head: 'Too few digits — that discards information the marks gave you.',
             body: 'You wrote ' + t + ', which stops at the ' + placeName(Math.pow(10, -dec)) +
               '. ' + (onMark
                 ? 'You rounded to the nearest mark. The level is not on a mark: the whole job is judging how far between two marks it sits.'

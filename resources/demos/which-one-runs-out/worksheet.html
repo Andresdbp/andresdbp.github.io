@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Which One Runs Out? — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 4 &middot; Chemical Reactions</div>
+      <h1>Which One Runs Out?</h1>
+      <p class="ws-sub">Finding the limiting reactant in N<sub>2</sub> + 3 H<sub>2</sub> &rarr; 2 NH<sub>3</sub>,
+        and working out why two reasonable-looking tests give the wrong answer.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/which-one-runs-out/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know, with the page closed. The point is to have
+        something on paper that the demonstration can later settle.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>You mix <strong>20.0 g of N<sub>2</sub></strong> with <strong>5.0 g of H<sub>2</sub></strong> and let
+          them react as far as they can: N<sub>2</sub> + 3 H<sub>2</sub> &rarr; 2 NH<sub>3</sub>. Which reactant
+          is completely used up, and which one is still in the flask at the end?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what you compared to decide that.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Set up the mixture you just predicted</h2>
+      <p class="ws-intro">Open the demonstration. Two sliders set the masses you mixed; the panel headed
+        <em>The three comparisons</em> reports that mixture three different ways.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Nitrogen, N<sub>2</sub></span> to <span class="ws-set">20.0 g</span> and
+          <span class="ws-set">Hydrogen, H<sub>2</sub></span> to <span class="ws-set">5.0 g</span>. (The preset
+          button <span class="ws-set">Grams mislead</span> does this in one click.)</li>
+        <li>Copy the three comparison rows out of the table. In the last column write which reactant that row
+          points at &mdash; the one with the <em>smaller</em> number.</li>
+        <li>Then record the three boxes in the <span class="ws-set">Result</span> panel.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">Row in the table</th><th>N<sub>2</sub></th><th>H<sub>2</sub></th>
+              <th style="width:28%">Points at which reactant?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">grams</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">moles</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">mol &divide; coef</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Limiting reactant</th><th>Theoretical yield (g NH<sub>3</sub>)</th>
+              <th>Left over (g, and of what)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Two of the three rows point at one reactant and one row points at the
+          other. Which row disagrees with the <span class="ws-set">Limiting reactant</span> box, and by how much
+          did the two masses differ &mdash; that is, how much more N<sub>2</sub> than H<sub>2</sub> did you
+          weigh out?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Show the arithmetic that turns 5.0 g of H<sub>2</sub> into the moles
+          value in your table, and then into the <em>mol &divide; coef</em> value. Use 2.016 g/mol.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The masses here are treated as exact, so every digit in the table is arithmetic rather than measurement.
+        On a real problem the significant figures in the answer are set by the balance you weighed on.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>Vary one reactant and watch the answer switch</h2>
+      <p class="ws-intro">Leave <span class="ws-set">Nitrogen, N<sub>2</sub></span> fixed at
+        <span class="ws-set">20.0 g</span> for this whole section. Move only the hydrogen slider.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Hydrogen, H<sub>2</sub></span> to each mass in the first column.</li>
+        <li>For each one, read the <em>moles</em> and <em>mol &divide; coef</em> entries for H<sub>2</sub>, plus
+          the <em>mol &divide; coef</em> entry for N<sub>2</sub>.</li>
+        <li>Record the <span class="ws-set">Limiting reactant</span> and
+          <span class="ws-set">Theoretical yield</span> boxes as well.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:13%">H<sub>2</sub> (g)</th><th>mol H<sub>2</sub></th>
+              <th>mol &divide; coef, H<sub>2</sub></th><th>mol &divide; coef, N<sub>2</sub></th>
+              <th>Limiting</th><th>Yield (g NH<sub>3</sub>)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">2.0</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3.0</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.0</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.3</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.4</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">6.0</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One column is the same in every row. Which one, and why does it not
+          change when you move the hydrogen slider?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Between which two rows does the limiting reactant switch? Write the
+          rule you would use to decide the limiting reactant from two <em>mol &divide; coef</em> values, in your
+          own words.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Adding more hydrogen raises the yield in the first few rows and then
+          stops raising it. Give the two masses in your table between which it stops, and say what is capping
+          the yield after that.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in Part 1. Was it right? If it was not, name
+          the specific comparison you made and say what it left out. If it was right, say whether your reasoning
+          would still have worked at H<sub>2</sub> = 4.0 g.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Using it the way a question would</h2>
+      <p class="ws-intro">Two tasks: one where the two shortcuts contradict each other, and one where you have
+        to work backwards from the answer you want.</p>
+
+      <ol class="ws-steps">
+        <li>Click the preset <span class="ws-set">Knife edge</span> (46.3 g N<sub>2</sub>, 10.0 g
+          H<sub>2</sub>). Fill in the table below.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Comparison</th><th>N<sub>2</sub></th><th>H<sub>2</sub></th><th>Points at</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">grams</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">moles</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">mol &divide; coef</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Here the grams row and the moles row point at different reactants, so
+          at most one of them can be right. Which of the two agrees with the
+          <span class="ws-set">Limiting reactant</span> box &mdash; and explain why agreeing on this mixture is
+          not evidence that the method works.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <ol class="ws-steps" style="margin-top:14px">
+        <li>Set <span class="ws-set">Nitrogen, N<sub>2</sub></span> to <span class="ws-set">50.0 g</span>.
+          Before touching the hydrogen slider, calculate on paper the mass of H<sub>2</sub> that would consume
+          that nitrogen exactly, with nothing left over on either side.</li>
+        <li>Round your answer to the nearest 0.1 g &mdash; the slider moves in steps of 0.1 g &mdash; and set
+          <span class="ws-set">Hydrogen, H<sub>2</sub></span> to it.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Show the calculation, then record what the demonstration reports.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+        <p style="margin-top:4px">Limiting reactant: __________ &nbsp;&nbsp; Theoretical yield:
+          __________ g &nbsp;&nbsp; Left over: __________ g of __________</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> You asked for a mixture with nothing left over, and the demonstration
+          still names a limiting reactant and a small leftover mass. Explain why, using the fact that the slider
+          moves in 0.1 g steps.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Read the <strong>Mass check</strong> line under the result. Write down
+          the grams in and the grams out for this mixture, and state the law that requires them to match.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, set the sliders to the
+        masses given, and check yourself &mdash; if a number is off, write down where.
+        Molar masses: N<sub>2</sub> 28.014, H<sub>2</sub> 2.016, NH<sub>3</sub> 17.031 g/mol.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> 28.0 g of N<sub>2</sub> is mixed with 4.00 g of H<sub>2</sub>. Identify
+          the limiting reactant, the theoretical yield of NH<sub>3</sub> in grams, and the mass of the excess
+          reactant left over.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> For a mixture of 60.0 g N<sub>2</sub> and 12.0 g H<sub>2</sub>, someone
+          argues: &ldquo;There are 2.14 mol of N<sub>2</sub> and 5.95 mol of H<sub>2</sub>, so nitrogen is
+          limiting.&rdquo; Both mole values are correct. Explain what is wrong with the conclusion, and give the
+          reactant that is actually limiting.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> You have 35.0 g of N<sub>2</sub> and want to convert all of it, using
+          as little excess hydrogen as possible. What mass of H<sub>2</sub> do you need, and what mass of
+          NH<sub>3</sub> would you get? When you check, round the hydrogen up to the nearest 0.1 g so the slider
+          can reach it.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A mixture contains <em>equal masses</em> of N<sub>2</sub> and
+          H<sub>2</sub>. Without a calculator, argue which reactant must be limiting, whatever that common mass
+          is. Your argument should use both the molar masses and the coefficients.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        Every yield on this sheet is a <strong>theoretical</strong> yield: the ceiling if the reaction ran to
+        completion with no side reactions. Ammonia synthesis is an equilibrium, and one pass through an
+        industrial reactor at about 450&nbsp;&deg;C and 200&nbsp;atm converts only roughly 15% of the feed, with
+        the rest recycled. Percent yield compares a measured mass to the ceiling you calculated.
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Tick <em>Predict first &mdash; hide the answers</em>, load a preset you have not used, and work the
+          limiting reactant out from the comparison table alone before you untick it.</li>
+        <li>Watch the particle picture as you move the sliders. Its caption tells you how many moles one drawn
+          molecule stands for. Find a mixture where the leftover reactant vanishes from the picture even though
+          the mass panel still reports a leftover, and explain what the drawing is rounding.</li>
+        <li>The preset <em>All three agree</em> puts 80.0 g of N<sub>2</sub> against 4.0 g of H<sub>2</sub>.
+          Starting there, find the smallest change to one slider that makes a green chip turn red.</li>
+        <li>Take a theoretical yield from anywhere on this sheet and work out what mass of NH<sub>3</sub> a
+          single industrial pass at roughly 15% conversion would actually deliver.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Which One Runs Out? &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

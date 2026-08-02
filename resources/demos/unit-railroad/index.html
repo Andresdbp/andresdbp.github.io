@@ -268,9 +268,10 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students believe the hard part of a conversion is remembering
-        whether to multiply or divide, so they guess, get a number, and then check the back of the book to
-        find out if the guess was right. That makes the answer key the judge of the work.
+        <strong>The tempting move:</strong> treat a conversion as one decision — multiply or divide — pick
+        the one that feels right, get a number, and check the back of the book to find out whether the pick
+        was correct. That works often enough to feel reliable, which is exactly why it survives. It also
+        leaves the answer key as the only thing judging the work.
       </p>
       <p>
         <strong>What to notice:</strong> flip any car the wrong way and watch what happens. The units stop
@@ -305,7 +306,7 @@
            1 lb = 453.59237 g (international avoirdupois pound)
            1 mL = 1 cm3, 1 L = 1000 cm3 (litre = cubic decimetre, 1964)
            1 US liquid gallon = 231 in3 = 3.785411784 L exactly
-         Each is stored with the "1" on top so the student, not the bank,
+         Each is stored with the "1" on top so the reader, not the bank,
          decides the orientation. `u` is a list of unit TOKENS: a cubed unit
          is three separate tokens, which is what makes cancellation honest.
          ===================================================================== */
@@ -365,7 +366,7 @@
         {
           short: 'g/cm³ → kg/m³',
           text: 'A liquid has a density of 1.20 g/cm³. Convert that density to {t}.',
-          sub: 'Cubed units. One cm on top will not cancel cm³ on the bottom — count the tokens.',
+          sub: 'Cubed units. One cm on top will not cancel cm³ on the bottom — count the symbols.',
           given: { v: 1.20, d: '1.20', u: ['g'], denV: 1, denD: '1', denU: ['cm', 'cm', 'cm'] },
           target: { kg: 1, m: -3 }, targetLabel: 'kg/m³',
           sf: 3, answer: 1.20 / 1000 * 1e6,
@@ -569,7 +570,7 @@
         eq.textContent = '=';
         rail.appendChild(eq);
 
-        // Nothing is judged until the student has actually added a car, so the
+        // Nothing is judged until a car has actually been added, so the
         // untouched starting state reads neutral rather than "wrong".
         var started = state.chain.length > 0;
         var res = document.createElement('div');

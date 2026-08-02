@@ -250,10 +250,10 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students believe that adding heat always makes something hotter,
-        so a flat stretch on this graph reads as &ldquo;somebody turned the burner off.&rdquo; The burner is
-        never off here. Energy pours in at exactly the same rate the whole way across, and for long stretches
-        the thermometer does not move at all.
+        <strong>The intuition to test:</strong> heat goes in, temperature goes up. That holds for almost
+        everything you have ever put on a burner, so a flat stretch on this graph reads as though somebody
+        turned the burner off. The burner is never off here. Energy pours in at exactly the same rate the
+        whole way across, and for long stretches the thermometer does not move at all.
       </p>
       <p>
         <strong>What to notice:</strong> temperature is a measure of how fast particles are moving on average.
@@ -836,7 +836,7 @@
         if (!state.animate) parts.redraw();
       });
 
-      // respect a reduced-motion preference: start still, let the student opt in
+      // respect a reduced-motion preference: start still, motion is opt-in
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         state.animate = false;
         $('anim').checked = false;

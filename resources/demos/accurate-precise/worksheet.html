@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Accurate, Precise, Both, Neither &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 1 &middot; Measurement &amp; Density</div>
+      <h1>Accurate, Precise, Both, Neither</h1>
+      <p class="ws-sub">Two independent faults in one balance, and which of them repeating a measurement
+        can actually remove.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/accurate-precise/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Commit to an answer on paper first. The demonstration will settle it exactly, so
+        it is worth being specific rather than safe.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A balance is out of calibration and reads <strong>0.30&nbsp;g high</strong>. It is otherwise
+          superb: repeat weighings of the same object agree to about &plusmn;0.02&nbsp;g. You place a
+          certified <strong>10.000&nbsp;g</strong> standard on it, weigh it <strong>500 times</strong>,
+          and average all 500 readings.</p>
+        <p style="margin-top:8px">Write the value you expect that average to have, to three decimal
+          places, and how far you expect it to sit from 10.000&nbsp;g.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">In one or two sentences, say what reasoning got you that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>The four cases, on one run</h2>
+      <p class="ws-intro">Open the demonstration. The two sliders are <em>Systematic bias</em> and
+        <em>Random scatter&nbsp;(&sigma;)</em>, and they act on the same set of weighings &mdash; moving a
+        slider reshapes the run you already have rather than starting a new one. That lets you compare all
+        four cases on identical data.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">New run</span>, then press <span class="ws-set">Add 25</span> four
+          times so that <span class="ws-set">Trials n</span> reads 100.</li>
+        <li>Click the preset button <span class="ws-set">Accurate and precise</span>. Do not press any
+          trial button again &mdash; n must stay at 100 for every row.</li>
+        <li>Fill in the first row from the readouts and from the heading in the coloured verdict panel.</li>
+        <li>Click each of the other three presets in turn and fill in the remaining rows.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:15%">Bias</th><th style="width:13%">&sigma;</th>
+              <th>Verdict panel heading</th><th style="width:14%">Mean</th>
+              <th style="width:15%">Mean &minus; true</th><th style="width:14%">Reading SD</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.00 g</td><td class="filled">0.02 g</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">+0.30 g</td><td class="filled">0.02 g</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.00 g</td><td class="filled">0.15 g</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">+0.30 g</td><td class="filled">0.15 g</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Which readout tracks the <em>bias</em> slider, and which tracks
+          the <em>scatter</em> slider? Name one readout for each.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Rows 1 and 2 have the same Reading SD but different Mean &minus;
+          true. Rows 1 and 3 have the same Mean &minus; true but different Reading SD. State in one
+          sentence what that pattern shows about the two faults.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The demonstration calls a balance <strong>accurate</strong> when |bias|&nbsp;&le;&nbsp;0.05&nbsp;g
+        and <strong>precise</strong> when &sigma;&nbsp;&le;&nbsp;0.05&nbsp;g. Those cut-offs are a choice
+        made for this demonstration, not a law of nature &mdash; a real tolerance is set by what the
+        measurement is for.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What more trials buy you</h2>
+      <p class="ws-intro">Here you vary one thing only: the number of weighings. Both sliders stay put.</p>
+
+      <ol class="ws-steps">
+        <li>Click the preset <span class="ws-set">Neither</span> (bias +0.30&nbsp;g, &sigma;
+          0.15&nbsp;g), then press <span class="ws-set">New run</span> to clear the trials. The sliders
+          keep their settings.</li>
+        <li>Press <span class="ws-set">Add 25</span> once. Record the n&nbsp;=&nbsp;25 row.</li>
+        <li>Press it again for n&nbsp;=&nbsp;50, twice more for n&nbsp;=&nbsp;100, four more for
+          n&nbsp;=&nbsp;200, eight more for n&nbsp;=&nbsp;400.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">Trials n</th><th>Std. error</th><th>Predicted SE</th>
+              <th>Mean &minus; true</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">25</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">50</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">100</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">200</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">400</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> From n&nbsp;=&nbsp;25 to n&nbsp;=&nbsp;100 the number of trials
+          rose by a factor of 4. By what factor did <em>Predicted SE</em> fall? Check the same factor from
+          n&nbsp;=&nbsp;100 to n&nbsp;=&nbsp;400.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Complete the rule in your own words: to cut the standard error in
+          half you must multiply the number of trials by ____, because standard error falls as
+          ____________.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Over that same 16-fold increase in trials, what happened to
+          <em>Mean &minus; true</em>? Quote your first and last values.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in Part 1. Compare it with what you
+          have just recorded. If it does not match, say precisely which step of your reasoning the data
+          contradicts.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards from a requirement</h2>
+      <p class="ws-intro">A question rarely hands you n and asks for the error. It hands you an error you
+        must meet and asks how to get there.</p>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> With &sigma;&nbsp;=&nbsp;0.15&nbsp;g, how many weighings are
+          needed to bring the standard error down to 0.010&nbsp;g? Work it out on paper first, showing the
+          rearrangement.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">New run</span>. Leave the sliders at bias +0.30&nbsp;g and &sigma;
+          0.15&nbsp;g.</li>
+        <li>Press <span class="ws-set">Add 25</span> until <span class="ws-set">Trials n</span> reaches
+          the number you calculated. Read <span class="ws-set">Predicted SE</span>.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Predicted SE at that n: ______________ g. Did you hit
+          0.010&nbsp;g? If you missed slightly, note that the demonstration also folds in the rounding of
+          the display to 0.01&nbsp;g &mdash; explain which direction that pushes the value.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Now press <span class="ws-set">New run</span>, set
+          <span class="ws-set">Systematic bias</span> to <span class="ws-set">&minus;0.17&nbsp;g</span>
+          and <span class="ws-set">Random scatter (&sigma;)</span> to
+          <span class="ws-set">0.05&nbsp;g</span>. <em>Before</em> pressing anything else, predict the
+          <em>Mean</em> and <em>Mean &minus; true</em> readouts after 100 weighings.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:6px">Now press <span class="ws-set">Add 25</span> four times. Actual Mean:
+          ______________ g. Actual Mean &minus; true: ______________ g.</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Your prediction in (c) will not match the last digit exactly.
+          Compare the size of that disagreement with the <em>Std. error</em> readout. Are they the same
+          order of magnitude, and why should they be?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> The shortcut &ldquo;our readings scatter, so we will take more of
+          them and the average will be accurate&rdquo; is doing real work in a lot of lab reports. Keeping
+          the settings from (c), press <span class="ws-set">Run to 500</span>. State exactly when that
+          shortcut holds and when it does not, referring to both sliders.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it and check
+        yourself &mdash; and where you were wrong, write down which step went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A certified 25.000&nbsp;g standard is weighed five times on the
+          same balance: 25.12, 25.11, 25.13, 25.12, 25.12&nbsp;g. Find the mean, the bias, the sample
+          standard deviation and the standard error. Using the &plusmn;0.05&nbsp;g cut-offs from Part 2,
+          classify the balance as accurate, precise, both or neither.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A balance has &sigma;&nbsp;=&nbsp;0.12&nbsp;g and negligible
+          bias. How many weighings are needed for the standard error to fall below 0.015&nbsp;g? Give the
+          smallest whole number that works.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Two balances are each used four times on the same certified
+          10.000&nbsp;g standard.<br>
+          Balance A: 10.31, 10.29, 10.30, 10.30&nbsp;g.<br>
+          Balance B: 9.8, 10.2, 10.1, 9.9&nbsp;g.<br>
+          Compute the mean and standard deviation for each. Which balance would you rather use for a
+          density determination, and why? Your answer must say what you would do with the balance you
+          chose.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Explain, without computing anything, why weighing your
+          <em>unknown</em> two hundred times can never reveal that the balance is out of calibration, and
+          name one measurement that would. Your explanation should refer to what averaging does to each of
+          the two error types.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Drag <em>Systematic bias</em> to &minus;0.40&nbsp;g and watch which side of the green line the
+          red dashed line sits on. Does the width of the 95&nbsp;% band change at all when you move the
+          bias slider? Should it?</li>
+        <li>Set &sigma; to 0.00&nbsp;g and then to 0.01&nbsp;g with n around 100. Watch <em>Reading
+          SD</em>, <em>Std. error</em> and <em>Predicted SE</em>. The model adds a rounding term because
+          the display only shows 0.01&nbsp;g &mdash; see whether you can spot it in the numbers.</li>
+        <li>Fix both sliders, then press <em>New run</em> half a dozen times, stopping at n&nbsp;=&nbsp;25
+          each time and noting <em>Mean &minus; true</em>. Do the same at n&nbsp;=&nbsp;500. How much does
+          the answer wander in each case, and does that match the Std. error readout?</li>
+        <li>Find a combination of the two sliders that pushes readings off the edge of the target plot, so
+          the little arrows appear at the boundary. What does that tell you about how far out a single
+          reading can land?</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Accurate, Precise, Both, Neither &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

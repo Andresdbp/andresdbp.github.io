@@ -273,13 +273,13 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students learn 22.4 L/mol early, it works on every homework problem
-        for about a week, and it quietly becomes a universal conversion factor &mdash; a fact about gases, like
-        the molar mass is a fact about a compound. It is not. 22.4 L/mol is one measurement of one thing at one
-        set of conditions: 0&nbsp;&deg;C and 1&nbsp;atm. The real quantity is RT/P, and it changes every time the
-        temperature or the pressure changes. At 25&nbsp;&deg;C and 1&nbsp;atm it is already 24.47&nbsp;L/mol; at
+        <strong>The shortcut:</strong> 22.4&nbsp;L/mol arrives early, works on every problem for about a week,
+        and quietly hardens into a universal conversion factor &mdash; a fact about gases, the way molar mass is
+        a fact about a compound. It is not. 22.4&nbsp;L/mol is one value of one quantity at one set of
+        conditions: 0&nbsp;&deg;C and 1&nbsp;atm. The quantity itself is RT/P, and it moves every time the
+        temperature or the pressure moves. At 25&nbsp;&deg;C and 1&nbsp;atm it is already 24.47&nbsp;L/mol; at
         300&nbsp;&deg;C and 1&nbsp;atm, which is the sort of temperature an inflator actually produces, it is
-        47.0&nbsp;L/mol &mdash; more than double the memorized number.
+        47.0&nbsp;L/mol &mdash; more than double.
       </p>
       <p>
         <strong>What to notice:</strong> set the mass to 100.0&nbsp;g and leave it there. At room temperature the
@@ -295,9 +295,10 @@
         <strong>The other half:</strong> the four cards under the bag are the whole calculation, and they run in
         one direction &mdash; grams of solid, moles of solid, moles of gas, litres of gas. The mole ratio 3/2
         comes from the coefficients of the balanced equation, not from anywhere else. Press
-        <em>Weigh out exactly enough</em> at room temperature and then at 300&nbsp;&deg;C: filling the same
-        60&nbsp;L bag takes 106.3&nbsp;g of azide in one case and 82.9&nbsp;g in the other. How much you weigh out
-        depends on the conditions the gas will be under. That is the connection the calculation exists to make.
+        <em>Weigh out exactly enough</em> at room temperature, then press <em>Hot deploy</em> and press it again:
+        filling the same 60&nbsp;L bag takes 106.3&nbsp;g of azide in one case and 82.9&nbsp;g in the other. How
+        much you weigh out depends on the conditions the gas will be under. That is the connection the
+        calculation exists to make.
       </p>
     </section>
   </div>
@@ -319,7 +320,7 @@
       var M_AZIDE = 65.01;          // g/mol
       var R = 0.0820574;            // L atm / (mol K)
       var RATIO = 3 / 2;            // mol N2 per mol NaN3, from the coefficients
-      var NAIVE = 22.4;             // the memorized number, used exactly as students use it
+      var NAIVE = 22.4;             // the memorized number, applied the way it usually gets applied
       var FONT = 'Poppins, system-ui, -apple-system, sans-serif';
 
       var DEFAULTS = { mass: 100.0, tC: 25, P: 1.00, target: 60 };
