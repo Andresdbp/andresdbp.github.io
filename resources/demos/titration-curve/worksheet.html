@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Titration Curve Lab — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 7 &middot; Solutions &amp; Acids/Bases</div>
+      <h1>Titration Curve Lab</h1>
+      <p class="ws-sub">Where the equivalence point actually sits, why the volume and the pH answer to
+        two different questions, and what the indicator has to match.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/titration-curve/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Nothing here is graded on being right &mdash;
+        the point is to have a committed answer on paper before the curve settles it.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>You titrate 25.0 mL of 0.100 M acetic acid (CH<sub>3</sub>COOH, pK<sub>a</sub> = 4.75) with
+          0.100 M NaOH. At the equivalence point &mdash; the moment every mole of acid has been
+          neutralised &mdash; what is the pH? Give a number, not a range.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Now the same question for 25.0 mL of 0.100 M HCl titrated with
+          0.100 M NaOH. pH at equivalence?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences on your reasoning &mdash; specifically, what
+          you assumed is left in the flask at the equivalence point.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Guided setup: the strong-acid run</h2>
+      <p class="ws-intro">Open the demonstration. Build the strong-acid curve first, so you have a
+        reference shape to compare everything else against.</p>
+
+      <ol class="ws-steps">
+        <li>In the <span class="ws-set">In the flask (analyte)</span> panel, click
+          <span class="ws-set">Strong acid</span>. The hint underneath should now name HCl.</li>
+        <li>Set <span class="ws-set">Analyte concentration</span> to <span class="ws-set">0.100 M</span>
+          and <span class="ws-set">Analyte volume</span> to <span class="ws-set">25.0 mL</span>.</li>
+        <li>In <span class="ws-set">In the burette (titrant)</span>, confirm
+          <span class="ws-set">NaOH (strong base)</span> is selected and set
+          <span class="ws-set">Titrant concentration</span> to <span class="ws-set">0.100 M</span>.</li>
+        <li>Before adding anything, read and record the <span class="ws-set">Equivalence vol.</span> and
+          <span class="ws-set">pH at equivalence</span> boxes.</li>
+        <li>Now add titrant with the <span class="ws-set">+5.00 mL</span>,
+          <span class="ws-set">+1.00 mL</span> and <span class="ws-set">+0.10 mL</span> buttons to hit
+          each volume in the table, reading <span class="ws-set">pH now</span> at each one. Check the
+          <span class="ws-set">Titrant added</span> box to be sure you are where you think you are;
+          <span class="ws-set">Undo</span> steps back if you overshoot.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Equivalence vol. = ____________ mL &nbsp;&nbsp;
+          pH at equivalence = ____________</p>
+      </div>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">Titrant added (mL)</th><th>pH now</th>
+              <th>Change in pH since the row above</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.00</td><td></td><td class="filled">&mdash;</td></tr>
+          <tr><td class="filled">10.00</td><td></td><td></td></tr>
+          <tr><td class="filled">20.00</td><td></td><td></td></tr>
+          <tr><td class="filled">24.00</td><td></td><td></td></tr>
+          <tr><td class="filled">24.90</td><td></td><td></td></tr>
+          <tr><td class="filled">25.10</td><td></td><td></td></tr>
+          <tr><td class="filled">30.00</td><td></td><td></td></tr>
+          <tr><td class="filled">50.00</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Between which two rows is the pH change largest? State the pH
+          change and the volume of NaOH that produced it.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The hint under the delivery buttons notes that one drop is
+          roughly 0.05 mL. Using your answer to <span class="label">b</span>, argue whether a single drop
+          near equivalence matters more or less than a single drop at 10.00 mL, and by roughly how much.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Moving any slider empties the flask and restarts the run. Finish a curve before you change
+        anything in the setup panels.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>The core relationship: acid strength and the equivalence pH</h2>
+      <p class="ws-intro">Now switch the flask to a weak acid and change one thing only &mdash; how weak
+        it is. Everything else stays fixed, so anything that moves is caused by pK<sub>a</sub> alone.</p>
+
+      <ol class="ws-steps">
+        <li>Click <span class="ws-set">Weak acid</span>. Keep
+          <span class="ws-set">Analyte concentration</span> at <span class="ws-set">0.100 M</span>,
+          <span class="ws-set">Analyte volume</span> at <span class="ws-set">25.0 mL</span>, and the
+          burette at <span class="ws-set">NaOH, 0.100 M</span>.</li>
+        <li>Set the <span class="ws-set">Acid strength, pK<sub>a</sub></span> slider to each value in the
+          table. The hint underneath names a real acid when you land on one of these.</li>
+        <li>For each pK<sub>a</sub>, read the <span class="ws-set">Equivalence vol.</span> box and the
+          <span class="ws-set">Key points on this curve</span> table at the bottom of the controls. You
+          do not need to add any titrant to fill this in.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>pK<sub>a</sub></th><th>Acid named in the hint</th><th>Equivalence vol. (mL)</th>
+              <th>pH at Start</th><th>pH at Half-equivalence</th><th>pH at Equivalence</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">3.17</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.75</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">6.35</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">7.53</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">9.25</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One column is identical in every row. Which one? Explain why
+          changing pK<sub>a</sub> cannot change it.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Compare the half-equivalence column with the pK<sub>a</sub>
+          column. State the relationship. (The two agree to within about 0.02 for most rows and drift
+          slightly apart for the strongest of these weak acids &mdash; the demonstration solves the full
+          charge balance rather than using the buffer approximation.)</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Write the rule connecting pK<sub>a</sub> to the pH at
+          equivalence, in your own words, and give the chemical reason. Name the species responsible.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your two predictions in Part 1. Which one was right,
+          which was not, and what exactly did you assume that turned out to be incomplete?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Using it the way a question would</h2>
+
+      <p class="ws-intro"><strong>4A &mdash; Working backwards to a concentration.</strong> A titration is
+        run to find an unknown, so the volume is the measurement and the concentration is the answer.</p>
+
+      <ol class="ws-steps">
+        <li>Set the flask to <span class="ws-set">Weak acid</span>,
+          <span class="ws-set">Analyte volume 20.0 mL</span>,
+          <span class="ws-set">Analyte concentration 0.150 M</span>,
+          <span class="ws-set">pK<sub>a</sub> 5.50</span>, burette
+          <span class="ws-set">NaOH 0.100 M</span>.</li>
+        <li><em>Before</em> looking at the readout, calculate the equivalence volume on paper. Write it
+          below, then check it against <span class="ws-set">Equivalence vol.</span></li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Your calculated equivalence volume: ____________ mL &nbsp;&nbsp;
+          Readout: ____________ mL. Show the calculation.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> From the <span class="ws-set">Key points on this curve</span>
+          table, record the half-equivalence volume and pH. If this were an unknown acid and those were
+          your only two measurements &mdash; equivalence volume and half-equivalence pH &mdash; show how
+          you would recover both its concentration and its K<sub>a</sub>.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:18px"><strong>4B &mdash; Where a habit breaks.</strong> A
+        common shortcut is to treat indicator choice as a matter of preference, since any of them changes
+        colour somewhere on an acid&ndash;base titration. Test that.</p>
+
+      <ol class="ws-steps">
+        <li>Return to <span class="ws-set">Weak acid</span>, <span class="ws-set">pK<sub>a</sub> 4.75</span>,
+          <span class="ws-set">0.100 M</span>, <span class="ws-set">25.0 mL</span>, burette
+          <span class="ws-set">NaOH 0.100 M</span>.</li>
+        <li>Work through the <span class="ws-set">Indicator</span> menu and record
+          <span class="ws-set">Colour changes at</span> and <span class="ws-set">Titration error</span>
+          for each one.</li>
+        <li>Then click <span class="ws-set">Strong acid</span> (same concentrations and volume) and
+          repeat.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Indicator (pH range)</th><th>Weak acid: colour changes at (mL)</th>
+              <th>Weak acid: titration error</th><th>Strong acid: colour changes at (mL)</th>
+              <th>Strong acid: titration error</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Methyl orange (3.1&ndash;4.4)</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Methyl red (4.4&ndash;6.2)</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Bromothymol blue (6.0&ndash;7.6)</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Phenolphthalein (8.3&ndash;10.0)</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Methyl orange is nearly harmless on one of these titrations and
+          catastrophic on the other. Give both errors, and explain the difference by referring to where
+          the indicator's pH range falls on each curve.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> If you used methyl orange on the weak acid and reported the
+          acid's concentration from the volume at which the colour changed, would your reported value be
+          too high or too low? By what percentage? Justify the direction, not just the number.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, set up each
+        scenario, and check yourself &mdash; if a number is off, write down where the method went wrong.
+        Assume 25 &deg;C, K<sub>w</sub> = 1.00 &times; 10<sup>&minus;14</sup>, throughout.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> 25.0 mL of 0.100 M HCl is titrated with 0.100 M NaOH. Calculate
+          the pH after exactly 24.00 mL of NaOH has been added. Report to two decimal places.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> 25.0 mL of 0.100 M of a monoprotic weak acid HA
+          (K<sub>a</sub> = 1.8 &times; 10<sup>&minus;5</sup>) is titrated with 0.100 M NaOH.
+          Calculate the pH (a) after 10.00 mL of NaOH, and (b) at the equivalence point. State which
+          equilibrium controls each answer.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A 20.0 mL sample of a monoprotic weak acid of unknown
+          concentration requires 30.00 mL of 0.100 M NaOH to reach the equivalence point. A pH meter
+          reads 5.50 when 15.00 mL of NaOH has been delivered. Find (a) the concentration of the acid,
+          (b) its K<sub>a</sub>, and (c) the pH at the equivalence point.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Two flasks each hold 25.0 mL of a 0.100 M monoprotic acid &mdash;
+          one strong, one weak. Both are titrated with 0.100 M NaOH. Explain, without calculating, why
+          the two titrations reach equivalence at the same volume but not at the same pH. Then state
+          which of the two starting pH values is higher, and why.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does considerably more than this
+        worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Tick <span class="ws-set">Reveal the full calculated curve</span> and press
+          <span class="ws-set">Run slowly</span>. Watch where the recorded points bunch up and where they
+          spread out, and work out what that spacing is telling you about the rate of pH change.</li>
+        <li>Put <span class="ws-set">Strong base</span> in the flask &mdash; the burette switches to HCl.
+          Sketch the curve you expect before you add anything, then build it. Where is equivalence, and
+          why?</li>
+        <li>Set the analyte to a strong acid and then click <span class="ws-set">HCl (strong acid)</span>
+          in the burette as well. Read the warning that appears and explain, in terms of what is being
+          neutralised, why <span class="ws-set">Equivalence vol.</span> shows a dash.</li>
+        <li>Drop both concentrations to <span class="ws-set">0.020 M</span> with a weak acid at
+          pK<sub>a</sub> 4.75. The equivalence volume does not move, but the vertical jump shrinks. Which
+          indicators from Part 4 still land inside it?</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Titration Curve Lab &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>ICE Workbench &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 8 &middot; Equilibrium</div>
+      <h1>ICE Workbench</h1>
+      <p class="ws-sub">What decides the sign of x, why the coefficients belong in the change row, and when
+        the &ldquo;x is small&rdquo; shortcut is allowed.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/ice-workbench/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The point is to have something committed to
+        paper that the demonstration will later settle one way or the other.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A sealed flask at 425&nbsp;&deg;C contains 0.100 mol&nbsp;L<sup>&minus;1</sup> HI and nothing
+          else &mdash; no H<sub>2</sub>, no I<sub>2</sub>. For
+          H<sub>2</sub>(g) + I<sub>2</sub>(g) &#8652; 2 HI(g), K = 54.3 at that temperature, which is a
+          large number.</p>
+        <p>Does x come out positive or negative, and is [HI] at equilibrium higher or lower than the 0.100
+          you started with?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what you used to decide.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading one complete ICE table</h2>
+      <p class="ws-intro">Open the demonstration. It starts on the <span class="ws-set">ICE table</span>
+        tab. The concentration sliders move in steps of 0.002 mol&nbsp;L<sup>&minus;1</sup>.</p>
+
+      <ol class="ws-steps">
+        <li>In <span class="ws-set">The reaction</span>, choose
+          <span class="ws-set">H&#8322; + I&#8322; &#8652; 2 HI</span>.</li>
+        <li>Press <span class="ws-set">Back to the reference K</span>, then confirm the
+          <span class="ws-set">K</span> readout.</li>
+        <li>Set <span class="ws-set">[H&#8322;]&#8320; = 0.1000</span>,
+          <span class="ws-set">[I&#8322;]&#8320; = 0.1000</span>,
+          <span class="ws-set">[HI]&#8320; = 0.0000</span>.</li>
+        <li>Copy the four boxes in <span class="ws-set">The reaction</span> panel into the first table,
+          then read the sentence under the Q-versus-K line and the
+          <span class="ws-set">Equilibrium</span> row of the ICE table for the second.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Reference K</th><th>at</th><th>&Delta;H&deg;</th><th>&Delta;n gas</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Q</th><th>Forward or backward?</th><th>x (mol L<sup>&minus;1</sup>)</th>
+              <th>Equilibrium [H<sub>2</sub>]</th><th>Equilibrium [I<sub>2</sub>]</th>
+              <th>Equilibrium [HI]</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> In the row labelled <span class="ws-set">Change &mdash; in
+          symbols</span>, what is written under HI, and why is it not the same as what is written under
+          H<sub>2</sub>?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Multiply your value of x by 2 and compare it with the equilibrium
+          [HI]. Show the arithmetic, then say in one sentence why those two numbers have to agree.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Tick <span class="ws-set">Show the most common wrong answer</span>.
+          Record the [HI] on the <span class="ws-set">Wrong answer</span> row: __________
+          mol&nbsp;L<sup>&minus;1</sup>. That answer still satisfies K = [HI]<sup>2</sup> /
+          ([H<sub>2</sub>][I<sub>2</sub>]). State what it does violate.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Leave the box ticked and switch the reaction to
+          <span class="ws-set">CO + H&#8322;O &#8652; CO&#8322; + H&#8322;</span>. What happens to the two
+          red rows, and what is it about this reaction that causes that?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What actually sets the sign of x</h2>
+      <p class="ws-intro">One slider moves; everything else stays where it is. Work down the table in
+        order.</p>
+
+      <ol class="ws-steps">
+        <li>Choose <span class="ws-set">N&#8322;O&#8324; &#8652; 2 NO&#8322;</span> and press
+          <span class="ws-set">Back to the reference K</span>. The <span class="ws-set">K</span> readout
+          should show 0.00460.</li>
+        <li>Leave <span class="ws-set">[N&#8322;O&#8324;]&#8320;</span> at
+          <span class="ws-set">0.1000</span> for every row.</li>
+        <li>Set <span class="ws-set">[NO&#8322;]&#8320;</span> to each value in the left-hand column and
+          record what the demonstration reports.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">[NO<sub>2</sub>]<sub>0</sub></th><th>Q</th>
+              <th>Q larger or smaller than K?</th><th>Runs forward or backward?</th>
+              <th>x, with its sign</th><th>Equilibrium [NO<sub>2</sub>]</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.0000</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.0100</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.0200</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.0300</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.0400</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Compute Q by hand for the fourth row from
+          Q = [NO<sub>2</sub>]<sup>2</sup> / [N<sub>2</sub>O<sub>4</sub>]. Show the working and compare
+          with the value you recorded.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Between which two rows does the sign of x change? Working to the
+          nearest 0.002, find the setting of [NO<sub>2</sub>]<sub>0</sub> that makes x smallest in
+          magnitude, and write down what the sentence under the Q-versus-K line says there.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> K held the same value in every row. Complete the rule: the sign of
+          x is decided by ______________________, and not by ______________________.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your part 1 prediction and test it: switch to
+          <span class="ws-set">H&#8322; + I&#8322; &#8652; 2 HI</span> and press
+          <span class="ws-set">Products only</span>. Was your prediction right? If your reasoning used the
+          size of K, say what that reasoning leaves out.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>When the &ldquo;x is small&rdquo; shortcut fails</h2>
+      <p class="ws-intro">Assuming the consumed concentrations barely move turns a quadratic into a square
+        root. It is a legitimate move, and it comes with a condition.</p>
+
+      <ol class="ws-steps">
+        <li>Set up <span class="ws-set">H&#8322; + I&#8322; &#8652; 2 HI</span> again with
+          <span class="ws-set">[H&#8322;]&#8320; = 0.1000</span>,
+          <span class="ws-set">[I&#8322;]&#8320; = 0.1000</span>,
+          <span class="ws-set">[HI]&#8320; = 0.0000</span> and
+          <span class="ws-set">Back to the reference K</span>.</li>
+        <li>Open the <span class="ws-set">Exact vs shortcut</span> tab and record the first row below.</li>
+        <li>Press <span class="ws-set">Move K until it is safe</span>, record the second row; then press
+          <span class="ws-set">Move K until it breaks</span> and record the third.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Setting</th><th>K</th><th>x exact</th><th>x shortcut</th><th>Percent error</th>
+              <th>5% rule check</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Reference K</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Moved until safe</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Moved until it breaks</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Press <span class="ws-set">Back to the reference K</span> again and
+          look at the <span class="ws-set">Side by side</span> table. What does the Shortcut column give for
+          [H<sub>2</sub>], and what does the row <span class="ws-set">Q of that answer</span> report for
+          that column? Explain in one sentence what has gone wrong physically.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Still at the reference K, read the
+          <span class="ws-set">Multiply it out</span> panel. What degree is the equation in x, how many
+          roots does it report, and on what grounds is one of them thrown out? Note carefully whether the
+          rejected root is a negative number.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> With H<sub>2</sub> and I<sub>2</sub> in the flask, does the
+          shortcut improve as K rises or as K falls? Now press <span class="ws-set">Products only</span> and
+          answer the same question. Why is there no single rule about the direction?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        The K slider is a thought experiment, not a laboratory control. Read the note directly underneath it:
+        the only thing that changes K for a given reaction is temperature, and for some settings the note
+        will tell you that no temperature produces that K at all.
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away from it. Show your working. Then reopen it, set each
+        situation up, and check yourself &mdash; and where you disagree, find the step where it happened.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> H<sub>2</sub>(g) + I<sub>2</sub>(g) &#8652; 2 HI(g), K = 54.3. A
+          flask starts with 0.200&nbsp;M H<sub>2</sub>, 0.200&nbsp;M I<sub>2</sub> and no HI. Find x and all
+          three equilibrium concentrations. (Take a square root rather than expanding the quadratic, and say
+          why you are allowed to.)</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> N<sub>2</sub>O<sub>4</sub>(g) &#8652; 2 NO<sub>2</sub>(g),
+          K = 0.0046 at 25&nbsp;&deg;C. A flask starts with 0.100&nbsp;M N<sub>2</sub>O<sub>4</sub> and no
+          NO<sub>2</sub>. <em>(a)</em> Solve for x with the &ldquo;x is small&rdquo; shortcut.
+          <em>(b)</em> Apply the 5% check. <em>(c)</em> If it fails, solve the quadratic properly and report
+          the percent error the shortcut would have carried.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> For H<sub>2</sub> + I<sub>2</sub> &#8652; 2 HI with K = 54.3, a
+          flask holds [H<sub>2</sub>] = 0.0500&nbsp;M, [I<sub>2</sub>] = 0.0500&nbsp;M and
+          [HI] = 0.400&nbsp;M. Without solving for x, compute Q and state the direction of reaction, the
+          sign of x, and whether [H<sub>2</sub>] rises or falls.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Starting from 0.100&nbsp;M H<sub>2</sub>, 0.100&nbsp;M
+          I<sub>2</sub> and no HI, someone writes the change row as &minus;x, &minus;x, +x, solves, and
+          obtains concentrations that satisfy K = [HI]<sup>2</sup> / ([H<sub>2</sub>][I<sub>2</sub>])
+          exactly. Explain why the answer must still be rejected, and name the quantity that is not
+          conserved by it.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The <span class="ws-set">Le Chatelier</span> tab is
+        untouched by everything above.</p>
+
+      <ul style="padding-left:18px">
+        <li>On the <span class="ws-set">Le Chatelier</span> tab choose
+          <span class="ws-set">Add a catalyst</span> and drag <span class="ws-set">Catalyst speed-up</span>
+          from 1 to 25. Watch the <span class="ws-set">K before</span> and
+          <span class="ws-set">K after</span> readouts and the ends of the solid and dashed curves. Decide
+          exactly what a catalyst does change.</li>
+        <li>Choose <span class="ws-set">Change volume</span>. Predict the shift from the
+          <span class="ws-set">&Delta;n gas</span> readout before you look, first for
+          H<sub>2</sub> + I<sub>2</sub> &#8652; 2 HI and then for
+          N<sub>2</sub> + 3 H<sub>2</sub> &#8652; 2 NH<sub>3</sub>.</li>
+        <li>Choose <span class="ws-set">Change temperature</span> &mdash; the one stress that moves K
+          itself. Compare an exothermic reaction with the endothermic
+          N<sub>2</sub>O<sub>4</sub> &#8652; 2 NO<sub>2</sub>: which way does K go when each is heated, and
+          how does the sign of &Delta;H&deg; predict it?</li>
+        <li>Choose <span class="ws-set">Add product</span> on the water-gas shift. Does the species you
+          added come back down to the value it had before the stress? Say what that means for the phrase
+          &ldquo;the system opposes the change&rdquo;.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      ICE Workbench &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

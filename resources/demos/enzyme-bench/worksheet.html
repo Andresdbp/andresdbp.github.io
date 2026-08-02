@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Enzyme Bench &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 3 &middot; Cellular Energetics</div>
+      <h1>Enzyme Bench</h1>
+      <p class="ws-sub">Two inhibitors, one question: which of them can substrate out-vote, and which of
+        V<sub>max</sub> and K<sub>m</sub> moves when it does.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/enzyme-bench/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Being wrong here costs nothing &mdash; the point is
+        to have a committed number to argue with later.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>An enzyme is inhibited, and you respond by flooding the tube with substrate &mdash; enough to
+          saturate the enzyme completely. For each inhibitor type, what percentage of the
+          <em>uninhibited</em> V<sub>max</sub> do you expect to get back?</p>
+        <p style="margin-top:8px">Competitive inhibitor: __________ %&nbsp;&nbsp;&nbsp;&nbsp;
+          Noncompetitive inhibitor: __________ %</p>
+        <p style="margin-top:10px">Write one or two sentences saying what reasoning produced those two
+          numbers.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>The uninhibited enzyme</h2>
+      <p class="ws-intro">Before anything is inhibited, you need to know what normal looks like. Open the
+        demonstration and press <span class="ws-set">Reset all</span>.</p>
+
+      <ol class="ws-steps">
+        <li>Confirm the starting conditions: <span class="ws-set">[E]<sub>total</sub> = 100 nM</span>,
+          <span class="ws-set">Temperature 37.0 &deg;C</span>, <span class="ws-set">pH 7.0</span>, and both
+          inhibitor checkboxes clear. The <span class="ws-set">Activity vs 37 &deg;C, pH 7</span> tile should
+          read 100%.</li>
+        <li>Write down what the <span class="ws-set">V<sub>max</sub> (apparent)</span> and
+          <span class="ws-set">K<sub>m</sub> (apparent)</span> tiles read right now.</li>
+        <li>Drag the <span class="ws-set">[S]</span> slider until its readout shows each value in the table,
+          and record <span class="ws-set">Rate v now</span> and <span class="ws-set">Share of
+          V<sub>max</sub></span>.</li>
+      </ol>
+
+      <p>V<sub>max</sub> = ____________ &micro;mol L<sup>&minus;1</sup> min<sup>&minus;1</sup>
+        &nbsp;&nbsp;&nbsp;&nbsp; K<sub>m</sub> = ____________ mM</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">[S] readout</th><th>Rate v now
+              (&micro;mol L<sup>&minus;1</sup> min<sup>&minus;1</sup>)</th>
+              <th>Share of V<sub>max</sub></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.500 mM</td><td></td><td></td></tr>
+          <tr><td class="filled">2.00 mM</td><td></td><td></td></tr>
+          <tr><td class="filled">6.00 mM</td><td></td><td></td></tr>
+          <tr><td class="filled">20.0 mM</td><td></td><td></td></tr>
+          <tr><td class="filled">100 mM</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One row reads exactly 50.0% of V<sub>max</sub>. Which [S] is it, and
+          what is that concentration called?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Going from 20.0 mM to 100 mM multiplies [S] by five. By what factor
+          does the rate increase? Explain, using the shape of the curve, why buying that much substrate is a
+          poor investment.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Set <span class="ws-set">[E]<sub>total</sub></span> to
+          <span class="ws-set">50 nM</span>. Record both headline tiles, then return the slider to 100 nM.</p>
+        <p style="margin-top:6px">V<sub>max</sub> = ____________ &nbsp;&nbsp;&nbsp;&nbsp;
+          K<sub>m</sub> = ____________</p>
+        <p style="margin-top:6px">Which one changed, and why does the other one have no reason to?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What each inhibitor actually moves</h2>
+      <p class="ws-intro">Now vary one thing at a time: the dose of one inhibitor, with [S] held fixed. Keep
+        <span class="ws-set">[S] at 2.00 mM</span> for both tables &mdash; press <span class="ws-set">Reset
+        all</span> between them if the slider drifts.</p>
+
+      <ol class="ws-steps">
+        <li>Tick <span class="ws-set">Competitive inhibitor</span>. Its slider unlocks; it runs 0 to 10.0 mM
+          in steps of 0.1, and K<sub>i</sub> = 2.0 mM.</li>
+        <li>Set <span class="ws-set">[I] competitive</span> to each dose in the table and record the two
+          headline tiles and <span class="ws-set">Rate v now</span>. For the 0 mM row, simply leave the
+          checkbox unticked.</li>
+        <li>Untick it, tick <span class="ws-set">Noncompetitive inhibitor</span> instead, and repeat.</li>
+      </ol>
+
+      <p><strong>Competitive</strong> &mdash; [S] fixed at 2.00 mM</p>
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">[I] competitive</th><th>V<sub>max</sub> (apparent)</th>
+              <th>K<sub>m</sub> (apparent)</th><th>Rate v now</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">6.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">10.0 mM</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Noncompetitive</strong> &mdash; [S] fixed at 2.00 mM</p>
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">[I] noncompetitive</th><th>V<sub>max</sub> (apparent)</th>
+              <th>K<sub>m</sub> (apparent)</th><th>Rate v now</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">6.0 mM</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">10.0 mM</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> In the competitive table, K<sub>m</sub> at [I] = 10.0 mM is how many
+          times K<sub>m</sub> at [I] = 0? Show that
+          K<sub>m,app</sub> = K<sub>m</sub>(1 + [I]/K<sub>i</sub>) gives the same factor.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> State the rule in your own words: one sentence for what a competitive
+          inhibitor does to V<sub>max</sub> and K<sub>m</sub>, one sentence for the noncompetitive one.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Press the <span class="ws-set">Competitive</span> preset button
+          &mdash; it sets that inhibitor to 10.0 mM and clears the other &mdash; then press
+          <span class="ws-set">Flood with substrate</span> and read the tile labelled <span class="ws-set">Rate
+          at saturating [S] (500 mM), as a share of the uninhibited V<sub>max</sub></span>. Now press
+          <span class="ws-set">Noncompetitive</span> and read the same tile.</p>
+        <p style="margin-top:6px">Competitive: __________ %&nbsp;&nbsp;&nbsp;&nbsp;
+          Noncompetitive: __________ %</p>
+        <p style="margin-top:8px">Compare both numbers with your prediction in Part 1. If either was off, say
+          specifically which assumption produced it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The competitive figure is not quite 100%, and it never will be at any finite [S]. The curve approaches
+        the uninhibited V<sub>max</sub> as an asymptote &mdash; 500 mM is close enough to make the point, not
+        close enough to reach it.
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Using it the way a question would</h2>
+      <p class="ws-intro">A single rate measurement is not evidence of anything. Here are two conditions that
+        are indistinguishable at one substrate concentration.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset all</span>. Confirm [S] reads 2.00 mM.</li>
+        <li><strong>Condition A:</strong> tick <span class="ws-set">Competitive inhibitor</span> and set it to
+          <span class="ws-set">6.0 mM</span>. Record the row.</li>
+        <li><strong>Condition B:</strong> untick it, tick <span class="ws-set">Noncompetitive inhibitor</span>
+          and set it to <span class="ws-set">3.0 mM</span>. Record the row.</li>
+        <li>For each condition, also read the saturating-[S] rescue tile.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:26%">Condition (at [S] = 2.00 mM)</th><th>Rate v now</th>
+              <th>Share of V<sub>max</sub></th><th>V<sub>max</sub> (app)</th>
+              <th>K<sub>m</sub> (app)</th><th>Rescue at 500 mM</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">A &mdash; competitive 6.0 mM</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">B &mdash; noncompetitive 3.0 mM</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The <span class="ws-set">Rate v now</span> column is identical for A
+          and B. Name two readouts on this page that tell them apart anyway, and say what each one shows.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> A lab has one enzyme sample and can only afford a single assay. What
+          would you tell them to change so that one further measurement distinguishes A from B? Justify it in
+          one sentence.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> <strong>Working backwards.</strong> You want the
+          <span class="ws-set">K<sub>m</sub> (apparent)</span> tile to read exactly
+          <span class="ws-set">10.00 mM</span> using the competitive inhibitor alone. Calculate the dose first
+          from K<sub>m,app</sub> = K<sub>m</sub>(1 + [I]/K<sub>i</sub>), then set the slider and check.</p>
+        <p style="margin-top:6px">Calculated [I] = __________ mM &nbsp;&nbsp;&nbsp;&nbsp;
+          Tile reads: __________ mM</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Press <span class="ws-set">Noncompetitive</span>, note V<sub>max</sub>,
+          then press <span class="ws-set">Neither</span> and lower
+          <span class="ws-set">[E]<sub>total</sub></span> until V<sub>max</sub> matches. Record the enzyme
+          concentration you needed, and explain what that equivalence says about how a noncompetitive
+          inhibitor works.</p>
+        <p style="margin-top:6px">[E]<sub>total</sub> = __________ nM</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, reproduce each
+        situation on the sliders, and write down where any disagreement came from. Unless a problem says
+        otherwise, use V<sub>max</sub> = 100 &micro;mol L<sup>&minus;1</sup> min<sup>&minus;1</sup>,
+        K<sub>m</sub> = 2.00 mM, and K<sub>i</sub> = 2.0 mM for both inhibitors.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Calculate the initial rate at [S] = 3.00 mM with no inhibitor
+          present, and express it as a percentage of V<sub>max</sub>.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A competitive inhibitor is added at [I] = 5.0 mM. Predict
+          K<sub>m,app</sub>, then predict the initial rate at [S] = 4.00 mM.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A double-reciprocal plot of two conditions gives two straight lines.
+          Both cross the vertical axis at 1/v = 0.0100 L min &micro;mol<sup>&minus;1</sup>. One crosses the
+          horizontal axis at &minus;0.500 mM<sup>&minus;1</sup>, the other at
+          &minus;0.125 mM<sup>&minus;1</sup>. Identify the inhibitor type, find V<sub>max</sub> and both
+          K<sub>m</sub> values, and calculate [I].</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A noncompetitive inhibitor is present at a concentration that halves
+          the rate at every [S]. State that concentration. Then explain, in terms of what the inhibitor does
+          to individual enzyme molecules, why a solution containing half as much enzyme and no inhibitor at
+          all would give an identical v-versus-[S] curve.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does considerably more than this
+        worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Drag <span class="ws-set">Temperature</span> across its whole range and watch the left-hand
+          environment plot. Find the two temperatures at which activity is half-maximal. The peak is not
+          halfway between them &mdash; work out which of the two effects, the Arrhenius rise or the loss of
+          folded enzyme, makes the curve asymmetric.</li>
+        <li>Take the temperature to 55 &deg;C, then bring it back to 37 &deg;C. The rate returns. Read the
+          <em>Honest limits</em> panel and say what would have to be added to the model for that recovery to
+          stop happening.</li>
+        <li>Press <span class="ws-set">Pepsin, opt 2.0</span>, then drag pH back to 7.0 and watch the
+          <span class="ws-set">Activity vs 37 &deg;C, pH 7</span> tile. Do the same starting from
+          <span class="ws-set">Trypsin, opt 8.0</span>. Explain what this predicts about where in the body
+          each enzyme can work.</li>
+        <li>Switch on both inhibitors at once and open the <span class="ws-set">1/v vs 1/[S]</span> tab. Both
+          intercepts move. Predict where each intercept lands before you look.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Enzyme Bench &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

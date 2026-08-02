@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Build a Polymer — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 1 &middot; Chemistry of Life</div>
+      <h1>Build a Polymer</h1>
+      <p class="ws-sub">Counting the bonds, the waters and the atoms in a growing chain &mdash; and finding
+        the one macromolecule the counting rule does not fit.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/build-a-polymer/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know, and commit it to paper before you look at the
+        demonstration. The point is to have something specific to compare against.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A cell links 12 glucose monomers into a single straight chain of starch. How many water
+          molecules are released in building that chain?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying how you arrived at that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Read the counters</h2>
+      <p class="ws-intro">Open the demonstration. The <span class="ws-set">Carbohydrate</span> tab should
+        already be selected; if not, click it. The <strong>Chain length</strong> slider runs from 1 to 12
+        in whole monomers, and the Counters panel reports the molecule four ways.</p>
+
+      <ol class="ws-steps">
+        <li>Click <span class="ws-set">Reset</span>, then drag <strong>Chain length</strong> down to
+          <span class="ws-set">1</span>.</li>
+        <li>Record the readouts in the first row of the table below. <strong>Formula</strong> and
+          <strong>Molar mass</strong> are in the Counters panel; copy the formula exactly, subscripts
+          included.</li>
+        <li>Move the slider to 2, then 3, then 4, filling in a row each time.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">Chain length</th><th>Bonds</th><th>Waters out</th>
+              <th>Molar mass (Da)</th><th>Formula</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Two of the columns you filled in are identical all the way down.
+          Which two, and what does that tell you about the relationship between bond formation and water?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Copy the two values from the lower part of the Counters panel:
+          <strong>Bond formed</strong> = ______________________ and <strong>Water lost per bond</strong>
+          = ____________ Da.</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> With the chain at 4, press <span class="ws-set">Hydrolyze</span>
+          once. Which of the two rows on the equation card lights up, and which way does the
+          H<sub>2</sub>O pill travel &mdash; toward the chain or away from it?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Now press <span class="ws-set">Add monomer</span> once and answer
+          the same two questions. State in one sentence what hydrolysis does to water that dehydration
+          synthesis does not.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>The counting rule</h2>
+      <p class="ws-intro">Vary one control &mdash; chain length &mdash; over its whole range and look for
+        the pattern in the numbers, not in the picture.</p>
+
+      <ol class="ws-steps">
+        <li>Stay on the <span class="ws-set">Carbohydrate</span> tab.</li>
+        <li>Set <strong>Chain length</strong> to each value in the left column and record the three
+          readouts. Let the animation finish before you read the numbers.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">Monomers (<em>n</em>)</th><th>Bonds</th><th>Waters out</th>
+              <th>Molar mass (Da)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">8</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">12</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Write the rule in your own words, then as an expression in
+          <em>n</em>: a straight chain of <em>n</em> monomers contains ____________ bonds and releases
+          ____________ waters.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Say why the two counts are one <em>less</em> than the number of
+          monomers rather than equal to it. Refer to a specific monomer in the chain.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your prediction in Part 1. Does the demonstration agree
+          with it? If not, name the specific assumption that turned out not to hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> The note under the <strong>Build</strong> panel gives the mass of
+          one &alpha;-D-glucose monomer as 180.16 Da. Twelve of them would be 2161.9 Da, but your table
+          says the 12-unit chain is lighter than that. Show that the missing mass is exactly accounted for
+          by the waters that left.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Backwards, and where the rule stops working</h2>
+      <p class="ws-intro">A question rarely hands you <em>n</em>. It hands you a mass, or a molecule that
+        the rule was never built for.</p>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> A straight chain of &alpha;-D-glucose has a molar mass of
+          1153.0&nbsp;Da. Using 180.16 Da per monomer and 18.02 Da per water, work out how many monomers
+          it contains. Show your algebra, then set the slider to your answer and check the
+          <strong>Molar mass</strong> readout.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <ol class="ws-steps">
+        <li>Click the <span class="ws-set">Lipid</span> tab. The slider is relabelled
+          <strong>Fatty acids attached</strong> and now runs 0 to 3.</li>
+        <li>Set it to <span class="ws-set">3</span> &mdash; a complete triglyceride &mdash; and fill in the
+          row below. A fifth readout, <strong>n &minus; 1 says</strong>, appears on this tab; record it too.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">Fatty acids</th><th>Bonds</th><th>Waters out</th>
+              <th>n &minus; 1 says</th><th>Molar mass (Da)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The <strong>Waters out</strong> and <strong>n &minus; 1 says</strong>
+          readouts disagree. Which one is correct for a triglyceride, and what is the missing molecule that
+          the <em>n</em> &minus; 1 rule failed to count?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Applying <em>n</em> &minus; 1 to fatty acids is a reasonable move
+          &mdash; it works for every other tab. State the structural feature a molecule must have for
+          <em>n</em> &minus; 1 to apply, and say in one sentence why a triglyceride does not have it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working on the lines. Then reopen
+        the demonstration, check yourself, and note where any arithmetic went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A single-stranded DNA fragment is 9 nucleotides long, every one of
+          them dAMP (331.22&nbsp;Da). How many phosphodiester bonds does it contain, how many water
+          molecules were released in building it, and what is its molar mass to the nearest whole Da?
+          (Water = 18.02 Da.)</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A polypeptide built entirely from glycine (75.07&nbsp;Da) has a
+          molar mass of 645.6&nbsp;Da. How many amino acid residues does it contain, and how many peptide
+          bonds?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> An amylase completely hydrolyzes one starch fragment of 8 glucose
+          units into 8 free glucose molecules. How many water molecules are consumed? Compare the combined
+          mass of the products with the mass of the original fragment: which is greater, and by how many
+          Da?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A triglyceride releases 3 water molecules when it forms, but a
+          chain of 3 glucose monomers releases only 2. Explain the difference in terms of what is being
+          joined to what in each case. Do not simply restate the two rules.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Every mass on this page comes from one specific monomer per family &mdash; &alpha;-D-glucose,
+        glycine, dAMP, palmitic acid &mdash; so that the numbers can be checked by hand. A real protein
+        mixes 20 different amino acids and real DNA mixes four nucleotides, so an actual chain's mass is a
+        sum of different residues, not a multiple of one.
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration holds more than this worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Switch between the four tabs with the equation card in view. Three of them show the same
+          reaction; the <span class="ws-set">Protein</span> tab shows a different one. Work out which group
+          hands over the hydrogen in each case, and why the peptide bond is the exception.</li>
+        <li>On the <span class="ws-set">Lipid</span> tab, take the slider all the way down to
+          <span class="ws-set">0</span>. Read the caption and the <strong>Formula</strong> readout for
+          glycerol on its own, then add fatty acids one at a time and track which readouts change and which
+          do not.</li>
+        <li>The note under <strong>Build</strong> on the <span class="ws-set">Carbohydrate</span> tab says
+          cellulose has the same formula and the same mass per unit as starch. If mass and formula cannot
+          tell them apart, what does &mdash; and why can you not digest one of them?</li>
+        <li>Read the last paragraph of &ldquo;What this is for&rdquo;, on how a cell actually builds DNA.
+          Decide what the demonstration still gets right about a phosphodiester bond and what it leaves out
+          about the way the cell pays for it.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Build a Polymer &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

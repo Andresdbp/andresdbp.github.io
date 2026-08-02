@@ -229,14 +229,15 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception, part one:</strong> students read a solubility curve as
-        <em>how much is dissolved</em>. It is not. It is the <em>ceiling</em> &mdash; the most that
-        <em>can</em> dissolve in 100 g of water at that temperature. Your sample can sit anywhere on the
-        chart; the curve does not move to meet it.
+        <strong>The curve is a ceiling, not a measurement.</strong> It is plotted from real measured
+        points, so reading it as <em>how much is dissolved</em> is a fair first guess &mdash; and the
+        wrong one. It reports the most that <em>can</em> dissolve in 100 g of water at that temperature.
+        Your sample can sit anywhere on the chart; the curve does not move to meet it.
       </p>
       <p>
-        <strong>The misconception, part two:</strong> "hotter dissolves more." That is a habit picked up
-        from sugar and salt, and it is false for gases. Switch the solute to NH₃ and the curve runs
+        <strong>"Hotter dissolves more" is a habit, not a law.</strong> Sugar and salt both behave that
+        way, so the generalisation is an honest one to draw &mdash; and it fails for gases. Switch the
+        solute to NH₃ and the curve runs
         <em>downhill</em>: heating drives dissolved gas out. This is why a warm river holds less dissolved
         oxygen than a cold one (about 14.6 mg/L at 0 °C, 8.3 mg/L at 25 °C, 6.4 mg/L at 40 °C in water open
         to air) and why a warm soda goes flat the instant you open it. Some solids do it too &mdash;
@@ -837,8 +838,8 @@
 
       function say(html) { $('msg').innerHTML = html; }
 
-      // A plain description of where the sample sits right now — used whenever the
-      // student moves a slider, so the message never goes stale.
+      // A plain description of where the sample sits right now — used whenever a
+      // slider moves, so the message never goes stale.
       function sayState() {
         var s = cur(), capNow = capacity(st.T);
         var excess = Math.max(0, st.total - st.dissolved);

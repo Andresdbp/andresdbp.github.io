@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Why Cells Are Small &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 2 &middot; Cell Structure &amp; Function</div>
+      <h1>Why Cells Are Small</h1>
+      <p class="ws-sub">Finding out what actually sets the size limit on a cell &mdash; and checking, number
+        by number, whether the membrane ever runs short.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/why-cells-are-small/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The point is to have a number on paper that the
+        demonstration can later confirm or refute.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A spherical cell sits in fluid holding oxygen at 100&nbsp;&micro;M. Oxygen diffuses in through the
+          membrane and is burned at a steady rate throughout the cytoplasm. At a radius of 60&nbsp;&micro;m,
+          the concentration at the very centre works out to 88&nbsp;&micro;M.</p>
+        <p style="margin-top:8px">Predict the centre concentration if the radius is doubled to
+          120&nbsp;&micro;m, with nothing else changed.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what reasoning produced that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Set the cell up and read it</h2>
+      <p class="ws-intro">Open the demonstration. The left side draws the cell and the oxygen inside it; the
+        right side reports the same cell as numbers.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset everything</span>. The <em>Sphere</em> tab is selected and the
+          <em>Working muscle</em> preset is on.</li>
+        <li>Confirm the three sliders in <em>The physics</em> read
+          <span class="ws-set">k = 40.0 &micro;M s&#8315;&sup1;</span>,
+          <span class="ws-set">D = 2000 &micro;m&sup2; s&#8315;&sup1;</span> and
+          <span class="ws-set">C<sub>s</sub> = 100 &micro;M</span>, and that
+          <span class="ws-set">Radius R</span> reads <span class="ws-set">120 &micro;m</span>.</li>
+        <li>Fill in the first row of the table from <em>The answer</em> panel and the
+          <em>Does the membrane fail?</em> panel.</li>
+        <li>Now drag <span class="ws-set">Radius R</span> to <span class="ws-set">240 &micro;m</span> and fill
+          in the second row. Record the flux numbers with their units, which change as the cell grows.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:11%">Radius R</th><th>Oxygen at the centre</th>
+              <th>Critical size for this shape</th><th>Dead core radius</th>
+              <th>Volume that is anoxic</th><th>Oxygen consumed</th>
+              <th>Oxygen crossing the membrane</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">120 &micro;m</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">240 &micro;m</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Compare the last two columns within each row. What is the
+          relationship between oxygen consumed and oxygen crossing the membrane, and does it change when
+          the cell grows past the critical size?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The 240&nbsp;&micro;m cell has a dead core. Given your answer to
+          <em>a</em>, state whether the membrane failed to supply this cell, and say what did run out
+          instead.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The two flux numbers are computed independently: one from k &times; volume, the other from Fick's law
+        at the membrane. They are not the same calculation printed twice.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>How the centre falls as the cell grows</h2>
+      <p class="ws-intro">Keep the <em>Sphere</em> tab and the <em>Working muscle</em> settings from Part 2.
+        Change only <span class="ws-set">Radius R</span>. The outside concentration stays at
+        100&nbsp;&micro;M, so the deficit is 100 minus whatever the centre reads.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Radius R</span> to each value in the table and read
+          <span class="ws-set">Oxygen at the centre</span>.</li>
+        <li>Fill in the deficit column yourself: 100 &minus; (centre reading).</li>
+        <li>Fill in the last column: each deficit divided by the deficit in the first row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Radius R</th><th style="width:12%">R &divide; 30 &micro;m</th>
+              <th>Oxygen at the centre (&micro;M)</th>
+              <th>Deficit = 100 &minus; centre (&micro;M)</th>
+              <th>Deficit &divide; deficit in row 1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">30.0 &micro;m</td><td class="filled">1</td><td></td><td></td><td class="filled">1</td></tr>
+          <tr><td class="filled">60.0 &micro;m</td><td class="filled">2</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">90.0 &micro;m</td><td class="filled">3</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">120 &micro;m</td><td class="filled">4</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">150 &micro;m</td><td class="filled">5</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Compare column 2 with column 5. Complete the rule in your own words:
+          multiplying the radius by <em>m</em> changes the drop in concentration between the membrane and the
+          centre by a factor of &nbsp;__________.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Use your rule &mdash; not the demonstration &mdash; to work out the
+          radius at which the deficit would reach the full 100&nbsp;&micro;M, so the centre reaches zero.
+          Show the arithmetic, then check it against the <span class="ws-set">Critical size for this shape</span>
+          readout.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Turn back to your Part&nbsp;1 prediction. The table contains both
+          answers. Was your number right? If it was not, name the specific assumption in your reasoning that
+          the data contradicts.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Two ways of using this</h2>
+      <p class="ws-intro">The first task is the comparison the demonstration is built around. The second is a
+        shortcut that looks like it should work.</p>
+
+      <p style="font-weight:600;margin-top:14px">A. Same cytoplasm, different shape</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset everything</span>, then set
+          <span class="ws-set">Radius R</span> to <span class="ws-set">250 &micro;m</span>. Fill in the sphere
+          row.</li>
+        <li>Tick <span class="ws-set">Keep the volume fixed when I change shape</span>.</li>
+        <li>Press the <span class="ws-set">Flat sheet</span> tab. The dimension control is now
+          <em>Half-thickness L</em> and the demonstration has re-solved it to hold the same cytoplasm. Fill in
+          the sheet row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Shape</th><th>Radius R / Half-thickness L</th><th>Volume (&micro;m&sup3;)</th>
+              <th>SA : V (&micro;m&#8315;&sup1;)</th><th>Oxygen at the centre</th>
+              <th>Volume that is anoxic</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Sphere</td><td class="filled">250 &micro;m</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Flat sheet</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> By what factor did SA:V rise? By what factor did the distance from
+          the membrane to the deepest point fall? Show both.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The centre went from anoxic to nearly the full outside value. Using
+          the two factors from <em>a</em>, argue which of them can account for that change and which cannot.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The geometry constant n is 6 for a sphere and 2 for a sheet. Part of
+          the improvement in <em>b</em> comes from the distance and part is given back by n. Which way does
+          the change in n push the centre concentration, and why does the sheet still win overall?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p style="font-weight:600;margin-top:18px">B. Where the SA:V shortcut fails</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset everything</span>. Leave
+          <span class="ws-set">Keep the volume fixed</span> <em>unticked</em>.</li>
+        <li>Press the <span class="ws-set">Flat sheet</span> tab and set
+          <span class="ws-set">Half-thickness L</span> to <span class="ws-set">50.0 &micro;m</span>. Fill in
+          the first row.</li>
+        <li>Change nothing else except <span class="ws-set">Elongation / flattening</span>, from
+          <span class="ws-set">20&times;</span> to <span class="ws-set">100&times;</span>. Fill in the second
+          row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Elongation</th><th>Volume (&micro;m&sup3;)</th><th>Surface area (&micro;m&sup2;)</th>
+              <th>SA : V (&micro;m&#8315;&sup1;)</th><th>Oxygen at the centre</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">20&times;</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">100&times;</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Volume and surface area both grew by more than twenty-fold, and SA:V
+          moved slightly in the direction that is supposed to mean trouble. What happened to the centre
+          concentration?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> A prediction written as &ldquo;centre concentration follows SA:V&rdquo;
+          would fail here. State the quantity that the centre concentration does follow, and explain why a
+          sheet can be widened without limit without the middle noticing.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Use
+        C(centre) = C<sub>s</sub> &minus; k a&sup2; / (nD) and a<sub>crit</sub> =
+        &radic;(nDC<sub>s</sub>/k), with n = 6 for a sphere, 4 for a cylinder and 2 for a sheet. Then reopen
+        the demonstration, set the same conditions, and check yourself.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Resting tissue: k = 5 &micro;M s&#8315;&sup1;,
+          D = 2000 &micro;m&sup2; s&#8315;&sup1;, C<sub>s</sub> = 60 &micro;M. For a spherical cell of radius
+          200 &micro;m, find the oxygen concentration at the centre, and find the critical radius. State
+          whether this cell has a dead core.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Working muscle in arterial blood: k = 40 &micro;M s&#8315;&sup1;,
+          D = 2000 &micro;m&sup2; s&#8315;&sup1;, C<sub>s</sub> = 130 &micro;M. Find the largest radius a
+          spherical cell can have and still have oxygen everywhere inside.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Keep the values from problem 2 and switch to a flat sheet. Find the
+          critical half-thickness. It comes out smaller than the sphere's critical radius. Explain why that
+          is not a contradiction of the claim that flat cells can grow larger than spherical ones &mdash;
+          your answer needs to say what is being held fixed in each comparison.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A spherical cell with k = 40 &micro;M s&#8315;&sup1;,
+          D = 2000 &micro;m&sup2; s&#8315;&sup1; and C<sub>s</sub> = 100 &micro;M grows from a radius of
+          40 &micro;m to 80 &micro;m. Show that its SA:V is exactly halved, then find the centre
+          concentration at both radii. Explain why the drop from the membrane to the centre does not change
+          by the same factor as SA:V, and what that rules out as the cause of the size limit.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does considerably more than this
+        worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Press <span class="ws-set">A large protein</span> and read the
+          <em>How long to reach this steady state</em> panel. This is the one setting where the transient
+          time becomes a serious constraint. Work out what had to change to get there, and why the same
+          argument does not apply to oxygen.</li>
+        <li>Use the <span class="ws-set">Cylinder</span> tab with
+          <span class="ws-set">Keep the volume fixed</span> ticked, and see where a cylinder lands between
+          the sphere and the sheet in the <em>Same cytoplasm, three shapes</em> table. Its geometry constant
+          is 4. Why is it between the other two rather than outside them?</li>
+        <li>Hold the radius fixed and walk <span class="ws-set">Outside concentration C<sub>s</sub></span>
+          from 130 &micro;M, roughly arterial, down to 50 &micro;M, roughly the venous end of a capillary
+          bed. Watch the critical size. What does this predict about where in a tissue hypoxia appears
+          first?</li>
+        <li>Read <em>Where this model simplifies</em>. Pick the assumption you think a genuinely large cell
+          is most likely to break, and say what it would gain by breaking it.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Why Cells Are Small &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

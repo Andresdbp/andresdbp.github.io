@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Solubility Curves — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 7 &middot; Solutions &amp; Acids/Bases</div>
+      <h1>Solubility Curves</h1>
+      <p class="ws-sub">What a solubility curve actually reports, and why the same point on the graph can
+        describe two different flasks.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/solubility-curves/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Being right is not the point &mdash; having
+        something on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>110 g of potassium nitrate, KNO<sub>3</sub>, is stirred into 100 g of water at 60&nbsp;&deg;C
+          and all of it dissolves. The flask is then cooled to 20&nbsp;&deg;C. How many grams of solid
+          KNO<sub>3</sub> end up on the bottom?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences saying what you assumed to get that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Four numbers, not one</h2>
+      <p class="ws-intro">Open the demonstration and press <span class="ws-set">Reset</span>. You should
+        have KNO<sub>3</sub> selected, Temperature 60&nbsp;&deg;C, Solute added 110&nbsp;g, Water
+        100&nbsp;g, and <span class="ws-set">Stir and seed while cooling</span> ticked. The panel
+        <em>State of the solution</em> reports four quantities and a coloured label.</p>
+
+      <ol class="ws-steps">
+        <li>With the Reset settings still in place, fill in the first row of the table.</li>
+        <li>Leave Temperature at 60&nbsp;&deg;C. Drag <span class="ws-set">Solute added</span> to
+          <span class="ws-set">60 g</span> and fill in the second row.</li>
+        <li>Drag <span class="ws-set">Solute added</span> to <span class="ws-set">180 g</span> and fill in
+          the third row.</li>
+        <li>Drag <span class="ws-set">Solute added</span> back to <span class="ws-set">110 g</span>, then
+          drag <span class="ws-set">Temperature</span> down to <span class="ws-set">20&nbsp;&deg;C</span>
+          and fill in the last row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:11%">T (&deg;C)</th><th style="width:13%">Solute added</th>
+              <th>Can dissolve</th><th>Dissolved</th><th>Room left</th>
+              <th>Undissolved solid</th><th style="width:20%">State (the coloured label)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">60</td><td class="filled">110 g</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">60</td><td class="filled">60 g</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">60</td><td class="filled">180 g</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">20</td><td class="filled">110 g</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> In the first three rows you changed how much solute you put in,
+          and one of the four readouts did not move at all. Which one, and why not?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Rows one and three have the same <em>Can dissolve</em> value but
+          different states. Say in one sentence what the difference between the two flasks is.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Two of the four readouts always add up to a third. There are two
+          such relationships here. Write both as equations, and check them against row three.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The <em>Measured points</em> panel lists the handbook values the curve is drawn through. The line
+        between those points is a monotone interpolation, so it never invents a bump the data do not show
+        &mdash; but only the listed temperatures are measured. Everything between them is an estimate.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What temperature does to the ceiling</h2>
+      <p class="ws-intro">Keep Water at 100&nbsp;g for all of this, so <em>Can dissolve</em> is read
+        directly in grams per 100&nbsp;g of water. Only the <span class="ws-set">Temperature</span> slider
+        moves.</p>
+
+      <ol class="ws-steps">
+        <li>With KNO<sub>3</sub> selected, set Temperature to each value in the table and record
+          <span class="ws-set">Can dissolve</span>.</li>
+        <li>Switch the solute to <span class="ws-set">NaCl</span>, then to
+          <span class="ws-set">NH<sub>3</sub>&nbsp;(g)</span>, and fill the second table the same way.
+          The NH<sub>3</sub> slider stops at 60&nbsp;&deg;C.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Temperature (&deg;C)</th>
+              <th>KNO<sub>3</sub> &mdash; Can dissolve (g per 100 g H<sub>2</sub>O)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td></td></tr>
+          <tr><td class="filled">20</td><td></td></tr>
+          <tr><td class="filled">40</td><td></td></tr>
+          <tr><td class="filled">60</td><td></td></tr>
+          <tr><td class="filled">80</td><td></td></tr>
+          <tr><td class="filled">100</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Temperature (&deg;C)</th><th>NaCl</th>
+              <th>NH<sub>3</sub> (g), at 1 atm NH<sub>3</sub></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td></td><td></td></tr>
+          <tr><td class="filled">20</td><td></td><td></td></tr>
+          <tr><td class="filled">40</td><td></td><td></td></tr>
+          <tr><td class="filled">60</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> State in your own words what temperature does to the ceiling for
+          each of the three solutes. One sentence each.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Between 0 and 60&nbsp;&deg;C, KNO<sub>3</sub> and NaCl both go
+          up. Give the increase in g per 100&nbsp;g of water for each. Why would nobody try to purify
+          NaCl by dissolving it hot and cooling it?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Now settle Part 1. Using your KNO<sub>3</sub> table, calculate
+          the mass of solid you expect on the bottom after cooling 110&nbsp;g of KNO<sub>3</sub> in
+          100&nbsp;g of water from 60&nbsp;&deg;C to 20&nbsp;&deg;C. Show the subtraction.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Press <span class="ws-set">Reset</span>, then press
+          <span class="ws-set">Cool it &rarr; 20&nbsp;&deg;C</span>. Write down the mass the message
+          reports, and compare it with your Part 1 prediction. If they differ, name the specific
+          assumption that did not hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards, and one shortcut that fails</h2>
+      <p class="ws-intro">Exam questions rarely hand you the temperature. They hand you a mass and ask
+        what conditions it needs &mdash; and they rarely use exactly 100&nbsp;g of water.</p>
+
+      <p><strong>A. Find the temperature.</strong></p>
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. Set <span class="ws-set">Solute added</span> to
+          <span class="ws-set">150 g</span>, leaving Water at 100&nbsp;g. Some of it is on the bottom.</li>
+        <li>Before touching the temperature: using your Part 3 table, estimate by interpolation the
+          temperature at which 150&nbsp;g would just dissolve. Show the working.
+          <div class="lines"><i></i><i></i></div>
+        </li>
+        <li>Now raise <span class="ws-set">Temperature</span> one degree at a time until
+          <span class="ws-set">Undissolved solid</span> first reads 0.0&nbsp;g. Record that temperature
+          and the <span class="ws-set">Can dissolve</span> value there.
+          <div class="lines"><i></i></div>
+        </li>
+      </ol>
+
+      <p><strong>B. When the water is not 100 g.</strong></p>
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. Set <span class="ws-set">Water</span> to
+          <span class="ws-set">150 g</span>, <span class="ws-set">Temperature</span> to
+          <span class="ws-set">20&nbsp;&deg;C</span>, and <span class="ws-set">Solute added</span> to
+          <span class="ws-set">60 g</span>.</li>
+        <li>Predict <em>Can dissolve</em> and <em>Undissolved solid</em> on paper first, then read them
+          off.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:34%"></th><th>Your prediction (g)</th><th>What the demonstration reads (g)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Can dissolve</td><td></td><td></td></tr>
+          <tr><td class="filled">Undissolved solid</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The curve is labelled &ldquo;g per 100&nbsp;g H<sub>2</sub>O.&rdquo;
+          Write the one line of arithmetic that converts a value read off the curve into a mass for this
+          flask.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <p><strong>C. Two flasks, one dot.</strong></p>
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. Untick
+          <span class="ws-set">Stir and seed while cooling</span>.</li>
+        <li>Press <span class="ws-set">Cool it &rarr; 20&nbsp;&deg;C</span> and fill in the second row of
+          the table below. The first row is the flask you already made in Part 2, row four &mdash; the
+          same 110&nbsp;g of KNO<sub>3</sub> in the same 100&nbsp;g of water at the same
+          20&nbsp;&deg;C.</li>
+        <li>Now press <span class="ws-set">Disturb it</span> and write down what the message says.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">How you got to 20 &deg;C</th><th>Can dissolve</th><th>Dissolved</th>
+              <th>Undissolved solid</th><th style="width:22%">State</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Cooled with stirring on</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Cooled undisturbed</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> What did <span class="ws-set">Disturb it</span> report?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Both flasks plot at the same point on the graph. Explain why the
+          graph alone cannot tell you which of the two you are holding, and state what does determine it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        A point plotted above the curve is not by itself evidence of supersaturation. Every flask in
+        Part 2 row three and row four also plots above the curve, and none of them is supersaturated
+        &mdash; they simply have solute that never dissolved.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away from it. Show your working. Then reopen it and check
+        yourself &mdash; and where you were wrong, write down where the reasoning went off. Handbook
+        values you need are given with each problem.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> 30&nbsp;g of KNO<sub>3</sub> is stirred into 50&nbsp;g of water
+          at 60&nbsp;&deg;C, where the solubility is 110.0&nbsp;g per 100&nbsp;g H<sub>2</sub>O.
+          (i) Is the solution saturated or unsaturated, and by how many grams?
+          (ii) The flask is cooled to 20&nbsp;&deg;C, where the solubility is 31.6&nbsp;g per 100&nbsp;g
+          H<sub>2</sub>O. What mass of solid appears, assuming it is stirred throughout?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A solution of KCl is saturated at 80&nbsp;&deg;C using
+          250&nbsp;g of water. Solubility of KCl: 51.3&nbsp;g per 100&nbsp;g H<sub>2</sub>O at
+          80&nbsp;&deg;C, 34.2&nbsp;g per 100&nbsp;g H<sub>2</sub>O at 20&nbsp;&deg;C. What mass of KCl
+          crystallises when the solution is cooled to 20&nbsp;&deg;C with stirring? (When you check this
+          on the demonstration, the Solute added slider takes whole grams only, so set it to the nearest
+          gram and expect agreement to within a few tenths.)</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Ammonia dissolved in 100&nbsp;g of water under 1&nbsp;atm of
+          NH<sub>3</sub> gas: 52.9&nbsp;g at 20&nbsp;&deg;C, 23.5&nbsp;g at 50&nbsp;&deg;C.
+          (i) A saturated solution at 20&nbsp;&deg;C is warmed to 50&nbsp;&deg;C at constant NH<sub>3</sub>
+          pressure. What mass of NH<sub>3</sub> leaves the solution?
+          (ii) Explain why the NH<sub>3</sub> curve runs the opposite way to the KNO<sub>3</sub> curve.
+          (iii) The curve is valid only at 1&nbsp;atm of NH<sub>3</sub>. Roughly what would the
+          20&nbsp;&deg;C value become at 0.5&nbsp;atm, and what principle are you using?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Two sealed flasks each contain 110&nbsp;g of KNO<sub>3</sub> and
+          100&nbsp;g of water at 20&nbsp;&deg;C, so both plot at the same point on the solubility chart.
+          One is a saturated solution over a bed of solid; the other is supersaturated and completely
+          clear. Explain how each flask could have been prepared, describe one observation that would
+          tell them apart, and state what the graph can and cannot tell you here. No arithmetic is
+          required.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Select NaCl and tick <span class="ws-set">Zoom the y-axis to this solute</span>. The curve
+          that looked flat is not quite flat. Decide whether the change from 0 to 100&nbsp;&deg;C is big
+          enough to be useful for anything.</li>
+        <li>Tap or drag directly on the chart to mix fresh samples. Find the temperature at which
+          KNO<sub>3</sub> and KCl are equally soluble, and say which one you would choose below that
+          temperature.</li>
+        <li>Drag <span class="ws-set">Water</span> down to 25&nbsp;g and watch what happens to the range
+          of the Solute added slider. Work out why the demonstration caps it where it does.</li>
+        <li>With NH<sub>3</sub> selected, notice that the <span class="ws-set">Heat it</span> button
+          changes its target. Read the note under the Temperature slider and explain what stops the curve
+          at 60&nbsp;&deg;C &mdash; the chemistry, or the data?</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Solubility Curves &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

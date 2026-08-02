@@ -400,36 +400,36 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students treat an ICE table as a form to fill in rather than a
-        piece of bookkeeping. Three specific habits follow, and each one has its own tab here.
+        <strong>The habit this is built against:</strong> treating an ICE table as a form to fill in rather
+        than as a piece of bookkeeping. Three specific things follow from that, and each one has its own tab
+        here.
       </p>
       <p>
-        <strong>1. They guess the sign of x.</strong> Almost everyone writes &minus;x under the reactants and
-        +x under the products every single time, because that is how the first worked example looked. But the
-        reaction runs whichever way it has to in order to reach K. Compute Q first. If Q &lt; K there is not
-        enough product yet and the reaction runs forward, so x is positive. If Q &gt; K there is too much
-        product and the reaction runs backward, so x is <em>negative</em> and the reactants go <em>up</em>.
-        Press &ldquo;Products only&rdquo; and watch every sign in the change row flip. Nothing else on the page
-        decides this &mdash; only Q against K.
+        <strong>1. The sign of x is not yours to choose.</strong> Writing &minus;x under the reactants and +x
+        under the products is a reasonable default &mdash; it is how the first worked example looks, and it is
+        correct whenever you start from reactants alone. But the reaction runs whichever way it has to in order
+        to reach K. Compute Q first. If Q &lt; K there is not enough product yet and the reaction runs forward,
+        so x is positive. If Q &gt; K there is too much product and the reaction runs backward, so x is
+        <em>negative</em> and the reactants go <em>up</em>. Press &ldquo;Products only&rdquo; and watch every
+        sign in the change row flip. Nothing else on the page decides this &mdash; only Q against K.
       </p>
       <p>
-        <strong>2. They ignore the coefficients.</strong> In H<sub>2</sub> + I<sub>2</sub> &#8652; 2 HI, two HI
-        molecules appear for every one H<sub>2</sub> consumed, so the change row is &minus;x, &minus;x,
-        <strong>+2x</strong>. Tick the &ldquo;common wrong answer&rdquo; box: writing +x there gives
-        [HI] = 0.0880 instead of 0.157 mol L&#8315;&#185;. The unnerving part is that the wrong answer still
-        satisfies the K expression &mdash; it feels right on the calculator. What it breaks is the atom
-        bookkeeping. Then switch to CO + H<sub>2</sub>O &#8652; CO<sub>2</sub> + H<sub>2</sub>, where every
-        coefficient is 1 and the mistake changes nothing at all. That is exactly why the habit survives:
-        students practise on reactions that forgive it.
+        <strong>2. The coefficients belong in the change row too.</strong> In H<sub>2</sub> + I<sub>2</sub>
+        &#8652; 2 HI, two HI molecules appear for every one H<sub>2</sub> consumed, so the change row is
+        &minus;x, &minus;x, <strong>+2x</strong>. Tick the &ldquo;common wrong answer&rdquo; box: writing +x
+        there gives [HI] = 0.0880 instead of 0.157 mol L&#8315;&#185;. The unnerving part is that the wrong
+        answer still satisfies the K expression &mdash; it survives the calculator check. What it breaks is the
+        atom bookkeeping. Then switch to CO + H<sub>2</sub>O &#8652; CO<sub>2</sub> + H<sub>2</sub>, where every
+        coefficient is 1 and the same slip changes nothing at all. That is why the habit is so durable: it
+        costs nothing on the reactions most often used to practise it.
       </p>
       <p>
-        <strong>3. They use the &ldquo;x is small&rdquo; shortcut without ever checking it.</strong> On the
-        default settings the shortcut is off by <strong>368%</strong>. Drag K down and watch the error curve
-        fall through the 5% line; drag it up and watch it blow past 100%. Which direction helps is not a rule
-        you can memorise: with H<sub>2</sub> and I<sub>2</sub> in the flask the shortcut needs a
-        <em>small</em> K, and with HI in the flask instead it needs a <em>large</em> one. The shortcut is
-        safe when x is genuinely small next to the concentration you are subtracting it from &mdash; nothing
-        else.
+        <strong>3. The &ldquo;x is small&rdquo; shortcut is a claim, and claims get checked.</strong> On the
+        default settings it is off by <strong>368%</strong>. Drag K down and watch the error curve fall through
+        the 5% line; drag it up and watch it blow past 100%. Which direction helps is not a rule worth
+        memorising: with H<sub>2</sub> and I<sub>2</sub> in the flask the shortcut needs a <em>small</em> K,
+        and with HI in the flask instead it needs a <em>large</em> one. The shortcut is safe when x is
+        genuinely small next to the concentration you are subtracting it from &mdash; nothing else.
       </p>
       <p>
         <strong>And the three Le Chatelier traps:</strong> a <strong>catalyst never shifts anything</strong>.
@@ -578,7 +578,7 @@
       }
 
       // "x is small": hold the side being consumed at its initial values and
-      // solve for the side being formed. Exactly what a student writes down.
+      // solve for the side being formed. Exactly what gets written down by hand.
       function solveApprox(sp, c0, K, iters) {
         var q = Math.exp(lnQ(sp, c0, 0));
         if (isNaN(q)) return NaN;

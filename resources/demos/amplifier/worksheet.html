@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Amplifier — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 4 &middot; Cell Communication &amp; Cell Cycle</div>
+      <h1>Amplifier</h1>
+      <p class="ws-sub">Why a signalling pathway has four steps instead of one, and why the number at the
+        bottom is so much larger than the number at the top.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/amplifier/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know about epinephrine binding a G protein-coupled
+        receptor. Commit to a number before the demonstration shows you one.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>Ten molecules of hormone bind ten receptors on one liver cell. The signal passes through four
+          steps: receptor &rarr; G protein &rarr; cAMP &rarr; activated enzyme &rarr; product. Roughly how
+          many product molecules does that cell end up making? Give an order of magnitude &mdash; tens,
+          thousands, millions.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying how you got that number &mdash; what you
+          assumed each step does to the count.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Two pathways, the same input</h2>
+      <p class="ws-intro">Open the demonstration. The horizontal axis of the top plot is logarithmic: every
+        gridline is a factor of ten, so equal spacing between bars means equal multiplication between
+        tiers.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset everything</span>. Check that
+          <span class="ws-set">Hormone molecules bound</span> reads 10, the four tier factors read
+          <span class="ws-set">&times;20, &times;100, &times;10, &times;1,000</span>, and
+          <span class="ws-set">Terminator activity</span> reads <span class="ws-set">&times;1 normal</span>.</li>
+        <li>From the <span class="ws-set">Molecule count at each tier</span> table, copy the
+          <em>Molecules</em> column into the first data column below.</li>
+        <li>Press <span class="ws-set">Bucket brigade</span>, which sets all four tiers to &times;1. Copy the
+          <em>Molecules</em> column again into the second data column.</li>
+        <li>Press <span class="ws-set">Realistic cascade</span> to restore the four factors.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:34%">Tier</th><th>Molecules &mdash; realistic cascade</th>
+              <th>Molecules &mdash; bucket brigade</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Hormone bound</td><td></td><td></td></tr>
+          <tr><td class="filled">G&alpha;&middot;GTP active</td><td></td><td></td></tr>
+          <tr><td class="filled">cAMP</td><td></td><td></td></tr>
+          <tr><td class="filled">Enzyme activated</td><td></td><td></td></tr>
+          <tr><td class="filled">Product</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <p>With the realistic cascade restored, record the four boxes under <span class="ws-set">The
+        result</span>.</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Product molecules from the cascade</th><th>Total gain</th>
+              <th>Bucket brigade would give</th><th>Cascade &divide; bucket brigade</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The number of hormone molecules was 10 in both configurations, and
+          nothing was added at any tier. Name the one property of the intermediates that differs between the
+          two columns.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Add the four tier factors: 20 + 100 + 10 + 1,000. Compare that
+          total with the <em>Total gain</em> you recorded. Which arithmetic operation actually combines the
+          tiers, and why does that operation follow from each step being catalytic?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        The per-tier factors on this page are illustrative orders of magnitude &mdash; the size textbook
+        cascades are roughly known to be, tens to thousands per tier. They are not measured constants for
+        one named pathway in one named cell. Every total you record here is an order of magnitude, not a
+        fact to quote.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What one tier is worth</h2>
+      <p class="ws-intro">Change one tier at a time and hold the rest still. This is the relationship the
+        rest of the worksheet depends on.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Realistic cascade</span>, and leave
+          <span class="ws-set">Hormone molecules bound</span> at 10 and
+          <span class="ws-set">Terminator activity</span> at <span class="ws-set">&times;1 normal</span>.</li>
+        <li>Drag slider <span class="ws-set">4. Product per activated enzyme</span> until the value beside
+          it reads <span class="ws-set">&times;1</span>. Record the two readouts.</li>
+        <li>Repeat for &times;10, &times;100, &times;1,000 and &times;10,000. Every one of those values is on
+          the slider &mdash; drag until the label matches exactly.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Tier 4 factor</th><th>Total gain</th>
+              <th>Product molecules from the cascade</th>
+              <th>Product &divide; product in the row above</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">&times;1</td><td></td><td></td><td class="filled">&mdash;</td></tr>
+          <tr><td class="filled">&times;10</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">&times;100</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">&times;1,000</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">&times;10,000</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Write the rule in your own words: multiplying one tier's factor by
+          ten does what to the number of product molecules?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Write the total gain as an equation in the four tier factors
+          <em>g</em><sub>1</sub> to <em>g</em><sub>4</sub>, then write the product count in terms of the
+          gain and the number of hormone molecules bound, <em>N</em><sub>0</sub>.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Watch the <em>Product</em> bar as you change tier 4 by a factor of
+          ten. How far does it move on the log axis, and why is that distance the same every time?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in part 1. Was your order of magnitude
+          right? If not, state specifically what you assumed a step does that the cascade does not do.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards, and a shortcut that fails</h2>
+
+      <p class="ws-intro"><strong>A. Designing a cascade to a target.</strong> Work this out on paper first,
+        then set it and check.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Hormone molecules bound</span> to <span class="ws-set">50</span>,
+          <span class="ws-set">Terminator activity</span> to <span class="ws-set">&times;1 normal</span>,
+          tier 1 to <span class="ws-set">&times;10</span>, tier 2 to <span class="ws-set">&times;50</span>
+          and tier 4 to <span class="ws-set">&times;500</span>.</li>
+        <li>Leave tier 3 alone for the moment. On paper, find the tier 3 factor that would make
+          <span class="ws-set">Product molecules from the cascade</span> read exactly
+          <span class="ws-set">1,250,000,000</span>.</li>
+        <li>Now set tier 3 to your answer and read the box.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Show the working that gave your tier 3 factor.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:18px"><strong>B. The shortcut.</strong> Press
+        <span class="ws-set">Reset everything</span> before starting this half.</p>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Terminators are what end the signal: G&alpha; hydrolysing its own
+          GTP, phosphodiesterase destroying cAMP, phosphatases stripping phosphates back off. It is
+          reasonable to expect that halving their activity, so every activated molecule survives twice as
+          long, doubles the output. <em>Predict</em> the product count at
+          <span class="ws-set">Terminator activity &times;0.5</span> before you move anything.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Now set <span class="ws-set">Terminator activity</span> to
+          <span class="ws-set">&times;0.5</span>, then to <span class="ws-set">&times;5</span>, then to
+          <span class="ws-set">&times;10</span>. Record each product count and the factor by which it
+          differs from the &times;1 value.</p>
+      </div>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Terminator activity</th>
+              <th>Product molecules from the cascade</th>
+              <th>Factor vs. the &times;1 value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">&times;1 normal</td><td></td><td class="filled">1</td></tr>
+          <tr><td class="filled">&times;0.5</td><td></td><td></td></tr>
+          <tr><td class="filled">&times;5</td><td></td><td></td></tr>
+          <tr><td class="filled">&times;10</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Each factor in your last column is a power of the terminator
+          setting. What power, and why that power and not some other? Your answer must refer to how many
+          tiers depend on how long an activated molecule survives.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> The lower plot is a straight line on log&ndash;log axes. Using your
+          answer to <em>d</em>, state its slope and explain in one sentence why a straight line of that
+          slope is what a power relationship looks like on these axes.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working, in scientific notation
+        where it helps. Then reopen the demonstration, set it up, and check yourself &mdash; and if you were
+        wrong, write down where it went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A four-tier cascade starts with 40 hormone molecules bound. The tier
+          factors are &times;50, &times;200, &times;5 and &times;2,000, and the terminators are at normal
+          speed. Find the total gain and the number of product molecules.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Take the standard cascade &mdash; 10 hormone molecules bound and
+          factors &times;20, &times;100, &times;10, &times;1,000 &mdash; which delivers 2.0&times;10<sup>8</sup>
+          product molecules at normal terminator speed. The terminators are now running five times faster.
+          Find the new product count <em>without</em> recomputing tier by tier.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A cell needs 6.0&times;10<sup>8</sup> product molecules and has only
+          30 hormone molecules bound. Its first three tiers give &times;20, &times;100 and &times;10, and the
+          terminators are at normal speed. What total gain is required, and what must the fourth tier factor
+          be?</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Someone proposes inserting a fifth protein into the pathway, one
+          that is activated by the tier above it and activates exactly one molecule of the tier below.
+          Explain what that insertion does to the number of product molecules, what it does to the time the
+          response takes, and how the top plot would show it. No calculation is needed, but your answer must
+          use the word <em>gain</em>.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Drag <span class="ws-set">Hormone molecules bound</span> from 1 to 100 while watching both
+          <em>Total gain</em> and <em>Product molecules from the cascade</em>. One of them moves and one does
+          not. Explain which is which, then confirm it against the equation you wrote in part 3b.</li>
+        <li>Using the lower plot, work out how fast the terminators would have to run to bring the cascade
+          output down to the ten molecules a bucket brigade delivers. Check whether that setting exists on
+          the slider, and say what that tells you about how hard it is to silence a cascade purely by
+          speeding up termination.</li>
+        <li>The hint under tier 3 says it takes four cAMP to release the catalytic subunits of one protein
+          kinase A, yet the tier factor is a net &times;10. Set tier 3 to &times;1 and notice the slider stops
+          there. Decide what a factor below one would have to mean physically, and whether a real step could
+          have one.</li>
+        <li>Turn off <span class="ws-set">Show the bucket-brigade comparison</span>, then set all four tiers
+          to &times;1 by hand rather than with the button, and read the caption that appears under the
+          written-out multiplication.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Amplifier &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Dynamic Equilibrium — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=1" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AC Chemistry &middot; Unit 8 &middot; Equilibrium</div>
+      <h1>Dynamic Equilibrium</h1>
+      <p class="ws-sub">Pinning down what stops changing at equilibrium, what never stops, and where the
+        equilibrium ratio actually comes from.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/dynamic-equilibrium/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Getting it right now is not the point &mdash;
+        having something specific on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A box holds 400 particles, all of them A, undergoing A &#8652; B. Each step, any given A has a
+          0.060 chance of turning into B, and any given B has a 0.020 chance of turning back into A. Run it
+          until the counts of A and B stop changing.</p>
+        <p style="margin-top:8px">How many of the 400 particles are A at that point?
+          &nbsp;__________&nbsp; And in a typical step at that point, how many particles go A &rarr; B?
+          &nbsp;__________</p>
+        <p style="margin-top:8px">Write one or two sentences saying how you got those two numbers.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Watch one box settle</h2>
+      <p class="ws-intro">Open the demonstration. It starts on the <span class="ws-set">Particles</span>
+        tab with the sliders already at the values in your prediction.</p>
+
+      <ol class="ws-steps">
+        <li>Confirm the two sliders read <span class="ws-set"><em>k</em><sub>f</sub> = 0.060</span> and
+          <span class="ws-set"><em>k</em><sub>r</sub> = 0.020</span>. Under <em>Restart the box with</em>,
+          make sure <span class="ws-set">All A</span> is selected, then press
+          <span class="ws-set">Restart</span>.</li>
+        <li>Press <span class="ws-set">Pause</span> as fast as you can afterwards &mdash; aim for
+          <em>Step</em> under 10 &mdash; and fill in the first row.</li>
+        <li>Press <span class="ws-set">Resume</span> and let it run to about <em>Step</em> 100, where the
+          <em>A particles</em> count stops trending in one direction. Pause and fill in the second row.</li>
+        <li>Press <span class="ws-set">Resume</span>, wait until <em>Step</em> is past 300, and pause again
+          for the third row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>When</th><th>A particles</th><th>B particles</th><th>A &rarr; B / step</th>
+              <th>B &rarr; A / step</th><th>Measured [B]/[A]</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">First few steps</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Around step 100</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Past step 300</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Between step 100 and step 300, which quantities in that table
+          changed meaningfully and which did not?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> In the last row, the two conversion counts are close to equal but
+          the A and B counts are nowhere near equal. State, in one sentence, exactly what quantity has
+          stopped changing at equilibrium.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Read the <em>Measured [B]/[A]</em> box and the
+          <em>K = k<sub>f</sub> / k<sub>r</sub></em> box. Write both values.
+          &nbsp;[B]/[A] = __________ &nbsp;&nbsp; K = __________</p>
+      </div>
+
+      <div class="ws-note">
+        The two conversion counts wobble by a few tenths even after the box has settled, and the measured
+        ratio wobbles with them. That is not sloppiness in the model: the box holds only 400 particles, and
+        each one is flipping a coin. A beaker holds around 10<sup>21</sup> molecules, and the same wobble
+        is far too small to see.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>Where the ratio comes from</h2>
+      <p class="ws-intro">Now change one rate constant at a time and watch what the equilibrium mixture
+        does. Both sliders move in steps of 0.005, so every value below is reachable exactly.</p>
+
+      <ol class="ws-steps">
+        <li>Switch to the <span class="ws-set">Two Rates, One Line</span> tab. The readouts you need are
+          <em>K = k<sub>f</sub> / k<sub>r</sub></em>, <em>[A] at eq.</em>, <em>[B] at eq.</em> and
+          <em>Rate at eq.</em></li>
+        <li>Leave <span class="ws-set"><em>k</em><sub>r</sub> = 0.020</span> alone for this whole part.</li>
+        <li>Set <em>k</em><sub>f</sub> to each value in the table and copy down the four readouts. Total
+          concentration is held at 1.00 mol L<sup>&minus;1</sup> throughout.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th><em>k</em><sub>f</sub></th><th><em>k</em><sub>r</sub></th><th>K</th>
+              <th>[A] at eq. (M)</th><th>[B] at eq. (M)</th><th>Rate at eq.</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.020</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.040</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.060</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.080</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.100</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> For each row, divide [B] at eq. by [A] at eq. Compare the answer
+          to the K in that row. Write what you find in one sentence.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Only one row has [A] = [B]. Which one, and what is special about
+          the two rate constants there? Say why every other row must come out unequal.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Using your table, write a formula for [A] at eq. in terms of K
+          alone, given that [A] + [B] = 1.00 M. Test it on the K = 4 row.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in Part 1. Was either number right? If
+          not, name the specific assumption behind it that the table has just contradicted.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Same K, different rate constants</h2>
+      <p class="ws-intro">A reasonable shortcut says a bigger rate constant pushes the reaction further
+        toward product. Test it against three settings that all share the same K.</p>
+
+      <ol class="ws-steps">
+        <li>Stay on the <span class="ws-set">Two Rates, One Line</span> tab.</li>
+        <li>Set each pair below, press <span class="ws-set">Show both at once</span>, and record the
+          readouts. Also read the number at the right-hand end of the <em>time (steps)</em> axis on the
+          rate plot &mdash; that is roughly how long the run takes to flatten.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th><em>k</em><sub>f</sub></th><th><em>k</em><sub>r</sub></th><th>K</th>
+              <th>[A] at eq. (M)</th><th>[B] at eq. (M)</th><th>Rate at eq.</th>
+              <th>Right end of time axis</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.030</td><td class="filled">0.010</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.060</td><td class="filled">0.020</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.090</td><td class="filled">0.030</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Which columns are identical across all three rows, and which
+          change? What does that say about the shortcut in the intro?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Two of these mixtures sit at the same place with very different
+          amounts of traffic across the barrier. Explain what a chemist would actually notice in the lab
+          that distinguishes the first row from the third.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> <em>Working backwards.</em> You want a mixture that ends up 80&nbsp;%
+          B and 20&nbsp;% A. Keeping <em>k</em><sub>r</sub> = 0.020, what K do you need and what
+          <em>k</em><sub>f</sub> does that require? Work it out first, then set it and check
+          <em>[B] at eq.</em></p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> With that setting still loaded, press <span class="ws-set">Start
+          from pure A</span>, then <span class="ws-set">Start from pure B</span>. Compare <em>K from pure
+          A</em> and <em>K from pure B</em>. What does the agreement tell you about what K depends on?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, check yourself,
+        and if a number came out wrong, write down where. For all of these, A &#8652; B is a single-step
+        reversible reaction and the total concentration is 1.00 mol L<sup>&minus;1</sup>. The
+        <em>Rate at eq.</em> readout is rounded to four decimal places, so allow for that when you
+        compare.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> <em>k</em><sub>f</sub> = 0.075 per step and <em>k</em><sub>r</sub>
+          = 0.025 per step. Find K, [A] at equilibrium, [B] at equilibrium, and the rate at equilibrium.
+          Then state how many of 400 particles would convert A &rarr; B in a typical step.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A mixture settles at [A] = 0.200 M and [B] = 0.800 M. The reverse
+          rate constant is <em>k</em><sub>r</sub> = 0.020 per step. Find K, find <em>k</em><sub>f</sub>,
+          and find the rate at equilibrium two different ways &mdash; once from the forward direction and
+          once from the reverse.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> <em>k</em><sub>f</sub> = 0.010 per step and <em>k</em><sub>r</sub>
+          = 0.040 per step. Without a calculator, say which side the equilibrium favours and why. Then
+          compute K, [A] and [B].</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Mixture I runs with <em>k</em><sub>f</sub> = 0.030,
+          <em>k</em><sub>r</sub> = 0.010. Mixture II runs with <em>k</em><sub>f</sub> = 0.090,
+          <em>k</em><sub>r</sub> = 0.030. Mixture II is converting molecules three times as fast in both
+          directions. Explain why Mixture II is not "more product-favoured" than Mixture I, and explain why
+          neither one is "more at equilibrium" than the other.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="ws-note warn">
+      Everything above rests on A &#8652; B being one particle in, one particle out, with both directions
+      happening in a single step &mdash; which is what makes K = <em>k</em><sub>f</sub>/<em>k</em><sub>r</sub>
+      exactly true. For a reaction such as N<sub>2</sub> + 3H<sub>2</sub> &#8652; 2NH<sub>3</sub> the
+      coefficients become exponents in K and the rate laws are not this simple. What does carry over
+      everywhere: at equilibrium the forward and reverse rates are equal, and the amounts usually are not.
+    </div>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>On the <em>Particles</em> tab, restart the box with <em>All B</em> and then with <em>Half
+          each</em>, leaving the sliders alone. Watch the <em>Measured [B]/[A]</em> box in each case. Time
+          how many steps it takes each starting mixture to arrive.</li>
+        <li>Push both sliders to 0.010, the slowest setting available, and watch the conversions-per-step
+          plot at equilibrium. Then push both to 0.100. In which case does the random wobble look larger
+          compared with the average, and why should the number of particles in the box matter to that?</li>
+        <li>Find every slider pair that triggers the K = 1 warning. What do they all have in common, and
+          what is the same about the equilibrium mixture in every one of them?</li>
+        <li>On the second tab, look at the four rate curves after pressing <em>Show both at once</em>. Two
+          of them lie exactly on top of each other for the entire run. Work out which two, and why that
+          has to happen.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Dynamic Equilibrium &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>
