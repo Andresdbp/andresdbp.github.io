@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Break a Gene — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 6 &middot; Gene Expression &amp; Regulation</div>
+      <h1>Break a Gene</h1>
+      <p class="ws-sub">Working out why the consequence of a point mutation depends less on the base that
+        changed than on <em>where in the codon</em> it sat.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/break-a-gene/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The number does not have to be right &mdash;
+        it has to be on paper, so that later you can see exactly which assumption moved.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>One base is changed at random somewhere in a protein-coding sequence. Out of 100 such changes,
+          how many do you expect to leave the amino acid sequence of the protein <em>exactly</em> as it
+          was?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences saying how you arrived at that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading one codon three ways</h2>
+      <p class="ws-intro">Open the demonstration. The sequence is the first 30 codons of human
+        <em>HBB</em>, the &beta;-globin gene. Each box is one codon, numbered above it: the top row is the
+        coding strand of the DNA, the middle row the mRNA, the bottom row the amino acid. Clicking a DNA
+        base changes it. Clicking the same base again cycles to the next possible base, and once more
+        returns it to wild type.</p>
+
+      <ol class="ws-steps">
+        <li>In <span class="ws-set">Make a mutation</span>, leave the type set to
+          <span class="ws-set">Substitution</span>. Press <span class="ws-set">Wild type</span> to clear
+          anything already applied.</li>
+        <li>With no mutation applied, read the <span class="ws-set">Peptide length</span> and
+          <span class="ws-set">Residues altered</span> readouts. Write them here:
+          ____________ aa, ____________ altered.</li>
+        <li>Find the box labelled <span class="ws-set">4</span>. Its DNA reads C&nbsp;T&nbsp;G. Click the
+          <em>third</em> letter, the G. Fill in the first row of the table from the
+          <span class="ws-set">This mutation</span> panel.</li>
+        <li>Click that same G twice more, filling in a row after each click.</li>
+        <li>Now click the <em>second</em> letter of codon 4, the T. (This replaces the previous
+          mutation &mdash; only one is applied at a time.) Click it three times in all, filling in a row
+          after each click.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">Base clicked</th><th>What changed in the DNA</th>
+              <th>Codon and amino acid</th><th style="width:16%">Consequence</th>
+              <th style="width:12%">Residues altered</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">3rd base, click 1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3rd base, click 2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3rd base, click 3</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2nd base, click 1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2nd base, click 2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2nd base, click 3</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Six mutations. In every one of them the DNA changed and the mRNA
+          changed. In how many did the <em>protein</em> change?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The same codon, the same kind of change, the same number of bases
+          altered. Name the one thing that differed between the top three rows and the bottom three.</p>
+        <div class="lines"><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>Is codon 4 special?</h2>
+      <p class="ws-intro">One codon is an anecdote. Vary the codon and see whether the pattern holds. The
+        panel titled <span class="ws-set">Codon <em>n</em> &mdash; all nine possible substitutions</span>
+        shows every single-base change to whichever codon you last clicked, sorted into three rows, and
+        each row is labelled with how many of its three options are silent.</p>
+
+      <ol class="ws-steps">
+        <li>Click any base inside codon 4. The panel retitles itself
+          <span class="ws-set">Codon 4</span>.</li>
+        <li>Below the codon table, the caption begins <span class="ws-set">Codon 4 of the mRNA is
+          &hellip;</span>. Take the wild-type codon and amino acid from there, not from the sequence
+          &mdash; the sequence is showing your mutation.</li>
+        <li>Copy the three row labels (<span class="ws-set">1st base</span>,
+          <span class="ws-set">2nd base</span>, <span class="ws-set">3rd base</span>) into the table as
+          a count out of 3. A row reading &ldquo;no silent option&rdquo; is 0.</li>
+        <li>Repeat for codons 7, 11, 16, 20 and 25.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:12%">Codon</th><th style="width:16%">mRNA codon</th>
+              <th style="width:20%">Amino acid</th><th>Silent options at 1st base</th>
+              <th>at 2nd base</th><th>at 3rd base</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">4</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">7</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">11</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">16</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">20</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">25</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One of the three right-hand columns holds the same value in all
+          six rows. Which column, and what value?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The third-base column is not constant. Sort your six codons into
+          those with 3 silent third-base options and those with fewer. Then switch to the
+          <span class="ws-set">Codon table</span> tab and look at the row labels printed in green. What do
+          the codons in your first group have in common?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:18px">Now take it off six codons and onto the whole sequence.
+        Switch the stage to the <span class="ws-set">Mutation spectrum</span> tab and press
+        <span class="ws-set">Run 500 more</span> twice.</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:26%">Outcome</th><th>Share (your sample)</th>
+              <th>Exact (all 270 substitutions)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Silent</td><td></td><td></td></tr>
+          <tr><td class="filled">Missense</td><td></td><td></td></tr>
+          <tr><td class="filled">Nonsense</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The caption under the stacked bars gives two numbers directly:
+          the percentage of second-base substitutions that are silent, and the percentage of third-base
+          substitutions that are silent. Write both.</p>
+        <p style="margin-top:4px">2nd base: ____________ % silent&nbsp;&nbsp;&nbsp;&nbsp;3rd base:
+          ____________ % silent</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> State the rule in your own words: what does the position of a
+          substitution within its codon determine?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> Go back to your prediction in part 1. Compare it with the
+          <em>Exact</em> silent figure. If it was off, say specifically what you had assumed that turned
+          out not to hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The <em>Exact</em> column is not a target typed in by hand. There are 90 bases and three
+        alternatives for each, so 270 substitutions exist, and the page classifies every one of them with
+        the same 64-codon table it uses everywhere else. Your sampled shares have to converge on those
+        values, and they do.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Where the shortcut breaks, and how to work backwards</h2>
+      <p class="ws-intro">&ldquo;Third-base changes are silent&rdquo; is a good generalisation and a bad
+        law. An exam question will hand you the exception, or hand you the consequence and expect you to
+        find the change that caused it.</p>
+
+      <ol class="ws-steps">
+        <li>Click any base inside codon 16. Its DNA reads T&nbsp;G&nbsp;G.</li>
+        <li>Read the <span class="ws-set">3rd base</span> row of the
+          <span class="ws-set">Codon 16</span> panel. Write down all three chips exactly as they appear
+          (codon and amino acid), and the row label.</li>
+      </ol>
+
+      <div class="lines"><i></i><i></i></div>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One of those three is red. What consequence class is that, and
+          what happens to translation? Give the length of the peptide it produces.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Using the codon table, explain why tryptophan in particular has
+          no silent option at <em>any</em> of its three positions, while alanine has three at the
+          third.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:16px">Now work backwards from a consequence.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Wild type</span>, then click any base inside codon 7.</li>
+        <li>Switch the stage to the <span class="ws-set">Codon table</span> tab. Exactly nine cells are
+          coloured &mdash; every codon one base away from codon 7.</li>
+        <li>Exactly one of the nine is red. Click it.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>What changed in the DNA</th><th>Codon and amino acid</th>
+              <th style="width:14%">Position hit</th><th style="width:14%">Peptide length</th>
+              <th style="width:14%">Residues altered</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Only 3.0% of the 270 possible substitutions in this window are
+          nonsense &mdash; the rarest of the three outcomes. Explain why it is nevertheless the outcome
+          most likely to destroy the protein, in terms of what the ribosome does when it reaches that
+          codon.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Press <span class="ws-set">The sickle-cell mutation</span>.
+          Record the base change, the codon change, the amino acid change and the
+          <span class="ws-set">Residues altered</span> readout.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:6px">This is one missense change out of the 193 possible ones here. Read the
+          <span class="ws-set">Honest limits</span> panel, then say in one sentence why the other 192
+          are not each expected to cause a disease.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Then reopen it and
+        check yourself &mdash; and where you were wrong, write down which step went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A coding sequence is 90 bases long.</p>
+        <p style="margin-top:4px"><span class="label">(a)</span> How many different single-base
+          substitutions are possible in it? Show the arithmetic.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:4px"><span class="label">(b)</span> Enumerating all of them gives 69 silent
+          changes, of which 66 come from third-base substitutions. Given that a third of the 90 bases sit
+          in each codon position, what percentage of third-base substitutions are silent, and what
+          percentage of <em>all</em> substitutions are silent?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Not one of the 90 possible second-base substitutions is silent.
+          State what would have to be true of the standard genetic code for a second-base substitution to
+          be silent, and say whether any such case exists. This is an explanation, not a
+          calculation.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A single-base substitution changes an mRNA codon from UGG to
+          UGA. This is codon 16 of a 30-codon reading frame.</p>
+        <p style="margin-top:4px"><span class="label">(a)</span> Which position within the codon was hit,
+          and which base replaced which?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:4px"><span class="label">(b)</span> Name the consequence class.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:4px"><span class="label">(c)</span> How many amino acids long is the mutant
+          peptide, and how many residues are missing relative to wild type?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A classmate argues that deleting three bases from a gene must be
+          about three times as damaging as deleting one. Explain why this is backwards. Your answer
+          should say what a one-base deletion does to the codons downstream of it, what a three-base
+          deletion does to those same codons, and which of the two leaves more of the original protein
+          intact.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does considerably more than this
+        worksheet has used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Switch the mutation type to <span class="ws-set">Deletion</span>, set
+          <span class="ws-set">How many bases</span> to 1, and click base 40 (the first base of codon
+          14). Note <span class="ws-set">Peptide length</span> and
+          <span class="ws-set">Residues altered</span>. Now set the size to 3 and click the same base.
+          Try sizes 1, 2 and 3 in <span class="ws-set">Insertion</span> mode as well. Which number of
+          bases behaves unlike the other two, and why is it the frame rather than the count that
+          matters?</li>
+        <li>Press <span class="ws-set">Clear tally</span>, then <span class="ws-set">Run 500 more</span>
+          one press at a time. How many draws does it take before every value in the
+          <em>Share</em> column sits within one percentage point of <em>Exact</em>? The triangles under
+          the bars mark the exact boundaries &mdash; watch the bars close on them.</li>
+        <li>Mutate a base in codon 1 and read what the page says about the start codon. Then read the
+          <span class="ws-set">Honest limits</span> panel to the end and find the one claim it makes about
+          <em>silent</em> mutations that this worksheet has quietly ignored throughout.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Break a Gene &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -395,6 +395,31 @@ input.is-bad { border-color: var(--bad); }
 .why p + p { margin-top: 9px; }
 .why strong { color: var(--text); font-weight: 600; }
 
+/* Link from a demo to its printable worksheet. Sits beside the theme
+   toggle in the header; collapses to just the icon on a phone. */
+.sheet-link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 13px;
+  border-radius: 11px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.sheet-link:hover { color: var(--accent-strong); border-color: var(--accent-line); }
+.sheet-link i { font-size: 15px; }
+
+@media (max-width: 560px) {
+  .sheet-link { padding: 0; width: 40px; justify-content: center; }
+  .sheet-link span { display: none; }
+}
+
 /* =========================================================
    Theme toggle (matches the portfolio's .theme-fab)
    ========================================================= */

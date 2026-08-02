@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: the sequence grid, the codon table, small legends */
@@ -207,6 +207,7 @@
           <span class="tag is-accent">Mutation &amp; the genetic code</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -349,7 +350,7 @@
           <div class="stack-s" id="posGrid"></div>
           <p class="ctrl-hint" style="margin-top:10px">
             Every chip is a real single-base change to this codon. Click one to apply it. Count the green ones in
-            each row &mdash; that is the whole lesson, one codon at a time.
+            each row &mdash; the structure of the code, one codon at a time.
           </p>
         </div>
 
@@ -410,12 +411,12 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students treat every mutation as a coin toss between &ldquo;broken&rdquo;
-        and &ldquo;really broken.&rdquo; A base changes, so the protein changes, so something goes wrong. They have
-        been told the code is &ldquo;redundant,&rdquo; and they can recite that six codons spell leucine, but they
-        file it away as trivia &mdash; a quirk of a table they have to memorise. What they never see is that the
-        redundancy is <strong>organised</strong>, and that the organisation is what decides whether a mutation
-        matters at all.
+        <strong>The intuition:</strong> a base changes, so the protein changes, so something goes wrong. Every
+        mutation is a coin toss between &ldquo;broken&rdquo; and &ldquo;really broken.&rdquo; That reading is
+        reasonable &mdash; it is what the word means in ordinary speech, and it is right often enough to feel
+        safe. Redundancy usually arrives as a separate fact filed next to the table: six codons spell leucine.
+        Kept apart like that it looks like trivia. It is not. The redundancy is <strong>organised</strong>, and
+        the organisation is what decides whether a mutation matters at all.
       </p>
       <p>
         <strong>What to notice.</strong> Take codon 4, CTG, leucine. Click its third base: you get CTA, CTC or CTT
@@ -435,7 +436,7 @@
         3.3%, and every one of those exceptions is either leucine or arginine.
       </p>
       <p>
-        <strong>Why the code is built that way.</strong> There are exactly eight fourfold boxes &mdash; every
+        <strong>Where the structure sits in the table.</strong> There are exactly eight fourfold boxes &mdash; every
         codon beginning UC, CU, CC, CG, AC, GU, GC or GG &mdash; and they ignore the third base entirely. That is
         32 of the 64 codons, half the code, where a mistake at the third position costs literally nothing. Switch
         to the codon table and look for the green row labels: those eight rows have the same amino acid four times

@@ -6,16 +6,16 @@
   <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport">
 
   <title>Did the mutation come first? | Dr. Andres Barboza</title>
-  <meta name="description" content="Replica plating, run by the student. Two hypotheses about where antibiotic resistance comes from are simulated side by side, and only one predicts resistant colonies at the same grid positions on all three replica plates.">
+  <meta name="description" content="Replica plating, run by you. Two hypotheses about where antibiotic resistance comes from are simulated side by side, and only one predicts resistant colonies at the same grid positions on all three replica plates.">
 
   <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: stage labels, legend swatches, comparison table */
@@ -90,13 +90,14 @@
       <div class="dh-body">
         <a class="back-link" href="../index.html">Science Demonstrations</a>
         <h1 class="demo-title">Did the mutation come first?</h1>
-        <p class="demo-sub">Press the velvet, then press <em>New run</em> five or six times. One of the two hypotheses puts the resistant colonies in the same grid positions on all three plates every single time. The other never does.</p>
+        <p class="demo-sub">Press the velvet, then press <em>New run</em> five or six times. One of the two hypotheses puts the resistant colonies at the same grid positions on all three plates run after run. The other scatters them somewhere new on each plate.</p>
         <div class="tags">
           <span class="tag is-bio">AP Biology</span>
           <span class="tag">Unit 7</span>
           <span class="tag is-accent">Natural selection</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -320,11 +321,11 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> almost everyone arrives believing that bacteria <em>become</em> resistant
-        because antibiotic showed up &mdash; that the challenge is what produces the change. Students write that the
-        bacteria &ldquo;adapted&rdquo;, &ldquo;built up resistance&rdquo;, or &ldquo;developed immunity&rdquo; to the
-        drug. That is a real, testable hypothesis, and it is the one this page simulates in the middle row. It is
-        also wrong, and you can find that out in about thirty seconds with a piece of velvet.
+        <strong>The hypothesis worth taking seriously.</strong> It is natural to read antibiotic resistance as
+        something the antibiotic produces: the population meets the drug, and the challenge is what changes the
+        cells. Saying a population &ldquo;adapted&rdquo;, &ldquo;built up resistance&rdquo; or &ldquo;developed
+        immunity&rdquo; all describe that mechanism. It is a real hypothesis, it makes a sharp prediction, and it is
+        the one simulated in the middle row. A piece of velvet is enough to find out whether the prediction holds.
       </p>
       <p>
         <strong>Why the experiment works.</strong> The two hypotheses cannot be separated by counting. Set the
@@ -342,9 +343,9 @@
         every time; the bottom row and the observed row keep landing in the same places as each other. Then tick
         <em>Reveal the master plate genotypes</em>: the colonies that survive were flagged before any antibiotic
         existed, and on the master plate they look completely ordinary. Then push <em>velvet transfer misses</em> up
-        to 20% &mdash; the agreement drops, because the velvet sometimes fails to carry a colony across, but it lands
-        near 50 to 80%, still hundreds of times higher than the induced-resistance prediction. The conclusion is not
-        fragile.
+        to 20% &mdash; the agreement drops, because the velvet sometimes fails to carry a colony across, but the
+        predicted figure only falls to about 52%, still more than two hundred times the induced-resistance
+        prediction. The conclusion is not fragile.
       </p>
       <p>
         <strong>Say it carefully.</strong> The mutation is <em>undirected</em>. It happened during ordinary growth on
@@ -402,7 +403,7 @@
       var TAU = Math.PI * 2;
 
       var GRIDS = [[6, 4], [7, 5], [8, 6], [9, 7], [10, 8]];
-      // Fixed starting run so every student opens on the same plates. Chosen
+      // Fixed starting run so every reader opens on the same plates. Chosen
       // only for legibility: 4 resistant colonies at the default settings, and
       // a clearly scattered induced row. Press New run to leave it behind.
       var SEED0 = 2000118;

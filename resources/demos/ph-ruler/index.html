@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* Demo-specific only: the four-way entry grid, the Kw strip, the preset pad. */
@@ -88,6 +88,7 @@
           <span class="tag is-accent">Solutions &amp; Acids/Bases</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -243,9 +244,10 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> pH looks like a rating out of 14, so students read pH 3 and pH 6 the way
-        they would read a 3 and a 6 on a quiz &mdash; both lowish, three apart, not a big deal. That reading is wrong
-        by a factor of a thousand.
+        <strong>The misconception:</strong> pH is written as a number between 0 and 14, so it invites you to read it
+        the way you would read any other bounded score &mdash; pH 3 and pH 6 both low, three apart, nothing dramatic.
+        That is a reasonable reading of the notation. It is also the one thing the notation hides: the scale is
+        logarithmic, and those three units are a factor of a thousand.
       </p>
       <p>
         <strong>What to notice:</strong> leave this solution at pH 3.00 and the comparison at pH 6.00. On the ruler
@@ -310,7 +312,7 @@
         for (var j = 0; j < lines.length && j < (maxLines || 3); j++) ctx.fillText(lines[j], cx, y + j * lh);
       }
 
-      // "1.00e-3" — the plain form a student would type
+      // "1.00e-3" — the plain form typed into the box
       function rawSci(x) {
         if (!isFinite(x) || x <= 0) return '0';
         var exp = Math.floor(Math.log10(x));
@@ -584,7 +586,7 @@
         render();
       }
 
-      // silent pass while the student is mid-keystroke: apply if it parses cleanly
+      // silent pass mid-keystroke: apply if it parses cleanly
       function tryLive(f) {
         var v = parseNum(f.el.value);
         if (!isFinite(v)) return;

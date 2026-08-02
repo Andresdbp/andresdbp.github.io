@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Logistic Growth &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 8 &middot; Ecology</div>
+      <h1>Logistic Growth</h1>
+      <p class="ws-sub">Where a limited population grows fastest, why that place is not the top of the
+        curve, and what it takes to push a population past K.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/logistic-growth/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Being right now is not the point &mdash;
+        having something on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A population grows logistically toward a carrying capacity of K = 1,000 individuals. At which
+          of these sizes does it add the <em>most</em> new individuals per day: N = 100, N = 500,
+          N = 900, or N = 1,000? Circle one and write the number.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what reasoning led you there.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading one population two ways</h2>
+      <p class="ws-intro">Open the demonstration. The upper plot is N against time; the lower plot is
+        dN/dt against N. The panels on the right report both in numbers.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset all</span>. The sliders should now read
+          <span class="ws-set">r = 0.50 d&#8315;&sup1;</span>, <span class="ws-set">K = 1,000</span>,
+          <span class="ws-set">N<sub>0</sub> = 10</span>, <span class="ws-set">Time window = 60 d</span>
+          and <span class="ws-set">Lag &tau; = 0.0 d</span>.</li>
+        <li>Drag the <span class="ws-set">Day shown</span> slider to each day in the table. Clicking the
+          slider once and then using the arrow keys gets you to an exact value.</li>
+        <li>For each day, copy the four values out of the panel headed
+          <span class="ws-set">At day &hellip;</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:12%">Day shown</th><th>Logistic N</th><th>Its growth dN/dt</th>
+              <th>Exponential N</th><th>Exponential &divide; logistic</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">5.0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">10.0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">15.0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">20.0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">30.0</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Between which two rows is <em>Its growth dN/dt</em> at its
+          largest? Give the logistic N at that row, and compare it with the value in the readout labelled
+          <span class="ws-set">Population there, K/2</span>.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> From day 20 to day 30 the logistic population barely changes,
+          but <em>Exponential &divide; logistic</em> changes enormously. Say what each of those two facts
+          tells you, in one sentence each.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Record the four values in the panel
+          <span class="ws-set">Where growth is fastest</span>:</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Notice the units. r is a rate <em>per individual per day</em> (d&#8315;&sup1;), while dN/dt is
+        individuals per day for the whole population. They are not the same quantity and are never
+        interchangeable in a calculation.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>Where the peak sits, and how high it is</h2>
+      <p class="ws-intro">Change one thing at a time. Leave <span class="ws-set">r = 0.50 d&#8315;&sup1;</span>
+        fixed for the whole table and move only <span class="ws-set">Carrying capacity K</span>. Both
+        readouts you need are in the <span class="ws-set">Where growth is fastest</span> panel and neither
+        depends on the day shown.</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">K</th><th>Population there, K/2</th><th>Fastest growth rK/4</th>
+              <th>Growth at N = 0.9K</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">200</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">600</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1,000</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1,400</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2,000</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> K doubles from 1,000 to 2,000. By what factor does the fastest
+          growth rate change? By what factor does the population size at which it happens change?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Now set <span class="ws-set">K = 1,000</span> and move
+          <span class="ws-set">r</span> to <span class="ws-set">1.00 d&#8315;&sup1;</span>. Record both
+          readouts again. Which one moved, and which one did not?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> State the rule in your own words: for any r and any K, the growth
+          rate of a logistic population is greatest when N is ___________ and the value there is
+          ___________.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in part 1. Was it right? If it was
+          not, name the specific assumption behind it that turned out not to hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards, and one rule that breaks</h2>
+      <p class="ws-intro">Exam questions rarely hand you r and K and ask for the curve. More often they
+        hand you something measured and ask for r or K.</p>
+
+      <ol class="ws-steps">
+        <li>A population is observed to grow fastest at <span class="ws-set">90 individuals per day</span>,
+          and that fastest growth happens when the population is <span class="ws-set">400</span>. Work out
+          K and r on paper first, using N<sub>peak</sub> = K/2 and (dN/dt)<sub>max</sub> = rK/4.</li>
+        <li>Now set the two sliders to your answers and check the
+          <span class="ws-set">Where growth is fastest</span> panel.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Your working, then the two readouts as the demonstration
+          shows them:</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:16px">Everything above rests on a rule that sounds safe:
+        <em>a population cannot exceed its carrying capacity</em>. Test it.</p>
+
+      <ol class="ws-steps">
+        <li>Press the <span class="ws-set">No lag</span> button, then
+          <span class="ws-set">Damped</span>, then <span class="ws-set">Sustained cycles</span>. After
+          each, record the two readouts in the lag panel.</li>
+        <li>With <span class="ws-set">Damped</span> selected, set <span class="ws-set">Day shown</span> to
+          <span class="ws-set">12.0 d</span> and read the tile
+          <span class="ws-set">With the lag: N and dN/dt</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Button</th><th>Lag &tau;</th>
+              <th>r &times; &tau;</th><th>Highest population reached, as a share of K</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">No lag</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Damped</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Sustained cycles</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> At day 12.0 with the damped lag, is the population above K? Is it
+          still growing? Copy the sentence the tile gives you.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> In dN/dt = rN(t)[1 &minus; N(t&minus;&tau;)/K], say which N is
+          being counted in each of the two factors, and use that to explain how the population can sit
+          above K and still be adding individuals.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Look at the lower plot with the lag on. The coloured path no
+          longer lies on the parabola. What does that tell you about whether dN/dt can be worked out from
+          today's N alone?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        Overshoot in this model comes from the delay and from nothing else. Read the
+        <strong>Honest limits</strong> panel: a real crash can also come from K itself dropping &mdash; a
+        drought or a disease can halve K in a season while the population is still sitting at the old
+        number.
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, check yourself,
+        and where you were wrong write down which step went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A population has r = 0.60 d&#8315;&sup1; and K = 1,500
+          individuals. Find the population size at which it grows fastest, and the growth rate there.
+          Give units.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A population has r = 0.25 d&#8315;&sup1; and K = 2,000. Find
+          dN/dt when N = 600. Then, without doing the arithmetic again, name a <em>different</em>
+          population size with exactly the same dN/dt, and justify it in one line.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Fisheries are often managed for maximum sustainable yield at
+          roughly half the unfished stock. Using the two competing factors in rN(1 &minus; N/K), explain
+          why a stock held near K/2 can replace itself faster than one left near K. No calculation.
+          Then name one thing this model leaves out that a real fishery would have to account for.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> A population has r = 0.50 d&#8315;&sup1; and a reproductive lag
+          of &tau; = 0.6 days. Compute r&tau; and predict, using the thresholds 1/e = 0.368 and
+          &pi;/2 = 1.571, whether the population overshoots K. Repeat for &tau; = 3.5 days.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does more than this worksheet
+        uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Set K = 1,000 with the lag at 0 and push <strong>Starting population N<sub>0</sub></strong>
+          up to 1,400. Which direction does the curve run now, and what does that say about calling K a
+          ceiling?</li>
+        <li>Widen the <strong>Time window</strong> to 200 days and watch <em>Exponential &divide;
+          logistic</em>, plus the label saying which day the exponential leaves the chart. How large does
+          that ratio get, and what does it say about how long an exponential model stays usable?</li>
+        <li>Turn a lag on, press <strong>Play</strong>, and follow the moving dot on the lower plot rather
+          than the upper one. Where in the loop is the population above K and still climbing, and where is
+          it below K and still falling?</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Logistic Growth &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

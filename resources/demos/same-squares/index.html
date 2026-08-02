@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific bits only: preset list, phenotype legend, genotype ledger */
@@ -84,7 +84,7 @@
         <a class="back-link" href="../index.html">Science Demonstrations</a>
         <h1 class="demo-title">Same Squares, Different Ratios</h1>
         <p class="demo-sub">
-          Press the preset buttons and watch the top number stay put while the bottom one moves.
+          Press the preset buttons: the genotype tally holds still while the phenotype ratio moves.
         </p>
         <div class="tags">
           <span class="tag is-bio">AP Biology</span>
@@ -92,6 +92,7 @@
           <span class="tag is-accent">Epistasis &amp; sex linkage</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -212,10 +213,12 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students meet 9:7 or 12:3:1 or 9:3:4 and conclude that the
-        Punnett square "works differently" for epistasis and other non-Mendelian traits &mdash; that some
-        other rule replaces the normal one. It does not. Every cross on this page is the same
-        <strong>AaBb &times; AaBb</strong>, the same four gamete types, the same sixteen boxes.
+        <strong>The reading this is meant to correct:</strong> a cross that comes out 9:7 or 12:3:1 or
+        9:3:4 looks like a Punnett square behaving differently &mdash; as if epistasis and other
+        non-Mendelian traits ran on some replacement rule. That is a fair thing to conclude from the
+        numbers alone, since the numbers really are different. But nothing about the square changed. Every
+        cross on this page is the same <strong>AaBb &times; AaBb</strong>, the same four gamete types, the
+        same sixteen boxes.
       </p>
       <p>
         <strong>What to notice:</strong> click through all six dihybrid presets and keep one eye on the
@@ -915,8 +918,8 @@
 
         // ---- the invariant, on top ----
         var cls = classCounts();
-        // raw counts on both branches, so the number a student reads off the panel
-        // is the same number they can count in the boxes
+        // raw counts on both branches, so the number shown on the panel is the
+        // same number that can be counted in the boxes
         document.getElementById('gtRatio').textContent =
           model.kind === 'sex' ? genotypeCountArray().join(' : ') : cls.join(' : ');
 

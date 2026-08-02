@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>From Bins to Bell Curve — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 5 &middot; Heredity</div>
+      <h1>From Bins to Bell Curve</h1>
+      <p class="ws-sub">How a handful of discrete Mendelian loci add up to a continuous trait &mdash; and
+        what heritability does and does not tell you once environment is in the picture.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/bins-to-bell-curve/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Being right is not the point &mdash; having
+        something on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>In this model, one locus (<em>Aa</em> &times; <em>Aa</em>) produces three possible offspring
+          heights spread across 150&ndash;190&nbsp;cm. Now suppose <strong>eight</strong> unlinked loci
+          share the job, each capital allele adding the same amount, and the trait still spans
+          150&ndash;190&nbsp;cm. With no environmental effect at all, how many <em>distinct</em> heights
+          can the offspring have?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying how you got that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading the cross</h2>
+      <p class="ws-intro">Open the demonstration. The <span class="ws-set">The cross</span> panel sets up
+        the parents; the <span class="ws-set">Genetics alone</span> panel reports what that cross produces
+        before environment is involved.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. The loci slider should read
+          <span class="ws-set">1</span> and the environmental slider
+          <span class="ws-set">0.00 cm</span>.</li>
+        <li>From the <span class="ws-set">Genetics alone</span> panel, copy
+          <span class="ws-set">Phenotype classes (2n+1)</span>,
+          <span class="ws-set">Gap between classes</span>,
+          <span class="ws-set">Offspring in one extreme class</span> and
+          <span class="ws-set">Class ratio</span> into the first row below.</li>
+        <li>Drag <span class="ws-set">Contributing loci, n</span> to <span class="ws-set">2</span>, then to
+          <span class="ws-set">3</span>, filling in a row each time.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:10%"><em>n</em></th><th>Phenotype classes</th>
+              <th>Gap between classes (cm)</th><th>Offspring in one extreme class</th>
+              <th>Class ratio</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The class ratio at <em>n</em>&nbsp;=&nbsp;1 is one you already
+          know from a monohybrid cross. Write the genotypes it corresponds to, in order from 150&nbsp;cm to
+          190&nbsp;cm.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> At <em>n</em>&nbsp;=&nbsp;2 the ratio has five numbers instead of
+          three. Where does each number come from? (You are counting allele combinations across four
+          alleles, not across two.)</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Look at the plot at <em>n</em>&nbsp;=&nbsp;3. The caption calls the
+          bars <em>point masses</em>. Using your gap value, state one height between 150 and 190&nbsp;cm
+          that <strong>no</strong> offspring in this model can have, and say why.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The sliders move in fixed steps &mdash; loci in steps of 1, environmental SD in steps of
+        0.25&nbsp;cm. If dragging overshoots, click the slider once and use the arrow keys to land on an
+        exact value. The number beside each label always shows the setting you are actually on.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What actually turns bars into a bell</h2>
+      <p class="ws-intro">Keep <span class="ws-set">Environmental SD, &sigma;<sub>E</sub></span> at
+        <span class="ws-set">0.00 cm</span> for this whole part. Nothing here is about environment yet.</p>
+
+      <ol class="ws-steps">
+        <li>Use the <span class="ws-set">n = 1</span> button, then the loci slider for 2 and 4, then the
+          <span class="ws-set">n = 8</span> button.</li>
+        <li>At each setting record the three values from <span class="ws-set">Genetics alone</span> plus
+          <span class="ws-set">Genetic SD</span> from the
+          <span class="ws-set">Variance in this population</span> panel.</li>
+        <li>Watch the plot, not just the numbers, as you go from 1 to 8.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:10%"><em>n</em></th><th>Phenotype classes</th>
+              <th>Gap between classes (cm)</th><th>Offspring in one extreme class</th>
+              <th>Genetic SD (cm)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">8</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Write the number of classes and the gap between classes as
+          formulas in <em>n</em>.</p>
+        <p>classes = ____________________ &nbsp;&nbsp;&nbsp; gap = ____________________ cm</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Divide the <em>n</em>&nbsp;=&nbsp;2 extreme-class value by the
+          <em>n</em>&nbsp;=&nbsp;1 value. What factor does one additional locus multiply that frequency by,
+          and why that factor and not some other one? Then read the line under the
+          <em>n</em>&nbsp;=&nbsp;8 value: one offspring in how many?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Three things change together as <em>n</em> rises, and a bell needs
+          all three. Name them, in two sentences, using your table.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Go back to your prediction in part 1. Compare it with the
+          <em>n</em>&nbsp;=&nbsp;8 row. If the numbers differ, say specifically what you assumed that the
+          model does not do.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> Genetic SD <em>falls</em> from 14.14&nbsp;cm to 5.00&nbsp;cm as
+          loci are added, even though every offspring is still genetically determined. Explain this using
+          the fact that the 150&ndash;190&nbsp;cm range is held fixed no matter how many loci share it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Reading it backwards, and one shortcut that fails</h2>
+      <p class="ws-intro">Exam questions rarely hand you <em>n</em>. They hand you something the
+        distribution does, and expect <em>n</em> back.</p>
+
+      <ol class="ws-steps">
+        <li>A cross of this kind produces 11 evenly spaced phenotype classes, 4.00&nbsp;cm apart, across
+          150&ndash;190&nbsp;cm. Work out <em>n</em> on paper first, then set the slider and check.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> <em>n</em> = ____________ &nbsp; Which of the two clues did you
+          use, and would the other one alone have been enough?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <p class="ws-intro" style="margin-top:16px">Now a claim worth testing: <em>more loci contributing to
+        a trait means more of its variation is genetic, so heritability goes up.</em> It sounds
+        reasonable. Test it.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">&sigma;<sub>E</sub></span> to <span class="ws-set">5.00 cm</span> and
+          leave it there for both rows.</li>
+        <li>Record the four values at <span class="ws-set">n = 1</span>, then at
+          <span class="ws-set">n = 8</span>. V<sub>G</sub> and V<sub>E</sub> are printed under the split
+          bar at the bottom of the <span class="ws-set">Variance in this population</span> panel.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:22%">Setting</th><th>V<sub>G</sub> (cm&sup2;)</th>
+              <th>V<sub>E</sub> (cm&sup2;)</th><th>Total SD (cm)</th>
+              <th>Heritability <em>h</em><sup>2</sup></th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled"><em>n</em> = 1, &sigma;<sub>E</sub> = 5.00</td>
+              <td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled"><em>n</em> = 8, &sigma;<sub>E</sub> = 5.00</td>
+              <td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Which way did <em>h</em><sup>2</sup> move? Since
+          &sigma;<sub>E</sub> never changed, the only term that moved was V<sub>G</sub>. Say what happened
+          to it and why, and then state what the claim above got wrong.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> That result depends on a modelling choice, not on biology: adding
+          loci here divides a fixed 150&ndash;190&nbsp;cm range into finer steps rather than widening the
+          range. Read the <span class="ws-set">What the model assumes</span> panel and name one other
+          simplification that this demonstration makes.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> With <em>n</em> = 2, find the setting of &sigma;<sub>E</sub> that
+          makes <em>h</em><sup>2</sup> read exactly 0.50. Then, <strong>before</strong> touching the
+          slider, predict the value that would do the same at <em>n</em> = 8, and check it.</p>
+        <p style="margin-top:6px">&sigma;<sub>E</sub> at <em>n</em> = 2: ____________ cm &nbsp;&nbsp;
+          predicted at <em>n</em> = 8: ____________ cm &nbsp;&nbsp; actual: ____________ cm</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        <strong>Watch the wording.</strong> Every <em>h</em><sup>2</sup> on this page describes the
+        variation among <em>this set of offspring</em>. It never says that some fraction of one
+        individual's height came from their genes. That second question has no answer, because no part of
+        anyone's height was built without both.
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it, check yourself,
+        and if a number is off, write down which step produced it.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Three loci contribute additively to a trait spanning
+          150&ndash;190&nbsp;cm, all parents fully heterozygous, no environmental effect. Give the number
+          of phenotype classes, the gap between neighbouring classes, and the fraction of offspring with
+          the all-lowercase genotype.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Five loci, same trait, with an environmental SD of 6.00&nbsp;cm.
+          Find V<sub>G</sub>, V<sub>E</sub>, the total SD, and <em>h</em><sup>2</sup> to two decimal
+          places. (Genetic variance in this model is 200/<em>n</em> cm&sup2;.)</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Population A: one locus, no environmental variance. Population B:
+          eight loci, &sigma;<sub>E</sub> = 12.00&nbsp;cm. Which population's offspring are more spread out
+          in height? Compute both total SDs before answering, then say why comparing total SD across two
+          populations tells you nothing on its own about which one experiences more environmental
+          variance.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> No calculation for this one. A study of a plant population reports
+          <em>h</em><sup>2</sup> = 0.53 for stem height. Explain what that number does say, and state one
+          conclusion people commonly draw from a heritability estimate that it does not support. Then name
+          one condition that has to hold for the estimate to describe any population other than the one
+          measured.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the worksheet has deliberately left these alone.</p>
+
+      <ul style="padding-left:18px">
+        <li>The <span class="ws-set">Overlay normal approximation</span> checkbox stays locked below
+          <em>n</em>&nbsp;=&nbsp;4. Turn it on at <em>n</em>&nbsp;=&nbsp;4 and again at
+          <em>n</em>&nbsp;=&nbsp;8 and find where the dashed curve sits above or below the bars. The bars
+          are the exact binomial; the curve is only an approximation to it.</li>
+        <li>The dots along the bottom are 260 sampled offspring, and
+          <span class="ws-set">New sample</span> draws a fresh set. At <em>n</em>&nbsp;=&nbsp;8 with
+          &sigma;<sub>E</sub> = 0, how many samples do you get through before one offspring lands in an
+          extreme class? Compare that with the frequency the panel reports.</li>
+        <li>Set <em>n</em>&nbsp;=&nbsp;2 and raise &sigma;<sub>E</sub> one step at a time from 0.00. Find
+          the setting at which the caption stops describing the classes as separate humps, and check it
+          against half the gap between classes. Then explain why <em>half</em> the gap is the sensible
+          place for that boundary.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      From Bins to Bell Curve &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

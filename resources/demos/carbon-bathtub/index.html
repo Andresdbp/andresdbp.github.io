@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
@@ -73,6 +73,7 @@
           <span class="tag is-accent">Ecology &mdash; stocks and flows</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -162,7 +163,7 @@
               <button class="btn" data-e="0">Net zero</button>
             </div>
             <button class="btn primary" id="btnHold">Set emissions to today&rsquo;s uptake</button>
-            <p class="ctrl-hint">That last button is the only one that actually stops the level moving, and it is the one nobody guesses.</p>
+            <p class="ctrl-hint">Of everything in this panel, that button is the only one that actually stops the level moving. Note where it puts the slider &mdash; it is neither zero nor &ldquo;a bit below last year&rdquo;.</p>
           </div>
         </div>
 
@@ -318,8 +319,9 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students hear &ldquo;emissions fell last year&rdquo; and conclude that
-        the amount of CO<sub>2</sub> in the air fell too. It did not. Emissions are a <em>flow</em> &mdash; how
+        <strong>Where the reasoning usually breaks.</strong> &ldquo;Emissions fell last year&rdquo; sounds like it
+        ought to mean the amount of CO<sub>2</sub> in the air fell too. That is a fair reading of the sentence,
+        and it is still not what happened. Emissions are a <em>flow</em> &mdash; how
         fast carbon is being added, in gigatonnes per year. Concentration is a <em>stock</em> &mdash; how much is
         in there right now, in ppm. They are different quantities with different units, and the only thing that
         connects them is this: <strong>the stock rises whenever inflow is bigger than outflow.</strong> Not when
@@ -1287,8 +1289,8 @@
           + 'move down the chain.';
         if (SEL === 'n') {
           return 'Dissolved phosphorus empties fast &mdash; algae strip it out with a time constant of 5 days. '
-            + 'Turn the tap off and this tub is basically empty within a fortnight, which is exactly why people '
-            + 'expect the lake to recover straight away. ' + base;
+            + 'Turn the tap off and this tub is basically empty within a fortnight, which is a fair reason to '
+            + 'expect the lake to recover straight away. Watch the oxygen tub before you settle on that. ' + base;
         }
         if (SEL === 'b') {
           return 'Algal biomass is one step behind the nutrient. It keeps growing while phosphorus is available and '

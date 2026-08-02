@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Does 3:1 Ever Look Like 3:1? &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 5 &middot; Heredity</div>
+      <h1>Does 3:1 Ever Look Like 3:1?</h1>
+      <p class="ws-sub">What a Mendelian ratio actually predicts about one batch of offspring, and what
+        chi-square is really asking when you test it.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/does-3-1-look-like-3-1/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know about monohybrid crosses. Nothing here is
+        graded on being right &mdash; the point is to have a number on paper that the demonstration can
+        later confirm or contradict.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A cross is <em>exactly</em> 3:1: every offspring has probability 0.75 of the dominant phenotype,
+          with no linkage, no lethal alleles and no scoring error. You count <strong>20</strong> offspring,
+          then repeat that whole count many times over.</p>
+        <p style="margin-top:6px">Write the <em>lowest</em> and the <em>highest</em> dominant : recessive
+          ratio you expect to see across those repeats.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Now suppose you counted <strong>1000</strong> offspring in each repeat
+          instead. Would that range of ratios be wider, narrower, or the same? Circle one, then say in one
+          sentence how you decided.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading one cross</h2>
+      <p class="ws-intro">Open the demonstration. The top panel, <em>The experiment</em>, draws one batch of
+        offspring; the panel below it, <em>Chi-square, term by term</em>, tests that batch against 3:1.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. The line under the buttons should read
+          <span class="ws-set">Run 1</span> and <em>Offspring counted, n</em> should read
+          <span class="ws-set">40</span>.</li>
+        <li>Copy the chi-square table exactly as the demonstration shows it, one row per phenotype class.</li>
+        <li>Take the dominant row and compute (O&nbsp;&minus;&nbsp;E)&sup2;/E yourself in the last column of
+          your own table. Confirm you get the number on screen.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Class</th><th>O</th><th>E</th><th>O &minus; E</th><th>(O&minus;E)&sup2;/E</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Dominant</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Recessive</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Total</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Record the four tiles under that table:
+          &chi;&sup2;&nbsp;=&nbsp;__________ &nbsp; p-value&nbsp;=&nbsp;__________ &nbsp;
+          Degrees of freedom&nbsp;=&nbsp;__________ &nbsp;
+          Critical value, &alpha; = 0.05&nbsp;=&nbsp;__________</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> There are two phenotype classes, yet the degrees of freedom is 1.
+          Read the hint printed under the table and state the reason in your own words.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <ol class="ws-steps" style="margin-top:16px">
+        <li>Now click <span class="ws-set">20</span> in the <em>Offspring counted, n</em> row. Record the
+          first line of the table below.</li>
+        <li>Press <span class="ws-set">Re-run the cross</span> and record the next line. Repeat until all
+          six lines are filled. Do not change anything else.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:12%">Run</th><th>Observed dominant</th><th>Observed recessive</th>
+              <th>Observed ratio</th><th>&chi;&sup2;</th>
+              <th>Reject or fail to reject?</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">5</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">6</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Across those six runs, how much did the probability of a dominant
+          offspring change? Quote the hint under the <em>Offspring counted, n</em> buttons to justify your
+          answer.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        Leave n at 20 and read the orange panel that has appeared under the verdict. The expected recessive
+        count is 5.0, sitting exactly on the rule-of-thumb floor of about 5 expected per class, and with 20
+        offspring the observed percentage can only land on multiples of 5. Treat every p-value you record at
+        n = 20 as indicative rather than exact.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What sample size buys you</h2>
+      <p class="ws-intro">One control, five settings. The underlying cross is exactly 3:1 at every one of
+        them, so anything that changes in this table is caused by sample size alone.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span> again so you start from Run 1 with
+          <em>Replicate experiments</em> at <span class="ws-set">300</span>.</li>
+        <li>Click each value of <em>Offspring counted, n</em> in turn and read the tiles in the
+          <em>Run the whole experiment again and again</em> panel. Do not press Re-run between settings.</li>
+        <li>Fill the last column yourself: multiply the predicted spread by &radic;n. Round to the nearest
+          whole number.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:9%">n</th><th>Spread of results, observed (pp)</th>
+              <th>Spread predicted by theory (pp)</th>
+              <th>Range of observed ratios across the replicates</th>
+              <th>Predicted spread &times; &radic;n</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">20</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">40</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">100</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">400</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1000</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The last column barely moves. Use that to complete the rule:
+          the standard deviation of the percentage dominant is roughly __________ &divide; &radic;n
+          percentage points.</p>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Going from n = 20 to n = 1000 multiplies the sample size by 50. By
+          what factor did the spread shrink? Show how that factor follows from your rule in part a.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Compare the n = 20 and n = 1000 rows of the <em>range of observed
+          ratios</em> column with the two answers you committed to on page 1. Say specifically what your
+          reasoning assumed that the data did not support &mdash; or, if you were right, what evidence in
+          this table confirms it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> The horizontal axis of the histogram is fixed from 40% to 100% at
+          every setting of n. Explain why holding that axis still is essential to the comparison you just
+          made.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Where the eyeball test fails</h2>
+      <p class="ws-intro">A common shortcut is to judge a cross by how far its ratio <em>looks</em> from
+        3.00:1. Below, that shortcut is put up against the test itself.</p>
+
+      <ol class="ws-steps">
+        <li>Click <span class="ws-set">20</span>, then <span class="ws-set">100</span>, then
+          <span class="ws-set">1000</span> in the <em>Offspring counted, n</em> row. At each one, read the
+          note at the bottom of the <em>Run the whole experiment again and again</em> panel: it states the
+          range of dominant counts a chi-square test would accept at that n.</li>
+        <li>Convert each end of that count range into a dominant : recessive ratio.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:9%">n</th><th>Accepted counts, dominant</th>
+              <th>Lowest accepted ratio</th><th>Highest accepted ratio</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">20</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">100</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1000</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> A cross gives <strong>72% dominant offspring</strong>. Write that
+          as counts at n = 100 and again at n = 1000, then compute &chi;&sup2; by hand for each. Use
+          E = 0.75n and E = 0.25n.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> State the verdict at each sample size against the critical value
+          3.841, and check both against the accepted-count ranges in your table.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The ratio was identical in both cases. Explain why the two verdicts
+          differ, and why that means &ldquo;this ratio looks close enough to 3:1&rdquo; is not a test.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Look at the two rejection tiles while you work. About 5% of the replicates get rejected at
+        &alpha; = 0.05 even though every one of them came from a cross that is exactly 3:1. The tile marked
+        <em>Exact long-run rate at this n</em> gives the true figure for the n you have selected; it is
+        never a clean 5.00%, because offspring come in whole numbers and the cut can only fall between two
+        adjacent counts.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show every step: expected counts, each
+        (O&nbsp;&minus;&nbsp;E)&sup2;/E term, the total, the degrees of freedom, and the comparison with
+        3.841. Then reopen the demonstration, set n to match, and check your verdict against the
+        accepted-count range in the third panel.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A monohybrid cross yields 40 offspring: 28 with the dominant
+          phenotype and 12 with the recessive. Test the 3:1 hypothesis at &alpha; = 0.05 and state your
+          conclusion in a full sentence.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> The same cross is repeated on a larger scale: 400 offspring, 285
+          dominant and 115 recessive. Test the 3:1 hypothesis at &alpha; = 0.05.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A third count gives 1000 offspring: 712 dominant and 288
+          recessive. Test the 3:1 hypothesis at &alpha; = 0.05.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> No calculation for this one. Problems 2 and 3 both gave about 71%
+          dominant, but only one of them was rejected. A lab partner concludes that the 1000-offspring count
+          must have been done badly. Explain what is wrong with that conclusion, and give two things a
+          significant &chi;&sup2; does <em>not</em> tell you.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and the demonstration does more than this worksheet
+        used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Drag the <em>Replicate experiments</em> slider from 20 up to 500 and watch the two rejection
+          tiles. One of them jumps around and one of them does not. Work out which is the estimate and which
+          is the target, and how many replicates you need before they agree to within a percentage point.</li>
+        <li>Step through all five values of n reading only the <em>Exact long-run rate at this n</em> tile.
+          It is never exactly 5.00%. Find which n comes closest, and explain the pattern using the fact that
+          offspring counts are whole numbers.</li>
+        <li>At n = 20 the histogram is a comb of evenly spaced bars with gaps between them. Measure the
+          spacing, account for it, and then find where the replicates that fall below 40% dominant end up on
+          that axis.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Does 3:1 Ever Look Like 3:1? &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>The Carbon Bathtub &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 8 &middot; Ecology</div>
+      <h1>The Carbon Bathtub</h1>
+      <p class="ws-sub">Separating a stock from a flow, and working out what it actually takes to stop a
+        level rising.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/carbon-bathtub/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Getting it right is not the point &mdash; having
+        something on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>Global CO<sub>2</sub> emissions are cut by 30% this year and then held at that lower rate,
+          unchanged, for the next fifty years. Over those fifty years, does the concentration of
+          CO<sub>2</sub> in the atmosphere rise, fall, or stay level? By roughly how much?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying what reasoning got you there.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Read the tap, the drain and the level</h2>
+      <p class="ws-intro">Open the demonstration. The segmented control at the top of the stage should be on
+        <span class="ws-set">Carbon</span>. Nothing in this part runs the clock &mdash; you are only moving
+        the tap and reading what the panels say.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. The <span class="ws-set">Year</span> box should read
+          2025, the <span class="ws-set">Emissions</span> slider 41.0 Gt CO<sub>2</sub> yr<sup>&minus;1</sup>,
+          and <span class="ws-set">Stock &mdash; atmospheric CO<sub>2</sub></span> should read 424.0 ppm.</li>
+        <li>Fill in the first row of the table from the panels on the right. Do <em>not</em> press Run.</li>
+        <li>Press the <span class="ws-set">Cut 30%</span> preset button and fill the second row. Then
+          <span class="ws-set">Cut 50%</span>, then <span class="ws-set">Net zero</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:15%">Preset</th><th>Inflow &mdash; emissions<br>(Gt CO<sub>2</sub> yr<sup>&minus;1</sup>)</th>
+              <th>Outflow &mdash; ocean + land uptake<br>(Gt CO<sub>2</sub> yr<sup>&minus;1</sup>)</th>
+              <th>Level is changing at<br>(ppm yr<sup>&minus;1</sup>)</th>
+              <th>Emissions that would hold the level steady</th>
+              <th>Where the level ends up<br>(ppm)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Today, 41</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Cut 30%</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Cut 50%</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Net zero</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Two whole columns hold the same value in all four rows. Name them.
+          You changed the tap four times, so those numbers cannot be controlled by the tap &mdash; what are
+          they controlled by instead?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The <span class="ws-set">Stock &mdash; atmospheric
+          CO<sub>2</sub></span> box also read 424.0 ppm every time. Explain why moving the emissions slider
+          changed how fast the level moves without changing the level itself.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Inflow and outflow are quoted in Gt CO<sub>2</sub> per year; the
+          stock is quoted in ppm. Read the caption under the bathtub and write down the single conversion
+          factor it uses to get from one to the other.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The two quantities are not interchangeable. A <strong>flow</strong> is measured per unit time and a
+        <strong>stock</strong> is not, which is why they take different units and why &ldquo;emissions&rdquo;
+        and &ldquo;concentration&rdquo; can move in opposite directions in the same year.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>Now run the clock</h2>
+      <p class="ws-intro">One control, four settings, fifty simulated years each. This is the part that
+        settles your prediction.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset</span>. This returns the year to 2025, the concentration to
+          424.0 ppm <em>and</em> the emissions slider to 41.0 &mdash; so set the preset <em>after</em>
+          resetting, never before.</li>
+        <li>Leave emissions at <span class="ws-set">41.0</span>. Press
+          <span class="ws-set">Skip 10 years</span> five times, until the
+          <span class="ws-set">Year</span> box reads 2075.</li>
+        <li>Record the stock and the two right-hand readouts.</li>
+        <li>Press Reset, choose the next preset, and repeat for all four rows.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">Emissions held<br>(Gt CO<sub>2</sub> yr<sup>&minus;1</sup>)</th>
+              <th>CO<sub>2</sub> in 2025<br>(ppm)</th><th>CO<sub>2</sub> in 2075<br>(ppm)</th>
+              <th>Change over 50 yr<br>(ppm)</th>
+              <th>Outflow in 2075<br>(Gt CO<sub>2</sub> yr<sup>&minus;1</sup>)</th>
+              <th>Level is changing at, 2075<br>(ppm yr<sup>&minus;1</sup>)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">41.0 &mdash; Today</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">28.7 &mdash; Cut 30%</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">20.5 &mdash; Cut 50%</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0 &mdash; Net zero</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One of your rows holds emissions 30% below today&rsquo;s figure
+          &mdash; a very large cut, sustained for half a century &mdash; and the concentration climbs
+          anyway. Write the rule that decides whether the level rises, in one sentence, using the words
+          <em>inflow</em> and <em>outflow</em>.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Go back to your part-1 prediction. Compare it with the
+          &ldquo;Cut 30%&rdquo; row. If it did not match, name the specific assumption you made that turned
+          out not to hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> In the top two rows, the outflow in 2075 is larger than the 22.3
+          you recorded in part 2 &mdash; and there is no control anywhere in the demonstration that sets the
+          drain. What made the outflow grow?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Two rows show the concentration falling. Using the outflow you
+          recorded in part 2, state the condition those two satisfy in 2025 and the other two do not.</p>
+        <div class="lines"><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards</h2>
+      <p class="ws-intro">So far every step handed you an emissions rate and asked what happened. Questions
+        usually run the other way: here is the outcome, find the rate.</p>
+
+      <ol class="ws-steps">
+        <li>Using your part-3 table, take any two rows and compute
+          <span class="ws-set">outflow &divide; (CO<sub>2</sub> in 2075 &minus; 280 ppm)</span>.</li>
+        <li>Press Reset. Drag the <span class="ws-set">Emissions</span> slider until
+          <span class="ws-set">Where the level ends up if emissions stay exactly where the slider is</span>
+          reads 500 ppm. The slider moves in steps of 0.1, so click it once and use the arrow keys for the
+          last tenth. Record the emissions value.</li>
+        <li>Press Reset, leave emissions at 41.0, and press <span class="ws-set">Skip 10 years</span> five
+          times to reach 2075. Read <span class="ws-set">Emissions that would hold the level steady right
+          now</span> and the small line of text underneath it.</li>
+      </ol>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Step 1 gives you the same constant from both rows. Write it down
+          with its units, then write the outflow as an equation in terms of the concentration
+          <em>C</em>.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> A level stops moving when outflow equals inflow. Use your equation
+          to work out, on paper, the emissions rate that holds the concentration at 500 ppm. Compare it with
+          the slider value you found in step 2.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> In 2025 the demonstration said 22.3 Gt CO<sub>2</sub>
+          yr<sup>&minus;1</sup> would hold the level steady, a cut of 45.6% from 41.0. In 2075, after fifty
+          years at 41.0, it names a <em>larger</em> emissions figure and a <em>smaller</em> percentage cut.
+          Explain why waiting makes the required cut look easier, and say what has been paid for that.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        Read the <strong>Honest limits</strong> panel before you push part (c) any further. This model lets
+        the sink keep growing without limit as concentration rises, whereas real ocean and land sinks
+        saturate; the real carbon cycle also has several sinks on very different clocks and a tail that
+        keeps a large fraction of added CO<sub>2</sub> in the air for centuries. Both simplifications make
+        stabilisation look easier here than it is.
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part page-break">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away from it. Show your working. Then reopen it, check
+        yourself, and if a number is off, write down where the arithmetic went astray.</p>
+
+      <div class="ws-note">
+        Three quantities are all you need, and you have already met each one: pre-industrial concentration
+        <strong>280 ppm</strong>; the uptake constant from part 4, <strong>0.155 Gt CO<sub>2</sub>
+        yr<sup>&minus;1</sup> per ppm of excess above 280</strong>; and <strong>7.79 Gt CO<sub>2</sub> per
+        ppm</strong>. Every problem below sits at the 2025 state, 424 ppm, so you can check each one by
+        pressing Reset and moving the slider only.
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> The concentration is 424 ppm and emissions are held at
+          35.0 Gt CO<sub>2</sub> yr<sup>&minus;1</sup>. Find the outflow, the net flow, and the rate at
+          which the concentration is changing in ppm yr<sup>&minus;1</sup>. State whether the level is
+          rising or falling.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Emissions are to be held constant at whatever rate eventually
+          settles the concentration at 600 ppm. Find that rate. Then say how it compares with today&rsquo;s
+          41.0 Gt CO<sub>2</sub> yr<sup>&minus;1</sup>, and what that comparison implies about a
+          &ldquo;600 ppm world&rdquo;.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A news report states that emissions fell from 41.0 to
+          33.0 Gt CO<sub>2</sub> yr<sup>&minus;1</sup> and describes this as &ldquo;a reduction in
+          atmospheric carbon dioxide.&rdquo; Starting from 424 ppm, calculate the rate of change of the
+          concentration at 33.0. Then state precisely which part of the report is correct and which part is
+          not.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> No calculation for this one. Explain why the emissions rate that
+          holds the concentration steady is not a fixed number, but climbs as the concentration climbs. Then
+          state what would have to become true of the ocean and land sinks for that to stop being the
+          case.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded, and none of it was needed above. The demonstration carries
+        a second system that runs on the identical arithmetic.</p>
+
+      <ul style="padding-left:18px">
+        <li>Switch the stage control to <strong>Runoff</strong>. Set <em>Heavy, 6.0</em>, press Run at
+          3&times; and watch dissolved oxygen fall past the fish-kill line. Then press <em>Stop the
+          fertiliser</em> and keep running. The tap is off and nothing new is entering &mdash; so read the
+          box that says how many days oxygen still needs, and find out which tub is responsible.</li>
+        <li>In Runoff mode the four tabs &mdash; Nutrient, Algae, Dead matter, Oxygen &mdash; chart four
+          separate bathtubs. After the fertiliser is stopped, put them in order from fastest-emptying to
+          slowest. The captions under the chart quote a time constant for each; check whether your ordering
+          agrees with them.</li>
+        <li>On the lower chart panel in either mode, the shaded band between the two flow lines is exactly
+          how fast the level above is moving. Find a setting where the band closes to nothing, and look at
+          what the stock curve is doing at that moment. Then switch to <em>Cut 50%</em> and see which side
+          of the other line the band moves to.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      The Carbon Bathtub &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

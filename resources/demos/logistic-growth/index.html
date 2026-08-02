@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: stage labels, unit-bearing readout tiles, legend */
@@ -61,6 +61,7 @@
           <span class="tag is-accent">Population ecology</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -282,11 +283,11 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The first misconception:</strong> that carrying capacity is a hard ceiling &mdash; a lid the
-        population runs into and cannot pass. Students draw the S-curve, label the flat top K, and conclude
-        that going above K is impossible. Real populations go above K all the time. Reindeer put on St
-        Matthew Island in 1944 grew to roughly 6,000 by 1963 on an island whose lichen could support a few
-        hundred, and then crashed to 42 animals in a single winter.
+        <strong>The first idea to test:</strong> that carrying capacity is a hard ceiling &mdash; a lid the
+        population runs into and cannot pass. That reading follows naturally from the S-curve, whose flat
+        top is labelled K and looks like a limit nothing gets past. Real populations go above K all the
+        time. Reindeer put on St Matthew Island in 1944 grew to roughly 6,000 by 1963 on an island whose
+        lichen could support a few hundred, and then crashed to 42 animals in a single winter.
       </p>
       <p>
         <strong>What to notice.</strong> Leave the lag at 0 and the logistic curve really does stop at K
@@ -306,10 +307,10 @@
         a line painted on the habitat.
       </p>
       <p>
-        <strong>The second misconception:</strong> that a population grows fastest when it is biggest. It is
-        an easy mistake, because on the upper plot the curve <em>is</em> steepest somewhere in the middle,
-        and students read &ldquo;steep&rdquo; as &ldquo;lots of individuals&rdquo;. The lower plot settles
-        it. With r = 0.50 d⁻¹ and K = 1,000, the growth rate peaks at <strong>125 individuals per day</strong>,
+        <strong>The second idea to test:</strong> that a population grows fastest when it is biggest. The
+        upper plot invites it: the curve <em>is</em> steepest somewhere in the middle, and &ldquo;steep&rdquo;
+        is quickly read as &ldquo;lots of individuals&rdquo;. The lower plot separates the two claims.
+        With r = 0.50 d⁻¹ and K = 1,000, the growth rate peaks at <strong>125 individuals per day</strong>,
         and it peaks at <strong>N = 500</strong>, exactly half of K. A population of 900 grows at 45 per day.
         A population of 100 &mdash; nine times smaller &mdash; also grows at 45 per day, exactly. A population
         of 990 adds fewer than 5 individuals a day. Bigger is emphatically not faster.

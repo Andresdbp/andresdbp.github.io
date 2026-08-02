@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Did the mutation come first? &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 7 &middot; Natural Selection</div>
+      <h1>Did the mutation come first?</h1>
+      <p class="ws-sub">Two hypotheses about where antibiotic resistance comes from, one square of sterile
+        velvet, and the single statistic that separates them.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/mutation-first/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Getting it right is not the point &mdash;
+        having a number on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>Bacteria are grown into 36 separate colonies on a plate holding <strong>no antibiotic</strong>.
+          A square of sterile velvet is pressed onto that plate and then onto three fresh plates that all
+          <strong>do</strong> contain antibiotic, so the velvet stamps the same colony pattern three
+          times. A few colonies grow on each of the three.</p>
+        <p style="margin-top:8px">Take every grid position that grew a resistant colony on <em>at least
+          one</em> of the three plates. <strong>What percentage of those positions do you expect to have
+          grown a resistant colony on all three plates?</strong> Write one number between 0 and 100.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">In one or two sentences, say what your number assumes about
+          <em>when</em> a cell becomes resistant.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading one experiment</h2>
+      <p class="ws-intro">Open the demonstration. The top row of plates is what the velvet actually
+        produced. The two rows below it are what each hypothesis predicts for that same run, computed from
+        the same settings. The table headed <span class="ws-set">What the two hypotheses predict</span> is
+        where you take your numbers from.</p>
+
+      <ol class="ws-steps">
+        <li>In the <span class="ws-set">Settings</span> panel, press
+          <span class="ws-set">Reset everything</span>. Check that <span class="ws-set">Master plate
+          grid</span> reads <span class="ws-set">8 &times; 6</span>,
+          <span class="ws-set">Resistance frequency</span> reads <span class="ws-set">10%</span>, and
+          <span class="ws-set">Velvet transfer misses</span> reads <span class="ws-set">0%</span>.</li>
+        <li>Record the run seed and the colony count from the line under
+          <span class="ws-set">Run the experiment</span>, and the three readouts at the bottom of
+          <span class="ws-set">Settings</span>, in the first table.</li>
+        <li>Copy all three rows of the comparison table into the second table, exactly as printed.</li>
+        <li>Tick <span class="ws-set">Reveal the master plate genotypes</span> and read the caption under
+          the master plate. Record how many colonies it says already carry the mutation. Untick it
+          again.</li>
+      </ol>
+
+      <table class="ws-table">
+        <tbody>
+          <tr><td class="filled">Run seed</td><td></td>
+              <td class="filled">Colonies on the master plate</td><td></td></tr>
+          <tr><td class="filled">Expected resistant colonies per replica plate</td><td></td>
+              <td class="filled">Colonies already carrying the mutation</td><td></td></tr>
+          <tr><td class="filled">Predicted agreement, antibiotic</td><td></td>
+              <td class="filled">Predicted agreement, mutation first</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">Plates</th><th>Resistant colonies<br>#1 / #2 / #3</th>
+              <th style="width:13%">On all 3</th><th style="width:13%">On &ge;1</th>
+              <th style="width:13%">Agree</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Observed</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Antibiotic causes it</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Mutation came first</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Compare the <span class="ws-set">Resistant colonies</span> column
+          down all three rows. Could you tell the two hypotheses apart from those counts alone? Say
+          why.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Which column <em>does</em> tell them apart, and what does that
+          column count? Use the definition of <span class="ws-set">Agree</span> printed under the
+          table.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Before you ticked the reveal box, nothing on the master plate
+          image distinguished one colony from another. State what each hypothesis claims about that
+          plate &mdash; how many resistant colonies is it carrying, according to each?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The reveal box is not something a real experimenter has. On a plate with no antibiotic on it, a
+        colony carrying the resistance mutation grows exactly like the rest, which is the reason the
+        question has to be settled by transferring colonies rather than by looking at them.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What the frequency does and does not control</h2>
+      <p class="ws-intro">One slider, moved across its whole range. The three readouts at the bottom of
+        <span class="ws-set">Settings</span> are calculated, not sampled, so they do not change when you
+        press <span class="ws-set">New run</span>. The last column does come from a single run.</p>
+
+      <ol class="ws-steps">
+        <li>Keep <span class="ws-set">Master plate grid</span> at <span class="ws-set">8 &times; 6</span>
+          and <span class="ws-set">Velvet transfer misses</span> at <span class="ws-set">0%</span>
+          throughout.</li>
+        <li>Drag <span class="ws-set">Resistance frequency</span> to <span class="ws-set">3%</span>, its
+          lowest setting. Record the three readouts, then the <span class="ws-set">Agree</span> figure on
+          the <span class="ws-set">Observed</span> row.</li>
+        <li>Repeat at each frequency in the table, up to <span class="ws-set">25%</span>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:16%">Resistance frequency</th>
+              <th>Expected resistant colonies per replica plate</th>
+              <th>Predicted agreement, antibiotic</th>
+              <th>Predicted agreement, mutation first</th>
+              <th>Observed row, Agree</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">3%</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">5%</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">10%</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">15%</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">20%</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">25%</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-note">
+        At <span class="ws-set">3%</span> the expected yield is about one colony per plate, so a run where
+        nothing grows at all is ordinary. The <span class="ws-set">Agree</span> cell then reads a dash,
+        because there is nothing to divide. Press <span class="ws-set">New run</span> until something
+        grows, and note in the margin how many presses that took.
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Which column changes steeply from top to bottom of your table?
+          Which columns barely move, or do not move at all?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> In your own words: what does the resistance frequency set, and
+          what does it leave unchanged? One sentence, no numbers.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your Part 1 prediction. Which of the two predicted
+          agreements is it closer to? If it was closer to the antibiotic row, name the assumption behind
+          it; if it was closer to the mutation-first row, name the assumption too. Either way, write the
+          assumption, not just the verdict.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>When the velvet is imperfect</h2>
+      <p class="ws-intro">Real velvet does not lift every colony every time, and a prediction of exactly
+        100% agreement is not something any real plate delivers. This part is where a tempting shortcut
+        breaks.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Reset everything</span>, then set
+          <span class="ws-set">Velvet transfer misses</span> to <span class="ws-set">20%</span>. Leave the
+          frequency at <span class="ws-set">10%</span>.</li>
+        <li>Record both predicted agreements from the <span class="ws-set">Settings</span> readouts.</li>
+        <li>Press <span class="ws-set">New run</span> three times, recording the
+          <span class="ws-set">Observed</span> row's <span class="ws-set">Agree</span> each time.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>Predicted agreement, antibiotic</th><th>Predicted agreement, mutation first</th>
+              <th>Observed, run 1</th><th>Observed, run 2</th><th>Observed, run 3</th></tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Divide the mutation-first prediction by the antibiotic
+          prediction. Roughly how many times larger is it? Show the division.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Here is the shortcut: <em>if the resistant colonies are not in
+          identical positions on all three plates, the mutation cannot have come first.</em> Use your row
+          of numbers to explain what is wrong with it, and say what the mutation-first hypothesis actually
+          predicts when the velvet misses colonies.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Working backwards. Without touching the slider yet, write down
+          the <span class="ws-set">Velvet transfer misses</span> value you think produces a
+          <span class="ws-set">Predicted agreement, mutation first</span> closest to
+          <strong>61.6%</strong>. Then find it on the slider and record what it actually is.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> Compare the <span class="ws-set">Expected resistant colonies per
+          replica plate</span> now with the value you recorded in Part 2, when the misses were at 0%.
+          Explain in one sentence why raising the miss rate lowers that number, and why that drop is
+          <em>not</em> what makes the two predicted agreements differ.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Then reopen it, set the
+        controls the problem describes, and check yourself &mdash; and where you were wrong, write down
+        which step went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> The master plate grid is <span class="ws-set">8 &times; 6</span>,
+          which puts 36 colonies on the dish. The resistance frequency is
+          <span class="ws-set">25%</span> and the velvet misses <span class="ws-set">0%</span>. Predict
+          the <span class="ws-set">Expected resistant colonies per replica plate</span> readout to one
+          decimal place.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Now the grid is <span class="ws-set">10 &times; 8</span>, which
+          puts 68 colonies on the dish; the frequency is <span class="ws-set">10%</span> and the velvet
+          misses <span class="ws-set">25%</span> of colonies on every press.</p>
+        <p style="margin-top:6px"><strong>(a)</strong> Predict the expected resistant colonies per replica
+          plate.</p>
+        <p style="margin-top:4px"><strong>(b)</strong> Under the mutation-first hypothesis a given mutant
+          colony reaches all three plates with probability (1 &minus; <em>m</em>)<sup>3</sup> and reaches
+          at least one with probability 1 &minus; <em>m</em><sup>3</sup>, where <em>m</em> is the miss
+          rate. Predict <span class="ws-set">Predicted agreement, mutation first</span> to one decimal
+          place.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> A lab reports that each of its three replica plates grew five
+          resistant colonies, and concludes from the matching counts that the mutations were present
+          before the antibiotic. State what is missing from that argument, and name the one additional
+          piece of information that would settle it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Joshua and Esther Lederberg (1952) were able to pick a resistant
+          colony off a master plate that had never held any antibiotic, and grow a resistant culture from
+          it. Explain how they knew which colony on that plate to pick, and why a culture grown from it
+          rules out the antibiotic-causes-it hypothesis. Write your answer without saying that the
+          bacteria adapted, responded, or needed anything.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet
+        uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>The <span class="ws-set">Many runs, not one lucky one</span> panel pools experiments instead
+          of judging one. Press <span class="ws-set">Clear tally</span>, then
+          <span class="ws-set">Run 25 more</span> several times, and watch the two mean agreements. Which
+          one settles down fastest, and does either one drift toward the other?</li>
+        <li>Use the <span class="ws-set">Both / Antibiotic causes it / Mutation first</span> buttons to dim
+          one prediction, then press <span class="ws-set">Replay the stamp</span> and watch the three
+          plates fill in order. Doing this with the mutation-first row hidden is a good test of whether you
+          can call the pattern before it appears.</li>
+        <li>Read the <span class="ws-set">Honest limits</span> panel. It puts the real mutation rate near
+          one cell in 10<sup>7</sup> to 10<sup>9</sup>, not the 10% the slider starts at. Work out roughly
+          how many colonies a master plate would need before one resistant colony is likely &mdash; then
+          decide whether that changes any conclusion you reached above, or only the number of plates
+          required to reach it.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Did the mutation come first? &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

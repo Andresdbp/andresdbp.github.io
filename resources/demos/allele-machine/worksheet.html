@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Allele Machine — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 7 &middot; Natural Selection</div>
+      <h1>Allele Machine</h1>
+      <p class="ws-sub">What dominance does and does not control, what a null model is for, and why a
+        single drifting population is unpredictable while two hundred of them are not.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/allele-machine/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The point is to have a number on paper that
+        the demonstration can later confirm or contradict.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>In a large population, allele <strong>A</strong> is <em>completely dominant</em> over
+          <strong>a</strong> and currently sits at a frequency of <strong>p = 0.02</strong>. Mating is
+          random, no one has a survival or reproductive advantage, nobody arrives or leaves, and no
+          mutation occurs. After <strong>200 generations</strong>, what is p?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences saying how you got that number &mdash;
+          in particular, say what role the word <em>dominant</em> played in your reasoning.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading the machine</h2>
+      <p class="ws-intro">Open the demonstration and stay on the <span class="ws-set">Hardy&ndash;Weinberg</span>
+        tab. This tab models an infinite population with exact arithmetic, so nothing here is noisy: any
+        movement in p is a force you switched on, not a fluke.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Restore all five conditions</span> and check that the second panel
+          now reads <span class="ws-set">Break a condition &mdash; 0 of 5 broken</span>.</li>
+        <li>Set <span class="ws-set">Dominance of A (h)</span> to <span class="ws-set">1.00</span> and
+          <span class="ws-set">Generations</span> to <span class="ws-set">60</span>.</li>
+        <li>Set <span class="ws-set">Starting frequency of A (p)</span> to
+          <span class="ws-set">0.30</span>. Fill in the first row from the readouts:
+          <span class="ws-set">p (freq. of A)</span>, <span class="ws-set">Change in p</span>, and the
+          three percentages listed under <span class="ws-set">Genotype frequencies</span>.</li>
+        <li>Repeat for each starting p in the left-hand column.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:13%">Starting p</th><th>p after 60 generations</th><th>Change in p</th>
+              <th>AA</th><th>Aa</th><th>aa</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.30</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.50</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.80</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> For the <span class="ws-set">0.80</span> row, calculate
+          p<sup>2</sup>, 2pq and q<sup>2</sup> by hand. Write the three numbers and say which recorded
+          column each one matches.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Every row has the same value in the
+          <span class="ws-set">Change in p</span> column. What is it, and what does that value tell you
+          about a population in which all five conditions hold?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Try to find a starting p that pushes the heterozygote frequency
+          above 50%. Record the highest Aa value you can reach and the p that produced it. Then justify
+          that maximum algebraically from 2pq.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What dominance actually controls</h2>
+      <p class="ws-intro">One control varied, everything else held still. Watch which readouts respond and
+        which do not.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Rare dominant allele</span>. This sets p to
+          <span class="ws-set">0.02</span> and h to <span class="ws-set">1.00</span>, and restores all
+          five conditions &mdash; exactly the population described in your part&nbsp;1 prediction.</li>
+        <li>Set <span class="ws-set">Generations</span> to <span class="ws-set">200</span>.</li>
+        <li>Fill in the first row. The last column asks for the category <em>names</em> printed under
+          <span class="ws-set">What you would actually see</span> &mdash; copy them, not their numbers.</li>
+        <li>Now move <span class="ws-set">Dominance of A (h)</span> to each value in the left-hand column,
+          changing nothing else, and complete the table.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:9%">h</th><th>p after 200 generations</th><th>Change in p</th>
+              <th>Aa</th><th style="width:32%">Categories under &ldquo;What you would actually see&rdquo;</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1.00</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.75</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.50</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.25</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.00</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Which columns changed as h moved, and which did not?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> State the rule in your own words: dominance is a statement about
+          __________, and it determines __________ but not __________.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your part&nbsp;1 prediction. What did the demonstration
+          give for p after 200 generations? If your prediction differed, name the specific assumption that
+          did not hold.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Dominance has one further job, and the demonstration is explicit about it: switch on
+        <span class="ws-set">Natural selection</span> and h also sets the heterozygote&rsquo;s relative
+        fitness, which is why a recessive allele is so slow to remove at low frequency. On its own, with
+        selection off, h still changes nothing about the gene pool.
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards from a phenotype</h2>
+      <p class="ws-intro">Exam questions rarely hand you p. They hand you the one class of people you can
+        count &mdash; the ones showing the recessive trait &mdash; and expect you to work back to the gene
+        pool.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Restore all five conditions</span>. Set
+          <span class="ws-set">Dominance of A (h)</span> to <span class="ws-set">1.00</span>,
+          <span class="ws-set">Starting frequency of A (p)</span> to <span class="ws-set">0.60</span>, and
+          <span class="ws-set">Generations</span> to <span class="ws-set">60</span>.</li>
+        <li>Fill in the first row: the three <span class="ws-set">Genotype frequencies</span>, the
+          <span class="ws-set">a trait (aa only)</span> percentage from
+          <span class="ws-set">What you would actually see</span>, and the
+          <span class="ws-set">Change in p</span> and <span class="ws-set">q (freq. of a)</span>
+          readouts.</li>
+        <li>Now tick <span class="ws-set">Non-random mating</span> and set the
+          <span class="ws-set">Inbreeding coefficient F</span> to <span class="ws-set">0.50</span>.
+          Record the second row.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">Setting</th><th>AA</th><th>Aa</th><th>aa</th>
+              <th>a trait (aa only)</th><th>Change in p</th><th>q (freq. of a)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">F = 0 (random)</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">F = 0.50</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Using the first row only: of the individuals showing the
+          <em>dominant</em> trait, what fraction are heterozygous? Show the division you used.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Explain why you cannot get p directly from the frequency of the
+          dominant phenotype, but you can from the frequency of the recessive one.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Now take the <em>second</em> row and apply the usual shortcut:
+          q = &radic;(frequency of aa). What value of q does that give? Compare it with the
+          <span class="ws-set">q (freq. of a)</span> readout on screen.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> The <span class="ws-set">Change in p</span> readout is identical
+          in both rows, yet all three genotype frequencies moved. Reconcile those two facts, and state the
+          condition the &radic; shortcut silently assumes.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Then reopen it, set the
+        controls the problem describes, and check yourself &mdash; if a number is off, write down where.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A population meets all five Hardy&ndash;Weinberg conditions, and
+          9% of individuals show the recessive phenotype. Find q, p, and the frequencies of AA, Aa and aa.
+          Then find what fraction of the individuals showing the dominant phenotype are carriers.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Two hundred isolated populations of <em>N</em> = 25 each start at
+          p = 0.20 and are left to drift, with no selection, mutation or migration. <strong>(i)</strong> In
+          the long run, roughly how many of the 200 end up fixed for A, and what reasoning gives that
+          number? <strong>(ii)</strong> Using H<sub>t</sub> = H<sub>0</sub>(1 &minus; 1/2N)<sup>t</sup>,
+          predict the mean heterozygosity after 100 generations.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Two populations both start at p = 0.50 with no selection: one has
+          <em>N</em> = 20, the other <em>N</em> = 1000. Calculate the expected mean heterozygosity in each
+          after 200 generations. Then state, in one sentence, what the pair of numbers says about the
+          claim that drift only matters in small populations.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> No calculation for this one. A lab report says a population
+          &ldquo;returned to Hardy&ndash;Weinberg equilibrium&rdquo; after a disturbance. Explain what is
+          wrong with treating Hardy&ndash;Weinberg as something a population <em>does</em>, and say what
+          information you actually get from measuring how far a real population sits from the
+          Hardy&ndash;Weinberg proportions.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does considerably more than this
+        worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Break <span class="ws-set">Natural selection</span> on its own with s = 0.50 over 200
+          generations, and run it twice: once with h = 1.00 and once with h = 0.00. Selection is acting
+          against the same allele at the same strength both times. Time how long the last few percent take
+          in each case, and account for the difference using the genotype bands.</li>
+        <li>Break <span class="ws-set">Migration (gene flow)</span> with m = 0.10 and a source frequency of
+          0.90. Check whether the remaining gap between p and 0.90 really shrinks to
+          (1 &minus; m) of itself every generation. Then compare how far
+          <span class="ws-set">Mutation</span> can move p at its largest available rate over the same span.</li>
+        <li>Break <span class="ws-set">Finite population size</span> alone at N = 10 and press
+          <span class="ws-set">Draw again</span> several times, then move to the
+          <span class="ws-set">Genetic drift</span> tab and press <span class="ws-set">New replicates</span>
+          a few times. Watch what stays stable across presses (the <span class="ws-set">Mean p, all 200</span>
+          readout, the fraction fixed) and what does not.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Allele Machine &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

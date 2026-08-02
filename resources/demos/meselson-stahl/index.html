@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: labels above each canvas, the strand legend, table dots */
@@ -78,6 +78,7 @@
           <span class="tag is-accent">Meselson &amp; Stahl</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -224,21 +225,22 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> almost every student can say &ldquo;replication is
-        semiconservative,&rdquo; and almost none can say what the other two models
-        <em>predicted</em>. That is a memorized conclusion, not an experiment. If you cannot state
-        what conservative and dispersive replication would have put in the tube, you have no idea why
-        Meselson and Stahl mattered &mdash; you are just trusting the textbook.
+        <strong>The misconception:</strong> &ldquo;replication is semiconservative&rdquo; is a far more
+        memorable sentence than either of the predictions it defeated, so it is the part that tends to
+        survive. It is still only a conclusion. A conclusion carries evidence with it only if you can
+        also say what the rejected alternatives would have put in the tube. Being able to state what
+        conservative and dispersive replication predicted is what turns a remembered result into one
+        you can defend.
       </p>
       <p>
         <strong>What to notice:</strong> step to generation 1 and compare the three tubes. At generation 0
         all three models say the same thing &mdash; one fully heavy band &mdash; so nothing has been tested
-        yet. Conservative dies as soon as growth in <sup>14</sup>N starts: it is the only model that still
+        yet. Conservative fails as soon as growth in <sup>14</sup>N starts: it is the only model that still
         puts DNA at the fully heavy line afterwards, and at generation 1 that band should hold half the
-        DNA. But semiconservative and dispersive give you the
+        DNA. But semiconservative and dispersive give the
         <em>identical</em> picture &mdash; one band, exactly halfway, at 1.7170 g/cm&sup3;. One
-        generation of data cannot choose between them, and a student who says &ldquo;generation 1 proved
-        replication is semiconservative&rdquo; is wrong.
+        generation of data cannot choose between them, so &ldquo;generation 1 proved replication is
+        semiconservative&rdquo; claims more than the tube shows.
       </p>
       <p>
         <strong>Generation 2 is the whole experiment.</strong> Semiconservative predicts the DNA splits
@@ -250,7 +252,7 @@
       </p>
       <p>
         <strong>The honest caveat:</strong> the dispersive band never stays put. It slides toward the
-        light line generation after generation, and by generation 4 it is only 6% <sup>15</sup>N, sitting
+        light line generation after generation, and by generation 4 it is only 6.3% <sup>15</sup>N, sitting
         at 1.7109 &mdash; close enough to plain light DNA that real film would struggle to separate them.
         That is exactly why the argument rests on generation 2, when the dispersive band is still clearly
         off the light line but the semiconservative prediction has already broken in two.
@@ -579,7 +581,7 @@
             '1.7240 g/cm&sup3;. An experiment that every hypothesis passes is not evidence.' };
         }
         if (n === 1) {
-          return { cls: 'note warn', html: '<strong>Generation 1 kills conservative &mdash; and nothing else.</strong> ' +
+          return { cls: 'note warn', html: '<strong>Generation 1 rules out conservative &mdash; and nothing else.</strong> ' +
             'Conservative is the only model that puts DNA at the heavy line (50% of it, still at 1.7240). ' +
             'Semiconservative and dispersive make <em>identical</em> predictions here: one band, 100% of the DNA, ' +
             'exactly halfway at 1.7170 g/cm&sup3;. Generation 1 cannot tell those two apart.' };

@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: group chips, the character matrix, the legend */
@@ -146,13 +146,14 @@
       <div class="dh-body">
         <a class="back-link" href="../index.html">Science Demonstrations</a>
         <h1 class="demo-title">Tree Builder</h1>
-        <p class="demo-sub">Group the five animals on characters they <em>share and inherited from a common ancestor</em>, and the tree is scored by how many evolutionary changes it needs. Then click any node to rotate it and watch the score not move.</p>
+        <p class="demo-sub">Group the five animals on characters they <em>share and inherited from a common ancestor</em>. The tree is scored by how many evolutionary changes it forces you to assume. Then rotate any node and watch that score refuse to move.</p>
         <div class="tags">
           <span class="tag is-bio">AP Biology</span>
           <span class="tag">Unit 7</span>
           <span class="tag is-accent">Phylogeny &amp; parsimony</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -235,8 +236,8 @@
               <button class="btn" id="pCold">Cold-blooded together</button>
             </div>
             <p class="ctrl-hint" style="margin-top:0">
-              Three arrangements students actually draw. Load each one, read the step count, then decide which
-              hypothesis the characters support.
+              Three arrangements that get drawn often, and for reasons that make sense. Load each one, read the
+              step count, then decide which hypothesis the characters support.
             </p>
             <div class="trylist" id="tryList"></div>
             <div class="btn-row">
@@ -284,10 +285,9 @@
           </p>
           <p class="note warn" style="margin-top:10px">
             <strong>Shared ancestral does not group.</strong> Shark, salamander and lizard all fail to hold a
-            constant body temperature. That is not something they invented together &mdash; it is what the
-            common ancestor of all six already did, so it says nothing about which of them are closest
-            relatives. Load <em>Cold-blooded together</em> and count the cost: the tree jumps from 15 steps
-            to 21.
+            constant body temperature. That is not new in those three &mdash; it is what the common ancestor
+            of all six already did, so it says nothing about which of them are closest relatives. Load
+            <em>Cold-blooded together</em> and count the cost: the tree jumps from 15 steps to 21.
           </p>
         </div>
 
@@ -318,10 +318,11 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students read a cladogram as a ladder of progress. The animals near
-        the left are &ldquo;primitive&rdquo;, the animals near the right are &ldquo;advanced&rdquo;, humans
-        belong at the top, and two names printed next to each other must be close relatives. Under that reading
-        a tree is a ranking &mdash; a scoreboard of how far each species has climbed.
+        <strong>The misconception:</strong> a cladogram invites reading as a ladder of progress. The animals
+        near the left are &ldquo;primitive&rdquo;, the animals near the right are &ldquo;advanced&rdquo;, humans
+        belong at the top, and two names printed next to each other must be close relatives. The layout
+        encourages exactly that &mdash; the drawing runs left to right, and so does time. Under that reading a
+        tree is a ranking: a scoreboard of how far each species has climbed.
       </p>
       <p>
         <strong>What to notice, first.</strong> Build the best tree you can, then click the node joining lizard
@@ -335,8 +336,8 @@
       <p>
         <strong>What to notice, second.</strong> The most parsimonious tree of all 105 possibilities needs 15
         steps, and in it the human is <em>not</em> the last tip. Human sits on a side branch and lizard and
-        pigeon are more deeply nested. Anyone reading branch position as advancement has just been told that a
-        pigeon out-ranks them. The tree is not saying that, and it never was.
+        pigeon are more deeply nested. If branch position meant advancement, this tree would be ranking a
+        pigeon above you. It is not making that claim, and it never was.
       </p>
       <p>
         <strong>Why the score works.</strong> Only characters that are <em>shared</em> and <em>derived</em>
@@ -354,8 +355,8 @@
         those characters &mdash; but you then have to break the skull opening, the uric acid waste and the foot
         scales that lizard and pigeon share, costing 3. The <em>Ladder</em> tree is exactly that trade, and it
         lands on 16. The data do not agree with themselves, and parsimony is how you decide which conflict to
-        swallow: the tree keeps the evidence supported by three characters and pays for two independent
-        origins of warm-bloodedness. That is a real result &mdash; mammals and birds did evolve endothermy
+        swallow: the tree keeps the grouping carried by three characters and pays two changes for endothermy
+        instead of one. That matches the wider evidence &mdash; mammals and birds did evolve endothermy
         separately &mdash; and the demonstration got there by counting, not by ranking anybody.
       </p>
     </section>
@@ -1192,7 +1193,7 @@
       el.pLadder.addEventListener('click', function () {
         loadTree(specToRoot(PRESET.ladder),
           '<strong>The ladder.</strong> Shark, then salamander, then lizard, then pigeon, then human at the ' +
-          'top &mdash; the shape almost everyone draws first. Notice what it quietly claims: in a fully ' +
+          'top &mdash; the shape a first sketch usually takes. Notice what it quietly claims: in a fully ' +
           'laddered tree the last two tips are each other&rsquo;s closest relatives, so this tree says a ' +
           'human is more closely related to a pigeon than a pigeon is to a lizard.');
       });

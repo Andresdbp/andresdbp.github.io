@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Heavy, Light, Hybrid &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 6 &middot; Gene Expression &amp; Regulation</div>
+      <h1>Heavy, Light, Hybrid</h1>
+      <p class="ws-sub">Running all three models of DNA replication side by side, and finding the one
+        generation that actually decides between them.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/meselson-stahl/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Getting it right is not the point &mdash;
+        having something on paper to argue with later is.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p><em>E. coli</em> is grown for many generations in <sup>15</sup>N until every DNA strand is
+          heavy, then transferred to <sup>14</sup>N medium. Three models are on the table: conservative,
+          semiconservative, dispersive. Counting the transfer as generation 0, <strong>which is the first
+          generation whose density-gradient tube can rule out the dispersive model?</strong> Write a
+          single generation number.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">In one or two sentences, say what the tube would have to look like at
+          that generation for dispersive to be eliminated.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading all three predictions at once</h2>
+      <p class="ws-intro">Open the demonstration. The row of buttons labelled
+        <span class="ws-set">Generations in <sup>14</sup>N medium</span> sets the generation from 0 to 4.
+        The <span class="ws-set">Predicted bands</span> table always lists all three models, whichever one
+        is highlighted &mdash; that table is where you take your numbers from.</p>
+
+      <ol class="ws-steps">
+        <li>Leave the generation on <span class="ws-set">0</span>. Read the
+          <span class="ws-set">Predicted bands</span> table and fill in the three generation-0 rows below.
+          Use the <span class="ws-set">Density</span> and <span class="ws-set">Share</span> columns exactly
+          as printed.</li>
+        <li>Click <span class="ws-set">1</span> (or press <span class="ws-set">Next generation</span>) and
+          fill in the three generation-1 rows.</li>
+        <li>For each row, the number of bands is just how many lines that model occupies in the table.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:11%">Gen</th><th style="width:24%">Model</th>
+              <th style="width:13%">Bands</th><th>Density of each band (g/cm&sup3;)</th>
+              <th>Share of each band</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td class="filled">Conservative</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0</td><td class="filled">Semiconservative</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0</td><td class="filled">Dispersive</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td class="filled">Conservative</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td class="filled">Semiconservative</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td class="filled">Dispersive</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> All three generation-0 rows are identical. Explain, in terms of
+          what the culture had been doing before the transfer, why that had to be true &mdash; and say
+          what it means for generation 0 as a test of the three models.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> At generation 1, one model is the only one still placing DNA at
+          1.7240 g/cm&sup3;. Name it, and give the share the table predicts for that band.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> At generation 1, two of the rows are identical to each other.
+          Which two, and what does that identity prevent you from concluding?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        Band darkness in the tubes is drawn proportional to the share of total DNA, so a small band is
+        genuinely faint on screen. Read the printed percentage rather than judging by eye.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What changes and what refuses to move</h2>
+      <p class="ws-intro">Now step the generation across its whole range and watch two quantities at once:
+        where a band sits, and how much DNA is in it. The semiconservative and dispersive rows behave in
+        opposite ways, and that contrast is the entire experiment.</p>
+
+      <ol class="ws-steps">
+        <li>Set the generation to <span class="ws-set">1</span>, then <span class="ws-set">2</span>,
+          <span class="ws-set">3</span>, <span class="ws-set">4</span> in turn.</li>
+        <li>At each generation read <span class="ws-set">Molecules</span> from the
+          <span class="ws-set">Readouts</span> panel.</li>
+        <li>From the <span class="ws-set">Predicted bands</span> table, record the semiconservative
+          <em>hybrid</em> band and the single dispersive band.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:9%">Gen</th><th style="width:15%">Molecules</th>
+              <th>Semiconservative<br>hybrid band: density</th>
+              <th>Semiconservative<br>hybrid band: share</th>
+              <th>Dispersive band:<br>density</th>
+              <th>Dispersive band:<br>share</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Of the four band columns, two hold the same value at every
+          generation. Name both, and for each say what the model requires that forces it to stay
+          fixed.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> The semiconservative hybrid band stays at one density but its
+          share halves each generation. Write that share as a formula in the generation number <em>n</em>,
+          and explain it by counting molecules: how many hybrid molecules exist at generation <em>n</em>,
+          out of how many total?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The dispersive band keeps 100% of the DNA but its density falls.
+          Write the fraction of a dispersive molecule&rsquo;s nitrogen that is <sup>15</sup>N as a formula
+          in <em>n</em>, and check it against the <sup>15</sup>N share readout.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> State in one sentence the rule that separates the two models:
+          under one of them the band count changes, under the other the band <em>position</em> changes.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">e.</span> Return to your prediction in part 1. Which generation actually
+          settles it? If your number was different, say what you had assumed about the dispersive
+          prediction that the table does not support.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Reading a tube backwards</h2>
+      <p class="ws-intro">An exam question rarely hands you the model and the generation. It hands you a
+        tube. Work each of these out on paper first, then set the demonstration to check.</p>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th>What the tube shows</th><th style="width:22%">Model</th>
+              <th style="width:16%">Generation</th><th style="width:26%">How you decided</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">One band, 100% of the DNA, at 1.7135&nbsp;g/cm&sup3;</td>
+              <td></td><td></td><td></td></tr>
+          <tr><td class="filled">Two bands: 12.5% at 1.7170 and 87.5% at 1.7100</td>
+              <td></td><td></td><td></td></tr>
+          <tr><td class="filled">Two bands: 25% at 1.7240 and 75% at 1.7100</td>
+              <td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> A shortcut that sounds reasonable: <em>one band means dispersive,
+          two bands means semiconservative.</em> Set the generation to <span class="ws-set">1</span> with
+          <span class="ws-set">Semiconservative</span> selected under
+          <span class="ws-set">Molecules drawn above</span>, and read the
+          <span class="ws-set">Bands</span> readout. What does it say, and where does the shortcut
+          break?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Tick <span class="ws-set">Reveal what Meselson &amp; Stahl
+          actually saw</span> and step from generation 1 to generation 2. Write down what was observed at
+          each, then explain why the generation-1 observation, on its own, cannot establish
+          semiconservative replication.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Read the <span class="ws-set">Where the model simplifies</span>
+          panel, then go to generation 4 and look at the dispersive tube. Give one reason a real
+          experiment run far past generation 2 would have been a weaker argument than generation 2
+          itself.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away. Show your working. Then reopen it and check
+        yourself &mdash; and where you were off, write down which step went wrong. Take the reference
+        densities as 1.7100&nbsp;g/cm&sup3; for all-<sup>14</sup>N DNA and 1.7240&nbsp;g/cm&sup3; for
+        all-<sup>15</sup>N DNA, with density straight-line in the fraction of <sup>15</sup>N.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Replication is semiconservative. A fully <sup>15</sup>N culture
+          has grown three generations in <sup>14</sup>N. State the total number of molecules, the number
+          of hybrid molecules, and the density and share of every band in the tube.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Suppose instead that replication were dispersive. After four
+          generations in <sup>14</sup>N, what fraction of each molecule&rsquo;s nitrogen is
+          <sup>15</sup>N? Use the linear relationship to calculate the band density to four decimal
+          places.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Suppose instead that replication were conservative. After four
+          generations, give the share of the DNA sitting at 1.7240&nbsp;g/cm&sup3; as an exact fraction
+          and as a percentage. The demonstration rounds shares to one decimal place &mdash; state what it
+          will display and why that differs from your exact value.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> At every generation, and under all three models, the original
+          <sup>15</sup>N accounts for the same fraction of the total DNA. Explain why that must be so, and
+          then explain how a caesium chloride gradient can still tell the three models apart despite
+          it. No calculation is needed.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does more than this worksheet uses.</p>
+
+      <ul style="padding-left:18px">
+        <li>Hold the generation at 3 and click through all three buttons under
+          <span class="ws-set">Molecules drawn above</span>. Each model draws the same eight molecules
+          differently. Describe, strand by strand, what makes the dispersive picture impossible to sort
+          into &ldquo;old&rdquo; and &ldquo;new&rdquo; strands.</li>
+        <li>Under dispersive replication the drawn strands are built from 16 blocks. Track how many blocks
+          stay heavy at each generation and work out what physically has to happen to a strand for that
+          pattern to be produced.</li>
+        <li>Step through generations 3 and 4 with the observations revealed. Meselson and Stahl followed
+          the culture out that far even though generation 2 had already decided the question. Argue for
+          what those extra generations were worth.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Heavy, Light, Hybrid &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

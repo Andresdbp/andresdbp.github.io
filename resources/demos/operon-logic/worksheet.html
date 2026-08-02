@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Operon Logic: predict the mutant &mdash; Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 6 &middot; Gene Expression &amp; Regulation</div>
+      <h1>Operon Logic: predict the mutant</h1>
+      <p class="ws-sub">Two inputs, one promoter, and four regulatory mutants that can only be told apart
+        by reasoning about mechanism rather than by memorising a phrase.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/operon-logic/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Whatever you write here gets compared against a
+        number later, so commit to something specific.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>Wild-type <em>E. coli</em> growing in medium that contains <strong>lactose and glucose
+          together</strong>. Taking full induction (lactose present, glucose absent) as 100%, roughly what
+          percentage of maximum is <em>lacZYA</em> being transcribed at?</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences saying what reasoning got you that number.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Reading the operon in all four conditions</h2>
+      <p class="ws-intro">Open the demonstration on the <span class="ws-set">lac operon</span> tab. The
+        <em>Genotype</em> menu should read <span class="ws-set">Wild type</span>. The four buttons under
+        <em>Conditions in the medium</em> set the sugars; the <em>Output</em> panel reports three things at
+        once.</p>
+
+      <ol class="ws-steps">
+        <li>Press the preset <span class="ws-set">lac&minus; glu&minus;</span>.</li>
+        <li>Copy three readouts into the first row of the table: <span class="ws-set">Transcription of lacZ
+          Y A</span> (the large percentage), <span class="ws-set">Repressor on operator</span> and
+          <span class="ws-set">CAP&ndash;cAMP on CAP site</span>.</li>
+        <li>Work down the remaining three presets and fill in the rest of the table.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:20%">Condition</th><th>Transcription (% of max)</th>
+              <th>Repressor on operator</th><th>CAP&ndash;cAMP on CAP site</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">lac&minus; glu&minus;</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lac&minus; glu+</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lac+ glu&minus;</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lac+ glu+</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Exactly one row has the repressor <em>off</em> the operator and
+          CAP&ndash;cAMP <em>on</em> its site at the same time. Which row, and what does the transcription
+          readout say there?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Compare the last two rows. One of the two protein readouts is
+          identical in both; the other flips. Name the readout that flips and name the small molecule whose
+          concentration is responsible for it.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The two lactose-free rows do not read zero. Using the
+          <em>Honest limits</em> panel, state in one sentence why a completely silent operon would be a
+          problem for the cell.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        The inducer is <strong>allolactose</strong>, an isomer that &beta;-galactosidase makes from lactose
+        &mdash; not lactose itself. The map draws them as one amber ligand for clarity. Say
+        &ldquo;allolactose binds the repressor&rdquo; on paper.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What the glucose switch is actually doing</h2>
+      <p class="ws-intro">Here you change one control, the glucose preset, and hold everything else fixed
+        while stepping through the whole <em>Genotype</em> menu. Lactose stays present throughout.</p>
+
+      <ol class="ws-steps">
+        <li>Set <em>Genotype</em> to <span class="ws-set">Wild type</span>.</li>
+        <li>Press <span class="ws-set">lac+ glu&minus;</span> and record the transcription percentage.
+          Press <span class="ws-set">lac+ glu+</span> and record it again.</li>
+        <li>Divide the first number by the second and write the ratio in the last column.</li>
+        <li>Repeat for each of the other four genotypes in the menu.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">Genotype</th><th>lac+ glu&minus; (%)</th><th>lac+ glu+ (%)</th>
+              <th>Ratio (glu&minus; &divide; glu+)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Wild type</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lacI&#8315;</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">O&#7580;</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lacI&#738;</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">CAP&#8315;</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Four of the five ratios are the same to within rounding. Write that
+          ratio, and complete the rule: adding glucose divides transcription by roughly __________, and it
+          does so whether the operon was sitting at 100% or at 0.5%.</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> One genotype has a ratio of 1 &mdash; glucose changes nothing at
+          all. Name it, and explain in one or two sentences why that single result rules out the idea that
+          glucose blocks the operator.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your prediction in Part 1. Compare it with the wild-type
+          <span class="ws-set">lac+ glu+</span> value. If it was off, say specifically what you assumed
+          about the inputs that turned out to be incomplete.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Using it the way a question would</h2>
+      <p class="ws-intro">Exam questions rarely hand you the genotype and ask for the number. They hand you
+        the numbers and ask for the genotype, or they hand you a plausible shortcut and see whether you
+        check it.</p>
+
+      <p><strong>A. Predict before you look.</strong></p>
+      <ol class="ws-steps">
+        <li>Set <em>Genotype</em> to <span class="ws-set">O&#7580;</span> first, then press
+          <span class="ws-set">Start prediction round</span>. The transcription numbers hide; the molecular
+          map keeps working.</li>
+        <li>Reading the map alone, choose OFF, LOW or HIGH for each of the four conditions and write your
+          four choices below <em>before</em> you press <span class="ws-set">Reveal</span>.</li>
+        <li>Press <span class="ws-set">Reveal</span> and record the actual value beside each.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:34%">Condition</th><th>Your prediction</th><th>Actual (% of max)</th>
+              <th>OFF / LOW / HIGH</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">no lactose, no glucose</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">no lactose, glucose present</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lactose present, no glucose</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">lactose AND glucose present</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Score recorded by the demonstration: ______ / 4. For any box you
+          missed, write what the map was telling you that you did not use.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <p style="margin-top:18px"><strong>B. Working backwards from a pattern.</strong></p>
+      <div class="ws-q">
+        <p><span class="label">b.</span> A strain reads <span class="ws-set">OFF, OFF, LOW, LOW</span>
+          across the four conditions in that order, and the <em>Repressor on operator</em> readout still
+          responds normally to lactose. Which genotype in the menu is it? Select it and confirm, then write
+          the two features of the pattern that identify it.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <p style="margin-top:18px"><strong>C. A shortcut worth testing.</strong></p>
+      <p class="ws-intro">&ldquo;Once the repressor is gone, nothing is holding the operon back, so it
+        should run at maximum.&rdquo; That is a reasonable line of thought. Test it.</p>
+      <ol class="ws-steps">
+        <li>Set <em>Genotype</em> to <span class="ws-set">lacI&#8315;</span> and press
+          <span class="ws-set">lac&minus; glu&minus;</span>. Record the percentage and the
+          <em>Repressor on operator</em> readout.</li>
+        <li>Press <span class="ws-set">lac&minus; glu+</span>. Record both again.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:26%">Condition</th><th>Transcription (% of max)</th>
+              <th>Repressor on operator</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">lac&minus; glu&minus;</td><td></td><td></td></tr>
+          <tr><td class="filled">lac&minus; glu+</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The repressor readout is the same in both rows, yet the
+          transcription level is not. Explain in two sentences why losing the repressor does not make the
+          operon glucose-insensitive.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        Negative regulation and positive regulation are separate events on the same promoter. Removing a
+        blocker is not the same thing as supplying a helper, and a strain can lose one while keeping the
+        other intact.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your reasoning, not just the answer.
+        Then reopen it and check &mdash; and where you were wrong, write down which step in the mechanism
+        you skipped.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> A strain transcribes <em>lacZYA</em> at 100% of maximum in medium
+          with <strong>no lactose and no glucose</strong>, and at about 4.9% in medium with
+          <strong>no lactose but glucose present</strong>. Name the two genotypes from the menu that both
+          fit these numbers, and state the experiment that separates them and what the result would be for
+          each.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> A CAP&#8315; strain is grown in lactose with no glucose. Give the
+          transcription level as a percentage of the wild-type maximum, and explain why the number is
+          neither 0% nor 100%.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> In a lacI&#738; strain, glucose is added to a medium that already
+          contains lactose. By what factor does transcription change? Predict the factor and justify it
+          before you check &mdash; and say why it is the same factor as in wild type even though the
+          absolute levels differ by more than a hundredfold.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> Explanation only, no numbers. Explain why deleting the repressor
+          leaves the operon fully glucose-sensitive, while deleting CAP makes the glucose signal
+          disappear entirely. Your answer should name what each protein does to the promoter and say which
+          one glucose acts through.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The second tab, <span class="ws-set">Eukaryotic
+        enhancers</span>, is untouched by everything above, and it is where this unit is going.</p>
+
+      <ul style="padding-left:18px">
+        <li>Switch to <em>Eukaryotic enhancers</em> and cycle the <em>Which cell are you in?</em> menu
+          through hepatocyte, skeletal muscle cell and neuron. Record all three transcription levels, then
+          use the <em>Silencer occupied</em> readout to say why muscle and neuron are both &ldquo;off&rdquo;
+          for different reasons &mdash; and why the neuron sits lower.</li>
+        <li>Select the neuron, then tick <em>HNF-4&alpha;</em> and <em>C/EBP&alpha;</em>. The gene barely
+          moves. Now untick <em>MeCP2</em>. What does the order of those two results tell you about a
+          repressor sitting on top of a set of activators? Press <em>Back to the real cell</em> when you
+          are done.</li>
+        <li>Starting from Sp1 alone, add HNF-4&alpha; on its own and note the level; go back and add
+          C/EBP&alpha; on its own and note that level; then have both bound at once. Add the two separate
+          increases together and compare with the level for both. Then select the skeletal muscle cell and
+          read the tag beside the <em>MyoD</em> checkbox &mdash; it states why an abundant and genuinely
+          powerful activator does nothing to this particular gene.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Operon Logic: predict the mutant &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

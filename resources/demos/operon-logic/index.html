@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: stage labels, the prediction rows, TF swatches */
@@ -91,6 +91,7 @@
           <span class="tag is-accent">Gene expression &amp; regulation</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -358,16 +359,18 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students learn one sentence &mdash; &ldquo;lactose present, lac operon
-        on&rdquo; &mdash; and then get taken apart by the question that actually gets asked. Lactose is only half
-        the input. The operon is an <strong>AND gate</strong>: it runs hard only when lactose is
-        <em>present</em> <strong>and</strong> glucose is <em>absent</em>. Set both sugars present on this page and
-        transcription reads <strong>4.94%</strong> of maximum, not 100%. The cell is doing the sensible thing: if
-        glucose is on the table, why build the machinery for the second-choice sugar?
+        <strong>The tempting reading:</strong> &ldquo;lactose present, lac operon on.&rdquo; It is a fair summary
+        of the induction step, and it is exactly half of the input. The operon is an <strong>AND gate</strong>: it
+        runs hard only when lactose is <em>present</em> <strong>and</strong> glucose is <em>absent</em>. Set both
+        sugars present on this page and transcription reads <strong>4.94%</strong> of maximum, not 100%. That is
+        the regulation doing something adaptive: while glucose is available, building the machinery for the
+        second-choice sugar buys the cell nothing.
       </p>
       <p>
-        <strong>Glucose is not a second repressor.</strong> This is the other half of the trap, and it is the one
-        that survives into college. Glucose never touches the operator and never touches the repressor. Glucose
+        <strong>Glucose is not a second repressor.</strong> Calling it one is a natural shorthand &mdash; glucose
+        really does shut the operon down &mdash; but the mechanism is the opposite kind of event, and that
+        distinction is what the harder questions turn on. Glucose never touches the operator and never touches
+        the repressor. Glucose
         lowers <strong>cAMP</strong>. With cAMP low, CAP has no cAMP to bind, so CAP does not sit on its site, so
         it never bends the DNA and never helps RNA polymerase get started. Removing a helper is not the same event
         as adding a blocker, and the page is built so you can see the difference: the repressor readout and the
@@ -1477,7 +1480,7 @@
             + 'whole time, not through the repressor.';
           cls = 'note warn';
         } else if (S.lac && S.glu) {
-          note = '<strong>This is the box everyone gets wrong.</strong> Lactose <em>is</em> present, and the '
+          note = '<strong>This is the box the AND gate is about.</strong> Lactose <em>is</em> present, and the '
             + 'repressor <em>is</em> off the operator. Transcription is still only ' + fmtLevel(L) + '% of maximum, '
             + 'because glucose keeps cAMP low, so CAP–cAMP never binds and the weak lac promoter gets no help. '
             + 'Lactose alone is not enough.';

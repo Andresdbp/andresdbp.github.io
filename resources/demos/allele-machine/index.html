@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: tab strip, proportion legends, nested condition blocks */
@@ -89,6 +89,7 @@
           <span class="tag is-accent">Hardy&ndash;Weinberg &amp; drift</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -419,8 +420,9 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception, part one:</strong> "dominant" gets stored as <em>stronger</em>, and
-        stronger gets stored as <em>should take over</em>. Press <strong>Rare dominant allele</strong>: A is
+        <strong>Dominant is not the same as common.</strong> The word invites you to store "dominant" as
+        <em>stronger</em>, and stronger as <em>should take over</em>. That reading is reasonable, and it is
+        wrong &mdash; here is where it breaks. Press <strong>Rare dominant allele</strong>: A is
         completely dominant and sits at 2%. Run it for two hundred generations. It is still at exactly 2%.
         Now drag the dominance slider from top to bottom and watch what moves: the genotype bar does not
         change by a thousandth, and the p line does not so much as flicker. The only thing that changes is
@@ -430,8 +432,8 @@
         much of northern Europe, the most common one at its locus.
       </p>
       <p>
-        <strong>The misconception, part two:</strong> students describe Hardy&ndash;Weinberg as something
-        populations <em>do</em> &mdash; "the population went into Hardy&ndash;Weinberg equilibrium." No
+        <strong>Hardy&ndash;Weinberg is not something a population does.</strong> You will hear it described
+        that way &mdash; "the population went into Hardy&ndash;Weinberg equilibrium." No
         population does this. Hardy&ndash;Weinberg is the prediction of what happens when <em>nothing</em>
         happens: it is a null model, deliberately built to be wrong, so that the size of its failure tells
         you which force is at work. That is why this tab is an infinite population with exact arithmetic
@@ -446,8 +448,9 @@
         conditions change allele frequencies. That one, on its own, does not.
       </p>
       <p>
-        <strong>The misconception, part three:</strong> "drift is random, so anything can happen and nothing
-        is predictable" &mdash; and its partner, "drift only matters in tiny populations." Both are backwards.
+        <strong>A random path, a predictable ensemble.</strong> Two statements that sound right: "drift is
+        random, so anything can happen and nothing is predictable", and "drift only matters in tiny
+        populations." Each is half of the picture, and the half it leaves out reverses it.
         Follow one population on the drift tab: its path really is unpredictable, and no amount of biology
         will tell you where it ends. Then look at all two hundred at once. The fraction that ends up fixed at
         1 lands on the starting frequency, give or take the few percent you would expect from counting only
@@ -521,7 +524,7 @@
       }
       function seedRand(s) { return Demo.rng(((s * 2654435761) >>> 0) || 1); }
 
-      /* round population sizes to numbers a student can say out loud */
+      /* round population sizes to numbers you can say out loud */
       var NLIST = [5, 6, 7, 8, 9, 10, 12, 14, 16, 20, 25, 30, 40, 50, 60, 80, 100,
                    125, 150, 200, 250, 300, 400, 500, 650, 800, 1000];
 
@@ -828,9 +831,9 @@
         } else if (nb === 1 && e.sel) {
           var against = hw.s > 0 ? 'a' : 'A';
           note = '<strong>Selection is the only force acting, and it is acting against ' + against +
-            '.</strong> Notice that how fast it works depends on dominance: a fully recessive allele hides ' +
-            'inside heterozygotes where selection cannot see it, so the last few percent take an ' +
-            'enormous number of generations.';
+            '.</strong> Notice that how fast it works depends on dominance: a fully recessive allele is ' +
+            'shielded inside heterozygotes, where selection has no phenotype to act on, so the last few ' +
+            'percent take an enormous number of generations.';
         } else if (nb === 1 && e.mut) {
           note = '<strong>Mutation alone is astonishingly slow.</strong> Even at &mu; = ' +
             Demo.fmt.sci(hw.mu, 1) + ', far above any real per-locus rate, p moved by only ' +
@@ -1090,7 +1093,7 @@
           ctx.stroke();
         }
 
-        // the single population a student is asked to follow (replicate 0)
+        // the single population you are asked to follow (replicate 0)
         if (dr.follow) trace(function (t) { return YA(dr.traj[t]); }, c.series[3], 2);
         // mean p across all 200 — flat, at the starting frequency
         trace(function (t) { return YA(dr.meanP[t]); }, c.text, 2);

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Selection Shaper — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 7 &middot; Natural Selection</div>
+      <h1>Selection Shaper</h1>
+      <p class="ws-sub">Separating what selection does <em>within</em> a generation from what actually
+        gets passed to the next one &mdash; and finding the change the mean never reports.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/selection-shaper/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. The point is to have something on paper to
+        argue with later, not to be right now.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A population of finches has a mean beak depth of <strong>10.000 mm</strong>. Deeper beaks crack
+          the available seeds better, so the birds that survive to breed are not a random sample: they
+          average <strong>10.200 mm</strong>. Predict the mean beak depth of their offspring generation.</p>
+        <div class="lines"><i></i><i></i></div>
+        <p style="margin-top:8px">Write one or two sentences saying how you got that number, and name
+          anything you had to assume to get there.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Setting up a directional run</h2>
+      <p class="ws-intro">Open the demonstration. Three mode tabs sit above the graph; the sliders and the
+        readout tiles are down the right-hand side (underneath the graph on a phone).</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Heritability h&sup2;</span> to <span class="ws-set">0.50</span>
+          first. This slider restarts the population at generation 0 every time you move it, so it goes
+          first or it will undo your other settings.</li>
+        <li>Set <span class="ws-set">Strength of selection</span> to <span class="ws-set">0.40</span>.</li>
+        <li>Click the <span class="ws-set">Directional</span> tab.</li>
+        <li>Press <span class="ws-set">Reset</span>. The <span class="ws-set">Generation</span> tile
+          should read 0.</li>
+        <li>Record the row for generation 0, then press <span class="ws-set">Step generation</span> once
+          and record generation 1. Keep stepping to fill the rest.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:13%">Generation</th><th>Mean beak depth (mm)</th>
+              <th>Variance of beak depth (mm&sup2;)</th>
+              <th>S &mdash; selection differential (mm)</th>
+              <th>R &mdash; response (mm)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">5</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The tile for S says <em>mean of the breeders minus mean of
+          everybody</em>, and it names both numbers underneath. At generation 0, what do the breeders
+          average, and what does the whole population average?</p>
+        <div class="lines"><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> S and R are both measured in millimetres and both are non-zero
+          here, but they are not the same number. Using the wording on the two tiles, say what each one
+          is measured <em>across</em>.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The mean moves by the same amount every generation in this run,
+          and the variance does not move at all. Read the <span class="ws-set">Variance of the
+          breeders</span> tile and explain why the variance holding still is consistent with what that
+          tile says.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What decides how much of S survives</h2>
+      <p class="ws-intro">Now change one thing only. Leave the mode on Directional and the strength on
+        0.40, and vary heritability.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Heritability h&sup2;</span> to <span class="ws-set">0.00</span>. The
+          population restarts at generation 0 on its own.</li>
+        <li>With <span class="ws-set">Generation</span> reading 0, record S, R, and the
+          <span class="ws-set">Predicted h&sup2; &times; S</span> tile.</li>
+        <li>Repeat for each heritability in the table. Every value is reachable &mdash; the slider steps
+          in units of 0.05.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:13%">h&sup2;</th><th>S (mm)</th><th>R (mm)</th>
+              <th>Predicted h&sup2; &times; S (mm)</th><th>R &divide; S</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0.00</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.25</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.50</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">0.75</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1.00</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One column is identical in all five rows. Which one, and what
+          does that tell you about whether heritability affects <em>who breeds</em>?</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Write the rule connecting R, S and h&sup2; as an equation, then
+          write it again as one sentence in your own words.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> Go back to your prediction in Part 1. The breeders averaged
+          10.200 mm against a population mean of 10.000 mm &mdash; that is exactly the S you recorded.
+          Which row of this table matches the answer you predicted? What did you assume h&sup2; was?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note">
+        With h&sup2; = 0, selection is still working: the orange breeders curve is visibly to the right
+        of the blue histogram and S is not zero. What is missing is heritable variation, so none of the
+        advantage the breeders had is transmitted. Selection without heritable variation is not evolution.
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>Working backwards, and one place the shortcut fails</h2>
+
+      <p class="ws-intro"><strong>Backwards.</strong> A question is more likely to hand you the response
+        and ask for the heritability than the other way round.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Strength of selection</span> to <span class="ws-set">0.60</span>,
+          mode <span class="ws-set">Directional</span>, and press
+          <span class="ws-set">Reset</span>. Record S at generation 0: ____________ mm.</li>
+        <li>On paper, work out the heritability that would give a response of exactly
+          <span class="ws-set">R = 0.150 mm</span> with that S. Show the working here.</li>
+      </ol>
+      <div class="lines"><i></i><i></i></div>
+
+      <ol class="ws-steps" style="margin-top:10px">
+        <li>Set <span class="ws-set">Heritability h&sup2;</span> to the value you calculated and read the
+          R tile. Did it come out at 0.150 mm? If not, find your error before going on.</li>
+      </ol>
+
+      <p class="ws-intro" style="margin-top:18px"><strong>Where a reasonable shortcut breaks.</strong>
+        &ldquo;R = 0, so nothing is happening&rdquo; is a natural thing to conclude. Test it.</p>
+
+      <ol class="ws-steps">
+        <li>Set <span class="ws-set">Heritability h&sup2;</span> to <span class="ws-set">0.50</span> and
+          <span class="ws-set">Strength of selection</span> to <span class="ws-set">0.40</span>.</li>
+        <li>Click the <span class="ws-set">Stabilizing</span> tab and press
+          <span class="ws-set">Reset</span>.</li>
+        <li>Record generation 0, then press <span class="ws-set">Step generation</span> until you have
+          every row. The <span class="ws-set">h&sup2; right now</span> tile is the fourth one in
+          <em>The two numbers to watch</em>.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:13%">Generation</th><th>Mean (mm)</th><th>S (mm)</th><th>R (mm)</th>
+              <th>Variance (mm&sup2;)</th><th>Variance of the breeders (mm&sup2;)</th>
+              <th>h&sup2; right now</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">10</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> S is zero at every generation, and the fitness curve is nowhere
+          near flat. Explain why S comes out zero here, in terms of where the green fitness curve peaks
+          relative to the population.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> R is also zero, and the mean never leaves 10.000 mm. State one
+          quantity in your table that <em>did</em> change, by how much between generation 0 and
+          generation 10, and argue whether the population evolved.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> The <span class="ws-set">h&sup2; right now</span> tile falls
+          over the run even though you never touched the slider. Its subtitle shows the two numbers it is
+          built from. Which of those two is dropping, and why does that make sense for selection that
+          removes the extremes?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-note warn">
+        The population in this model is infinite, so nothing you see is sampling luck &mdash; every change
+        is selection. There is also no mutation, so variance that stabilizing selection removes is gone
+        for good and the run bottoms out at the non-heritable floor. In a real population mutation keeps
+        feeding variance back in, and the two forces settle at a balance well above that floor.
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page or look away from it. Show your working. Then reopen it, set the
+        controls each question describes, and check yourself &mdash; if you were wrong, write down where
+        it went off.</p>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Directional selection, strength 0.40, heritability 0.75. At
+          generation 0 the population mean is 10.000 mm and S = 0.200 mm. Find R, then predict the mean
+          beak depth at generation 4. State the assumption about S you had to make to get from R to
+          generation 4.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> In a different run the population mean is 10.000 mm, the birds
+          that breed average 10.300 mm, and the following generation averages 10.180 mm. Find S, find R,
+          and find h&sup2;. Then say which mode and which two slider settings would reproduce this in the
+          demonstration.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Over ten generations of stabilizing selection the mean beak depth
+          is 10.000 mm at the start and 10.000 mm at the end. Someone concludes that the population is not
+          evolving. Explain what they should be reading instead, and describe what has happened to the
+          allele frequencies underlying beak depth. No calculation.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> That same run starts with a phenotypic variance of 1.000
+          mm&sup2; and h&sup2; = 0.50. The variance falls each generation but never reaches zero, even
+          after thirty generations. State the value it is approaching and explain, in terms of the two
+          components of phenotypic variance, why selection cannot push it below that value in this
+          model.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does considerably more than this
+        worksheet used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Press <span class="ws-set">Disruptive, strong</span>, then press
+          <span class="ws-set">Run</span> and press <span class="ws-set">Pause</span> at about generation
+          10. The mean stays at 10.000 mm while the
+          histogram splits into two humps. Watch <span class="ws-set">Relative fitness of an average
+          bird</span> as it happens, and work out why a value below 1.000 is exactly what disruptive
+          selection means.</li>
+        <li>Uncheck <span class="ws-set">Draw the predicted next generation</span>, set up any run you
+          like, and sketch on paper where you think the dashed curve should sit relative to the orange
+          breeders curve. Then switch it back on and see how close you were.</li>
+        <li>Run <span class="ws-set">Disruptive, strong</span> until the distribution is clearly split,
+          then click the <span class="ws-set">Directional</span> tab without pressing Reset. Compare the
+          R tile against the <span class="ws-set">Predicted h&sup2; &times; S</span> tile. R = h&sup2;S
+          is exact only while the distribution is bell-shaped, and this one no longer is.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Selection Shaper &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: sequence viewers, the codon table grid, chips */
@@ -186,6 +186,7 @@
           <span class="tag is-accent">Gene expression</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -428,10 +429,10 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students collapse transcription and translation into one blurry
-        process called "making a protein". Ask them which strand is read and they say "the DNA". Ask which
-        direction anything is built and they shrug. Ask where it happens and they say "in the cell". Those
-        three questions have exact answers, and the answers are what the whole unit is about.
+        <strong>The misconception:</strong> transcription and translation collapse very easily into one
+        blurry process called "making a protein". Which strand is read? "The DNA." Which direction is
+        anything built in? Where does it happen? "In the cell." Those three questions have exact answers,
+        and the answers are what the whole unit is about.
       </p>
       <p>
         <strong>Which strand.</strong> A gene has two strands and only one of them is copied. RNA polymerase
@@ -440,8 +441,8 @@
         with U wherever that strand has T. Step through transcription one base at a time and watch the
         readout: template C gives RNA G, template A gives RNA U, template T gives RNA A. Then compare the
         mRNA with the top row of the DNA. Identical, except T became U. That is why the top strand is called
-        the sense strand &mdash; and it is also why students who "read the top strand" get the right letters
-        for the wrong reason and then fall apart the moment a question asks them to write the template.
+        the sense strand &mdash; and it is also why reading the top row straight off gives the right RNA
+        letters for the wrong reason. The shortcut holds until a question asks for the template itself.
       </p>
       <p>
         <strong>Which direction.</strong> The two strands run antiparallel, so if the coding strand reads
@@ -467,7 +468,7 @@
         first 18 bases of this mRNA are a 5' UTR and are never translated; the ribosome scans until it finds
         the first <strong>AUG</strong> and counts in threes from there. Edit the sequence and the frame is
         re-derived every time. That is what makes the presets bite: <em>Delete one base</em> removes a single
-        nucleotide from exon 2 and every codon downstream is misread, producing a stop codon early and a
+        nucleotide from exon 2 and every codon downstream is misread, producing a stop codon early and an
         18-amino-acid fragment instead of a 27-amino-acid protein. <em>Break a splice site</em> changes one G
         to an A at the start of intron 1, so the spliceosome cannot see the intron, the intron stays in the
         message, and the protein is wrecked from residue 8 onward. That is not a made-up scenario &mdash;
@@ -1197,8 +1198,8 @@
           el.rStep.textContent = 'only the finished mRNA is allowed out';
           cap = 'The DNA stays behind. A single-stranded copy, ' + M.mature.length +
                 ' nt long, leaves through a nuclear pore.';
-          now = 'This is the step students skip. The gene never moves. What crosses into the cytoplasm is ' +
-                'an edited copy — already spliced, capped and tailed.';
+          now = 'This is the step that gets compressed out of most summaries. The gene never moves. What ' +
+                'crosses into the cytoplasm is an edited copy — already spliced, capped and tailed.';
         } else if (ST.ph === 4 || ST.ph === 5) {
           el.rStep.textContent = 'the ribosome is reading the mRNA 5′→3′';
           if (!M.codons.length) {

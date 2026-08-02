@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* ---- hub-specific ---- */
@@ -69,6 +69,20 @@
 
     .dc-src { font-size: 11.5px; color: var(--muted); }
     .dc-src i { font-size: 11px; }
+
+    /* the card is one big link, so the worksheet link sits beside it, not in it */
+    .card-wrap { position: relative; display: flex; }
+    .card-wrap > .demo-card { flex: 1; padding-bottom: 34px; }
+    .ws-badge {
+      position: absolute; right: 13px; bottom: 11px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 500; color: var(--muted);
+      padding: 3px 9px; border-radius: 20px;
+      border: 1px solid var(--line); background: var(--surface-2);
+      transition: color .2s ease, border-color .2s ease;
+    }
+    .ws-badge:hover { color: var(--accent-strong); border-color: var(--accent-line); }
+    .ws-badge i { font-size: 11px; }
 
     .empty { padding: 30px 4px; color: var(--muted); font-size: 14px; }
   </style>
@@ -311,7 +325,13 @@
           inner + '</a>';
       }
       if (isLive) {
-        return '<a class="demo-card" href="' + esc(d.slug) + '/">' + inner + '</a>';
+        // The whole card links to the demo, so the worksheet link cannot sit
+        // inside it — nested anchors are invalid. Wrap them as siblings.
+        return '<div class="card-wrap">' +
+          '<a class="demo-card" href="' + esc(d.slug) + '/">' + inner + '</a>' +
+          '<a class="ws-badge" href="' + esc(d.slug) + '/worksheet.html" ' +
+            'title="Printable worksheet"><i class="bi bi-file-earmark-text"></i> Worksheet</a>' +
+        '</div>';
       }
       return '<div class="demo-card is-planned">' + inner + '</div>';
     }

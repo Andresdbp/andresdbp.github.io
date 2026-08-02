@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Tree Builder — Worksheet</title>
+  <link rel="icon" href="../../../assets/img/favicon-32x32.png" sizes="32x32" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/worksheet.css?v=2" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
+</head>
+
+<body>
+  <div class="sheet">
+
+    <header class="ws-head">
+      <div class="ws-kicker">AP Biology &middot; Unit 7 &middot; Natural Selection</div>
+      <h1>Tree Builder</h1>
+      <p class="ws-sub">Working out what a cladogram claims, what it does not claim, and how counting
+        changes decides between two arrangements that both look reasonable.</p>
+      <div class="ws-fields">
+        <span>Name</span><span>Date</span><span>Period</span>
+      </div>
+      <a class="ws-open" href="index.html"><strong>Open the demonstration &rarr;</strong></a>
+      <div class="ws-url">Demonstration: andresdbp.github.io/resources/demos/tree-builder/</div>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">1</span>Before you open anything</h2>
+      <p class="ws-intro">Answer from what you already know. Having something on paper is the point; being
+        right at this stage is not.</p>
+
+      <div class="ws-box">
+        <div class="ws-box-title">Prediction</div>
+        <p>A cladogram is drawn with lizard on one line and pigeon on the line below it, joined at a single
+          branch point. Someone redraws the same diagram with pigeon on top and lizard below &mdash; the
+          branch point is spun through 180&deg; and nothing else is touched.</p>
+        <p style="margin-top:8px"><span class="label">a.</span> Does the redrawn diagram make a different
+          claim about which animals share which ancestors? Yes or no.</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px"><span class="label">b.</span> The demonstration scores a tree by the number
+          of evolutionary changes it has to assume. After the redraw, does that number go up, go down, or
+          stay the same?</p>
+        <div class="lines"><i></i></div>
+        <p style="margin-top:8px">Write one sentence saying how you decided.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">2</span>Build one tree, and watch the score fall</h2>
+      <p class="ws-intro">Open the demonstration. Panel <span class="ws-set">1 &middot; Build the tree</span>
+        holds one chip per animal. Clicking two chips joins them into a clade. The lancelet chip is greyed
+        out &mdash; it is the outgroup and stays at the root.</p>
+
+      <ol class="ws-steps">
+        <li>Before joining anything, record the top row of the table from panel
+          <span class="ws-set">2 &middot; The score</span>.</li>
+        <li>Click <span class="ws-set">Lizard</span>, then <span class="ws-set">Pigeon</span>. Read the note
+          that appears under the chips: it names the shared derived characters supporting the join. Record how
+          many there are, then fill in the readouts.</li>
+        <li>Click <span class="ws-set">Human</span>, then <span class="ws-set">Lizard + Pigeon</span>.</li>
+        <li>Click <span class="ws-set">Salamander</span>, then
+          <span class="ws-set">Human + Lizard + Pigeon</span>.</li>
+        <li>Click <span class="ws-set">Shark</span>, then the one remaining chip.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:30%">After this join</th><th>Shared derived<br>characters named</th>
+              <th>Steps (changes)</th><th>Groups left<br>to join</th><th>Rank of all<br>105 trees</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">nothing joined yet</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Lizard + Pigeon</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Human + Lizard + Pigeon</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Salamander + Human + Lizard + Pigeon</td><td></td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">Shark + Salamander + Human + Lizard + Pigeon</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-note">
+        <strong>Rank of all 105 trees</strong> reads as a dash until every animal is joined. A half-built
+        picture is not yet one of the 105 arrangements, so there is nothing to rank it against.
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> The final join added one shared derived character but did not lower
+          the step count at all. Explain why joining the last two remaining groups cannot change the score.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Copy the tree string from the <span class="ws-set">Your tree</span>
+          label above the diagram, exactly as written.</p>
+        <div class="lines"><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">3</span>What a rotation costs</h2>
+      <p class="ws-intro">Keep the tree you just built. A node is a hinge: turning it re-orders what is drawn
+        above and below. This part decides whether your page-1 prediction holds.</p>
+
+      <ol class="ws-steps">
+        <li>Record row 0 of the table before touching anything.</li>
+        <li>On the diagram, click the coloured circle at the point where <span class="ws-set">lizard</span>
+          and <span class="ws-set">pigeon</span> join. Record row 1.</li>
+        <li>Press <span class="ws-set">Rotate a node</span> four more times, recording a row each time. The
+          button works through a different hinge on each press, so the picture keeps changing.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:14%">Rotations<br>you made</th><th>The string in the <em>Your tree</em> label</th>
+              <th style="width:15%">Steps<br>(changes)</th><th style="width:15%">Rank of all<br>105 trees</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">0</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">1</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">2</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">3</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">4</td><td></td><td></td><td></td></tr>
+          <tr><td class="filled">5</td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> One column changed on almost every row and two columns never changed
+          at all. State the rule in your own words: what does a rotation alter, and what does it leave alone?</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Go back to your page-1 prediction. Was each part right? If either was
+          not, name the specific assumption that turned out to be false.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> On at least one of your rows, two animals ended up printed on
+          neighbouring lines that were not neighbours before. Using your rule, explain why &ldquo;printed next
+          to each other&rdquo; is not a statement about relatedness.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">d.</span> If a rotation does not change the information in a tree, then what
+          exactly <em>is</em> the information a cladogram carries? Answer in one sentence.</p>
+        <div class="lines"><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">4</span>When a good-looking grouping still loses</h2>
+      <p class="ws-intro">Human and pigeon share two striking derived features that nothing else on this tree
+        has. Grouping them is a defensible move. This part prices it.</p>
+
+      <ol class="ws-steps">
+        <li>Press <span class="ws-set">Start over</span>, then tick
+          <span class="ws-set">Show how many shared derived characters each join would have</span>.</li>
+        <li>Click <span class="ws-set">Human</span>. Each other chip now carries a count. Record them, then
+          click <span class="ws-set">Human</span> again to deselect.</li>
+        <li>Click <span class="ws-set">Lizard</span> and record the same counts.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:26%">Chip you selected</th><th>Shark</th><th>Salamander</th><th>Human</th>
+              <th>Lizard</th><th>Pigeon</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Human</td><td></td><td></td><td class="filled">&mdash;</td><td></td><td></td></tr>
+          <tr><td class="filled">Lizard</td><td></td><td></td><td></td><td class="filled">&mdash;</td><td></td></tr>
+        </tbody>
+      </table>
+
+      <ol class="ws-steps">
+        <li>Now build the human-and-pigeon tree, clicking the new animal first each time:
+          <span class="ws-set">Human</span> then <span class="ws-set">Pigeon</span>;
+          <span class="ws-set">Lizard</span> then the <span class="ws-set">Human + Pigeon</span> chip;
+          <span class="ws-set">Salamander</span> then that chip; <span class="ws-set">Shark</span> then the last
+          chip. Record as you go.</li>
+        <li>Press <span class="ws-set">Cold-blooded together</span> in panel
+          <span class="ws-set">3 &middot; Try another arrangement</span> and record its score.</li>
+      </ol>
+
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:44%">Arrangement</th><th>Steps (changes)</th><th>Rank of all 105 trees</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">Human + Pigeon</td><td></td><td class="filled">&mdash;</td></tr>
+          <tr><td class="filled">Lizard + Human + Pigeon</td><td></td><td class="filled">&mdash;</td></tr>
+          <tr><td class="filled">Salamander + Lizard + Human + Pigeon</td><td></td><td class="filled">&mdash;</td></tr>
+          <tr><td class="filled">complete tree, human and pigeon grouped</td><td></td><td></td></tr>
+          <tr><td class="filled">Cold-blooded together</td><td></td><td></td></tr>
+          <tr><td class="filled">your part-2 tree, for comparison</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">a.</span> Grouping human with pigeon is supported by real shared derived
+          characters, and it still scores worse than your part-2 tree. Using the two counts you recorded above,
+          account for the difference exactly.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">b.</span> Count the entries in the list of scored trees in panel 3. Now press
+          <span class="ws-set">The ladder</span>, read its score, and count the entries again. The list did not
+          grow. Explain what that tells you about <em>The ladder</em> and the tree you just built by hand.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">c.</span> <em>Cold-blooded together</em> groups shark, salamander and lizard on
+          a feature all three genuinely share: none of them holds a constant internally set body temperature.
+          Explain why that shared feature is not evidence that the three form a clade.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <div class="page-break"></div>
+
+    <!-- ============ 5 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">5</span>Solve these without the demonstration</h2>
+      <p class="ws-intro">Close the page, or look away from it. Show your working. Then reopen it and check
+        yourself &mdash; and where you were wrong, write down what you had assumed.</p>
+
+      <p style="margin-bottom:6px">The whole character matrix, condensed. <em>Derived</em> means the state
+        differs from the lancelet's.</p>
+      <table class="ws-table">
+        <thead>
+          <tr><th style="width:46%">Character</th><th>Derived in</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="filled">1 &mdash; notochord at some stage</td><td class="filled">no animal &mdash; all six have it</td></tr>
+          <tr><td class="filled">2 &mdash; vertebral column</td><td class="filled">shark, salamander, human, lizard, pigeon</td></tr>
+          <tr><td class="filled">3, 4, 5 &mdash; bony skeleton; lungs; four limbs with digits</td><td class="filled">salamander, human, lizard, pigeon</td></tr>
+          <tr><td class="filled">6, 7 &mdash; amniotic egg; waterproof keratinised skin</td><td class="filled">human, lizard, pigeon</td></tr>
+          <tr><td class="filled">8, 9, 10 &mdash; two openings behind the eye socket; uric acid waste; beta-keratin foot scales</td><td class="filled">lizard, pigeon</td></tr>
+          <tr><td class="filled">11, 12 &mdash; constant internally set body temperature; four-chambered heart</td><td class="filled">human, pigeon</td></tr>
+          <tr><td class="filled">13 &mdash; feathers</td><td class="filled">pigeon</td></tr>
+          <tr><td class="filled">14 &mdash; hair</td><td class="filled">human</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ws-q">
+        <p><span class="label">1.</span> Two trees differ in one respect only. In tree A, lizard and pigeon are
+          sister taxa and human branches just outside them. In tree B, human and pigeon are sister taxa and
+          lizard branches just outside them. Everything else &mdash; lancelet at the root, then shark, then
+          salamander &mdash; is identical.</p>
+        <p style="margin-top:6px">Work out the number of steps characters 8, 9, 10, 11 and 12 each need on tree
+          A and on tree B, total the five for each tree, and state which whole tree scores lower and by how
+          much.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">2.</span> Character 2, the vertebral column, is derived in all five animals
+          other than the lancelet. State how many steps it costs on every one of the 105 possible trees, and
+          say whether it can be used to choose between any two of them. Justify the number.</p>
+        <div class="lines"><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">3.</span> Someone argues that feathers and hair are such conspicuous, wholly
+          different structures that they are strong evidence pigeon and human are <em>not</em> close relatives.
+          Explain what is wrong with the argument. No calculation.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="ws-q">
+        <p><span class="label">4.</span> The lancelet is never joined to anything and never appears in a clade
+          you build. Name the two separate jobs it does in this analysis, and state what you would no longer be
+          able to determine if it were removed from the matrix.</p>
+        <div class="lines"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="ws-part">
+      <h2><span class="n">6</span>On your own</h2>
+      <p class="ws-intro">Nothing here is graded. The demonstration does considerably more than this worksheet
+        has used.</p>
+
+      <ul style="padding-left:18px">
+        <li>Predict the score of <span class="ws-set">Swimmers together</span> before you press it, then use
+          the <em>Steps</em> column of the character matrix to find which characters that arrangement forces to
+          change more than once.</li>
+        <li>Tick <span class="ws-set">Show only the parsimony-informative characters</span> and count how many
+          of the fourteen survive. The ones that drop out are real biology. Say precisely what they can and
+          cannot tell you.</li>
+        <li>Tap a single row of the character matrix to trace that one character on the tree; the tick marks
+          then read <em>gained</em> or <em>lost</em>. Find a character costing two steps and decide whether the
+          demonstration is drawing it as two separate gains or as a gain followed by a loss &mdash; then ask
+          whether counting steps alone could ever distinguish the two.</li>
+      </ul>
+    </section>
+
+    <div class="ws-foot">
+      Tree Builder &middot; Dr. Andres Barboza &middot; Strake Jesuit College Preparatory
+    </div>
+  </div>
+</body>
+
+</html>

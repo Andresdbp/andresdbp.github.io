@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../../../assets/css/tokens.css?v=4" rel="stylesheet">
-  <link href="../../../assets/css/demo.css?v=4" rel="stylesheet">
-  <script src="../../../assets/js/demo-shell.js?v=4"></script>
+  <link href="../../../assets/css/tokens.css?v=5" rel="stylesheet">
+  <link href="../../../assets/css/demo.css?v=5" rel="stylesheet">
+  <script src="../../../assets/js/demo-shell.js?v=5"></script>
 
   <style>
     /* demo-specific only: stage labels, legend, unit-bearing readout tiles */
@@ -65,6 +65,7 @@
           <span class="tag is-accent">Allopatric speciation</span>
         </div>
       </div>
+      <a class="sheet-link" href="worksheet.html" title="Printable worksheet"><i class="bi bi-file-earmark-text"></i><span>Worksheet</span></a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark mode">
         <i class="bi bi-moon-stars-fill"></i><i class="bi bi-sun-fill"></i>
       </button>
@@ -200,8 +201,8 @@
             <p class="note warn" id="leakNote">
               Set this to <strong>1.00</strong> and raise the barrier. Divergence stalls near 0.25 and stays
               there forever. <strong>One migrant per generation</strong> &mdash; one animal out of fifty, once a
-              generation &mdash; is enough to stop two populations diverging into separate species. Gene flow is not a weak
-              force you can ignore; it is the reason most populations never speciate.
+              generation &mdash; is enough to stop two populations diverging into separate species. Gene flow is not a
+              minor correction; it is the reason most populations never speciate.
             </p>
           </div>
         </div>
@@ -241,7 +242,7 @@
           </p>
           <p class="note warn" style="margin-top:10px">
             <strong>This is allopatric speciation only</strong> &mdash; populations split by a physical barrier
-            (geography). It is the easiest case and the one AP Biology asks about first. Speciation also happens
+            (geography). It is the least complicated case and the one AP Biology asks about first. Speciation also happens
             <em>without</em> a barrier (sympatric speciation: polyploidy in plants, host-race shifts in insects,
             assortative mating in one lake). Nothing on this page models that, and the fact that you have to
             raise a barrier here does not mean a barrier is required in nature.
@@ -266,11 +267,11 @@
     <section class="why">
       <h2>What this is for</h2>
       <p>
-        <strong>The misconception:</strong> students picture speciation as a moment. One population, then a wall
-        goes up, then &mdash; at some particular generation &mdash; <em>ping</em>, two species. They expect there
-        to be a birthday. Textbook definitions encourage it: "a species is a group that can interbreed and
-        produce fertile offspring" sounds like a yes/no test, so speciation sounds like the instant the answer
-        flips from yes to no.
+        <strong>The misconception:</strong> it is natural to read speciation as a moment. One population, then a
+        wall goes up, then &mdash; at some particular generation &mdash; <em>ping</em>, two species, with a date
+        you could mark on a calendar. Textbook definitions invite that reading: "a species is a group that can
+        interbreed and produce fertile offspring" sounds like a yes/no test, so speciation sounds like the
+        instant the answer flips from yes to no.
       </p>
       <p>
         <strong>There is no such instant.</strong> Press <em>Split 60 gen</em> and watch. The barrier goes up,
@@ -293,9 +294,10 @@
         slow, ambiguous band where the honest answer is <em>partly</em>.
       </p>
       <p>
-        <strong>Watch the last fraction of a percent do the work.</strong> Here is the number that surprises
-        people. Stop a run at 110 generations of separation: isolation is already about <strong>0.96</strong>
-        &mdash; 96% of gene flow blocked, hybrid fitness down to about 0.10, nine hybrids in ten failing. Lower
+        <strong>Watch the last fraction of a percent do the work.</strong> Here is the number that does not mean
+        what its size suggests. Stop a run at 110 generations of separation: isolation is already about
+        <strong>0.96</strong> &mdash; 96% of gene flow blocked, hybrid fitness down to about 0.12, nearly nine
+        hybrids in ten failing. Lower
         the barrier and they fuse anyway, in about twenty generations. Why? Because 4% of ten potential migrants
         is still roughly <strong>0.4 migrants per generation</strong> landing their genes, and at that divergence
         the trickle erases difference faster than drift and selection can build it. Isolation has to climb past
@@ -1009,7 +1011,7 @@
       render(false);
       // Start paused. Raising the barrier or pressing a preset starts the
       // clock, so the generation axis is not already thousands of empty
-      // generations wide by the time the student does anything.
+      // generations wide before anything has been done to it.
       el.btnRun.textContent = 'Run';
     })();
   </script>
