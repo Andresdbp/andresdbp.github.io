@@ -53,10 +53,19 @@ a:hover { text-decoration: underline; }
 
 .ws-open {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: 500; margin: 16px 0 4px;
+  font-size: 13px; font-weight: 500; margin: 16px 8px 4px 0;
   padding: 7px 13px; border-radius: 9px;
   background: var(--accent-soft); border: 1px solid var(--accent-line);
 }
+/* Download the print-ready copy. Screen only — pointless on paper. */
+.ws-pdf {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500; margin: 16px 0 4px;
+  padding: 7px 13px; border-radius: 9px;
+  color: var(--text-2);
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.ws-pdf:hover { color: var(--accent-strong); border-color: var(--accent-line); text-decoration: none; }
 
 /* ---------- parts ---------- */
 .ws-part { margin-top: 26px; page-break-inside: auto; }
@@ -139,6 +148,34 @@ ol.ws-steps > li::before {
 @media print {
   @page { margin: 14mm 13mm; }
 
+  /* Force a print-safe palette regardless of the theme the page was viewed
+     in. Without this, anything using var(--text) prints WHITE ON WHITE when
+     the viewer happens to be in dark mode — which silently erases every
+     value in a "set the slider to X" instruction and every question label.
+     Overriding the tokens fixes all of them in one place. */
+  :root,
+  :root[data-theme="dark"],
+  :root[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f2f2f2;
+    --line: #999999;
+    --line-soft: #cccccc;
+    --text: #000000;
+    --text-2: #000000;
+    --muted: #444444;
+    --accent: #000000;
+    --accent-strong: #000000;
+    --accent-soft: #ffffff;
+    --accent-line: #000000;
+    --warn: #000000;
+    --warn-soft: #f2f2f2;
+    --ok: #000000;
+    --bad: #000000;
+    --shadow: none;
+    --shadow-sm: none;
+  }
+
   body {
     background: #fff; color: #000;
     font-size: 11pt; line-height: 1.5; padding: 0;
@@ -150,8 +187,8 @@ ol.ws-steps > li::before {
   h1, h2, h3 { color: #000; }
   a { color: #000; text-decoration: none; }
 
-  /* the button to open the demo is useless on paper, but the URL is not */
-  .ws-open { display: none; }
+  /* the buttons are useless on paper, but the demo URL is not */
+  .ws-open, .ws-pdf { display: none; }
   .ws-url { display: block !important; font-size: 9.5pt; color: #000; margin-bottom: 6pt; }
 
   .ws-head { border-bottom: 2px solid #000; }
